@@ -30,18 +30,22 @@
 
 # IMPORT LIBRARIES ----
 library(TDA)
+library(TDAStats)
 library(parallel)
 library(doParallel)
 library(foreach)
 library(clue)
 library(rdist)
-library(data.table)
 
 # FUNCTIONS ----
-diagram_to_dt <- function(p){
-  ret_dt = rbindlist(lapply(X = 1:nrow(p),FUN = function(X){return(data.table(dimension = as.numeric(p[X,1]),birth = as.numeric(p[X,2]),death = as.numeric(p[X,3])))}))
-  ret_dt[,lifespan:=death-birth]
-  return(ret_dt)
+TDA_diagram_to_df <- function(d){
+  d = d[[1]]
+  class(d) = "matrix"
+  return(as.data.frame(d))
+}
+
+TDAStats_diagram_to_df <- function(d){
+  return(as.data.frame(d))
 }
 
 d_wasserstein <- function(D1,D2,dim,p){
@@ -52,23 +56,6 @@ d_wasserstein <- function(D1,D2,dim,p){
 
   # calculate the wasserstein metric in each dimension
   # subset both barcodes by dimension X
-
-
-  if(!is.data.table(D1))
-  {
-    B1 = diagram_to_dt(D1)
-  }else
-  {
-    B1 = D1
-  }
-
-  if(!is.data.table(D2))
-  {
-    B2 = diagram_to_dt(D2)
-  }else
-  {
-    B2 = D2
-  }
 
   B1_subset = B1[which(B1$dimension == dim),]
   B2_subset = B2[which(B2$dimension == dim),]
@@ -86,8 +73,8 @@ d_wasserstein <- function(D1,D2,dim,p){
   }
 
   # remove diagonal entries from B1_subset and B2_subset
-  B1_subset = B1_subset[birth != death]
-  B2_subset = B2_subset[birth != death]
+  B1_subset = B1_subset[which(B1_subset[,2] != B1_subset[,3]),]
+  B2_subset = B2_subset[which(B2_subset[,2] != B2_subset[,3]),]
 
   if(nrow(B1_subset) > 0)
   {
@@ -139,8 +126,8 @@ loss <- function(diagrams_1,diagrams_2,dist_mat,perm,dim,p){
   # compute the pairwise barcode distances for both lists in parallel
   cl = makeCluster(detectCores() - 1)
   registerDoParallel(cl)
-  clusterEvalQ(cl,c(library(data.table),library(clue),library(rdist)))
-  clusterExport(cl,c("d_wasserstein","diagram_to_dt"))
+  clusterEvalQ(cl,c(library(clue),library(rdist)))
+  clusterExport(cl,c("d_wasserstein"))
   clusterExport(cl,c("diagrams_1","diagrams_2","dist_mat"),envir = environment())
 
   d1_tot = foreach(i = comb1,.combine = c) %dopar%
