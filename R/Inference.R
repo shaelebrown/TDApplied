@@ -22,7 +22,6 @@
 # CHANGES TO MAKE:
 # include option for infinity norm in Wasserstein metrics
 # make sure test statistic is correct
-# keep dependence functionality and cite paper
 
 # IMPORT LIBRARIES ----
 library(TDA)
@@ -312,7 +311,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q){
     }
 
     # return sum of within group distances
-    return(list(res = (1/(length(diagrams_1)*(length(diagrams_1) - 1))) * sum(d1_tot) + (1/(length(diagrams_2)*(length(diagrams_2) - 1))) * sum(d2_tot),dist_mat = dist_mat))
+    return(list(statistics = (1/(length(diagrams_1)*(length(diagrams_1) - 1))) * sum(d1_tot) + (1/(length(diagrams_2)*(length(diagrams_2) - 1))) * sum(d2_tot),dist_mats = dist_mats))
 
   }
 
@@ -362,42 +361,75 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   dist_mats = lapply(X = dims,FUN = function(X){return(matrix(data = -1,nrow = n,ncol = n))})
 
   # compute loss function on observed data
-  test_loss = loss(diagram_groups = diagram_groups,dist_mat = dist_mat,perm = 1:n,dims = dims,p = p,q = q)
+  test_loss = loss(diagram_groups = diagram_groups,dist_mat = dist_mat,dims = dims,p = p,q = q)
   dist_mats = test_loss$dist_mats
-  test_loss = test_loss$results
+  test_statistics = test_loss$statistics
 
   # get permutation values
-  perm_values = c()
+  perm_values = lapply(X = dims,FUN = function(X){return(list())})
   for(perm in 1:iterations)
   {
     if(paired == F)
     {
-      # sample groups from their union
-      perm = sample(1:(length(diagrams_1) + length(diagrams_2)),size = n1,replace = F)
+      # sample groups from their union, maintaining group sizes
+      perm = split(x = 1:n,f = sample(unlist(lapply(X = 1:length(diagram_groups),FUN = function(X){return(rep(X,length = X))})),size = n,replace = F))
+
+      csum_group_sizes = cumsum(unlist(lapply(diagram_groups,FUN = length)))
+
+      permuted_groups = lapply(X = perm,FUN = function(X){
+
+        res = list()
+        for(i in 1:length(X))
+        {
+          g = min.which(csum_group_sizes > X[i])
+          res[[length(res) + 1]] <- diagram_groups[g][i - csum_group_sizes[g]]
+        }
+        return(res)})
     }else
     {
-      # group dependencies much be maintained
-      perm = rbinom(n = length(diagrams_1),size = 1,prob = 0.5)
-      perm = c(which(perm == 1),length(diagrams_1) + which(perm == 0))
+      # pairings are maintained
+      perm = lapply(X = 1:length(diagram_groups[[1]]),FUN = function(X){return(sample(1:length(diagram_groups),size = length(diagram_groups),replace = F))})
+
+      permuted_groups = lapply(X = length(diagram_groups),FUN = function(X){
+
+        groups = do.call("[[",X,perm)
+        res = list()
+        for(i in 1:length(groups))
+        {
+          res[[length(res) + 1]] <- diagram_groups[groups][i]
+        }
+        return(res)})
     }
 
-    # return loss function
-    res = loss(diagrams_1 = diagrams_1,diagrams_2 = diagrams_2,dist_mat = dist_mat,perm = perm,dim = dim,p = p)
-    dist_mat = res$dist_mat
-    perm_values = c(perm_values,res$res)
+    # compute loss function and add to permutation values
+    permuted_loss = loss(permuted_groups,dist_mats = dist_mats,dims = dims,p = p,q = q)
+    dist_mats = permuted_loss$dist_mats
+    for(d in dims)
+    {
+      perm_values[d][(length(perm_values[d]) + 1):(length(perm_values[d]) + iterations)] = permuted_loss$statistics[d]
+    }
 
   }
 
-  # return results
-  answer = list(dimension = dim,
-                permvals = perm_values,
-                test_statistic = test_loss,
-                p_value = (sum(perm_values <= test_loss) + 1)/(length(perm_values) + 1))
+  # set up return list
+  names(perm_values) = as.character(dims)
+  names(test_statistics) = as.character(dims)
+  pval = lapply(X = 1:length(dims),FUN = function(X){
+
+    return((sum(perm_values[X] <= test_statistics[X]) + 1)/(iterations + 1))
+
+  })
+  names(pval) = as.character(dims)
+
+  results = list(dimensions = dims,
+                 permvals = perm_values,
+                 test_statistic = test_statistics,
+                 p_value = pval)
 
   # print time duration
   print(paste0("Time taken: ",Sys.time()-s))
 
-  return(answer)
+  return(results)
 
 }
 
