@@ -20,13 +20,9 @@
 # an infinity-norm distance
 
 # CHANGES TO MAKE:
-# include TDAStats and TDA functionalities
-# remove dependencies on unnecessary libraries like data.table
 # include option for infinity norm in Wasserstein metrics
 # make sure test statistic is correct
 # keep dependence functionality and cite paper
-# allow for vector of desired dimensions
-# allow for multiple groups of diagrams and cite papers
 
 # IMPORT LIBRARIES ----
 library(TDA)
@@ -39,13 +35,154 @@ library(rdist)
 
 # FUNCTIONS ----
 TDA_diagram_to_df <- function(d){
+  # function to convert d to a dataframe
+  # d is a diagram from library TDA
+
   d = d[[1]]
   class(d) = "matrix"
   return(as.data.frame(d))
 }
 
 TDAStats_diagram_to_df <- function(d){
+  # function to convert d to a dataframe
+  # d is a diagram from library TDAStats
+
   return(as.data.frame(d))
+}
+
+check_diagram <- function(d){
+  # error checks for a diagram
+  # d is a diagram, stored as a dataframe
+
+  if(nrow(d) == 0)
+  {
+    stop("Every diagram must be non-empty.")
+  }
+
+  if(ncol(d) != 3)
+  {
+    stop("Every diagram must have three columns.")
+  }
+
+  if(class(d[,1]) != "numeric" | class(d[,2]) != "numeric" | class(d[,3]) != "numeric")
+  {
+    stop("Diagrams must have numeric columns.")
+  }
+
+  if(!all.equal(d[,1],as.integer(d[,1])))
+  {
+    stop("Homology dimensions must be whole numbers.")
+  }
+
+  if(length(which(d[,1]) < 0) > 0)
+  {
+    stop("Homology dimensions must be >= 0.")
+  }
+
+  if(length(which(d[,2]) < 0) > 0 | length(which(d[,3]) < 0) > 0)
+  {
+    stop("Birth and death radii must be >= 0.")
+  }
+
+  if(length(which(complete.cases(d))) != nrow(d))
+  {
+    stop("Diagrams can't have missing values.")
+  }
+
+}
+
+all_diagrams <- function(groups,lib){
+  # function to make sure all groups are lists or vectors of diagrams, to convert the diagrams to dataframes
+  # and to error check each diagram
+  # groups is a vector or list of vectors or lists of diagrams
+  # lib is either "TDA" or "TDAStats
+
+  for(g in 1:length(groups))
+  {
+    for(diag in 1:length(groups[g]))
+    {
+      if(class(groups[g][diag]) != ifelse(test = lib == "TDA",yes = "diagram",no = c("matrix","array")))
+      {
+        stop("Every diagram must be the output from a homology calculation from either TDA or TDAStats.")
+      }else
+      {
+        if(lib == "TDA")
+        {
+          groups[g][diag] = TDA_diagram_to_df(groups[g][diag])
+        }else
+        {
+          groups[g][diag] = TDAStats_diagram_to_df(groups[g][diag])
+        }
+      }
+
+      check_diagram(groups[g][diag])
+    }
+  }
+}
+
+check_params <- function(iterations,p,q,dims,paired,lib){
+  # error checks on the parameters for the main function
+
+  if(!is.numeric(iterations))
+  {
+    stop("Iterations must be numeric.")
+  }
+
+  if(iterations != as.integer(iterations))
+  {
+    stop("Iterations must be a whole number.")
+  }
+
+  if(iterations <= 1 | is.infinite(iterations))
+  {
+    stop("Iterations must be a finite number at least 1.")
+  }
+
+  if(!as.numeric(p))
+  {
+    stop("p must be numeric.")
+  }
+
+  if(p < 1)
+  {
+    stop("p must be at least 1.")
+  }
+
+  if(!is.numeric(q))
+  {
+    stop("q must be numeric.")
+  }
+
+  if(q < 1 | is.infinite(q))
+  {
+    stop("q must be a finite number at least 1.")
+  }
+
+  if(!is.numeric(dims))
+  {
+    stop("dims must be a numeric vector or value.")
+  }
+
+  if(!all.equal(dims,as.integer(dims)))
+  {
+    stop("dims must be whole numbers.")
+  }
+
+  if(length(which(dims < 0 | is.infinite(dims))) > 0)
+  {
+    stop("dims must be positive and finite.")
+  }
+
+  if(!is.logical(paired))
+  {
+    stop("paired must be T or F.")
+  }
+
+  if(!is.character(lib) | is.vector(lib) | lib %in% c("TDA","TDAStats") == F)
+  {
+    stop("lib must be a single character, either TDA or TDAStats.")
+  }
+
 }
 
 d_wasserstein <- function(D1,D2,dim,p){
@@ -112,118 +249,130 @@ d_wasserstein <- function(D1,D2,dim,p){
 
 }
 
-loss <- function(diagrams_1,diagrams_2,dist_mat,perm,dim,p){
-  # function to compute the F_{p,p} loss between two sets of diagrams
-  # environment e contains diagrams_1, diagrams_2 and the current distmat
-  # perm is the list of indices between 1 and n1+n2 which consistute the first set of diagrams
-  # dim is the maximum dimension of diagrams to consider
-  # p is a finite number >=1
+loss <- function(diagram_groups,dist_mats,dims,p,q){
+  # function to compute the F_{p,q} loss between groups of diagrams
+  # diagram_groups are the (possibly permuted) groups of diagrams
+  # dist mats stores the current distance matrices for the diagrams in each dimension
+  # dims are the homological dimensions of diagrams to consider
+  # p is a number >=1
+  # q is a finite number >= 1
 
-  # get all possible pairs of distinct members of each list of diagrams
-  comb1 = combn(perm,m = 2,simplify = F)
-  comb2 = combn(setdiff(1:(length(diagrams_1) + length(diagrams_2)),perm),m = 2,simplify = F)
-
-  # compute the pairwise barcode distances for both lists in parallel
+  # initialize a cluster for computing distances between diagrams in parallel
   cl = makeCluster(detectCores() - 1)
   registerDoParallel(cl)
   clusterEvalQ(cl,c(library(clue),library(rdist)))
   clusterExport(cl,c("d_wasserstein"))
-  clusterExport(cl,c("diagrams_1","diagrams_2","dist_mat"),envir = environment())
+  clusterExport(cl,c("diagram_groups","dist_mats"),envir = environment())
 
-  d1_tot = foreach(i = comb1,.combine = c) %dopar%
+  # compute loss function and update distance matrices in each dimension
+  for(dim in dims)
+  {
+
+    d_tots = unlist(lapply(diagram_groups,FUN = function(X){
+
+      d = foreach(i = comb1,.combine = c) %dopar%
+        {
+          i = unlist(i)
+          if(dist_mat[i[[1]],i[[2]]] == -1)
+          {
+            if(i[[1]] > length(diagrams_1))
+            {
+              D1 = diagrams_2[[i[[1]] - length(diagrams_1)]]
+            }else
+            {
+              D1 = diagrams_1[[i[[1]]]]
+            }
+
+            if(i[[2]] > length(diagrams_1))
+            {
+              D2 = diagrams_2[[i[[2]] - length(diagrams_1)]]
+            }else
+            {
+              D2 = diagrams_1[[i[[2]]]]
+            }
+            return(d_wasserstein(D1 = D1,D2 = D2,dim = dim,p = p))
+          }
+          return(dist_mat[i[[1]],i[[2]]])
+        }
+
+      return(d)
+
+    }))
+
+    # update the upper triang of dist_mat
+    for(i in 1:length(comb1))
     {
-      i = unlist(i)
-      if(dist_mat[i[[1]],i[[2]]] == -1)
-      {
-        if(i[[1]] > length(diagrams_1))
-        {
-          D1 = diagrams_2[[i[[1]] - length(diagrams_1)]]
-        }else
-        {
-          D1 = diagrams_1[[i[[1]]]]
-        }
-
-        if(i[[2]] > length(diagrams_1))
-        {
-          D2 = diagrams_2[[i[[2]] - length(diagrams_1)]]
-        }else
-        {
-          D2 = diagrams_1[[i[[2]]]]
-        }
-        return(d_wasserstein(D1 = D1,D2 = D2,dim = dim,p = p))
-      }
-      return(dist_mat[i[[1]],i[[2]]])
+      j = comb1[[i]]
+      dist_mat[j[[1]],j[[2]]] = d1_tot[[i]]
+    }
+    for(i in 1:length(comb2))
+    {
+      j = comb2[[i]]
+      dist_mat[j[[1]],j[[2]]] = d2_tot[[i]]
     }
 
-  d2_tot = foreach(i = comb2,.combine = c) %dopar%
-    {
-      if(dist_mat[i[[1]],i[[2]]] == -1)
-      {
-        if(i[[1]] > length(diagrams_1))
-        {
-          D1 = diagrams_2[[i[[1]] - length(diagrams_1)]]
-        }else
-        {
-          D1 = diagrams_1[[i[[1]]]]
-        }
+    # return sum of within group distances
+    return(list(res = (1/(length(diagrams_1)*(length(diagrams_1) - 1))) * sum(d1_tot) + (1/(length(diagrams_2)*(length(diagrams_2) - 1))) * sum(d2_tot),dist_mat = dist_mat))
 
-        if(i[[2]] > length(diagrams_1))
-        {
-          D2 = diagrams_2[[i[[2]] - length(diagrams_1)]]
-        }else
-        {
-          D2 = diagrams_1[[i[[2]]]]
-        }
-        return(d_wasserstein(D1 = D1,D2 = D2,dim = dim,p = p))
-      }
-      return(dist_mat[i[[1]],i[[2]]])
-    }
+  }
 
   stopCluster(cl)
 
-  # update the upper triang of dist_mat
-  for(i in 1:length(comb1))
-  {
-    j = comb1[[i]]
-    dist_mat[j[[1]],j[[2]]] = d1_tot[[i]]
-  }
-  for(i in 1:length(comb2))
-  {
-    j = comb2[[i]]
-    dist_mat[j[[1]],j[[2]]] = d2_tot[[i]]
-  }
-
-  # return sum of within group distances
-  return(list(res = (1/(length(diagrams_1)*(length(diagrams_1) - 1))) * sum(d1_tot) + (1/(length(diagrams_2)*(length(diagrams_2) - 1))) * sum(d2_tot),dist_mat = dist_mat))
-
 }
 
-permutation_test <- function(diagrams_1,diagrams_2,iterations,p,dim,subject_dependence){
+permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),paired = F,lib = "TDA"){
 
-  # function to test whether or not two sets of labelled persistence diagrams come from the same geometric process
-  # diagrams_1 is a list of diagrams in the first group and likewise for diagrams_2 and the second group
-  # iterations is the number of permutations we will calculate for class labels
-  # dim is the maximum dimension in which to calculate homology for barcodes
-  # p is the finite wasserstein distance parameter, p >= 1
+  # function to test whether or not multiple groups of persistence diagrams come from the same geometric process
+  # ... are the groups of diagrams, either stored as lists or vectors
+  # iterations is the number of permutations we will calculate for group labels
+  # p is the wasserstein distance parameter, p >= 1
+  # q is the finite distance exponential, q >= 1
+  # dims is a vector of desired homological dimensions
+  # paired is a boolean which determines if dependencies exist between diagrams of the same indices in different groups
+
+  # retrieve diagram groups
+  diagram_groups <- list(...)
+
+  # make sure there are at least two groups
+  if(length(diagram_groups) < 2)
+  {
+    stop("At least two groups of persistence diagrams must be supplied.")
+  }
+
+  # check each diagram and convert to a dataframe
+  all_diagrams(diagram_groups,lib)
+
+  # error check all parameters
+  check_params(iterations,p,q,dims,paired,lib)
+
+  # make sure that if paired == T then all groups have the same number of diagrams
+  if(paired)
+  {
+    if(length(unique(unlist(lapply(diagrams_groups,FUN = length)))) != 1)
+    {
+      stop("If paired is true then all groups of diagrams must have the same number of elements.")
+    }
+  }
 
   # time computations
   s = Sys.time()
 
-  # make distance matrix for both sets of diagrams
-  dist_mat = matrix(data = -1,nrow = length(diagrams_1) + length(diagrams_2),ncol = length(diagrams_1) + length(diagrams_2))
+  # make distance matrix for all diagrams for each dimension
+  n = sum(unlist(lapply(groups,FUN = length)))
+  dist_mats = lapply(X = dims,FUN = function(X){return(matrix(data = -1,nrow = n,ncol = n))})
 
   # compute loss function on observed data
-  test_loss = loss(diagrams_1 = diagrams_1,diagrams_2 = diagrams_2,dist_mat = dist_mat,perm = 1:length(diagrams_1),dim = dim,p = p)
-  dist_mat = test_loss$dist_mat
-  test_loss = test_loss$res
+  test_loss = loss(diagram_groups = diagram_groups,dist_mat = dist_mat,perm = 1:n,dims = dims,p = p,q = q)
+  dist_mats = test_loss$dist_mats
+  test_loss = test_loss$results
 
   # get permutation values
   perm_values = c()
-  for(X in 1:iterations)
+  for(perm in 1:iterations)
   {
-    if(subject_dependence == F | length(diagrams_1) != length(diagrams_2))
+    if(paired == F)
     {
-      # sample two groups from the union of the two sets of diagrams
+      # sample groups from their union
       perm = sample(1:(length(diagrams_1) + length(diagrams_2)),size = n1,replace = F)
     }else
     {
