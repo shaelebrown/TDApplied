@@ -34,12 +34,15 @@ library(rdist)
 
 # FUNCTIONS ----
 TDA_diagram_to_df <- function(d){
-  # function to convert d to a dataframe
+  # function to convert d to a data frame with standardized colnames names
   # d is a diagram from library TDA
 
   d = d[[1]]
   class(d) = "matrix"
-  return(as.data.frame(d))
+  d = as.data.frame(d)
+  colnames(d) = c("dimension","birth","death")
+
+  return(d)
 }
 
 TDAStats_diagram_to_df <- function(d){
@@ -216,8 +219,8 @@ d_wasserstein <- function(D1,D2,dim,p){
   }
 
   # remove diagonal entries from D1_subset and D2_subset
-  D1_subset = D1_subset[which(D1_subset[,2] != D1_subset[,3]),]
-  D2_subset = D2_subset[which(D2_subset[,2] != D2_subset[,3]),]
+  D1_subset = D1_subset[which(D1_subset[,1] != D1_subset[,2]),]
+  D2_subset = D2_subset[which(D2_subset[,1] != D2_subset[,2]),]
 
   if(nrow(D1_subset) > 0)
   {
