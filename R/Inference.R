@@ -374,6 +374,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
       # sample groups from their union, maintaining group sizes
       perm = split(x = 1:n,f = sample(unlist(lapply(X = 1:length(diagram_groups),FUN = function(X){return(rep(X,length = X))})),size = n,replace = F))
 
+      # compute cumulative sums of groups lengths in order to correctly invert diagram indices
       csum_group_sizes = cumsum(unlist(lapply(diagram_groups,FUN = length)))
 
       permuted_groups = lapply(X = perm,FUN = function(X){
@@ -381,7 +382,10 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
         res = list()
         for(i in 1:length(X))
         {
+          # invert diagram indices
           g = min.which(csum_group_sizes > X[i])
+
+          # append to permuted group
           res[[length(res) + 1]] <- diagram_groups[g][i - csum_group_sizes[g]]
         }
         return(res)})
@@ -392,16 +396,18 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
 
       permuted_groups = lapply(X = length(diagram_groups),FUN = function(X){
 
+        # get the Xth element of each list
         groups = do.call("[[",X,perm)
         res = list()
         for(i in 1:length(groups))
         {
+          # append correct diagram to the end of the list
           res[[length(res) + 1]] <- diagram_groups[groups][i]
         }
         return(res)})
     }
 
-    # compute loss function and add to permutation values
+    # compute loss function, add to permutation values and updated distance matrices
     permuted_loss = loss(permuted_groups,dist_mats = dist_mats,dims = dims,p = p,q = q)
     dist_mats = permuted_loss$dist_mats
     for(d in dims)
