@@ -259,14 +259,20 @@ d_wasserstein <- function(D1,D2,dim,p){
   }
 
   # use the Hungarian algorithm from the clue package to find the minimal weight matching
-  best_match = solve_LSAP(x = dist_mat,maximum = F)
+  best_match = as.numeric(solve_LSAP(x = dist_mat,maximum = F))
+  seq_match = 1:length(best_match)
+
+  # subset best match by removing all pairs which between diagonal points
+  indices = cbind(seq_match,best_match)
+  indices = indices[which(indices[,1] <= (nrow(D1_subset) - nrow(diag2)) | indices[,2] <= (nrow(D2_subset) - nrow(diag1))),]
 
   # return the distance between D1 and D2
   if(is.finite(p))
   {
-    return(sum(dist_mat[cbind(seq_along(best_match), best_match)]^(p))^(1/p))
+    return((sum(dist_mat[indices]^(p)))^(1/p))
   }
-  return(max(dist_mat[cbind(seq_along(best_match), best_match)]))
+
+  return(max(dist_mat[indices]))
 
 }
 
