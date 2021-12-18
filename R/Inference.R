@@ -131,7 +131,7 @@ all_diagrams <- function(groups,lib){
 
 }
 
-check_params <- function(iterations,p,q,dims,paired,lib){
+check_params <- function(iterations,p,q,dims,paired,lib,distance){
   # error checks on the parameters for the main function
 
   if(!is.numeric(iterations))
@@ -194,9 +194,14 @@ check_params <- function(iterations,p,q,dims,paired,lib){
     stop("lib must be a single character, either TDA or TDAStats.")
   }
 
+  if(!is.character(distance) | distance %in% c("wasserstein","Turner") == F)
+  {
+    stop("distance must be a single character, either wasserstein or Turner.")
+  }
+
 }
 
-d_wasserstein <- function(D1,D2,dim,p){
+diagram_distance <- function(D1,D2,dim,p,distance){
   # function to compute the wasserstein/bottleneck metric between two diagrams
   # D1 and D2 are diagrams stored as data frames
   # dim is the dimension to subset
@@ -248,13 +253,13 @@ d_wasserstein <- function(D1,D2,dim,p){
   D2_subset = rbind(D2_subset,diag1)
 
   # compute the distance matrix between rows of D1_subset and D2_subset
-  if(is.finite(p))
+  if(is.finite(p) & distance == "Turner")
   {
-    # compute the p-wasserstein distance
+    # compute the p-wasserstein distance for matching pairs
     dist_mat = as.matrix(cdist(D1_subset,D2_subset,metric = "minkowski",p = p))
   }else
   {
-    # compute the bottleneck distance
+    # compute the bottleneck distance for matching pairs
     dist_mat = as.matrix(cdist(D1_subset,D2_subset,metric = "maximum"))
   }
 
@@ -276,19 +281,20 @@ d_wasserstein <- function(D1,D2,dim,p){
 
 }
 
-loss <- function(diagram_groups,dist_mats,dims,p,q){
+loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
   # function to compute the F_{p,q} loss between groups of diagrams
   # diagram_groups are the (possibly permuted) groups of diagrams
   # dist mats stores the current distance matrices for the diagrams in each dimension
   # dims are the homological dimensions of diagrams to consider
   # p is a number >=1
   # q is a finite number >= 1
+  # distance is the distance metric to use, either "Wasserstein" (default) or "Turner"
 
   # initialize a cluster for computing distances between diagrams in parallel
   cl = makeCluster(detectCores() - 1)
   registerDoParallel(cl)
   clusterEvalQ(cl,c(library(clue),library(rdist)))
-  clusterExport(cl,c("d_wasserstein"))
+  clusterExport(cl,c("diagram_distance"))
   clusterExport(cl,c("diagram_groups","dist_mats"),envir = environment())
 
   # initialize return vector of statistics, one for each dimension
@@ -310,7 +316,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q){
           # if the distance matrix has not already stored the distance calculation
           if(dist_mats[which.min(dims == dim)][X[i[[1]]]$ind,X[i[[2]]$ind]] == -1)
           {
-            return(d_wasserstein(D1 = X[i[[1]]]$diag,D2 = X[i[[2]]]$diag,dim = dim,p = p)^q)
+            return(diagram_distance(D1 = X[i[[1]]]$diag,D2 = X[i[[2]]]$diag,dim = dim,p = p,distance = distance)^q)
           }
 
           # else return the already stored distance value
@@ -346,7 +352,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q){
 
 }
 
-permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),paired = F,lib = "TDA"){
+permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),paired = F,lib = "TDA",distance = "wasserstein"){
 
   # function to test whether or not multiple groups of persistence diagrams come from the same geometric process
   # ... are the groups of diagrams, either stored as lists or vectors
@@ -369,7 +375,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   diagram_groups = all_diagrams(diagram_groups,lib)
 
   # error check all parameters
-  check_params(iterations,p,q,dims,paired,lib)
+  check_params(iterations,p,q,dims,paired,lib,distance)
 
   # make sure that if paired == T then all groups have the same number of diagrams
   if(paired)
@@ -388,7 +394,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   dist_mats = lapply(X = dims,FUN = function(X){return(matrix(data = -1,nrow = n,ncol = n))})
 
   # compute loss function on observed data
-  test_loss = loss(diagram_groups = diagram_groups,dist_mat = dist_mat,dims = dims,p = p,q = q)
+  test_loss = loss(diagram_groups = diagram_groups,dist_mat = dist_mat,dims = dims,p = p,q = q,distance = distance)
   dist_mats = test_loss$dist_mats
   test_statistics = test_loss$statistics
 
@@ -432,7 +438,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
     }
 
     # compute loss function, add to permutation values and updated distance matrices
-    permuted_loss = loss(permuted_groups,dist_mats = dist_mats,dims = dims,p = p,q = q)
+    permuted_loss = loss(permuted_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance)
     dist_mats = permuted_loss$dist_mats
     for(d in dims)
     {
@@ -454,7 +460,8 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   results = list(dimensions = dims,
                  permvals = perm_values,
                  test_statistic = test_statistics,
-                 p_value = pval)
+                 p_value = pval,
+                 distance = distance)
 
   # print time duration
   print(paste0("Time taken: ",Sys.time()-s))
