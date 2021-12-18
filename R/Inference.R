@@ -96,6 +96,10 @@ all_diagrams <- function(groups,lib){
   # groups is a vector or list of vectors or lists of diagrams
   # lib is either "TDA" or "TDAStats
 
+  # compute cumulative sums of groups lengths in order to correctly compute diagram indices
+  csum_group_sizes = cumsum(unlist(lapply(diagram_groups,FUN = length)))
+  csum_group_sizes = c(0,csum_group_sizes)
+
   for(g in 1:length(groups))
   {
     for(diag in 1:length(groups[g]))
@@ -105,18 +109,23 @@ all_diagrams <- function(groups,lib){
         stop("Every diagram must be the output from a homology calculation from either TDA or TDAStats.")
       }else
       {
+        # convert each diagram to a data frame according to which library they were computed with
+        # and size index of each diagram in all diagrams
         if(lib == "TDA")
         {
-          groups[g][diag] = TDA_diagram_to_df(groups[g][diag])
+          groups[g][diag] = list(diag = TDA_diagram_to_df(groups[g][diag]),ind = csum_group_sizes[g - 1] + d)
         }else
         {
-          groups[g][diag] = TDAStats_diagram_to_df(groups[g][diag])
+          groups[g][diag] = list(diag = TDAStats_diagram_to_df(groups[g][diag]),ind = csum_group_sizes[g - 1] + d)
         }
       }
 
-      check_diagram(groups[g][diag])
+      check_diagram(groups[g][diag]$diag)
     }
   }
+
+  return(groups)
+
 }
 
 check_params <- function(iterations,p,q,dims,paired,lib){
@@ -184,12 +193,11 @@ check_params <- function(iterations,p,q,dims,paired,lib){
 
 }
 
-d_wasserstein <- function(D1,D2,dim,p,q){
+d_wasserstein <- function(D1,D2,dim,p){
   # function to compute the wasserstein/bottleneck metric between two diagrams
   # D1 and D2 are diagrams stored as data frames
   # dim is the dimension to subset
   # p is the power of the wasserstein distance, p >= 1
-  # q is the finite exponent, q >= 1
 
   # subset both diagrams by dimension X
   D1_subset = D1[which(D1$dimension == dim),]
@@ -253,9 +261,9 @@ d_wasserstein <- function(D1,D2,dim,p,q){
   # return the distance between D1 and D2
   if(is.finite(p))
   {
-    return(sum(dist_mat[cbind(seq_along(best_match), best_match)]^(p))^(q/p))
+    return(sum(dist_mat[cbind(seq_along(best_match), best_match)]^(p))^(1/p))
   }
-  return(max(dist_mat[cbind(seq_along(best_match), best_match)])^(q))
+  return(max(dist_mat[cbind(seq_along(best_match), best_match)]))
 
 }
 
@@ -274,59 +282,58 @@ loss <- function(diagram_groups,dist_mats,dims,p,q){
   clusterExport(cl,c("d_wasserstein"))
   clusterExport(cl,c("diagram_groups","dist_mats"),envir = environment())
 
+  # initialize return vector of statistics, one for each dimension
+  statistics = c()
+
   # compute loss function and update distance matrices in each dimension
   for(dim in dims)
   {
 
-    d_tots = unlist(lapply(diagram_groups,FUN = function(X){
+    # to store sum of test statistics within each group
+    d_tots = unlist(lapply(X = diagram_groups,FUN = function(X){
 
-      d = foreach(i = comb1,.combine = c) %dopar%
+      # compute distances in parallel for each unique pair of diagrams in each group
+      d = foreach(i = combn(x = length(X),m = 2,simplify = F),.combine = c) %dopar%
         {
+          # get two diagrams within the group to compute their distance
           i = unlist(i)
-          if(dist_mat[i[[1]],i[[2]]] == -1)
-          {
-            if(i[[1]] > length(diagrams_1))
-            {
-              D1 = diagrams_2[[i[[1]] - length(diagrams_1)]]
-            }else
-            {
-              D1 = diagrams_1[[i[[1]]]]
-            }
 
-            if(i[[2]] > length(diagrams_1))
-            {
-              D2 = diagrams_2[[i[[2]] - length(diagrams_1)]]
-            }else
-            {
-              D2 = diagrams_1[[i[[2]]]]
-            }
-            return(d_wasserstein(D1 = D1,D2 = D2,dim = dim,p = p))
+          # if the distance matrix has not already stored the distance calculation
+          if(dist_mats[which.min(dims == dim)][X[i[[1]]]$ind,X[i[[2]]$ind]] == -1)
+          {
+            return(d_wasserstein(D1 = X[i[[1]]]$diag,D2 = X[i[[2]]]$diag,dim = dim,p = p)^q)
           }
-          return(dist_mat[i[[1]],i[[2]]])
+
+          # else return the already stored distance value
+          return(dist_mats[which.min(dims == dim)][X[i[[1]]]$ind,X[i[[2]]$ind]])
         }
 
       return(d)
 
     }))
 
-    # update the upper triang of dist_mat
-    for(i in 1:length(comb1))
+    # update the upper triangle of dist_mat
+    for(X in diagram_groups)
     {
-      j = comb1[[i]]
-      dist_mat[j[[1]],j[[2]]] = d1_tot[[i]]
-    }
-    for(i in 1:length(comb2))
-    {
-      j = comb2[[i]]
-      dist_mat[j[[1]],j[[2]]] = d2_tot[[i]]
+      for(i in 1:length(combn(x = length(X),m = 2,simplify = F)))
+      {
+        j = comb1[[i]]
+        dist_mats[which.min(dims == dim)][X[combn(x = length(X),m = 2,simplify = F)[i][[1]]]$ind,X[combn(x = length(X),m = 2,simplify = F)[i][[2]]$ind]] = d_tots[which.min(diagram_groups == X)][i]
+      }
     }
 
-    # return sum of within group distances
-    return(list(statistics = (1/(length(diagrams_1)*(length(diagrams_1) - 1))) * sum(d1_tot) + (1/(length(diagrams_2)*(length(diagrams_2) - 1))) * sum(d2_tot),dist_mats = dist_mats))
+    # append calculated loss statistic to statistics vector
+    statistics = c(statistics,sum(unlist(lapply(X = 1:length(d_tots),FUN = function(X){
+
+      return(sum(d_tots[X])/(length(diagram_groups[X])*(length(diagram_groups[X]) - 1)))
+
+    }))))
 
   }
 
   stopCluster(cl)
+
+  return(list(statistics = statistics,dist_mats = dist_mats))
 
 }
 
@@ -349,8 +356,8 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
     stop("At least two groups of persistence diagrams must be supplied.")
   }
 
-  # check each diagram and convert to a dataframe
-  all_diagrams(diagram_groups,lib)
+  # check each diagram, converting each to a data frame and storing index in all diagrams
+  diagram_groups = all_diagrams(diagram_groups,lib)
 
   # error check all parameters
   check_params(iterations,p,q,dims,paired,lib)
@@ -384,9 +391,6 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
     {
       # sample groups from their union, maintaining group sizes
       perm = split(x = 1:n,f = sample(unlist(lapply(X = 1:length(diagram_groups),FUN = function(X){return(rep(X,length = X))})),size = n,replace = F))
-
-      # compute cumulative sums of groups lengths in order to correctly invert diagram indices
-      csum_group_sizes = cumsum(unlist(lapply(diagram_groups,FUN = length)))
 
       permuted_groups = lapply(X = perm,FUN = function(X){
 
