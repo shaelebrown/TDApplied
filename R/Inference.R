@@ -184,67 +184,78 @@ check_params <- function(iterations,p,q,dims,paired,lib){
 
 }
 
-d_wasserstein <- function(D1,D2,dim,p){
-  # function to compute the wasserstein metric between two barcodes
-  # B1 and B2 are diagrams as outputted from the function ripsDiag
-  # dim is the maximum dimension to consider
-  # p is the finite power of the wasserstein distance, p >= 1
+d_wasserstein <- function(D1,D2,dim,p,q){
+  # function to compute the wasserstein/bottleneck metric between two diagrams
+  # D1 and D2 are diagrams stored as data frames
+  # dim is the dimension to subset
+  # p is the power of the wasserstein distance, p >= 1
+  # q is the finite exponent, q >= 1
 
-  # calculate the wasserstein metric in each dimension
-  # subset both barcodes by dimension X
-
-  B1_subset = B1[which(B1$dimension == dim),]
-  B2_subset = B2[which(B2$dimension == dim),]
-  B1_subset = B1_subset[,2:3]
-  B2_subset = B2_subset[,2:3]
+  # subset both diagrams by dimension X
+  D1_subset = D1[which(D1$dimension == dim),]
+  D2_subset = D2[which(D2$dimension == dim),]
+  D1_subset = D1_subset[,2:3]
+  D2_subset = D2_subset[,2:3]
 
   # create empty diagonals for the persistence landscapes
-  diag1 = B1_subset[0,]
-  diag2 = B2_subset[0,]
+  diag1 = D1_subset[0,]
+  diag2 = D2_subset[0,]
 
   # if both subsets are empty then set their distance to 0
-  if(nrow(B1_subset) == 0 & nrow(B2_subset) == 0)
+  if(nrow(D1_subset) == 0 & nrow(D2_subset) == 0)
   {
     return(0)
   }
 
-  # remove diagonal entries from B1_subset and B2_subset
-  B1_subset = B1_subset[which(B1_subset[,2] != B1_subset[,3]),]
-  B2_subset = B2_subset[which(B2_subset[,2] != B2_subset[,3]),]
+  # remove diagonal entries from D1_subset and D2_subset
+  D1_subset = D1_subset[which(D1_subset[,2] != D1_subset[,3]),]
+  D2_subset = D2_subset[which(D2_subset[,2] != D2_subset[,3]),]
 
-  if(nrow(B1_subset) > 0)
+  if(nrow(D1_subset) > 0)
   {
-    for(i in 1:nrow(B1_subset))
+    for(i in 1:nrow(D1_subset))
     {
-      # for each non-trivial element in B1_subset we add its projection onto the diagonal in diag1
-      proj_diag = mean(as.numeric(B1_subset[i,]))
+      # for each non-trivial element in D1_subset we add its projection onto the diagonal in diag1
+      proj_diag = mean(as.numeric(D1_subset[i,]))
       diag1 = rbind(diag1,data.frame(birth = proj_diag,death = proj_diag))
     }
   }
 
-  if(nrow(B2_subset) > 0)
+  if(nrow(D2_subset) > 0)
   {
-    for(i in 1:nrow(B2_subset))
+    for(i in 1:nrow(D2_subset))
     {
-      # for each non-trivial element in B2_subset we add its projection onto the diagonal in diag2
-      proj_diag = mean(as.numeric(B2_subset[i,]))
+      # for each non-trivial element in D2_subset we add its projection onto the diagonal in diag2
+      proj_diag = mean(as.numeric(D2_subset[i,]))
       diag2 = rbind(diag2,data.frame(birth = proj_diag,death = proj_diag))
     }
   }
 
-  # since an element b of B1_subset is either matched to an element of B2 or to the projection of b onto the diagonal
-  # we form the two sets to be matched by row binding B1_subset with diag2 and B2_subset with diag1
-  B1_subset = rbind(B1_subset,diag2)
-  B2_subset = rbind(B2_subset,diag1)
+  # since an element b of D1_subset is either matched to an element of D2 or to the projection of b onto the diagonal
+  # we form the two sets to be matched by row binding D1_subset with diag2 and D2_subset with diag1
+  D1_subset = rbind(D1_subset,diag2)
+  D2_subset = rbind(D2_subset,diag1)
 
-  # use cdist function from the rdist package to find the wasserstein distance matrix between rows of the updated B1_subset and B2_subset
-  dist_mat = as.matrix(cdist(B1_subset,B2_subset,metric = "minkowski",p = p))
+  # compute the distance matrix between rows of D1_subset and D2_subset
+  if(is.finite(p))
+  {
+    # compute the p-wasserstein distance
+    dist_mat = as.matrix(cdist(D1_subset,D2_subset,metric = "minkowski",p = p))
+  }else
+  {
+    # compute the bottleneck distance
+    dist_mat = as.matrix(cdist(D1_subset,D2_subset,metric = "maximum"))
+  }
 
   # use the Hungarian algorithm from the clue package to find the minimal weight matching
   best_match = solve_LSAP(x = dist_mat,maximum = F)
 
-  # return the distance for dimension X
-  return(sum(dist_mat[cbind(seq_along(best_match), best_match)]^(p))^(1/p))
+  # return the distance between D1 and D2
+  if(is.finite(p))
+  {
+    return(sum(dist_mat[cbind(seq_along(best_match), best_match)]^(p))^(q/p))
+  }
+  return(max(dist_mat[cbind(seq_along(best_match), best_match)])^(q))
 
 }
 
