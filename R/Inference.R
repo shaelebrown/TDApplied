@@ -72,12 +72,12 @@ check_diagram <- function(d){
     stop("Homology dimensions must be whole numbers.")
   }
 
-  if(length(which(d[,1]) < 0) > 0)
+  if(length(which(d[,1] < 0)) > 0)
   {
     stop("Homology dimensions must be >= 0.")
   }
 
-  if(length(which(d[,2]) < 0) > 0 | length(which(d[,3]) < 0) > 0)
+  if(length(which(d[,2] < 0)) > 0 | length(which(d[,3] < 0)) > 0)
   {
     stop("Birth and death radii must be >= 0.")
   }
@@ -89,7 +89,7 @@ check_diagram <- function(d){
 
 }
 
-all_diagrams <- function(groups,lib){
+all_diagrams <- function(diagram_groups,lib){
   # function to make sure all groups are lists or vectors of diagrams, to convert the diagrams to dataframes
   # and to error check each diagram
   # groups is a vector or list of vectors or lists of diagrams
@@ -99,31 +99,35 @@ all_diagrams <- function(groups,lib){
   csum_group_sizes = cumsum(unlist(lapply(diagram_groups,FUN = length)))
   csum_group_sizes = c(0,csum_group_sizes)
 
-  for(g in 1:length(groups))
+  for(g in 1:length(diagram_groups))
   {
-    for(diag in 1:length(groups[g]))
+    for(diag in 1:length(diagram_groups[[g]]))
     {
-      if(class(groups[g][diag]) != ifelse(test = lib == "TDA",yes = "diagram",no = c("matrix","array")))
+      if(lib == "TDA")
       {
-        stop("Every diagram must be the output from a homology calculation from either TDA or TDAStats.")
-      }else
-      {
-        # convert each diagram to a data frame according to which library they were computed with
-        # and size index of each diagram in all diagrams
-        if(lib == "TDA")
+        if(class(diagram_groups[[g]][[diag]][[1]]) != "diagram")
         {
-          groups[g][diag] = list(diag = TDA_diagram_to_df(groups[g][diag]),ind = csum_group_sizes[g - 1] + d)
+          stop("Every diagram must be the output from a homology calculation from either TDA or TDAStats.")
         }else
         {
-          groups[g][diag] = list(diag = TDAStats_diagram_to_df(groups[g][diag]),ind = csum_group_sizes[g - 1] + d)
+          diagram_groups[[g]][[diag]] = list(diag = TDA_diagram_to_df(diagram_groups[[g]][[diag]]),ind = csum_group_sizes[g] + diag)
+        }
+      }else
+      {
+        if(class(diagram_groups[[g]][[diag]] != c("matrix","array")))
+        {
+          stop("Every diagram must be the output from a homology calculation from either TDA or TDAStats.")
+        }else
+        {
+          diagram_groups[[g]][[diag]] = list(diag = TDAStats_diagram_to_df(diagram_groups[[g]][[diag]]),ind = csum_group_sizes[g] + diag)
         }
       }
 
-      check_diagram(groups[g][diag]$diag)
+      check_diagram(diagram_groups[[g]][[diag]]$diag)
     }
   }
 
-  return(groups)
+  return(diagram_groups)
 
 }
 
@@ -185,7 +189,7 @@ check_params <- function(iterations,p,q,dims,paired,lib,distance){
     stop("paired must be T or F.")
   }
 
-  if(!is.character(lib) | is.vector(lib) | lib %in% c("TDA","TDAStats") == F)
+  if(!is.character(lib) | lib %in% c("TDA","TDAStats") == F)
   {
     stop("lib must be a single character, either TDA or TDAStats.")
   }
@@ -300,7 +304,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
   cl = makeCluster(detectCores() - 1)
   registerDoParallel(cl)
   clusterEvalQ(cl,c(library(clue),library(rdist)))
-  clusterExport(cl,c("d_wasserstein","diagram_groups","dist_mats","dims","combinations","p"),envir = environment())
+  clusterExport(cl,c("diagram_distance","diagram_groups","dist_mats","dims","combinations","p"),envir = environment())
 
   # initialize return vector of statistics, one for each dimension
   statistics = c()
@@ -399,6 +403,9 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   dist_mats = test_loss$dist_mats
   test_statistics = test_loss$statistics
 
+  # compute cumulative sum of diagram group sizes for inverting diagram indices
+  csum_group_sizes = c(0,cumsum(unlist(lapply(X = diagram_groups,FUN = length))))
+
   # get permutation values
   perm_values = lapply(X = dims,FUN = function(X){return(list())})
   for(perm in 1:iterations)
@@ -406,7 +413,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
     if(paired == F)
     {
       # sample groups from their union, maintaining group sizes
-      perm = split(x = 1:n,f = sample(unlist(lapply(X = 1:length(diagram_groups),FUN = function(X){return(rep(X,length = X))})),size = n,replace = F))
+      perm = split(x = 1:n,f = sample(unlist(lapply(X = 1:length(diagram_groups),FUN = function(X){return(rep(X,length = length(diagram_groups[[X]])))})),size = n,replace = F))
 
       permuted_groups = lapply(X = perm,FUN = function(X){
 
@@ -414,10 +421,10 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
         for(i in 1:length(X))
         {
           # invert diagram indices
-          g = min.which(csum_group_sizes > X[i])
+          g = min(which(csum_group_sizes >= X[i])) - 1
 
           # append to permuted group
-          res[[length(res) + 1]] <- diagram_groups[g][i - csum_group_sizes[g]]
+          res[[length(res) + 1]] <- diagram_groups[[g]][[X[[i]] - csum_group_sizes[g]]]
         }
         return(res)})
     }else
@@ -425,15 +432,15 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
       # pairings are maintained
       perm = lapply(X = 1:length(diagram_groups[[1]]),FUN = function(X){return(sample(1:length(diagram_groups),size = length(diagram_groups),replace = F))})
 
-      permuted_groups = lapply(X = length(diagram_groups),FUN = function(X){
+      permuted_groups = lapply(X = 1:length(diagram_groups),FUN = function(X){
 
         # get the Xth element of each list
-        groups = do.call("[[",X,perm)
+        groups = sapply(perm,"[[",X)
         res = list()
         for(i in 1:length(groups))
         {
           # append correct diagram to the end of the list
-          res[[length(res) + 1]] <- diagram_groups[groups][i]
+          res[[length(res) + 1]] <- diagram_groups[[groups[[i]]]][[X]]
         }
         return(res)})
     }
@@ -441,9 +448,9 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
     # compute loss function, add to permutation values and updated distance matrices
     permuted_loss = loss(permuted_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance)
     dist_mats = permuted_loss$dist_mats
-    for(d in dims)
+    for(d in 1:length(dims))
     {
-      perm_values[d][(length(perm_values[d]) + 1):(length(perm_values[d]) + iterations)] = permuted_loss$statistics[d]
+      perm_values[[d]][[(length(perm_values[[d]]) + 1)]] <- permuted_loss$statistics[[d]]
     }
 
   }
@@ -453,7 +460,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   names(test_statistics) = as.character(dims)
   pval = lapply(X = 1:length(dims),FUN = function(X){
 
-    return((sum(perm_values[X] <= test_statistics[X]) + 1)/(iterations + 1))
+    return((sum(perm_values[[X]] <= test_statistics[[X]]) + 1)/(iterations + 1))
 
   })
   names(pval) = as.character(dims)
@@ -461,8 +468,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   results = list(dimensions = dims,
                  permvals = perm_values,
                  test_statistic = test_statistics,
-                 p_value = pval,
-                 distance = distance)
+                 p_value = pval)
 
   # print time duration
   print(paste0("Time taken: ",Sys.time()-s))
