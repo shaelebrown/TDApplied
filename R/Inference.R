@@ -385,7 +385,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   # make sure that if paired == T then all groups have the same number of diagrams
   if(paired)
   {
-    if(length(unique(unlist(lapply(diagrams_groups,FUN = length)))) != 1)
+    if(length(unique(unlist(lapply(diagram_groups,FUN = length)))) != 1)
     {
       stop("If paired is true then all groups of diagrams must have the same number of elements.")
     }
