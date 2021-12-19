@@ -19,10 +19,6 @@
 # it uses the Dionysus wasserstein distance, which is by default
 # an infinity-norm distance
 
-# CHANGES TO MAKE:
-# include option for infinity norm in Wasserstein metrics
-# make sure test statistic is correct
-
 # IMPORT LIBRARIES ----
 library(TDA)
 library(TDAStats)
@@ -290,12 +286,21 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
   # q is a finite number >= 1
   # distance is the distance metric to use, either "Wasserstein" (default) or "Turner"
 
+  # create combination of all diagram group elements and their indices
+  combinations = do.call(rbind,lapply(X = 1:length(diagram_groups),FUN = function(X){
+
+    distance_pairs = as.data.frame(t(as.data.frame(combn(x = length(diagram_groups[[X]]),m = 2,simplify = F))))
+    distance_pairs$group = X
+    rownames(distance_pairs) = NULL
+    return(distance_pairs[,c(3,1,2)])
+
+  }))
+
   # initialize a cluster for computing distances between diagrams in parallel
   cl = makeCluster(detectCores() - 1)
   registerDoParallel(cl)
   clusterEvalQ(cl,c(library(clue),library(rdist)))
-  clusterExport(cl,c("diagram_distance"))
-  clusterExport(cl,c("diagram_groups","dist_mats"),envir = environment())
+  clusterExport(cl,c("d_wasserstein","diagram_groups","dist_mats","dims","combinations","p"),envir = environment())
 
   # initialize return vector of statistics, one for each dimension
   statistics = c()
@@ -304,43 +309,39 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
   for(dim in dims)
   {
 
-    # to store sum of test statistics within each group
-    d_tots = unlist(lapply(X = diagram_groups,FUN = function(X){
+    clusterExport(cl,"dim",envir = environment())
 
-      # compute distances in parallel for each unique pair of diagrams in each group
-      d = foreach(i = combn(x = length(X),m = 2,simplify = F),.combine = c) %dopar%
+    d_tots = foreach(j = 1:nrow(combinations),.combine = c) %dopar%
+      {
+        g = as.numeric(combinations[j,1])
+        d1 = as.numeric(combinations[j,2])
+        d2 = as.numeric(combinations[j,3])
+        dim_ind = min(which(dims == dim))
+
+        if(dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind] == -1)
         {
-          # get two diagrams within the group to compute their distance
-          i = unlist(i)
-
-          # if the distance matrix has not already stored the distance calculation
-          if(dist_mats[which.min(dims == dim)][X[i[[1]]]$ind,X[i[[2]]$ind]] == -1)
-          {
-            return(diagram_distance(D1 = X[i[[1]]]$diag,D2 = X[i[[2]]]$diag,dim = dim,p = p,distance = distance)^q)
-          }
-
-          # else return the already stored distance value
-          return(dist_mats[which.min(dims == dim)][X[i[[1]]]$ind,X[i[[2]]$ind]])
+          return(diagram_distance(D1 = diagram_groups[[g]][[d1]]$diag,D2 = diagram_groups[[g]][[d2]]$diag,p = p,dim = dim,distance = distance)^q)
         }
 
-      return(d)
+        # else return the already stored distance value
+        return(dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind])
 
-    }))
+      }
 
     # update the upper triangle of dist_mat
-    for(X in diagram_groups)
+    for(i in 1:nrow(combinations))
     {
-      for(i in 1:length(combn(x = length(X),m = 2,simplify = F)))
-      {
-        j = comb1[[i]]
-        dist_mats[which.min(dims == dim)][X[combn(x = length(X),m = 2,simplify = F)[i][[1]]]$ind,X[combn(x = length(X),m = 2,simplify = F)[i][[2]]$ind]] = d_tots[which.min(diagram_groups == X)][i]
-      }
+      g = as.numeric(combinations[i,1])
+      d1 = as.numeric(combinations[i,2])
+      d2 = as.numeric(combinations[i,3])
+      dim_ind = min(which(dims == dim))
+      dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind] = d_tots[[i]]
     }
 
     # append calculated loss statistic to statistics vector
-    statistics = c(statistics,sum(unlist(lapply(X = 1:length(d_tots),FUN = function(X){
+    statistics = c(statistics,sum(unlist(lapply(X = 1:length(diagram_groups),FUN = function(X){
 
-      return(sum(d_tots[X])/(length(diagram_groups[X])*(length(diagram_groups[X]) - 1)))
+      return(sum(d_tots[which(combinations$group == X)])/(length(diagram_groups[[X]])*(length(diagram_groups[[X]]) - 1)))
 
     }))))
 
@@ -390,11 +391,11 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   s = Sys.time()
 
   # make distance matrix for all diagrams for each dimension
-  n = sum(unlist(lapply(groups,FUN = length)))
+  n = sum(unlist(lapply(diagram_groups,FUN = length)))
   dist_mats = lapply(X = dims,FUN = function(X){return(matrix(data = -1,nrow = n,ncol = n))})
 
   # compute loss function on observed data
-  test_loss = loss(diagram_groups = diagram_groups,dist_mat = dist_mat,dims = dims,p = p,q = q,distance = distance)
+  test_loss = loss(diagram_groups = diagram_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance)
   dist_mats = test_loss$dist_mats
   test_statistics = test_loss$statistics
 
