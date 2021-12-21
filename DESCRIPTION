@@ -9,5 +9,7 @@ Description: Topological data analysis (TDA) is a suite of powerful tools that c
 Depends: R (>= 3.3), TDA, TDAStats, parallel, doParallel, foreach, clue, rdist
 License: GPL-3
 URL: https://github.com/shaelebrown/TDAInference
+BugReports: https://github.com/shaelebrown/TDAInference/issues
 Encoding: UTF-8
 LazyData: true
+NeedsCompilation: yes
