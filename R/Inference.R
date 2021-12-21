@@ -19,15 +19,6 @@
 # it uses the Dionysus wasserstein distance, which is by default
 # an infinity-norm distance
 
-# IMPORT LIBRARIES ----
-library(TDA)
-library(TDAStats)
-library(parallel)
-library(doParallel)
-library(foreach)
-library(clue)
-library(rdist)
-
 # FUNCTIONS ----
 TDA_diagram_to_df <- function(d){
 
