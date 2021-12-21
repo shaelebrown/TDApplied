@@ -25,10 +25,10 @@ TDA_diagram_to_df <- function(d){
   # function to convert d to a data frame with standardized column names
   # d is a diagram from library TDA
 
-  d = d[[1]]
-  class(d) = "matrix"
-  d = as.data.frame(d)
-  colnames(d) = c("dimension","birth","death")
+  d <- d[[1]]
+  class(d) <- "matrix"
+  d <- as.data.frame(d)
+  colnames(d) <- c("dimension","birth","death")
 
   return(d)
 
@@ -92,8 +92,8 @@ all_diagrams <- function(diagram_groups,lib){
   # lib is either "TDA" or "TDAStats"
 
   # compute cumulative sums of groups lengths in order to correctly compute diagram indices
-  csum_group_sizes = cumsum(unlist(lapply(diagram_groups,FUN = length)))
-  csum_group_sizes = c(0,csum_group_sizes)
+  csum_group_sizes <- cumsum(unlist(lapply(diagram_groups,FUN = length)))
+  csum_group_sizes <- c(0,csum_group_sizes)
 
   # loop through all diagram groups
   for(g in 1:length(diagram_groups))
@@ -110,7 +110,7 @@ all_diagrams <- function(diagram_groups,lib){
         }else
         {
           # if of the right form, format into a data frame and store diagram index
-          diagram_groups[[g]][[diag]] = list(diag = TDA_diagram_to_df(diagram_groups[[g]][[diag]]),ind = csum_group_sizes[g] + diag)
+          diagram_groups[[g]][[diag]] <- list(diag = TDA_diagram_to_df(diagram_groups[[g]][[diag]]),ind = csum_group_sizes[g] + diag)
         }
       }else
       {
@@ -121,7 +121,7 @@ all_diagrams <- function(diagram_groups,lib){
         }else
         {
           # if of the right form, format into a data frame and store diagram index
-          diagram_groups[[g]][[diag]] = list(diag = TDAStats_diagram_to_df(diagram_groups[[g]][[diag]]),ind = csum_group_sizes[g] + diag)
+          diagram_groups[[g]][[diag]] <- list(diag = TDAStats_diagram_to_df(diagram_groups[[g]][[diag]]),ind = csum_group_sizes[g] + diag)
         }
       }
 
@@ -223,13 +223,13 @@ diagram_distance <- function(D1,D2,dim,p,distance){
     if(is.list(D1) & class(D1[[1]]) == "diagram")
     {
       # D1 is the output from a TDA calculation
-      D1 = TDA_diagram_to_df(D1)
+      D1 <- TDA_diagram_to_df(D1)
     }else
     {
       if(class(D1)[[1]] == "matrix" & class(D1)[[2]] == "array")
       {
         # D1 is the output from a TDAStats calculation
-        D1 = TDAStats_diagram_to_df(D1)
+        D1 <- TDAStats_diagram_to_df(D1)
       }else
       {
         stop("D1 must be the output of either a TDA or TDAStats computation.")
@@ -246,13 +246,13 @@ diagram_distance <- function(D1,D2,dim,p,distance){
     if(is.list(D2) & class(D2[[1]]) == "diagram")
     {
       # D2 is the output from a TDA calculation
-      D2 = TDA_diagram_to_df(D2)
+      D2 <- TDA_diagram_to_df(D2)
     }else
     {
       if(class(D2)[[1]] == "matrix" & class(D2)[[2]] == "array")
       {
         # D2 is the output from a TDAStats calculation
-        D2 = TDAStats_diagram_to_df(D2)
+        D2 <- TDAStats_diagram_to_df(D2)
       }else
       {
         stop("D2 must be the output of either a TDA or TDAStats computation.")
@@ -265,14 +265,14 @@ diagram_distance <- function(D1,D2,dim,p,distance){
   }
 
   # subset both diagrams by dimension dim and for birth and death columns
-  D1_subset = D1[which(D1$dimension == dim),]
-  D2_subset = D2[which(D2$dimension == dim),]
-  D1_subset = D1_subset[,2:3]
-  D2_subset = D2_subset[,2:3]
+  D1_subset <- D1[which(D1$dimension == dim),]
+  D2_subset <- D2[which(D2$dimension == dim),]
+  D1_subset <- D1_subset[,2:3]
+  D2_subset <- D2_subset[,2:3]
 
   # create empty diagonals for the persistence diagrams
-  diag1 = D1_subset[0,]
-  diag2 = D2_subset[0,]
+  diag1 <- D1_subset[0,]
+  diag2 <- D2_subset[0,]
 
   # if both subsets are empty then set their distance to 0
   if(nrow(D1_subset) == 0 & nrow(D2_subset) == 0)
@@ -281,16 +281,16 @@ diagram_distance <- function(D1,D2,dim,p,distance){
   }
 
   # remove diagonal entries from D1_subset and D2_subset
-  D1_subset = D1_subset[which(D1_subset[,1] != D1_subset[,2]),]
-  D2_subset = D2_subset[which(D2_subset[,1] != D2_subset[,2]),]
+  D1_subset <- D1_subset[which(D1_subset[,1] != D1_subset[,2]),]
+  D2_subset <- D2_subset[which(D2_subset[,1] != D2_subset[,2]),]
 
   # for each non-trivial element in D1_subset we add its projection onto the diagonal in diag1
   if(nrow(D1_subset) > 0)
   {
     for(i in 1:nrow(D1_subset))
     {
-      proj_diag = mean(as.numeric(D1_subset[i,]))
-      diag1 = rbind(diag1,data.frame(birth = proj_diag,death = proj_diag))
+      proj_diag <- mean(as.numeric(D1_subset[i,]))
+      diag1 <- rbind(diag1,data.frame(birth = proj_diag,death = proj_diag))
     }
   }
 
@@ -299,34 +299,34 @@ diagram_distance <- function(D1,D2,dim,p,distance){
   {
     for(i in 1:nrow(D2_subset))
     {
-      proj_diag = mean(as.numeric(D2_subset[i,]))
-      diag2 = rbind(diag2,data.frame(birth = proj_diag,death = proj_diag))
+      proj_diag <- mean(as.numeric(D2_subset[i,]))
+      diag2 <- rbind(diag2,data.frame(birth = proj_diag,death = proj_diag))
     }
   }
 
   # since an element b of D1_subset is either matched to an element of D2 or to the projection of b onto the diagonal
   # we form the two sets to be matched by row binding D1_subset with diag2 and D2_subset with diag1
-  D1_subset = rbind(D1_subset,diag2)
-  D2_subset = rbind(D2_subset,diag1)
+  D1_subset <- rbind(D1_subset,diag2)
+  D2_subset <- rbind(D2_subset,diag1)
 
   # compute the distance matrix between rows of D1_subset and D2_subset
   if(is.finite(p) & distance == "Turner")
   {
     # compute the p-wasserstein distance for matching pairs
-    dist_mat = as.matrix(cdist(D1_subset,D2_subset,metric = "minkowski",p = p))
+    dist_mat <- as.matrix(cdist(D1_subset,D2_subset,metric = "minkowski",p = p))
   }else
   {
     # compute the bottleneck distance for matching pairs
-    dist_mat = as.matrix(cdist(D1_subset,D2_subset,metric = "maximum"))
+    dist_mat <- as.matrix(cdist(D1_subset,D2_subset,metric = "maximum"))
   }
 
   # use the Hungarian algorithm from the clue package to find the minimal weight matching
-  best_match = as.numeric(solve_LSAP(x = dist_mat,maximum = F))
-  seq_match = 1:length(best_match)
+  best_match <- as.numeric(solve_LSAP(x = dist_mat,maximum = F))
+  seq_match <- 1:length(best_match)
 
   # subset best match by removing all pairs between diagonal points
-  indices = cbind(seq_match,best_match)
-  indices = indices[which(indices[,1] <= (nrow(D1_subset) - nrow(diag2)) | indices[,2] <= (nrow(D2_subset) - nrow(diag1))),]
+  indices <- cbind(seq_match,best_match)
+  indices <- indices[which(indices[,1] <= (nrow(D1_subset) - nrow(diag2)) | indices[,2] <= (nrow(D2_subset) - nrow(diag1))),]
 
   # if p is finite, exponentiate each matched distance and take the p-th root of their sum
   if(is.finite(p))
@@ -350,17 +350,17 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
   # distance is the distance metric to use, either "wasserstein" (default) or "Turner"
 
   # create combination of all pairs of diagram group elements and their group indices
-  combinations = do.call(rbind,lapply(X = 1:length(diagram_groups),FUN = function(X){
+  combinations <- do.call(rbind,lapply(X = 1:length(diagram_groups),FUN = function(X){
 
-    distance_pairs = as.data.frame(t(as.data.frame(combn(x = length(diagram_groups[[X]]),m = 2,simplify = F))))
-    distance_pairs$group = X
-    rownames(distance_pairs) = NULL
+    distance_pairs <- as.data.frame(t(as.data.frame(combn(x = length(diagram_groups[[X]]),m = 2,simplify = F))))
+    distance_pairs$group <- X
+    rownames(distance_pairs) <- NULL
     return(distance_pairs[,c(3,1,2)])
 
   }))
 
   # initialize a cluster cl for computing distances between diagrams in parallel
-  cl = makeCluster(detectCores() - 1)
+  cl <- makeCluster(detectCores() - 1)
   registerDoParallel(cl)
 
   # export necessary libraries and variables to cl
@@ -368,7 +368,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
   clusterExport(cl,c("diagram_distance","diagram_groups","dist_mats","dims","combinations","p"),envir = environment())
 
   # initialize return vector of statistics, one for each dimension
-  statistics = c()
+  statistics <- c()
 
   # compute loss function and update distance matrices in each dimension dim
   for(dim in dims)
@@ -376,15 +376,15 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
 
     clusterExport(cl,"dim",envir = environment())
 
-    d_tots = foreach(comb = 1:nrow(combinations),.combine = c) %dopar%
+    d_tots <- foreach(comb = 1:nrow(combinations),.combine = c) %dopar%
       {
         # get group and diagram indices from combinations
-        g = as.numeric(combinations[comb,1])
-        d1 = as.numeric(combinations[comb,2])
-        d2 = as.numeric(combinations[comb,3])
+        g <- as.numeric(combinations[comb,1])
+        d1 <- as.numeric(combinations[comb,2])
+        d2 <- as.numeric(combinations[comb,3])
 
         # get index of dim in dims
-        dim_ind = min(which(dims == dim))
+        dim_ind <- min(which(dims == dim))
 
         # if the distance between these two diagrams has not already been computed, compute their distance
         if(dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind] == -1)
@@ -401,12 +401,12 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
     for(comb in 1:nrow(combinations))
     {
       # get group and diagram indices
-      g = as.numeric(combinations[comb,1])
-      d1 = as.numeric(combinations[comb,2])
-      d2 = as.numeric(combinations[comb,3])
+      g <- as.numeric(combinations[comb,1])
+      d1 <- as.numeric(combinations[comb,2])
+      d2 <- as.numeric(combinations[comb,3])
 
       # get index of dim in dims
-      dim_ind = min(which(dims == dim))
+      dim_ind <- min(which(dims == dim))
 
       # update the correct entry of the current dimension distance matrix with the newly calculated distances
       dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind] = d_tots[[i]]
@@ -414,7 +414,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
     }
 
     # append calculated loss statistic to statistics vector
-    statistics = c(statistics,sum(unlist(lapply(X = 1:length(diagram_groups),FUN = function(X){
+    statistics <- c(statistics,sum(unlist(lapply(X = 1:length(diagram_groups),FUN = function(X){
 
       # loss statistic is the sum of all within group distances of unique diagram pairs, normalized
       # by the number of those pairs in the group
@@ -432,7 +432,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
 
 }
 
-permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),paired = F,lib = "TDA",distance = "wasserstein"){
+permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),paired = F,lib = "TDA",distance = "wasserstein",verbose = FALSE){
 
   # function to test whether or not multiple groups of persistence diagrams come from the same geometric process
   # ... are the groups of diagrams, either stored as lists or vectors
@@ -443,6 +443,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   # paired is a boolean which determines if dependencies exist between diagrams of the same indices in different groups
   # lib is the TDA library used for homological calculations, either "TDA" (default) or "TDAStats"
   # distance is either "wasserstein" or "Turner" and determines how distances will be computed between diagrams
+  # verbose is either TRUE or FALSE (default), printing runtime of function call
 
   # retrieve diagram groups
   diagram_groups <- list(...)
@@ -454,7 +455,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   }
 
   # check each diagram, converting each to a data frame and storing their indices in all the diagrams
-  diagram_groups = all_diagrams(diagram_groups,lib)
+  diagram_groups <- all_diagrams(diagram_groups,lib)
 
   # error check function parameters
   check_params(iterations,p,q,dims,paired,lib,distance)
@@ -469,23 +470,23 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   }
 
   # time computations
-  start_time = Sys.time()
+  start_time <- Sys.time()
 
   # make distance matrix for all diagrams for each dimension, store total number of diagrams across
   # all groups in variable n
-  n = sum(unlist(lapply(diagram_groups,FUN = length)))
-  dist_mats = lapply(X = dims,FUN = function(X){return(matrix(data = -1,nrow = n,ncol = n))})
+  n <- sum(unlist(lapply(diagram_groups,FUN = length)))
+  dist_mats <- lapply(X = dims,FUN = function(X){return(matrix(data = -1,nrow = n,ncol = n))})
 
   # compute loss function on observed data and update dist_mats
-  test_loss = loss(diagram_groups = diagram_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance)
-  dist_mats = test_loss$dist_mats
-  test_statistics = test_loss$statistics
+  test_loss <- loss(diagram_groups = diagram_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance)
+  dist_mats <- test_loss$dist_mats
+  test_statistics <- test_loss$statistics
 
   # compute cumulative sum of diagram group sizes for inverting diagram indices
-  csum_group_sizes = c(0,cumsum(unlist(lapply(X = diagram_groups,FUN = length))))
+  csum_group_sizes <- c(0,cumsum(unlist(lapply(X = diagram_groups,FUN = length))))
 
   # create empty list in each dimension to store loss function statistic for each permutation
-  perm_values = lapply(X = dims,FUN = function(X){return(list())})
+  perm_values <- lapply(X = dims,FUN = function(X){return(list())})
 
   # permute group labels and recalculate the loss function each time
   for(perm in 1:iterations)
@@ -494,17 +495,17 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
     if(paired == F)
     {
       # sample groups from their union, maintaining group sizes
-      perm = split(x = 1:n,f = sample(unlist(lapply(X = 1:length(diagram_groups),FUN = function(X){return(rep(X,length = length(diagram_groups[[X]])))})),size = n,replace = F))
+      perm <- split(x = 1:n,f = sample(unlist(lapply(X = 1:length(diagram_groups),FUN = function(X){return(rep(X,length = length(diagram_groups[[X]])))})),size = n,replace = F))
 
-      permuted_groups = lapply(X = perm,FUN = function(X){
+      permuted_groups <- lapply(X = perm,FUN = function(X){
 
-        res = list()
+        res <- list()
 
         # for each index in that permuted group
         for(ind in 1:length(X))
         {
           # invert diagram indices
-          g = min(which(csum_group_sizes >= X[ind])) - 1
+          g <- min(which(csum_group_sizes >= X[ind])) - 1
 
           # append to permuted group
           res[[length(res) + 1]] <- diagram_groups[[g]][[X[[ind]] - csum_group_sizes[g]]]
@@ -513,14 +514,14 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
     }else
     {
       # permute all the 1st diagrams between the groups, 2nd diagrams between the groups etc.
-      perm = lapply(X = 1:length(diagram_groups[[1]]),FUN = function(X){return(sample(1:length(diagram_groups),size = length(diagram_groups),replace = F))})
+      perm <- lapply(X = 1:length(diagram_groups[[1]]),FUN = function(X){return(sample(1:length(diagram_groups),size = length(diagram_groups),replace = F))})
 
-      permuted_groups = lapply(X = 1:length(diagram_groups),FUN = function(X){
+      permuted_groups <- lapply(X = 1:length(diagram_groups),FUN = function(X){
 
         # get the Xth element of each list
-        groups = sapply(perm,"[[",X)
+        groups <- sapply(perm,"[[",X)
 
-        res = list()
+        res <- list()
 
         # for each group g in the permuted group labels
         for(g in 1:length(groups))
@@ -532,8 +533,8 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
     }
 
     # compute loss function, add to permutation values and updated distance matrices
-    permuted_loss = loss(permuted_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance)
-    dist_mats = permuted_loss$dist_mats
+    permuted_loss <- loss(permuted_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance)
+    dist_mats <- permuted_loss$dist_mats
     for(d in 1:length(dims))
     {
       perm_values[[d]][[(length(perm_values[[d]]) + 1)]] <- permuted_loss$statistics[[d]]
@@ -542,29 +543,35 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   }
 
   # set up return list
-  names(perm_values) = as.character(dims)
+  names(perm_values) <- as.character(dims)
   for(i in 1:length(perm_values))
   {
-    perm_values[[i]] = unlist(perm_values[[i]])
+    perm_values[[i]] <- unlist(perm_values[[i]])
   }
 
-  names(test_statistics) = as.character(dims)
+  names(test_statistics) <- as.character(dims)
 
-  pval = lapply(X = 1:length(dims),FUN = function(X){
+  pval <- lapply(X = 1:length(dims),FUN = function(X){
 
     return((sum(perm_values[[X]] <= test_statistics[[X]]) + 1)/(iterations + 1))
 
   })
-  names(pval) = as.character(dims)
-  pval = unlist(pval)
+  names(pval) <- as.character(dims)
+  pval <- unlist(pval)
 
-  results = list(dimensions = dims,
+  runtime = Sys.time() - start_time
+
+  results <- list(dimensions = dims,
                  permvals = perm_values,
                  test_statistic = test_statistics,
-                 p_value = pval)
+                 p_value = pval,
+                 run_time = runtime)
 
-  # print time duration of function call
-  print(paste0("Time taken: ",Sys.time() - start_time))
+  if(verbose == T)
+  {
+    # print time duration of function call
+    print(paste0("Time taken: ",runtime))
+  }
 
   return(results)
 
