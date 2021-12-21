@@ -107,16 +107,16 @@ all_diagrams <- function(diagram_groups,lib){
       {
         if(class(diagram_groups[[g]][[diag]][[1]]) != "diagram")
         {
-          stop("Every diagram must be the output from a homology calculation from either TDA or TDAStats.")
+          stop(paste0("Every diagram must be the output from a homology calculation from ",lib,"."))
         }else
         {
           diagram_groups[[g]][[diag]] = list(diag = TDA_diagram_to_df(diagram_groups[[g]][[diag]]),ind = csum_group_sizes[g] + diag)
         }
       }else
       {
-        if(class(diagram_groups[[g]][[diag]] != c("matrix","array")))
+        if(class(diagram_groups[[g]][[diag]])[[1]] != "matrix" & class(diagram_groups[[g]][[diag]])[[2]] != "array")
         {
-          stop("Every diagram must be the output from a homology calculation from either TDA or TDAStats.")
+          stop(paste0("Every diagram must be the output from a homology calculation from ",lib,"."))
         }else
         {
           diagram_groups[[g]][[diag]] = list(diag = TDAStats_diagram_to_df(diagram_groups[[g]][[diag]]),ind = csum_group_sizes[g] + diag)
@@ -206,6 +206,47 @@ diagram_distance <- function(D1,D2,dim,p,distance){
   # D1 and D2 are diagrams stored as data frames
   # dim is the dimension to subset
   # p is the power of the wasserstein distance, p >= 1
+
+  # for standalone usage force D1 and D2 to be dataf rames if they are the output of a homology calculation
+  if(class(D1) != "data.frame")
+  {
+    if(is.list(D1) & class(D1[[1]]) == "diagram")
+    {
+      # D1 is the output from a TDA calculation
+      D1 = TDA_diagram_to_df(D1)
+    }else
+    {
+      if(class(D1)[[1]] == "matrix" & class(D1)[[2]] == "array")
+      {
+        # D1 is the output from a TDAStats calculation
+        D1 = TDAStats_diagram_to_df(D1)
+      }else
+      {
+        stop("D1 must be the output of either a TDA or TDAStats computation.")
+      }
+    }
+    check_diagram(D1)
+  }
+
+  if(class(D2) != "data.frame")
+  {
+    if(is.list(D2) & class(D2[[1]]) == "diagram")
+    {
+      # D2 is the output from a TDA calculation
+      D2 = TDA_diagram_to_df(D2)
+    }else
+    {
+      if(class(D2)[[1]] == "matrix" & class(D2)[[2]] == "array")
+      {
+        # D2 is the output from a TDAStats calculation
+        D2 = TDAStats_diagram_to_df(D2)
+      }else
+      {
+        stop("D2 must be the output of either a TDA or TDAStats computation.")
+      }
+    }
+    check_diagram(D2)
+  }
 
   # subset both diagrams by dimension X
   D1_subset = D1[which(D1$dimension == dim),]
@@ -457,6 +498,10 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
 
   # set up return list
   names(perm_values) = as.character(dims)
+  for(i in 1:length(perm_values))
+  {
+    perm_values[[i]] = unlist(perm_values[[i]])
+  }
   names(test_statistics) = as.character(dims)
   pval = lapply(X = 1:length(dims),FUN = function(X){
 
@@ -464,6 +509,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
 
   })
   names(pval) = as.character(dims)
+  pval = unlist(pval)
 
   results = list(dimensions = dims,
                  permvals = perm_values,
