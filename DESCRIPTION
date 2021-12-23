@@ -11,7 +11,8 @@ Description: Topological data analysis (TDA) is a suite of powerful tools
     a persistence diagram which finds holes in the dataset. This package 
     implements code from several papers which have described a permutation test 
     for groups of persistence diagrams (read Robinson & Turner (2017) 
-    <doi:10.1007/s41468-017-0008-7> for the basic introduction). 
+    <doi:10.1007/s41468-017-0008-7> for the basic introduction) to be used with
+    persistence diagrams computed with packages 'TDA' or 'TDAStats'.
 Depends: R (>= 3.3), 
 Imports: TDA, TDAStats, doParallel, clue, rdist
 License: GPL-3
