@@ -5,8 +5,15 @@ Version: 0.1.0
 Authors@R: c(person("Shael", "Brown", email = "shaelebrown@gmail.com", role = c("aut","cre")))
 Author: Shael Brown [aut, cre]
 Maintainer: Shael Brown <shaelebrown@gmail.com>
-Description: Topological data analysis (TDA) is a suite of powerful tools that can find unique non-linear structure in data. The most common TDA tool, persistent homology, produces a "shape descriptor" of its input data called a persistence diagram which finds holes in the dataset. This package implements code from several papers which have described a permutation test for groups of persistence diagrams (read Robinson & Turner (2017) <doi:10.1007/s41468-017-0008-7> for the basic introduction). 
-Depends: R (>= 3.3), TDA, TDAStats, parallel, doParallel, foreach, clue, rdist
+Description: Topological data analysis (TDA) is a suite of powerful tools 
+    that can find unique non-linear structure in data. The most common TDA tool, 
+    persistent homology, produces a "shape descriptor" of its input data called 
+    a persistence diagram which finds holes in the dataset. This package 
+    implements code from several papers which have described a permutation test 
+    for groups of persistence diagrams (read Robinson & Turner (2017) 
+    <doi:10.1007/s41468-017-0008-7> for the basic introduction). 
+Depends: R (>= 3.3), 
+Imports: TDA, TDAStats, doParallel, clue, rdist
 License: GPL-3
 URL: https://github.com/shaelebrown/TDAInference
 BugReports: https://github.com/shaelebrown/TDAInference/issues
