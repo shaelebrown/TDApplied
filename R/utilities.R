@@ -47,7 +47,7 @@ all_diagrams <- function(diagram_groups,lib){
   # function to make sure all diagram groups are lists or vectors of diagrams,
   # to convert the diagrams to data frames and to error check each diagram.
   # diagram_groups is a vector or list of vectors or lists of diagrams
-  # lib is either "TDA" or "TDAStats"
+  # lib is either "TDA" or "TDAstats"
 
   # compute cumulative sums of groups lengths in order to correctly compute diagram indices
   csum_group_sizes <- cumsum(unlist(lapply(diagram_groups,FUN = length)))
@@ -72,14 +72,14 @@ all_diagrams <- function(diagram_groups,lib){
         }
       }else
       {
-        # check to make sure each diagram is actually the output of some TDAStats computation
+        # check to make sure each diagram is actually the output of some TDAstats computation
         if(class(diagram_groups[[g]][[diag]])[[1]] != "matrix" & class(diagram_groups[[g]][[diag]])[[2]] != "array")
         {
           stop(paste0("Every diagram must be the output from a homology calculation from ",lib,"."))
         }else
         {
           # if of the right form, format into a data frame and store diagram index
-          diagram_groups[[g]][[diag]] <- list(diag = TDAStats_diagram_to_df(diagram_groups[[g]][[diag]]),ind = csum_group_sizes[g] + diag)
+          diagram_groups[[g]][[diag]] <- list(diag = TDAstats_diagram_to_df(diagram_groups[[g]][[diag]]),ind = csum_group_sizes[g] + diag)
         }
       }
 
@@ -153,9 +153,9 @@ check_params <- function(iterations,p,q,dims,paired,lib,distance){
     stop("paired must be T or F.")
   }
 
-  if(!is.character(lib) | lib %in% c("TDA","TDAStats") == F)
+  if(!is.character(lib) | lib %in% c("TDA","TDAstats") == F)
   {
-    stop("lib must be a single character, either TDA or TDAStats.")
+    stop("lib must be a single character, either TDA or TDAstats.")
   }
 
   if(!is.character(distance) | distance %in% c("wasserstein","Turner") == F)

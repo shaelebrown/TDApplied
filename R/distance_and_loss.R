@@ -2,7 +2,7 @@
 #' Calculate distances between pairs of persistence diagrams
 #'
 #' Calculates the distance between a pair of persistce diagrams, stored as
-#' data frames (as the output from TDA_diagram_to_df or TDAStats_diagram_to_df)
+#' data frames (as the output from TDA_diagram_to_df or TDAstats_diagram_to_df)
 #' in a particular homological dimension. Different TDA sources define distances
 #' differently, and this function has functionality to compute distances like
 #' in the R package TDA (based on the C++ library Dionysus, see
@@ -11,14 +11,14 @@
 #' <https://link.springer.com/article/10.1007/s41468-017-0008-7>.
 #'
 #' The `D1` and `D2` parameters should be persistence diagrams, either outputted
-#' from a homology calculation is the packages TDA or TDAStats, or such a
+#' from a homology calculation is the packages TDA or TDAstats, or such a
 #' persistence diagram converted to a data frame via the functions TDA_diagram_to_df
-#' or TDAStats_diagram_to_df. The `dim` parameter should be a positive finite integer.
+#' or TDAstats_diagram_to_df. The `dim` parameter should be a positive finite integer.
 #' The `p` parameter should be a positive integer or Inf. The `distance` parameter
 #' should be a string, either "wasserstein" or "Turner".
 #'
-#' @param D1 first persistence diagram, either computed from TDA or TDAStats or converted to a data frame
-#' @param D2 second persistence diagram, either computed from TDA or TDAStats or converted to a data frame
+#' @param D1 first persistence diagram, either computed from TDA or TDAstats or converted to a data frame
+#' @param D2 second persistence diagram, either computed from TDA or TDAstats or converted to a data frame
 #' @param dim homological dimension in which the distance is to be computed
 #' @param p  matching distance parameter
 #' @param distance string which determines which type of distance calculation to carry out
@@ -29,7 +29,7 @@
 #' @export
 #' @examples
 #'
-#' # create two diagrams with package TDA and TDAStats based on 2D Gaussians
+#' # create two diagrams with package TDA and TDAstats based on 2D Gaussians
 #' diag1 <- ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
 #' diag2 <- calculate_homology(ata.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),dim = 1,threshold = 1)
 #'
@@ -41,7 +41,7 @@
 #'
 #' # repeat wasserstein calculation but with diagrams converted to data frames
 #' diag1_df <- TDA_diagram_to_df(d = diag1)
-#' diag2_df <- TDAStats_diagram_to_df(d = diag2)
+#' diag2_df <- TDAstats_diagram_to_df(d = diag2)
 #' wass_df <- diagram_distance(D1 = diag1_df,D2 = diag2_df,dim = 1,p = 2,distance = "wasserstein")
 
 diagram_distance <- function(D1,D2,dim,p,distance){
@@ -65,11 +65,11 @@ diagram_distance <- function(D1,D2,dim,p,distance){
     {
       if(class(D1)[[1]] == "matrix" & class(D1)[[2]] == "array")
       {
-        # D1 is the output from a TDAStats calculation
-        D1 <- TDAStats_diagram_to_df(D1)
+        # D1 is the output from a TDAstats calculation
+        D1 <- TDAstats_diagram_to_df(D1)
       }else
       {
-        stop("D1 must be the output of either a TDA or TDAStats computation.")
+        stop("D1 must be the output of either a TDA or TDAstats computation.")
       }
     }
 
@@ -88,11 +88,11 @@ diagram_distance <- function(D1,D2,dim,p,distance){
     {
       if(class(D2)[[1]] == "matrix" & class(D2)[[2]] == "array")
       {
-        # D2 is the output from a TDAStats calculation
-        D2 <- TDAStats_diagram_to_df(D2)
+        # D2 is the output from a TDAstats calculation
+        D2 <- TDAstats_diagram_to_df(D2)
       }else
       {
-        stop("D2 must be the output of either a TDA or TDAStats computation.")
+        stop("D2 must be the output of either a TDA or TDAstats computation.")
       }
     }
 

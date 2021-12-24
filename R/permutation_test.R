@@ -14,13 +14,13 @@
 #' Alternatively, the `mat` parameter could be a distance matrix (upper
 #' triangular half is ignored); note: `format` should be specified as "ldm".
 #'
-#' @param ... groups of persistence diagrams, outputted from a homology calculation in TDA or TDAStats
+#' @param ... groups of persistence diagrams, outputted from a homology calculation in TDA or TDAstats
 #' @param iterations number of iterations for permuting group labels
 #' @param p wasserstein parameter, number at least 1 (and bottleneck distance if == Inf)
 #' @param q  finite number at least 1 for exponentiation in Turner loss function
 #' @param dims homological dimensions in which the test is to be carried out
 #' @param paired if there is a second-order pairing between diagrams at the same index in different groups
-#' @param lib either "TDA" or "TDAStats" for consistency
+#' @param lib either "TDA" or "TDAstats" for consistency
 #' @param distance either "wasserstein" or "Turner" for determining which distance of diagrams to use
 #' @param verbose if the time duration of the function call should be printed
 #'
@@ -67,7 +67,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   # q is the finite distance exponential, q >= 1
   # dims is a vector of desired homological dimensions
   # paired is a boolean which determines if dependencies exist between diagrams of the same indices in different groups
-  # lib is the TDA library used for homological calculations, either "TDA" (default) or "TDAStats"
+  # lib is the TDA library used for homological calculations, either "TDA" (default) or "TDAstats"
   # distance is either "wasserstein" or "Turner" and determines how distances will be computed between diagrams
   # verbose is either TRUE or FALSE (default), printing runtime of function call
 
