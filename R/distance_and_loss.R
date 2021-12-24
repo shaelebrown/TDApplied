@@ -224,7 +224,7 @@ diagram_distance <- function(D1,D2,dim,p,distance){
 #' })
 #'
 #'
-#' # compute Turner loss function with p,q = 2 in dimension 1
+#' # compute Turner loss function with p,q = 2 in dimension 1 with other parameters set as defaults
 #' example_loss <- loss(diagram_groups = list(g1,g2),dist_mats = list(matrix(data = -1,nrow = 6,ncol = 6)),p = 2,q = 2,distance = "Turner")
 
 loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
