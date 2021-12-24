@@ -214,7 +214,6 @@ diagram_distance <- function(D1,D2,dim,p,distance){
 #' diag <- ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
 #' df <- TDA_diagram_to_df(d = diag)
 #' return(list(diag = df,ind = X))
-#'
 #' })
 #'
 #' g2 <- lapply(X = 1:3,FUN = function(X){
@@ -222,8 +221,8 @@ diagram_distance <- function(D1,D2,dim,p,distance){
 #' diag <- ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
 #' df <- TDA_diagram_to_df(d = diag)
 #' return(list(diag = df,ind = X + 3))
-#'
 #' })
+#'
 #'
 #' # compute Turner loss function with p,q = 2 in dimension 1
 #' example_loss <- loss(diagram_groups = list(g1,g2),dist_mats = list(matrix(data = -1,nrow = 6,ncol = 6)),p = 2,q = 2,distance = "Turner")
