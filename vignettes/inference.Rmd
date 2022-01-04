@@ -93,16 +93,41 @@ The extension to multiple groups, noted at the end of the paper @Robinson_Turner
 
 There is one additional functionality that this package provides, and it is an idea that was discussed in @dependencies. One of the assumptions of the inference procedure listed in @Robinson_Turner is that the persistence diagrams are all independent, however this is not always reasonable to assume in practice. For example, suppose we had point cloud data for several subjects in a pharmaceutical study both before and after a drug intervention. We might want to know if the geometric structure of the point clouds changed after the drug intervention, so our two groups of persistence diagrams would be the before intervention and after invention groups. Since there is a pairing between some of the persistence diagrams (the diagrams belonging to the same patient) these diagrams will not be independent of each other. From this perspective, we will only allow permutations which keep the two (or more in the case of many diagram groups) persistence diagrams of each patient (i.e. dependency) separated. So after each permutation each group still contains one persistence diagram per patient. Not only is this more ideal theoretically, but it also offers a practical advantage. If there was truly a difference between the groups then if there are subject differences the permuted-within-group variances would be larger when each group contains one persistence diagram from each subject, enhancing the test power.
 
+To demonstrate the utility of the TDAInference package, we will go through several examples. Firstly, we will give some examples to show that the various distances between persistence diagrams are being computed correctly. Secondly, we will benchmark the distance calculations to show that they are faster than those provided in the TDA package. Thirdly, we will carry out various permutation tests with multiple groups either sampled from the same or different objects to show that the permutation test returns expected results.
+
 ```{r setup}
 library(TDAInference)
+library(ggplot2)
 ```
-
-First we will show that the distance calculations are correct by working out a few small examples by hand and comparing them to the results of the distance calculations in the TDAInference package.
 
 ## Case study: `first`
 
-DO
+Let us construct a few examples of diagrams which we can easily calculate by hand what their distances should be. Let $D_1$ be the diagram with a single point $(2,3)$. Now, let $D_2 = \{(2,3.1),(5,6)\}$, $D_3 = \{(1,1.1),(3,3.1)\}$. We can visualize the three diagrams below:
 
+```{r}
+# D1
+ggplot(data = data.frame(Birth = 2,Death = 3),aes(x = Birth,y = Death)) + geom_point() + xlim(0,6) + geom_abline(slope = 1,intercept = 0) + ylim(0,6) + ggtitle(bquote("" ~ D[1])) + theme(plot.title = element_text(hjust = 0.5))
+
+# D2
+ggplot(data = data.frame(Birth = c(2,5),Death = c(3.1,6)),aes(x = Birth,y = Death)) + geom_point() + xlim(0,6) + geom_abline(slope = 1,intercept = 0) + ylim(0,6) + ggtitle(bquote("" ~ D[2])) + theme(plot.title = element_text(hjust = 0.5))
+
+# D3
+ggplot(data = data.frame(Birth = c(1,3),Death = c(1.1,3.1)),aes(x = Birth,y = Death)) + geom_point() + xlim(0,6) + geom_abline(slope = 1,intercept = 0) + ylim(0,6) + ggtitle(bquote("" ~ D[3])) + theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+Now, for each pair of diagrams $(D_i,D_j)$ and each distance metric it's clear what the distance value should be. Note that for all metrics the matchings are the same in the different diagram pairings. In $d(D_1,D_2)$, $(2,3)$ is matched with $(2,3.1)$ and $(5,6)$ is matched with its diagonal projection, $(5.5,5.5)$. Therefore, using the 2-wasserstein metric the distance should be $\sqrt{0.1^2+0.5^2} \approx 0.1870829$, using the Turner metric with $p = 2$ the distance should be $\sqrt{d_{E}((2,3),(2,3.1))^2+d_{E}((5,6),(5.5,5.5))^2} \approx 0.7141428$, and using the Infinity norm distance the distance should be $0.1 + 0.5 = 0.6$. In each case the diagram_distance function returns the expected value:
+
+```{r}
+diagram_distance(D1 = data.frame(birth = 2,death = 3),D2 = data.frame(birth = c(2,5),death = c(3.1,6)),p = 2,distance = "wasserstein")
+
+diagram_distance(D1 = data.frame(birth = 2,death = 3),D2 = data.frame(birth = c(2,5),death = c(3.1,6)),p = 2,distance = "Turner")
+
+diagram_distance(D1 = data.frame(birth = 2,death = 3),D2 = data.frame(birth = c(2,5),death = c(3.1,6)),p = Inf,distance = "Turner")
+
+```
+
+We can do similar calculations for each of the other pairs $(D_1,D_3)$ and $(D_2,D_3)$. For $(D_1,D_3)$ the optimal matchine is $(2,3)$ and WHAT. CONTINUE HERE.
 
 Now we will benchmark the runtime of the distance calculations on different-sized random persistence diagrams compared to calculations using the package TDA. 
 
