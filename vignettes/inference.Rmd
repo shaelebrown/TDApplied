@@ -1,14 +1,15 @@
 ---
 title: "Statistical inference on persistence diagrams with TDAInference"
 author: "Shael Brown"
-output: rmarkdown::html_vignette:
-  fig_caption: yes
+output: 
+  rmarkdown::html_vignette:
+    fig_caption: yes
 vignette: >
   %\VignetteIndexEntry{inference}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 references:
-  - id: Robinson_Turner
+- id: Robinson_Turner
   title: 'Hypothesis testing for topological data analysis'
   author:
   - family: Robinson
@@ -23,7 +24,7 @@ references:
   type: article-journal
   issued:
     year: 2017
-    - id: distance_calc
+- id: distance_calc
   title: 'Geometry Helps to Compare Persistence Diagrams'
   author:
   - family: Kerber
@@ -40,7 +41,7 @@ references:
   type: article-journal
   issued:
     year: 2017
-      - id: dependencies
+- id: dependencies
   title: 'Statistical Inference for Persistent Homology applied to fMRI'
   author:
   - family: Abdallah
@@ -48,17 +49,17 @@ references:
   - family: Regalski
     given: Adam
   - family: Behzad Kang
-  given: Mohammad
+    given: Mohammad
   - family: Berishaj
-  given: Maria
+    given: Maria
   - family: Nnadi
-  given: Nkechi
+    given: Nkechi
   - family: Chowdury
-  given: Asadur
+    given: Asadur
   - family: Diwadkar
-  given: Vaibhav
+    given: Vaibhav
   - family: Salch
-  given: Andrew
+    given: Andrew
   container-title: Github
   URL: 'https://github.com/hassan-abdallah/Statistical_Inference_PH_fMRI/blob/main/Abdallah_et_al_Statistical_Inference_PH_fMRI.pdf'
   type: article-journal
@@ -119,22 +120,22 @@ ggplot(data = data.frame(Birth = c(1,3),Death = c(1.1,3.1)),aes(x = Birth,y = De
 Now, for each pair of diagrams $(D_i,D_j)$ and each distance metric it's clear what the distance value should be. Note that for all metrics the matchings are the same in the different diagram pairings. In $d(D_1,D_2)$, $(2,3)$ is matched with $(2,3.1)$ and $(5,6)$ is matched with its diagonal projection, $(5.5,5.5)$. Therefore, using the 2-wasserstein metric the distance should be $\sqrt{0.1^2+0.5^2} \approx 0.1870829$, using the Turner metric with $p = 2$ the distance should be $\sqrt{d_{E}((2,3),(2,3.1))^2+d_{E}((5,6),(5.5,5.5))^2} \approx 0.7141428$, and using the Infinity norm distance the distance should be $0.1 + 0.5 = 0.6$. In each case the diagram_distance function returns the expected value:
 
 ```{r}
-diagram_distance(D1 = data.frame(birth = 2,death = 3),D2 = data.frame(birth = c(2,5),death = c(3.1,6)),p = 2,distance = "wasserstein")
+diagram_distance(D1 = data.frame(dimension = 0,birth = 2,death = 3),D2 = data.frame(dimension = 0,birth = c(2,5),death = c(3.1,6)),p = 2,distance = "wasserstein",dim = 0)
 
-diagram_distance(D1 = data.frame(birth = 2,death = 3),D2 = data.frame(birth = c(2,5),death = c(3.1,6)),p = 2,distance = "Turner")
+diagram_distance(D1 = data.frame(dimension = 0,birth = 2,death = 3),D2 = data.frame(dimension = 0,birth = c(2,5),death = c(3.1,6)),p = 2,distance = "Turner",dim = 0)
 
-diagram_distance(D1 = data.frame(birth = 2,death = 3),D2 = data.frame(birth = c(2,5),death = c(3.1,6)),p = Inf,distance = "Turner")
+diagram_distance(D1 = data.frame(dimension = 0,birth = 2,death = 3),D2 = data.frame(dimension = 0,birth = c(2,5),death = c(3.1,6)),p = Inf,distance = "Turner",dim = 0)
 
 ```
 
 We can do similar calculations for each of the other pairs $(D_1,D_3)$ and $(D_2,D_3)$. For $(D_1,D_3)$ the optimal matchine is each point with its diagonal projection: $(2,3)$ with $(2.5,2.5)$, $(1.1.1)$ with $(1.05,1.05)$ and $(3,3.1)$ with $(3.05,3.05)$. It is easy to verify that the distance should be $\sqrt{0.5} + 2*\sqrt{0.05} \approx 1.15432$ for the 2-wasserstein metric, $\frac{1}{\sqrt{2}} \approx 0.7071068$ for the $p = 2$ Turner metric, and $0.5+0.05+0.05 = 0.6$ for the Infinity norm metric. We see that those calculations were carried out correctly by the digram_distance function as well:
 
 ```{r}
-diagram_distance(D1 = data.frame(birth = 2,death = 3),D2 = data.frame(birth = c(1,3),death = c(1.1,3.1)),p = 2,distance = "wasserstein")
+diagram_distance(D1 = data.frame(dimension = 0,birth = 2,death = 3),D2 = data.frame(dimension = 0,birth = c(1,3),death = c(1.1,3.1)),p = 2,distance = "wasserstein",dim = 0)
 
-diagram_distance(D1 = data.frame(birth = 2,death = 3),D2 = data.frame(birth = c(1,3),death = c(1.1,3.1)),p = 2,distance = "Turner")
+diagram_distance(D1 = data.frame(dimension = 0,birth = 2,death = 3),D2 = data.frame(dimension = 0,birth = c(1,3),death = c(1.1,3.1)),p = 2,distance = "Turner",dim = 0)
 
-diagram_distance(D1 = data.frame(birth = 2,death = 3),D2 = data.frame(birth = c(1,3),death = c(1.1,3.1)),p = Inf,distance = "Turner")
+diagram_distance(D1 = data.frame(dimension = 0,birth = 2,death = 3),D2 = data.frame(dimension = 0,birth = c(1,3),death = c(1.1,3.1)),p = Inf,distance = "Turner",dim = 0)
 
 ```
 
@@ -142,11 +143,11 @@ Finally, we will check the distances computed between $D_2$ and $D_3$. The optim
 
 
 ```{r}
-diagram_distance(D1 = data.frame(birth = c(2,5),death = c(3.1,6)),D2 = data.frame(birth = c(1,3),death = c(1.1,3.1)),p = 2,distance = "wasserstein")
+diagram_distance(D1 = data.frame(dimension = 0,birth = c(2,5),death = c(3.1,6)),D2 = data.frame(dimension = 0,birth = c(1,3),death = c(1.1,3.1)),p = 2,distance = "wasserstein",dim = 0)
 
-diagram_distance(D1 = data.frame(birth = c(2,5),death = c(3.1,6)),D2 = data.frame(birth = c(1,3),death = c(1.1,3.1)),p = 2,distance = "Turner")
+diagram_distance(D1 = data.frame(dimension = 0,birth = c(2,5),death = c(3.1,6)),D2 = data.frame(dimension = 0,birth = c(1,3),death = c(1.1,3.1)),p = 2,distance = "Turner",dim = 0)
 
-diagram_distance(D1 = data.frame(birth = c(2,5),death = c(3.1,6)),D2 = data.frame(birth = c(1,3),death = c(1.1,3.1)),p = Inf,distance = "Turner")
+diagram_distance(D1 = data.frame(dimension = 0,birth = c(2,5),death = c(3.1,6)),D2 = data.frame(dimension = 0,birth = c(1,3),death = c(1.1,3.1)),p = Inf,distance = "Turner",dim = 0)
 
 ```
 
