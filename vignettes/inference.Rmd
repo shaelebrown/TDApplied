@@ -127,9 +127,34 @@ diagram_distance(D1 = data.frame(birth = 2,death = 3),D2 = data.frame(birth = c(
 
 ```
 
-We can do similar calculations for each of the other pairs $(D_1,D_3)$ and $(D_2,D_3)$. For $(D_1,D_3)$ the optimal matchine is $(2,3)$ and WHAT. CONTINUE HERE.
+We can do similar calculations for each of the other pairs $(D_1,D_3)$ and $(D_2,D_3)$. For $(D_1,D_3)$ the optimal matchine is each point with its diagonal projection: $(2,3)$ with $(2.5,2.5)$, $(1.1.1)$ with $(1.05,1.05)$ and $(3,3.1)$ with $(3.05,3.05)$. It is easy to verify that the distance should be $\sqrt{0.5} + 2*\sqrt{0.05} \approx 1.15432$ for the 2-wasserstein metric, $\frac{1}{\sqrt{2}} \approx 0.7071068$ for the $p = 2$ Turner metric, and $0.5+0.05+0.05 = 0.6$ for the Infinity norm metric. We see that those calculations were carried out correctly by the digram_distance function as well:
+
+```{r}
+diagram_distance(D1 = data.frame(birth = 2,death = 3),D2 = data.frame(birth = c(1,3),death = c(1.1,3.1)),p = 2,distance = "wasserstein")
+
+diagram_distance(D1 = data.frame(birth = 2,death = 3),D2 = data.frame(birth = c(1,3),death = c(1.1,3.1)),p = 2,distance = "Turner")
+
+diagram_distance(D1 = data.frame(birth = 2,death = 3),D2 = data.frame(birth = c(1,3),death = c(1.1,3.1)),p = Inf,distance = "Turner")
+
+```
+
+Finally, we will check the distances computed between $D_2$ and $D_3$. The optimal matching in all cases is given by $(2,3.1)$ and $(3,3.1)$, $(5,6)$ with its diagonal projection $(5.5,5.5)$, and $(1,1.1)$ with its diagonal projection $(1.05,1.05)$. The 2-wasserstein metric should be $1+$, the $p=2$ Turner metric should be $1+\frac{1}{\sqrt{2}} + \frac{1}{10\sqrt{2}} \approx 1.777817$, and the Infinity norm distance should be $1 + 0.5 + 0.05 = 1.55$.
+
+
+```{r}
+diagram_distance(D1 = data.frame(birth = c(2,5),death = c(3.1,6)),D2 = data.frame(birth = c(1,3),death = c(1.1,3.1)),p = 2,distance = "wasserstein")
+
+diagram_distance(D1 = data.frame(birth = c(2,5),death = c(3.1,6)),D2 = data.frame(birth = c(1,3),death = c(1.1,3.1)),p = 2,distance = "Turner")
+
+diagram_distance(D1 = data.frame(birth = c(2,5),death = c(3.1,6)),D2 = data.frame(birth = c(1,3),death = c(1.1,3.1)),p = Inf,distance = "Turner")
+
+```
+
+## Case study: benchmarking diagram_distance function
 
 Now we will benchmark the runtime of the distance calculations on different-sized random persistence diagrams compared to calculations using the package TDA. 
+
+## Case study: testing the permutation_test function
 
 Now we will compare the permutation test results of multiple groups of persistence diagram drawn from the same distribution of points, and multiple groups of diagrams drawn from different shapes.
 
