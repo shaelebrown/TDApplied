@@ -59,7 +59,8 @@ triangular half is ignored); note: `format` should be specified as "ldm".
 # create three groups of persistence diagrams on 2D Gaussians using TDA
 g1 <- lapply(X = 1:3,FUN = function(X){
 
-diag <- ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
+gauss <- data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1))
+diag <- ripsDiag(gauss,maxscale = 1,maxdimension = 1)
 df <- TDA_diagram_to_df(d = diag)
 return(list(diag = df,ind = X))
 
@@ -67,7 +68,8 @@ return(list(diag = df,ind = X))
 
 g2 <- lapply(X = 1:3,FUN = function(X){
 
-diag <- ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
+gauss <- data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1))
+diag <- ripsDiag(gauss,maxscale = 1,maxdimension = 1)
 df <- TDA_diagram_to_df(d = diag)
 return(list(diag = df,ind = X + 3))
 
@@ -75,12 +77,14 @@ return(list(diag = df,ind = X + 3))
 
 g3 <- lapply(X = 1:3,FUN = function(X){
 
-diag <- ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
+gauss <- data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1))
+diag <- ripsDiag(gauss,maxscale = 1,maxdimension = 1)
 df <- TDA_diagram_to_df(d = diag)
 return(list(diag = df,ind = X + 6))
 
 })
 
-# do permutation test with 20 iterations, p,q = 2, in dimensions 0 and 1, with no pairing using Turner distance and printing the time duration
+# do permutation test with 20 iterations, p,q = 2, in dimensions 0 and 1, with
+# no pairing using Turner distance and printing the time duration
 perm_test = permutation_test(g1,g2,g3,iterations = 20,distance = "Turner",verbose = TRUE)
 }
