@@ -1,4 +1,6 @@
 
+#' @importFrom stats complete.cases
+
 # error checks for permutation_test function parameters
 
 check_diagram <- function(d){
@@ -35,7 +37,7 @@ check_diagram <- function(d){
     stop("Birth and death radii must be >= 0.")
   }
 
-  if(length(which(complete.cases(d))) != nrow(d))
+  if(length(which(stats::complete.cases(d))) != nrow(d))
   {
     stop("Diagrams can't have missing values.")
   }

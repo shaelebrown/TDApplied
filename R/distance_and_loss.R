@@ -30,8 +30,8 @@
 #' @examples
 #'
 #' # create two diagrams with package TDA and TDAstats based on 2D Gaussians
-#' diag1 <- ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
-#' diag2 <- calculate_homology(ata.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),dim = 1,threshold = 1)
+#' diag1 <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
+#' diag2 <- TDAstats::calculate_homology(ata.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),dim = 1,threshold = 1)
 #'
 #' # calculate their wasserstein distance
 #' wass <- diagram_distance(D1 = diag1,D2 = diag2,dim = 1,p = 2,distance = "wasserstein")
@@ -204,21 +204,22 @@ diagram_distance <- function(D1,D2,dim,p,distance){
 #'
 #' @import parallel
 #' @import doParallel
-#' @importFrom foreach foreach
+#' @importFrom foreach foreach %dopar%
+#' @importFrom utils combn
 #' @return numeric value of the loss function
 #' @examples
 #'
 #' # create two groups of diagrams, based on 2D Gaussians, with package TDA
 #' g1 <- lapply(X = 1:3,FUN = function(X){
 #'
-#' diag <- ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
+#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
 #' df <- TDA_diagram_to_df(d = diag)
 #' return(list(diag = df,ind = X))
 #' })
 #'
 #' g2 <- lapply(X = 1:3,FUN = function(X){
 #'
-#' diag <- ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
+#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
 #' df <- TDA_diagram_to_df(d = diag)
 #' return(list(diag = df,ind = X + 3))
 #' })
@@ -240,7 +241,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
   # create combination of all pairs of diagram group elements and their group indices
   combinations <- do.call(rbind,lapply(X = 1:length(diagram_groups),FUN = function(X){
 
-    distance_pairs <- as.data.frame(t(as.data.frame(combn(x = length(diagram_groups[[X]]),m = 2,simplify = F))))
+    distance_pairs <- as.data.frame(t(as.data.frame(utils::combn(x = length(diagram_groups[[X]]),m = 2,simplify = F))))
     distance_pairs$group <- X
     rownames(distance_pairs) <- NULL
     return(distance_pairs[,c(3,1,2)])
@@ -248,12 +249,12 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
   }))
 
   # initialize a cluster cl for computing distances between diagrams in parallel
-  cl <- makeCluster(detectCores() - 1)
-  registerDoParallel(cl)
+  cl <- parallel::makeCluster(parallel::detectCores() - 1)
+  doParallel::registerDoParallel(cl)
 
   # export necessary libraries and variables to cl
-  clusterEvalQ(cl,c(library(clue),library(rdist)))
-  clusterExport(cl,c("diagram_distance","diagram_groups","dist_mats","dims","combinations","p"),envir = environment())
+  parallel::clusterEvalQ(cl,c(library(clue),library(rdist)))
+  parallel::clusterExport(cl,c("diagram_distance","diagram_groups","dist_mats","dims","combinations","p"),envir = environment())
 
   # initialize return vector of statistics, one for each dimension
   statistics <- c()
@@ -262,9 +263,9 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
   for(dim in dims)
   {
 
-    clusterExport(cl,"dim",envir = environment())
+    parallel::clusterExport(cl,"dim",envir = environment())
 
-    d_tots <- foreach(comb = 1:nrow(combinations),.combine = c) %dopar%
+    d_tots <- foreach::foreach(comb = 1:nrow(combinations),.combine = c) %dopar%
       {
         # get group and diagram indices from combinations
         g <- as.numeric(combinations[comb,1])
@@ -313,7 +314,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
   }
 
   # cleanup
-  stopCluster(cl)
+  parallel::stopCluster(cl)
 
   # return the test statistics and distance matrices in all dimensions
   return(list(statistics = statistics,dist_mats = dist_mats))
