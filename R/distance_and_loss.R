@@ -204,7 +204,7 @@ diagram_distance <- function(D1,D2,dim,p,distance){
 #'
 #' @import parallel
 #' @import doParallel
-#' @importFrom foreach foreach %dopar%
+#' @import foreach
 #' @importFrom utils combn
 #' @return numeric value of the loss function
 #' @examples
@@ -259,6 +259,9 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
   # initialize return vector of statistics, one for each dimension
   statistics <- c()
 
+  # create local function for %dopar%
+  `%dopar%` <- foreach::`%dopar%`
+
   # compute loss function and update distance matrices in each dimension dim
   for(dim in dims)
   {
@@ -298,7 +301,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
       dim_ind <- min(which(dims == dim))
 
       # update the correct entry of the current dimension distance matrix with the newly calculated distances
-      dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind] = d_tots[[i]]
+      dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind] = d_tots[[comb]]
 
     }
 

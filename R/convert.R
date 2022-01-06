@@ -16,7 +16,7 @@
 #' # create a persistence diagram from a 2D Gaussian using TDA
 #' df = data.frame(x = rnorm(n = 100,mean = 0,sd = 1),y = rnorm(n = 100,mean = 0,sd = 1))
 #'
-#' # compute persistence barcode with ripsDiag
+#' # compute persistence diagram with ripsDiag
 #' phom = TDA::ripsDiag(X = df,maxdimension = 1,maxscale = 1)
 #'
 #' # convert to data frame
@@ -54,7 +54,7 @@ TDA_diagram_to_df <- function(d){
 #' # create a persistence diagram from a 2D Gaussian using TDAstats
 #' df = data.frame(x = rnorm(n = 100,mean = 0,sd = 1),y = rnorm(n = 100,mean = 0,sd = 1))
 #'
-#' # compute persistence barcode with calculate_homology
+#' # compute persistence diagram with calculate_homology
 #' phom = TDAstats::calculate_homology(mat = df,maxdimension = 1,maxscale = 1)
 #'
 #' # convert to data frame
