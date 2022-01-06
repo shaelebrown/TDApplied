@@ -150,15 +150,15 @@ diagram_distance <- function(D1,D2,dim,p,distance){
   if(is.finite(p) & distance == "Turner")
   {
     # compute the p-wasserstein distance for matching pairs
-    dist_mat <- as.matrix(cdist(D1_subset,D2_subset,metric = "minkowski",p = p))
+    dist_mat <- as.matrix(rdist::cdist(D1_subset,D2_subset,metric = "minkowski",p = p))
   }else
   {
     # compute the bottleneck distance for matching pairs
-    dist_mat <- as.matrix(cdist(D1_subset,D2_subset,metric = "maximum"))
+    dist_mat <- as.matrix(rdist::cdist(D1_subset,D2_subset,metric = "maximum"))
   }
 
   # use the Hungarian algorithm from the clue package to find the minimal weight matching
-  best_match <- as.numeric(solve_LSAP(x = dist_mat,maximum = F))
+  best_match <- as.numeric(clue::solve_LSAP(x = dist_mat,maximum = F))
   seq_match <- 1:length(best_match)
 
   # subset best match by removing all pairs between diagonal points
