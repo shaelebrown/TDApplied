@@ -60,7 +60,7 @@ triangular half is ignored); note: `format` should be specified as "ldm".
 g1 <- lapply(X = 1:3,FUN = function(X){
 
 gauss <- data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1))
-diag <- ripsDiag(gauss,maxscale = 1,maxdimension = 1)
+diag <- TDA::ripsDiag(gauss,maxscale = 1,maxdimension = 1)
 df <- TDA_diagram_to_df(d = diag)
 return(list(diag = df,ind = X))
 
@@ -69,7 +69,7 @@ return(list(diag = df,ind = X))
 g2 <- lapply(X = 1:3,FUN = function(X){
 
 gauss <- data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1))
-diag <- ripsDiag(gauss,maxscale = 1,maxdimension = 1)
+diag <- TDA::ripsDiag(gauss,maxscale = 1,maxdimension = 1)
 df <- TDA_diagram_to_df(d = diag)
 return(list(diag = df,ind = X + 3))
 
@@ -78,7 +78,7 @@ return(list(diag = df,ind = X + 3))
 g3 <- lapply(X = 1:3,FUN = function(X){
 
 gauss <- data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1))
-diag <- ripsDiag(gauss,maxscale = 1,maxdimension = 1)
+diag <- TDA::ripsDiag(gauss,maxscale = 1,maxdimension = 1)
 df <- TDA_diagram_to_df(d = diag)
 return(list(diag = df,ind = X + 6))
 

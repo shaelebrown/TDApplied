@@ -55,15 +55,15 @@ diagram_distance <- function(D1,D2,dim,p,distance){
   # the bottleneck distance
 
   # for standalone usage force D1 and D2 to be data frames if they are the output of a homology calculation
-  if(class(D1) != "data.frame")
+  if(length(class(D1)) != 1 && class(D1) != "data.frame")
   {
-    if(is.list(D1) & class(D1[[1]]) == "diagram")
+    if(is.list(D1) && class(D1[[1]]) == "diagram")
     {
       # D1 is the output from a TDA calculation
       D1 <- TDA_diagram_to_df(D1)
     }else
     {
-      if(class(D1)[[1]] == "matrix" & class(D1)[[2]] == "array")
+      if(class(D1)[[1]] == "matrix" && class(D1)[[2]] == "array")
       {
         # D1 is the output from a TDAstats calculation
         D1 <- TDAstats_diagram_to_df(D1)
@@ -78,15 +78,15 @@ diagram_distance <- function(D1,D2,dim,p,distance){
 
   }
 
-  if(class(D2) != "data.frame")
+  if(length(class(D2)) != 1 && class(D2) != "data.frame")
   {
-    if(is.list(D2) & class(D2[[1]]) == "diagram")
+    if(is.list(D2) && class(D2[[1]]) == "diagram")
     {
       # D2 is the output from a TDA calculation
       D2 <- TDA_diagram_to_df(D2)
     }else
     {
-      if(class(D2)[[1]] == "matrix" & class(D2)[[2]] == "array")
+      if(class(D2)[[1]] == "matrix" && class(D2)[[2]] == "array")
       {
         # D2 is the output from a TDAstats calculation
         D2 <- TDAstats_diagram_to_df(D2)
@@ -102,8 +102,8 @@ diagram_distance <- function(D1,D2,dim,p,distance){
   }
 
   # subset both diagrams by dimension dim and for birth and death columns
-  D1_subset <- D1[which(D1$dimension == dim),]
-  D2_subset <- D2[which(D2$dimension == dim),]
+  D1_subset <- D1[which(D1$dimension == dim),1:3]
+  D2_subset <- D2[which(D2$dimension == dim),1:3]
   D1_subset <- D1_subset[,2:3]
   D2_subset <- D2_subset[,2:3]
 
@@ -259,35 +259,32 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
   # initialize return vector of statistics, one for each dimension
   statistics <- c()
 
-  # create local function for %dopar%
-  `%dopar%` <- foreach::`%dopar%`
-
   # compute loss function and update distance matrices in each dimension dim
   for(dim in dims)
   {
 
     parallel::clusterExport(cl,"dim",envir = environment())
 
-    d_tots <- foreach::foreach(comb = 1:nrow(combinations),.combine = c) %dopar%
+    d_tots <- foreach::`%dopar%`(obj = foreach::foreach(comb = 1:nrow(combinations),.combine = c),ex = {
+
+      # get group and diagram indices from combinations
+      g <- as.numeric(combinations[comb,1])
+      d1 <- as.numeric(combinations[comb,2])
+      d2 <- as.numeric(combinations[comb,3])
+
+      # get index of dim in dims
+      dim_ind <- min(which(dims == dim))
+
+      # if the distance between these two diagrams has not already been computed, compute their distance
+      if(dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind] == -1)
       {
-        # get group and diagram indices from combinations
-        g <- as.numeric(combinations[comb,1])
-        d1 <- as.numeric(combinations[comb,2])
-        d2 <- as.numeric(combinations[comb,3])
-
-        # get index of dim in dims
-        dim_ind <- min(which(dims == dim))
-
-        # if the distance between these two diagrams has not already been computed, compute their distance
-        if(dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind] == -1)
-        {
-          return(diagram_distance(D1 = diagram_groups[[g]][[d1]]$diag,D2 = diagram_groups[[g]][[d2]]$diag,p = p,dim = dim,distance = distance)^q)
-        }
-
-        # else return the already stored distance value
-        return(dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind])
-
+        return(diagram_distance(D1 = diagram_groups[[g]][[d1]]$diag,D2 = diagram_groups[[g]][[d2]]$diag,p = p,dim = dim,distance = distance)^q)
       }
+
+      # else return the already stored distance value
+      return(dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind])
+
+    })
 
     # update the upper triangle of dist_mat to account for new distances just calculated
     for(comb in 1:nrow(combinations))

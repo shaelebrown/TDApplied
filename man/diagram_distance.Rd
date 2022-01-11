@@ -43,8 +43,8 @@ should be a string, either "wasserstein" or "Turner".
 # create two diagrams with package TDA and TDAstats based on 2D Gaussians
 df1 <- data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1))
 df2 <- data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1))
-diag1 <- ripsDiag(df1,maxscale = 1,maxdimension = 1)
-diag2 <- calculate_homology(df2,dim = 1,threshold = 1)
+diag1 <- TDA::ripsDiag(df1,maxscale = 1,maxdimension = 1)
+diag2 <- TDAstats::calculate_homology(df2,dim = 1,threshold = 1)
 
 # calculate their wasserstein distance
 wass <- diagram_distance(D1 = diag1,D2 = diag2,dim = 1,p = 2,distance = "wasserstein")
