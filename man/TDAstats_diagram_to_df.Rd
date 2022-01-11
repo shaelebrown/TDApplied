@@ -26,9 +26,9 @@ The `d` parameter is the persistence diagram to be converted.
 # create a persistence diagram from a 2D Gaussian using TDAstats
 df = data.frame(x = rnorm(n = 100,mean = 0,sd = 1),y = rnorm(n = 100,mean = 0,sd = 1))
 
-# compute persistence barcode with calculate_homology
-phom = TDAstats::calculate_homology(mat = df,dim = 1,threshold = 1)
+# compute persistence diagram with calculate_homology
+phom = TDAstats::calculate_homology(mat = df,maxdimension = 1,maxscale = 1)
 
 # convert to data frame
-phom_df = TDAstats_diagram_to_df(d = phom)
+phom_df = TDAstats_diagram_to_df(d = phom,dim = 1,threshold = 1)
 }

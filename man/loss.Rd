@@ -45,23 +45,19 @@ either "wasserstein" or "Turner".
 # create two groups of diagrams, based on 2D Gaussians, with package TDA
 g1 <- lapply(X = 1:3,FUN = function(X){
 
-gauss <- data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1))
-diag <- TDA::ripsDiag(gauss,maxscale = 1,maxdimension = 1)
+diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
 df <- TDA_diagram_to_df(d = diag)
 return(list(diag = df,ind = X))
 })
 
 g2 <- lapply(X = 1:3,FUN = function(X){
 
-gauss <- data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1))
-diag <- TDA::ripsDiag(gauss,maxscale = 1,maxdimension = 1)
+diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
 df <- TDA_diagram_to_df(d = diag)
 return(list(diag = df,ind = X + 3))
 })
 
 
 # compute Turner loss function with p,q = 2 in dimension 1 with other parameters set as defaults
-groups = list(g1,g2)
-d_mats <- list(matrix(data = -1,nrow = 6,ncol = 6))
-example_loss <- loss(diagram_groups = groups,dist_mats = d_mats,p = 2,q = 2,distance = "Turner")
+example_loss <- loss(diagram_groups = list(g1,g2),dist_mats = list(matrix(data = -1,nrow = 6,ncol = 6)),p = 2,q = 2,distance = "Turner")
 }
