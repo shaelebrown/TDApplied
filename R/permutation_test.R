@@ -26,7 +26,6 @@
 #'
 #' @return list with dimensions used (named vector), permutation loss values in each dimension (named list), test statistics in each dimension (named vector)
 #'                   a p-value for each dimension (all stored in a named vector) and the time duration of the function call.
-#' @importFrom stats complete.cases
 #' @export
 #' @examples
 #'

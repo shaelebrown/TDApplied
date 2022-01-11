@@ -202,9 +202,9 @@ diagram_distance <- function(D1,D2,dim,p,distance){
 #' @param q finite exponent at least 1
 #' @param distance string which determines which type of distance calculation to carry out
 #'
-#' @import parallel
-#' @import doParallel
-#' @import foreach
+#' @importFrom parallel makeCluster detectCores clusterEvalQ clusterExport stopCluster
+#' @importFrom doParallel registerDoParallel
+#' @importFrom foreach foreach %dopar%
 #' @importFrom utils combn
 #' @return numeric value of the loss function
 #' @examples
