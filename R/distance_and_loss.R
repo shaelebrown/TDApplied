@@ -29,9 +29,9 @@
 #' @export
 #' @examples
 #'
-#' # create two diagrams with package TDA and TDAstats based on 2D Gaussians
+#' # create two diagrams with package TDA based on 2D Gaussians
 #' diag1 <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
-#' diag2 <- TDAstats::calculate_homology(ata.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),dim = 1,threshold = 1)
+#' diag2 <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
 #'
 #' # calculate their wasserstein distance
 #' wass <- diagram_distance(D1 = diag1,D2 = diag2,dim = 1,p = 2,distance = "wasserstein")

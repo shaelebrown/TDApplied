@@ -12,9 +12,12 @@ Description: Topological data analysis (TDA) is a suite of powerful tools
     implements code from several papers which have described a permutation test 
     for groups of persistence diagrams (read Robinson & Turner (2017) 
     <doi:10.1007/s41468-017-0008-7> for the basic introduction) to be used with
-    persistence diagrams computed with packages 'TDA' or 'TDAstats'.
-Depends: R (>= 3.3.0)
-Imports: TDA, TDAstats, doParallel, clue, rdist
+    persistence diagrams computed with package 'TDA'.
+Depends: TDA
+Imports: 
+    doParallel, 
+    clue, 
+    rdist
 License: GPL-3
 URL: https://github.com/shaelebrown/TDAInference
 BugReports: https://github.com/shaelebrown/TDAInference/issues

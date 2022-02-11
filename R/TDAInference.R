@@ -6,7 +6,13 @@
 #' compute distances between persistence diagrams.
 #'
 #' @useDynLib TDAInference
-#' @import TDA, TDAstats, doParallel, clue, rdist
+#' @importFrom clue solve_LSAP
+#' @importFrom doParallel, registerDoParallel
+#' @importFrom foreach "%dopar%" foreach
+#' @importFrom parallel clusterEvalQ clusterExport detectCores makeCluster stopCluster
+#' @importFrom rdist cdist
+#' @importFrom stats complete.cases
+#' @importFrom utils combn
 #' @name TDAInference
 #' @docType package
 NULL

@@ -20,7 +20,6 @@
 #' @param q  finite number at least 1 for exponentiation in Turner loss function
 #' @param dims homological dimensions in which the test is to be carried out
 #' @param paired if there is a second-order pairing between diagrams at the same index in different groups
-#' @param lib either "TDA" or "TDAstats" for consistency
 #' @param distance either "wasserstein" or "Turner" for determining which distance of diagrams to use
 #' @param verbose if the time duration of the function call should be printed
 #'
@@ -57,7 +56,7 @@
 #' # do permutation test with 20 iterations, p,q = 2, in dimensions 0 and 1, with no pairing using Turner distance and printing the time duration
 #' perm_test = permutation_test(g1,g2,g3,iterations = 20,distance = "Turner",verbose = TRUE)
 
-permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),paired = F,lib = "TDA",distance = "wasserstein",verbose = FALSE){
+permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),paired = F,distance = "wasserstein",verbose = FALSE){
 
   # function to test whether or not multiple groups of persistence diagrams come from the same geometric process
   # ... are the groups of diagrams, either stored as lists or vectors
@@ -66,7 +65,6 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   # q is the finite distance exponential, q >= 1
   # dims is a vector of desired homological dimensions
   # paired is a boolean which determines if dependencies exist between diagrams of the same indices in different groups
-  # lib is the TDA library used for homological calculations, either "TDA" (default) or "TDAstats"
   # distance is either "wasserstein" or "Turner" and determines how distances will be computed between diagrams
   # verbose is either TRUE or FALSE (default), printing runtime of function call
 
@@ -80,10 +78,10 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   }
 
   # check each diagram, converting each to a data frame and storing their indices in all the diagrams
-  diagram_groups <- all_diagrams(diagram_groups,lib)
+  diagram_groups <- all_diagrams(diagram_groups)
 
   # error check function parameters
-  check_params(iterations,p,q,dims,paired,lib,distance)
+  check_params(iterations,p,q,dims,paired,distance)
 
   # make sure that if paired == T then all groups have the same number of diagrams
   if(paired)

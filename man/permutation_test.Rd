@@ -11,7 +11,6 @@ permutation_test(
   q = 2,
   dims = c(0, 1),
   paired = F,
-  lib = "TDA",
   distance = "wasserstein",
   verbose = FALSE
 )
@@ -28,8 +27,6 @@ permutation_test(
 \item{dims}{homological dimensions in which the test is to be carried out}
 
 \item{paired}{if there is a second-order pairing between diagrams at the same index in different groups}
-
-\item{lib}{either "TDA" or "TDAstats" for consistency}
 
 \item{distance}{either "wasserstein" or "Turner" for determining which distance of diagrams to use}
 
