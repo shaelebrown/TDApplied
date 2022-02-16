@@ -2,7 +2,7 @@
 #' Calculate distances between pairs of persistence diagrams
 #'
 #' Calculates the distance between a pair of persistce diagrams, stored as
-#' data frames (as the output from TDA_diagram_to_df or TDAstats_diagram_to_df)
+#' data frames (as the output from diagram_to_df)
 #' in a particular homological dimension. Different TDA sources define distances
 #' differently, and this function has functionality to compute distances like
 #' in the R package TDA (based on the C++ library Dionysus, see
@@ -10,15 +10,15 @@
 #' original paper for inference of persistence diagrams by Robinson and Turner in 2017
 #' <https://link.springer.com/article/10.1007/s41468-017-0008-7>.
 #'
-#' The `D1` and `D2` parameters should be persistence diagrams, either outputted
-#' from a homology calculation is the packages TDA or TDAstats, or such a
-#' persistence diagram converted to a data frame via the functions TDA_diagram_to_df
-#' or TDAstats_diagram_to_df. The `dim` parameter should be a positive finite integer.
+#' The `D1` and `D2` parameters should be persistence diagrams, outputted
+#' from a homology calculation in the package TDA, or such a
+#' persistence diagram converted to a data frame via the function diagram_to_df.
+#' The `dim` parameter should be a positive finite integer.
 #' The `p` parameter should be a positive integer or Inf. The `distance` parameter
 #' should be a string, either "wasserstein" or "Turner".
 #'
-#' @param D1 first persistence diagram, either computed from TDA or TDAstats or converted to a data frame
-#' @param D2 second persistence diagram, either computed from TDA or TDAstats or converted to a data frame
+#' @param D1 first persistence diagram, either computed from TDA or converted to a data frame
+#' @param D2 second persistence diagram, either computed from TDA or converted to a data frame
 #' @param dim homological dimension in which the distance is to be computed
 #' @param p  matching distance parameter
 #' @param distance string which determines which type of distance calculation to carry out
@@ -40,8 +40,8 @@
 #' bottleneck <- diagram_distance(D1 = diag2,D2 = diag2,dim = 1,p = Inf,distance = "wasserstein")
 #'
 #' # repeat wasserstein calculation but with diagrams converted to data frames
-#' diag1_df <- TDA_diagram_to_df(d = diag1)
-#' diag2_df <- TDAstats_diagram_to_df(d = diag2)
+#' diag1_df <- diagram_to_df(d = diag1)
+#' diag2_df <- diagram_to_df(d = diag2)
 #' wass_df <- diagram_distance(D1 = diag1_df,D2 = diag2_df,dim = 1,p = 2,distance = "wasserstein")
 
 diagram_distance <- function(D1,D2,dim,p,distance){
@@ -60,17 +60,10 @@ diagram_distance <- function(D1,D2,dim,p,distance){
     if(is.list(D1) && class(D1[[1]]) == "diagram")
     {
       # D1 is the output from a TDA calculation
-      D1 <- TDA_diagram_to_df(D1)
+      D1 <- diagram_to_df(D1)
     }else
     {
-      if(class(D1)[[1]] == "matrix" && class(D1)[[2]] == "array")
-      {
-        # D1 is the output from a TDAstats calculation
-        D1 <- TDAstats_diagram_to_df(D1)
-      }else
-      {
-        stop("D1 must be the output of either a TDA or TDAstats computation.")
-      }
+      stop("D1 must be the output of either a TDA computation.")
     }
 
     # error check D1
@@ -86,14 +79,7 @@ diagram_distance <- function(D1,D2,dim,p,distance){
       D2 <- TDA_diagram_to_df(D2)
     }else
     {
-      if(class(D2)[[1]] == "matrix" && class(D2)[[2]] == "array")
-      {
-        # D2 is the output from a TDAstats calculation
-        D2 <- TDAstats_diagram_to_df(D2)
-      }else
-      {
-        stop("D2 must be the output of either a TDA or TDAstats computation.")
-      }
+      stop("D2 must be the output of either a TDA computation.")
     }
 
     # error check for D2
@@ -213,14 +199,14 @@ diagram_distance <- function(D1,D2,dim,p,distance){
 #' g1 <- lapply(X = 1:3,FUN = function(X){
 #'
 #' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
-#' df <- TDA_diagram_to_df(d = diag)
+#' df <- diagram_to_df(d = diag)
 #' return(list(diag = df,ind = X))
 #' })
 #'
 #' g2 <- lapply(X = 1:3,FUN = function(X){
 #'
 #' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
-#' df <- TDA_diagram_to_df(d = diag)
+#' df <- diagram_to_df(d = diag)
 #' return(list(diag = df,ind = X + 3))
 #' })
 #'

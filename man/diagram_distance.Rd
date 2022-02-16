@@ -7,9 +7,9 @@
 diagram_distance(D1, D2, dim, p, distance)
 }
 \arguments{
-\item{D1}{first persistence diagram, either computed from TDA or TDAstats or converted to a data frame}
+\item{D1}{first persistence diagram, either computed from TDA or converted to a data frame}
 
-\item{D2}{second persistence diagram, either computed from TDA or TDAstats or converted to a data frame}
+\item{D2}{second persistence diagram, either computed from TDA or converted to a data frame}
 
 \item{dim}{homological dimension in which the distance is to be computed}
 
@@ -22,7 +22,7 @@ numeric value of the distance calculation
 }
 \description{
 Calculates the distance between a pair of persistce diagrams, stored as
-data frames (as the output from TDA_diagram_to_df or TDAstats_diagram_to_df)
+data frames (as the output from diagram_to_df)
 in a particular homological dimension. Different TDA sources define distances
 differently, and this function has functionality to compute distances like
 in the R package TDA (based on the C++ library Dionysus, see
@@ -31,10 +31,10 @@ original paper for inference of persistence diagrams by Robinson and Turner in 2
 <https://link.springer.com/article/10.1007/s41468-017-0008-7>.
 }
 \details{
-The `D1` and `D2` parameters should be persistence diagrams, either outputted
-from a homology calculation is the packages TDA or TDAstats, or such a
-persistence diagram converted to a data frame via the functions TDA_diagram_to_df
-or TDAstats_diagram_to_df. The `dim` parameter should be a positive finite integer.
+The `D1` and `D2` parameters should be persistence diagrams, outputted
+from a homology calculation in the package TDA, or such a
+persistence diagram converted to a data frame via the function diagram_to_df.
+The `dim` parameter should be a positive finite integer.
 The `p` parameter should be a positive integer or Inf. The `distance` parameter
 should be a string, either "wasserstein" or "Turner".
 }
@@ -51,7 +51,7 @@ wass <- diagram_distance(D1 = diag1,D2 = diag2,dim = 1,p = 2,distance = "wassers
 bottleneck <- diagram_distance(D1 = diag2,D2 = diag2,dim = 1,p = Inf,distance = "wasserstein")
 
 # repeat wasserstein calculation but with diagrams converted to data frames
-diag1_df <- TDA_diagram_to_df(d = diag1)
-diag2_df <- TDAstats_diagram_to_df(d = diag2)
+diag1_df <- diagram_to_df(d = diag1)
+diag2_df <- diagram_to_df(d = diag2)
 wass_df <- diagram_distance(D1 = diag1_df,D2 = diag2_df,dim = 1,p = 2,distance = "wasserstein")
 }

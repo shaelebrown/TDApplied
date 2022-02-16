@@ -14,7 +14,7 @@
 #' Alternatively, the `mat` parameter could be a distance matrix (upper
 #' triangular half is ignored); note: `format` should be specified as "ldm".
 #'
-#' @param ... groups of persistence diagrams, outputted from a homology calculation in TDA or TDAstats
+#' @param ... groups of persistence diagrams, outputted from a homology calculation in TDA
 #' @param iterations number of iterations for permuting group labels
 #' @param p wasserstein parameter, number at least 1 (and bottleneck distance if == Inf)
 #' @param q  finite number at least 1 for exponentiation in Turner loss function
@@ -32,7 +32,7 @@
 #' g1 <- lapply(X = 1:3,FUN = function(X){
 #'
 #' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
-#' df <- TDA_diagram_to_df(d = diag)
+#' df <- diagram_to_df(d = diag)
 #' return(list(diag = df,ind = X))
 #'
 #' })
@@ -40,7 +40,7 @@
 #' g2 <- lapply(X = 1:3,FUN = function(X){
 #'
 #' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
-#' df <- TDA_diagram_to_df(d = diag)
+#' df <- diagram_to_df(d = diag)
 #' return(list(diag = df,ind = X + 3))
 #'
 #' })
@@ -48,7 +48,7 @@
 #' g3 <- lapply(X = 1:3,FUN = function(X){
 #'
 #' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
-#' df <- TDA_diagram_to_df(d = diag)
+#' df <- diagram_to_df(d = diag)
 #' return(list(diag = df,ind = X + 6))
 #'
 #' })

@@ -16,7 +16,7 @@ permutation_test(
 )
 }
 \arguments{
-\item{...}{groups of persistence diagrams, outputted from a homology calculation in TDA or TDAstats}
+\item{...}{groups of persistence diagrams, outputted from a homology calculation in TDA}
 
 \item{iterations}{number of iterations for permuting group labels}
 
@@ -57,7 +57,7 @@ triangular half is ignored); note: `format` should be specified as "ldm".
 g1 <- lapply(X = 1:3,FUN = function(X){
 
 diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
-df <- TDA_diagram_to_df(d = diag)
+df <- diagram_to_df(d = diag)
 return(list(diag = df,ind = X))
 
 })
@@ -65,7 +65,7 @@ return(list(diag = df,ind = X))
 g2 <- lapply(X = 1:3,FUN = function(X){
 
 diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
-df <- TDA_diagram_to_df(d = diag)
+df <- diagram_to_df(d = diag)
 return(list(diag = df,ind = X + 3))
 
 })
@@ -73,7 +73,7 @@ return(list(diag = df,ind = X + 3))
 g3 <- lapply(X = 1:3,FUN = function(X){
 
 diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
-df <- TDA_diagram_to_df(d = diag)
+df <- diagram_to_df(d = diag)
 return(list(diag = df,ind = X + 6))
 
 })

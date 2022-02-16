@@ -46,14 +46,14 @@ either "wasserstein" or "Turner".
 g1 <- lapply(X = 1:3,FUN = function(X){
 
 diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
-df <- TDA_diagram_to_df(d = diag)
+df <- diagram_to_df(d = diag)
 return(list(diag = df,ind = X))
 })
 
 g2 <- lapply(X = 1:3,FUN = function(X){
 
 diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
-df <- TDA_diagram_to_df(d = diag)
+df <- diagram_to_df(d = diag)
 return(list(diag = df,ind = X + 3))
 })
 
