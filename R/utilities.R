@@ -60,14 +60,20 @@ all_diagrams <- function(diagram_groups){
     # loop through each diagram in each group
     for(diag in 1:length(diagram_groups[[g]]))
     {
-      # check to make sure each diagram is actually the output of some TDA computation
-      if(class(diagram_groups[[g]][[diag]][[1]]) != "diagram")
+      # check to make sure each diagram is actually the output of some TDA computation or a data frame
+      if(class(diagram_groups[[g]][[diag]]) != "data.frame" && !(is.list(diagram_groups[[g]][[diag]]) && length(diagram_groups[[g]][[diag]]) == 1 && names(diagram_groups[[g]][[diag]]) == "diagram" && class(diagram_groups[[g]][[diag]]$diagram) == "diagram"))
       {
-        stop(paste0("Every diagram must be the output from a homology calculation from ",lib,"."))
+        stop(paste0("Every diagram must be the output from a homology calculation from TDA or diagram_to_df."))
       }else
       {
         # if of the right form, format into a data frame and store diagram index
-        diagram_groups[[g]][[diag]] <- list(diag = diagram_to_df(diagram_groups[[g]][[diag]]),ind = csum_group_sizes[g] + diag)
+        if(class(diagram_groups[[g]][[diag]]) == "data.frame")
+        {
+          diagram_groups[[g]][[diag]] <- list(diag = diagram_groups[[g]][[diag]],ind = csum_group_sizes[g] + diag)
+        }else
+        {
+          diagram_groups[[g]][[diag]] <- list(diag = diagram_to_df(diagram_groups[[g]][[diag]]),ind = csum_group_sizes[g] + diag)
+        }
       }
 
       # make sure the converted diagram has appropriate attributes for further use

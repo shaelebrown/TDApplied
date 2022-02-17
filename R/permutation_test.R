@@ -31,30 +31,43 @@
 #' # create three groups of persistence diagrams on 2D Gaussians using TDA
 #' g1 <- lapply(X = 1:3,FUN = function(X){
 #'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
+#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
+#' y = rnorm(100,mean = 0,sd = 1)),
+#' maxscale = 1,
+#' maxdimension = 1)
 #' df <- diagram_to_df(d = diag)
-#' return(list(diag = df,ind = X))
+#' return(df)
 #'
 #' })
 #'
 #' g2 <- lapply(X = 1:3,FUN = function(X){
 #'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
+#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
+#' y = rnorm(100,mean = 0,sd = 1)),
+#' maxscale = 1,
+#' maxdimension = 1)
 #' df <- diagram_to_df(d = diag)
-#' return(list(diag = df,ind = X + 3))
+#' return(df)
 #'
 #' })
 #'
 #' g3 <- lapply(X = 1:3,FUN = function(X){
 #'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
+#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
+#' y = rnorm(100,mean = 0,sd = 1)),
+#' maxscale = 1,
+#' maxdimension = 1)
 #' df <- diagram_to_df(d = diag)
-#' return(list(diag = df,ind = X + 6))
+#' return(df)
 #'
 #' })
 #'
-#' # do permutation test with 20 iterations, p,q = 2, in dimensions 0 and 1, with no pairing using Turner distance and printing the time duration
-#' perm_test = permutation_test(g1,g2,g3,iterations = 20,distance = "Turner",verbose = TRUE)
+#' # do permutation test with 20 iterations, p,q = 2, in dimensions 0 and 1, with
+#' # no pairing using Turner distance and printing the time duration
+#' perm_test = permutation_test(g1,g2,g3,
+#' iterations = 20,
+#' distance = "Turner",
+#' verbose = TRUE)
 
 permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),paired = F,distance = "wasserstein",verbose = FALSE){
 

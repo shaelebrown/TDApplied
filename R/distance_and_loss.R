@@ -30,8 +30,14 @@
 #' @examples
 #'
 #' # create two diagrams with package TDA based on 2D Gaussians
-#' diag1 <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
-#' diag2 <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
+#' diag1 <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
+#' y = rnorm(100,mean = 0,sd = 1)),
+#' maxscale = 1,
+#' maxdimension = 1)
+#' diag2 <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
+#' y = rnorm(100,mean = 0,sd = 1)),
+#' maxscale = 1,
+#' maxdimension = 1)
 #'
 #' # calculate their wasserstein distance
 #' wass <- diagram_distance(D1 = diag1,D2 = diag2,dim = 1,p = 2,distance = "wasserstein")
@@ -55,37 +61,35 @@ diagram_distance <- function(D1,D2,dim,p,distance){
   # the bottleneck distance
 
   # for standalone usage force D1 and D2 to be data frames if they are the output of a homology calculation
-  if(length(class(D1)) != 1 && class(D1) != "data.frame")
+  if(is.list(D1) && length(D1) == 1 && names(D1) == "diagram" && class(D1$diagram) == "diagram")
   {
-    if(is.list(D1) && class(D1[[1]]) == "diagram")
+    # D1 is the output from a TDA calculation
+    D1 <- diagram_to_df(D1)
+  }else
+  {
+    if(class(D1) != "data.frame")
     {
-      # D1 is the output from a TDA calculation
-      D1 <- diagram_to_df(D1)
-    }else
-    {
-      stop("D1 must be the output of either a TDA computation.")
+      stop("D1 must either be the output of a TDA computation or data frame.")
     }
-
-    # error check D1
-    check_diagram(D1)
-
   }
 
-  if(length(class(D2)) != 1 && class(D2) != "data.frame")
+  # error check D1
+  check_diagram(D1)
+
+  if(is.list(D2) && length(D2) == 1 && names(D2) == "diagram" && class(D2$diagram) == "diagram")
   {
-    if(is.list(D2) && class(D2[[1]]) == "diagram")
+    # D1 is the output from a TDA calculation
+    D2 <- diagram_to_df(D2)
+  }else
+  {
+    if(class(D2) != "data.frame")
     {
-      # D2 is the output from a TDA calculation
-      D2 <- TDA_diagram_to_df(D2)
-    }else
-    {
-      stop("D2 must be the output of either a TDA computation.")
+      stop("D2 must either be the output of a TDA computation or data frame.")
     }
-
-    # error check for D2
-    check_diagram(D2)
-
   }
+
+  # error check D2
+  check_diagram(D2)
 
   # subset both diagrams by dimension dim and for birth and death columns
   D1_subset <- D1[which(D1$dimension == dim),1:3]
@@ -188,31 +192,44 @@ diagram_distance <- function(D1,D2,dim,p,distance){
 #' @param q finite exponent at least 1
 #' @param distance string which determines which type of distance calculation to carry out
 #'
-#' @importFrom parallel makeCluster detectCores clusterEvalQ clusterExport stopCluster
+#' @importFrom parallel makeCluster clusterEvalQ clusterExport stopCluster
+#' @importFrom parallelly availableCores
 #' @importFrom doParallel registerDoParallel
 #' @importFrom foreach foreach %dopar%
 #' @importFrom utils combn
+#' @export
 #' @return numeric value of the loss function
 #' @examples
 #'
 #' # create two groups of diagrams, based on 2D Gaussians, with package TDA
 #' g1 <- lapply(X = 1:3,FUN = function(X){
 #'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
+#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
+#' y = rnorm(100,mean = 0,sd = 1)),
+#' maxscale = 1,
+#' maxdimension = 1)
 #' df <- diagram_to_df(d = diag)
 #' return(list(diag = df,ind = X))
 #' })
 #'
 #' g2 <- lapply(X = 1:3,FUN = function(X){
 #'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),y = rnorm(100,mean = 0,sd = 1)),maxscale = 1,maxdimension = 1)
+#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
+#' y = rnorm(100,mean = 0,sd = 1)),
+#' maxscale = 1,
+#' maxdimension = 1)
 #' df <- diagram_to_df(d = diag)
 #' return(list(diag = df,ind = X + 3))
 #' })
 #'
 #'
 #' # compute Turner loss function with p,q = 2 in dimension 1 with other parameters set as defaults
-#' example_loss <- loss(diagram_groups = list(g1,g2),dist_mats = list(matrix(data = -1,nrow = 6,ncol = 6)),p = 2,q = 2,distance = "Turner")
+#' example_loss <- loss(diagram_groups = list(g1,g2),
+#' dist_mats = list(matrix(data = -1,nrow = 6,ncol = 6)),
+#' p = 2,
+#' q = 2,
+#' dims = c(1),
+#' distance = "Turner")
 
 loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
 
@@ -234,8 +251,11 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
 
   }))
 
+  # determine maximum available number of cores
+  num_workers <- parallelly::availableCores(omit = 1)
+
   # initialize a cluster cl for computing distances between diagrams in parallel
-  cl <- parallel::makeCluster(parallel::detectCores() - 1)
+  cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
 
   # export necessary libraries and variables to cl
@@ -249,7 +269,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
   for(dim in dims)
   {
 
-    parallel::clusterExport(cl,"dim",envir = environment())
+    parallel::clusterExport(cl,"dim")
 
     d_tots <- foreach::`%dopar%`(obj = foreach::foreach(comb = 1:nrow(combinations),.combine = c),ex = {
 
