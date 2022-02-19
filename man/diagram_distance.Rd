@@ -7,18 +7,18 @@
 diagram_distance(D1, D2, dim, p, distance)
 }
 \arguments{
-\item{D1}{first persistence diagram, either computed from TDA or converted to a data frame}
+\item{D1}{the first persistence diagram, either computed from TDA or converted to a data frame with diagram_to_df.}
 
-\item{D2}{second persistence diagram, either computed from TDA or converted to a data frame}
+\item{D2}{the second persistence diagram, either computed from TDA or converted to a data frame with diagram_to_df.}
 
-\item{dim}{homological dimension in which the distance is to be computed}
+\item{dim}{the homological dimension in which the distance is to be computed.}
 
-\item{p}{matching distance parameter}
+\item{p}{the wasserstein power parameter.}
 
-\item{distance}{string which determines which type of distance calculation to carry out}
+\item{distance}{a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "Turner".}
 }
 \value{
-numeric value of the distance calculation
+the numeric value of the distance calculation.
 }
 \description{
 Calculates the distance between a pair of persistce diagrams, stored as

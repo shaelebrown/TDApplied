@@ -8,35 +8,35 @@ loss(diagram_groups, dist_mats, dims, p, q, distance)
 }
 \arguments{
 \item{diagram_groups}{groups (lists/vectors) of persistence diagrams, stored as lists of a data frame and
-an index of the diagram in all the diagrams across all groups}
+an index of the diagram in all the diagrams across all groups.}
 
 \item{dist_mats}{distance matrices between all possible pairs of persistence diagrams across and within groups
 storing the current distances which have been precomputed.}
 
-\item{dims}{which homological dimensions in which the loss function is to be computed}
+\item{dims}{a numeric vector of which homological dimensions in which the loss function is to be computed.}
 
-\item{p}{positive wasserstein parameter, if Inf then the bottleneck distance}
+\item{p}{a positive wasserstein parameter, if Inf then the bottleneck distance.}
 
-\item{q}{finite exponent at least 1}
+\item{q}{a finite exponent at least 1.}
 
-\item{distance}{string which determines which type of distance calculation to carry out}
+\item{distance}{a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "Turner".}
 }
 \value{
 numeric value of the loss function
 }
 \description{
-Calculates the pairs of distances between all persistence diagrams (stored as data frames)
-with an arbitrary number of groups. The loss function is described in Robinson and Turner in 2017
+Calculates the normalized sum of within-group exponentiated distances between pairs of persistence diagrams (stored as data frames)
+for an arbitrary number of groups. The loss function is described in Robinson and Turner 2017
 <https://link.springer.com/article/10.1007/s41468-017-0008-7>, but mathematically we
 compute the distances of each within-group pair of persistence diagrams and exponentiate
 each distance by q and take the q-th root of the sum.
 }
 \details{
 The `diagram_groups` parameter should be a list or vector of persistence diagrams stored as data frames.
-The `dist_mats` parameter should be a list, with one element for each element in the parameter `dims`,
-which stores a matrix of distance calculations (and -1 for distance calculations yet to be completed).
 The `dims` parameter is a vector of non-negative whole numbers, representing the homological dimensions
-to calculate the loss function in. The `p` parameter should be a number at least 1 and possibly Inf.
+to calculate the loss function in. The `dist_mats` parameter should be a list, with one element for each element in the parameter `dims`,
+which stores a matrix of distance calculations (with -1 entries for distance calculations yet to be completed).
+The `p` parameter should be a number at least 1 and possibly Inf.
 The `q` parameter should be a finite number at least 1. The `distance` parameter should be a string
 either "wasserstein" or "Turner".
 }

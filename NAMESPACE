@@ -2,7 +2,6 @@
 
 export(diagram_distance)
 export(diagram_to_df)
-export(loss)
 export(permutation_test)
 import(TDA)
 importFrom(clue,solve_LSAP)

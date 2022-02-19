@@ -16,40 +16,43 @@ permutation_test(
 )
 }
 \arguments{
-\item{...}{groups of persistence diagrams, outputted from a homology calculation in TDA}
+\item{...}{groups of persistence diagrams, outputted from a homology calculation in TDA.}
 
-\item{iterations}{number of iterations for permuting group labels}
+\item{iterations}{nthe umber of iterations for permuting group labels.}
 
-\item{p}{wasserstein parameter, number at least 1 (and bottleneck distance if == Inf)}
+\item{p}{the wasserstein parameter, number at least 1 (and bottleneck distance if == Inf).}
 
-\item{q}{finite number at least 1 for exponentiation in Turner loss function}
+\item{q}{a finite number at least 1 for exponentiation in Turner loss function.}
 
-\item{dims}{homological dimensions in which the test is to be carried out}
+\item{dims}{a numeric vector of the homological dimensions in which the test is to be carried out.}
 
-\item{paired}{if there is a second-order pairing between diagrams at the same index in different groups}
+\item{paired}{a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups.}
 
-\item{distance}{either "wasserstein" or "Turner" for determining which distance of diagrams to use}
+\item{distance}{a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "Turner".}
 
-\item{verbose}{if the time duration of the function call should be printed}
+\item{verbose}{a boolean flag for if the time duration of the function call should be printed.}
 }
 \value{
 list with dimensions used (named vector), permutation loss values in each dimension (named list), test statistics in each dimension (named vector)
                   a p-value for each dimension (all stored in a named vector) and the time duration of the function call.
 }
 \description{
-Calculates the turner loss function for a number of groups of persistence diagrams
-and then permutes group labels several times and recomputes the loss function
-to generate a null distribution and calculate a p value for each desired dimension.
+Calculates the turner loss function for a number of groups of persistence diagrams,
+and then generates a null distribution by permuting group labels several times and
+recomputing the loss function. A p-value for each desired homological dimension is generated.
 This function keeps track of distance calculations as to not repeat calculations
 which can individually take a long time.
 }
 \details{
-The `mat` parameter should be a numeric matrix with each row corresponding
-to a single point, and each column corresponding to a single dimension. Thus,
-if `mat` has 50 rows and 5 columns, it represents a point cloud with 50 points
-in 5 dimensions. The `dim` parameter should be a positive integer.
-Alternatively, the `mat` parameter could be a distance matrix (upper
-triangular half is ignored); note: `format` should be specified as "ldm".
+The `...` parameter should be a list of lists of persistence diagrams, outputted from a
+homology calculation in TDA. The `iterations` parameter should be the number of permutations
+desired for generating the null distribution. The `p` parameter is the wasserstein power, and `q`
+is the exponent for distances. `dims` is a numeric vector of the homological dimensions in which
+to carry out the test. The `paired` parameter is a boolean flag for whether there are correspondences
+between diagrams at the same location across groups, as this affects which permutations are permissible
+when generating the null distribution. The `distance` parameter determines which distance metric
+should be used between persistence diagrams. `verbose` determines if the time duration of the
+function call should be printed.
 }
 \examples{
 

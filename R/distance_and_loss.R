@@ -17,13 +17,13 @@
 #' The `p` parameter should be a positive integer or Inf. The `distance` parameter
 #' should be a string, either "wasserstein" or "Turner".
 #'
-#' @param D1 first persistence diagram, either computed from TDA or converted to a data frame
-#' @param D2 second persistence diagram, either computed from TDA or converted to a data frame
-#' @param dim homological dimension in which the distance is to be computed
-#' @param p  matching distance parameter
-#' @param distance string which determines which type of distance calculation to carry out
+#' @param D1 the first persistence diagram, either computed from TDA or converted to a data frame with diagram_to_df.
+#' @param D2 the second persistence diagram, either computed from TDA or converted to a data frame with diagram_to_df.
+#' @param dim the homological dimension in which the distance is to be computed.
+#' @param p  the wasserstein power parameter.
+#' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "Turner".
 #'
-#' @return numeric value of the distance calculation
+#' @return the numeric value of the distance calculation.
 #' @importFrom rdist cdist
 #' @importFrom clue solve_LSAP
 #' @export
@@ -169,35 +169,34 @@ diagram_distance <- function(D1,D2,dim,p,distance){
 #### LOSS FUNCTION FOR GROUPS OF PERSISTENCE DIAGRAMS ####
 #' Calculate Turner loss function for groups of persistence diagrams
 #'
-#' Calculates the pairs of distances between all persistence diagrams (stored as data frames)
-#' with an arbitrary number of groups. The loss function is described in Robinson and Turner in 2017
+#' Calculates the normalized sum of within-group exponentiated distances between pairs of persistence diagrams (stored as data frames)
+#' for an arbitrary number of groups. The loss function is described in Robinson and Turner 2017
 #' <https://link.springer.com/article/10.1007/s41468-017-0008-7>, but mathematically we
 #' compute the distances of each within-group pair of persistence diagrams and exponentiate
 #' each distance by q and take the q-th root of the sum.
 #'
 #' The `diagram_groups` parameter should be a list or vector of persistence diagrams stored as data frames.
-#' The `dist_mats` parameter should be a list, with one element for each element in the parameter `dims`,
-#' which stores a matrix of distance calculations (and -1 for distance calculations yet to be completed).
 #' The `dims` parameter is a vector of non-negative whole numbers, representing the homological dimensions
-#' to calculate the loss function in. The `p` parameter should be a number at least 1 and possibly Inf.
+#' to calculate the loss function in. The `dist_mats` parameter should be a list, with one element for each element in the parameter `dims`,
+#' which stores a matrix of distance calculations (with -1 entries for distance calculations yet to be completed).
+#' The `p` parameter should be a number at least 1 and possibly Inf.
 #' The `q` parameter should be a finite number at least 1. The `distance` parameter should be a string
 #' either "wasserstein" or "Turner".
 #'
 #' @param diagram_groups groups (lists/vectors) of persistence diagrams, stored as lists of a data frame and
-#'                          an index of the diagram in all the diagrams across all groups
+#'                          an index of the diagram in all the diagrams across all groups.
 #' @param dist_mats distance matrices between all possible pairs of persistence diagrams across and within groups
 #'                      storing the current distances which have been precomputed.
-#' @param dims which homological dimensions in which the loss function is to be computed
-#' @param p positive wasserstein parameter, if Inf then the bottleneck distance
-#' @param q finite exponent at least 1
-#' @param distance string which determines which type of distance calculation to carry out
+#' @param dims a numeric vector of which homological dimensions in which the loss function is to be computed.
+#' @param p a positive wasserstein parameter, if Inf then the bottleneck distance.
+#' @param q a finite exponent at least 1.
+#' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "Turner".
 #'
 #' @importFrom parallel makeCluster clusterEvalQ clusterExport stopCluster
 #' @importFrom parallelly availableCores
 #' @importFrom doParallel registerDoParallel
 #' @importFrom foreach foreach %dopar%
 #' @importFrom utils combn
-#' @export
 #' @return numeric value of the loss function
 
 loss <- function(diagram_groups,dist_mats,dims,p,q,distance){

@@ -3,13 +3,14 @@
 #'
 #' The output of homology calculations in package TDA
 #' are not immediately able to be used for distance calculations.
-#' These functions convert the output of homology calculations in TDA
-#' into a data frame for further usage.
+#' This function converts the output of homology calculations in TDA
+#' into a data frame either for further usage in this package or
+#' for personalized analyses.
 #'
-#' The `d` parameter is the persistence diagram to be converted.
+#' The `d` parameter should be the output of a TDA homology calculation.
 #'
-#' @param d output of a homology calculation, like ripsDiag
-#' @return 3-column data frame, with each row representing a topological feature
+#' @param d the output of a TDA homology calculation, like ripsDiag.
+#' @return a 3-column data frame, with each row representing a topological feature.
 #' @export
 #' @examples
 #'
