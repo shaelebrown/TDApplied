@@ -98,94 +98,210 @@ To demonstrate the utility of the TDAInference package, we will go through sever
 
 
 ```{r setup}
+if(interactive()){
+  devtools::load_all()
+}
 library("TDAInference")
 ```
 
-## Case study: `Distances between diagrams`
+## Case study: `Using the diagram_distance function`
 
-Let us construct a few examples of diagrams which we can easily calculate by hand what their distances should be. Let $D_1$ be the diagram with a single point $(2,3)$. Now, let $D_2 = \{(2,3.1),(5,6)\}$, $D_3 = \{(1,1.1),(3,3.1)\}$. We can visualize the three diagrams below:
+First we will construct a pair of small diagrams for which we can easily calculate by hand what their distance should be (according to the various types of distance metrics available in this package), and then we will do the same with diagrams generated from the TDA package. Let $D_1 = \{(2,3)\}$ be the diagram with a single point $(2,3)$, and let $D_2 = \{(2,3.1),(5,6)\}$ have two points. We will construct these diagrams as data frames, as if they were the output of the diagram_to_df function, and plot them:
 
 ```{r}
 # D1
-plot(x = 2,y = 3,xlab = "Birth",ylab = "Death",main = bquote("" ~ D[1]),xlim = c(0,6),ylim = c(0,6),pch = 16)
+D1 = data.frame(dimension = 0,birth = 2,death = 3)
+plot(x = D1$birth,y = D1$death,xlab = "Birth",ylab = "Death",main = bquote("" ~ D[1]),xlim = c(0,6),ylim = c(0,6),pch = 16)
 abline(a = 0,b = 1)
 
 # D2
-plot(x = c(2,5),y = c(3.1,6),xlab = "Birth",ylab = "Death",main = bquote("" ~ D[2]),xlim = c(0,6),ylim = c(0,6),pch = 16)
-abline(a = 0,b = 1)
-
-# D3
-plot(x = c(1,3),y = c(1.1,3.1),xlab = "Birth",ylab = "Death",main = bquote("" ~ D[3]),xlim = c(0,6),ylim = c(0,6),pch = 16)
+D2 = data.frame(dimension = 0,birth = c(2,5),death = c(3.1,6))
+plot(x = D2$birth,y = D2$death,xlab = "Birth",ylab = "Death",main = bquote("" ~ D[2]),xlim = c(0,6),ylim = c(0,6),pch = 16)
 abline(a = 0,b = 1)
 
 ```
 
-Now, for each pair of diagrams $(D_i,D_j)$ and each distance metric it's clear what the distance value should be. Note that for all metrics the matchings are the same in the different diagram pairings. In $d(D_1,D_2)$, $(2,3)$ is matched with $(2,3.1)$ and $(5,6)$ is matched with its diagonal projection, $(5.5,5.5)$. Therefore, using the 2-wasserstein metric the distance should be $\sqrt{0.1^2+0.5^2} \approx 0.509902$, using the Turner metric with $p = 2$ the distance should be $\sqrt{d_{E}((2,3),(2,3.1))^2+d_{E}((5,6),(5.5,5.5))^2} \approx 0.7141428$, and using the Infinity norm distance the distance should be $0.5$. In each case the diagram_distance function returns the expected value:
+Now, let's compute the distance between $D_1$ and $D_2$ using the various distance metrics, and confirm that  it's clear what the distance value should be. Note that for all metrics the optimal matching is the same: $(2,3)$ is matched with $(2,3.1)$ and $(5,6)$ is matched with its diagonal projection, $(5.5,5.5)$. Therefore, using the 2-wasserstein metric (like in the package TDA) the distance should be $\sqrt{0.1^2+0.5^2} \approx 0.509902$:
 
 ```{r}
-diagram_distance(D1 = data.frame(dimension = 0,birth = 2,death = 3),D2 = data.frame(dimension = 0,birth = c(2,5),death = c(3.1,6)),p = 2,distance = "wasserstein",dim = 0)
-
-diagram_distance(D1 = data.frame(dimension = 0,birth = 2,death = 3),D2 = data.frame(dimension = 0,birth = c(2,5),death = c(3.1,6)),p = 2,distance = "Turner",dim = 0)
-
-diagram_distance(D1 = data.frame(dimension = 0,birth = 2,death = 3),D2 = data.frame(dimension = 0,birth = c(2,5),death = c(3.1,6)),p = Inf,distance = "Turner",dim = 0)
-
+diagram_distance(D1 = D1,D2 = D2,p = 2,distance = "wasserstein",dim = 0)
 ```
 
-We can do similar calculations for each of the other pairs $(D_1,D_3)$ and $(D_2,D_3)$. For $(D_1,D_3)$ the optimal matchine is each point with its diagonal projection: $(2,3)$ with $(2.5,2.5)$, $(1.1.1)$ with $(1.05,1.05)$ and $(3,3.1)$ with $(3.05,3.05)$. It is easy to verify that the distance should be $\sqrt{0.05^2+0.05^2+0.5^2} \approx 0.5049752$ for the 2-wasserstein metric, $\sqrt{0.05^2+0.05^2+0.05^2+0.05^2+0.5^2+0.5^2} \approx 0.7141428$ for the $p = 2$ Turner metric, and $0.5$ for the Infinity norm metric. We see that those calculations were carried out correctly by the digram_distance function as well:
+The same distance but with $p = 3$ should be $(0.1^3+0.5^3)^{1/3} \approx 0.5013298$:
 
 ```{r}
-diagram_distance(D1 = data.frame(dimension = 0,birth = 2,death = 3),D2 = data.frame(dimension = 0,birth = c(1,3),death = c(1.1,3.1)),p = 2,distance = "wasserstein",dim = 0)
-
-diagram_distance(D1 = data.frame(dimension = 0,birth = 2,death = 3),D2 = data.frame(dimension = 0,birth = c(1,3),death = c(1.1,3.1)),p = 2,distance = "Turner",dim = 0)
-
-diagram_distance(D1 = data.frame(dimension = 0,birth = 2,death = 3),D2 = data.frame(dimension = 0,birth = c(1,3),death = c(1.1,3.1)),p = Inf,distance = "Turner",dim = 0)
-
+diagram_distance(D1 = D1,D2 = D2,p = 3,distance = "wasserstein",dim = 0)
 ```
 
-It is easy to verify that the distances between $D_2$ and $D_3$ are computed properly, but it covers similar cases to previous distances so we will not write out the verification in this document.
+While the TDA package, based on the C++ package Dionysus, computes the bottleneck distance between matched points, another popular alternative is to compute Euclidean (or Minkowski) distances between matched points, like in the Robinson and Turner paper. The Euclidean case can be acheived by setting $p=2$ for the "Turner" distance, which should result in a distance of $\sqrt{0.1^2+0.5^2 + 0.5^2} \approx 0.7141428$:
+
+```{r}
+diagram_distance(D1 = D1,D2 = D2,p = 2,distance = "Turner",dim = 0)
+```
+
+Again, it is easy to switch to a Minkowski metric by changing the $p$ parameter. If we set $p=3$ the distance should be $(0.1^3+0.5^3+0.5^3)^{1/3} \approx 0.6307994$:
+
+```{r}
+diagram_distance(D1 = D1,D2 = D2,p = 3,distance = "Turner",dim = 0)
+```
+
+Finally, we can compute the standard bottleneck distance between the diagrams, which is just the maximum bottleneck distance between any pair of matched points, 0.5:
+
+```{r}
+diagram_distance(D1 = D1,D2 = D2,p = Inf,distance = "wasserstein",dim = 0)
+```
+
+We include more tests of correctness for the diagram_distance function in the test folder, should the reader be interested in further validation.
+
+<!-- OLD -->
+
+<!-- $D_3 = \{(1,1.1),(3,3.1)\}$. We can visualize the three diagrams below: -->
+
+<!-- ```{r} -->
+<!-- D3 = data.frame(x = c(1,3),y = c(1.1,3.1)) -->
+<!-- ``` -->
+
+<!-- We can do similar calculations for each of the other pairs $(D_1,D_3)$ and $(D_2,D_3)$. For $(D_1,D_3)$ the optimal matchine is each point with its diagonal projection: $(2,3)$ with $(2.5,2.5)$, $(1.1.1)$ with $(1.05,1.05)$ and $(3,3.1)$ with $(3.05,3.05)$. It is easy to verify that the distance should be $\sqrt{0.05^2+0.05^2+0.5^2} \approx 0.5049752$ for the 2-wasserstein metric, $\sqrt{0.05^2+0.05^2+0.05^2+0.05^2+0.5^2+0.5^2} \approx 0.7141428$ for the $p = 2$ Turner metric, and $0.5$ for the Infinity norm metric. We see that those calculations were carried out correctly by the digram_distance function as well: -->
+
+<!-- It is easy to verify that the distances between $D_2$ and $D_3$ are computed properly, but it covers similar cases to previous distances so we will not write out the verification in this document. -->
 
 ## Case study: `Benchmarking the diagram_distance function`
 
-Now we will benchmark the runtime of the distance calculations on pairs of different-sized random persistence diagrams compared to calculations using the package TDA. We will first simulate random diagrams of various sizes to compare runtimes, and then barcodes from 2D circles, uniformly sampled with $n$ points ($n \in \{100,200,300,\dots,10000\}$) with 10 iterations at each value of $n$.
+Now we will benchmark the runtime of the distance calculations on pairs of different-sized random persistence diagrams compared to calculations using the package TDA. We will first simulate random diagrams of various sizes to compare runtimes, with $n$ points ($n \in \{100,200,300,\dots,10000\}$) with 10 iterations at each value of $n$. The code took much too long to generate with this vignette, but can be viewed in the .Rmd file for this vignette. The runtimes were computed on a Windows 10 64-bit machine, an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM. The benchmarking plot can be seen below:
 
-```{r}
-# simulate random barcodes with sizes 100,200,...,10000
-library(TDA)
-runtimes_random <- data.frame(n_row = numeric(),package = character(),time_in_sec = numeric())
-for(n_row in seq(100,10000,100)){
-  
-  for(iteration in 1:10)
-  {
-    
-    # simulate pair of diagrams, points mainly close to the diagonal
-    diagram1 = data.frame(dimension = rep(0,n_row),birth = 0.1*rchisq(n = n_row,df = 10))
-    diagram1$death = diagram$birth + 0.1*rchisq(n = n_row,df = 1)
-    diagram2 = data.frame(dimension = rep(0,n_row),birth = 0.1*rchisq(n = n_row,df = 10))
-    diagram2$death = diagram$birth + 0.1*rchisq(n = n_row,df = 1)
-    
-    # benchmark time, in seconds, for both package's distance calculations (2-wasserstein distance in TDAInference)
-    start_time_TDAInference = Sys.time()
-    d_TDAInference = diagram_distance(D1 = diagram1,D2 = diagram2,dim = 0,p = 2,distance = "wasserstein")
-    end_time_TDAInference = Sys.time()
-    time_diff_TDAInference = as.numeric(end_time_TDAInference - start_time_TDAInference,units = "secs")
-    diagram1 = list(diagram = diagram1)
-    class(diagram1$diagram) = "diagram"
-    diagram2 = list(diagram = diagram2)
-    class(diagram2$diagram) = "diagram"
-    start_time_TDA = Sys.time()
-    d_TDA = TDA::wasserstein(Diag1 = diagram1,Diag2 = diagram2,dim = 0,p = 2)
-    end_time_TDA = Sys.time()
-    time_diff_TDA = as.numeric(end_time_TDA - start_time_TDA,units = "secs")
-    
-    runtimes_random = rbind(runtimes_random,data.frame(n_row = n_row,package = "TDAInference",time_in_sec = 4))
-    runtimes_random = rbind(runtimes_random,data.frame(n_row = n_row,package = "TDA",time_in_sec = 4))
-    
-  }
-  
-}
+```{r,echo = F,warning=F,out.width="80%",out.height="90%"}
+# simulate random barcodes with sizes 100,200,...,1000
+# library(TDA)
+# runtimes_random <- data.frame(n_row = numeric(),package = character(),time_in_sec = numeric())
+# for(n_row in seq(100,1000,100)){
+# 
+#   for(iteration in 1:10)
+#   {
+# 
+#     # simulate pair of diagrams, points mainly close to the diagonal
+#     diagram1 = data.frame(dimension = rep(0,n_row),birth = 0.1*rchisq(n = n_row,df = 10))
+#     diagram1$death = diagram1$birth + 0.1*rchisq(n = n_row,df = 1)
+#     diagram2 = data.frame(dimension = rep(0,n_row),birth = 0.1*rchisq(n = n_row,df = 10))
+#     diagram2$death = diagram2$birth + 0.1*rchisq(n = n_row,df = 1)
+# 
+#     # benchmark time, in seconds, for both package's distance calculations (2-wasserstein distance in TDAInference)
+#     start_time_TDAInference = Sys.time()
+#     d_TDAInference = diagram_distance(D1 = diagram1,D2 = diagram2,dim = 0,p = 2,distance = "wasserstein")
+#     end_time_TDAInference = Sys.time()
+#     time_diff_TDAInference = as.numeric(end_time_TDAInference - start_time_TDAInference,units = "secs")
+#     diagram1 = list(diagram = diagram1)
+#     diagram2 = list(diagram = diagram2)
+#     diagram1$diagram = as.matrix(diagram1$diagram)
+#     diagram2$diagram = as.matrix(diagram2$diagram)
+#     class(diagram1$diagram) = "diagram"
+#     class(diagram2$diagram) = "diagram"
+#     start_time_TDA = Sys.time()
+#     d_TDA = TDA::wasserstein(Diag1 = diagram1$diagram,Diag2 = diagram2$diagram,dimension = 0,p = 2)
+#     end_time_TDA = Sys.time()
+#     time_diff_TDA = as.numeric(end_time_TDA - start_time_TDA,units = "secs")
+# 
+#     runtimes_random = rbind(runtimes_random,data.frame(n_row = n_row,package = "TDAInference",time_in_sec = time_diff_TDAInference))
+#     runtimes_random = rbind(runtimes_random,data.frame(n_row = n_row,package = "TDA",time_in_sec = time_diff_TDA))
+# 
+#   }
+# 
+# }
+# 
+# # compute means and sd's at each value of rows for both packages
+# summary_table = data.frame(n_row = numeric(),mean = numeric(),sd = numeric(),package = character())
+# for(n_row in seq(100,1000,100))
+# {
+#   
+#   for(p in c("TDAInference","TDA"))
+#   {
+#     
+#     summary_table = rbind(summary_table,data.frame(n_row = n_row,mean = mean(runtimes_random[which(runtimes_random$n_row == n_row & runtimes_random$package == p),3]),sd = sd(runtimes_random[which(runtimes_random$n_row == n_row & runtimes_random$package == p),3]),package = p))
+#     
+#   }
+#   
+# }
+
+# since this code takes a very long time to run, we will hard code the table that resulted from the above section^
+summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.087,0.137,0.278,1.880,0.859,8.742,1.782,28.908,3.928,63.544,6.648,141.373,11.158,252.689,18.409,427.515,28.220,725.520,39.675,1024.007),sd = c(0.021,0.010,0.018,0.170,0.100,0.630,0.161,1.849,0.245,3.927,0.455,12.202,0.806,14.315,1.350,37.318,2.675,63.963,2.983,102.328),package = rep(c("TDAInference","TDA"),10))
+
+# plot table
+plot(summary_table$n_row[summary_table$package=="TDA"], summary_table$mean[summary_table$package=="TDA"], type="b",
+     xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd),xlab = "Points in diagram",ylab = "Mean execution time (sec)",main = "Benchmarking diagram_distance function")
+lines(summary_table$n_row[summary_table$package=="TDAInference"], summary_table$mean[summary_table$package=="TDAInference"], col=2, type="b")
+legend(x = 200,y = 800,legend = c("TDAInference","TDA"),col = c("red","black"),lty = c(1,1),cex = 0.8)
+arrows(summary_table$n_row, summary_table$mean-1.96*summary_table$sd/sqrt(10), summary_table$n_row, summary_table$mean+1.96*summary_table$sd/sqrt(10), length=0.05, angle=90, code=3)
+
 ```
 
-## Case study: `Testing the permutation_test function`
+The TDAInference diagram\_distance function gives a significant speedup compared to the TDA wasserstein function (with similar results expected for the bottleneck distance function since the two use the same underlying engine). As the diagrams get larger the speedup appears to increase, with almost a 26x speedup for diagrams with 1000 points, however this ratio looks like it would plateau around 30x above 1000 points, or at least it would grow slowly. 
+
+Now, we will repeat the same experiment but instead computing diagrams from shapes provided in the TDA package (a uniformly sampled Torus and sphere) with the same number of data points as in the previous example, $n \in \{100,200,\dots,1000\}$ with 10 repetitions per size. Again, to avoid a long build for this vignette the results were computed on the same computer as listed above, and can be generated using the code in the .Rmd file. The plot is as follows:
+
+```{r,echo = F,warning=F}
+# generate persistence diagrams from circles, Tori and spheres with  100,200,...,1000 data points.
+# library(TDA)
+# runtimes_shape <- data.frame(n_row = numeric(),package = character(),time_in_sec = numeric())
+# for(n_row in seq(100,1000,100)){
+# 
+#   for(iteration in 1:10)
+#   {
+# 
+#     # simulate pair of diagrams from the desired shapes
+#     diagram_torus = ripsDiag(X = TDA::torusUnif(n = n_row,a = 1,c = 2),maxdimension = 2,maxscale = 2)
+#     diagram_sphere = ripsDiag(X = TDA::sphereUnif(n = n_row,d = 2,r = 1),maxdimension = 2,maxscale = 1)
+#     
+#     # compute their wasserstein distances in all dimensions and benchmark
+#     start_time_TDAInference = Sys.time()
+#     diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 0,p = 2,distance = "wasserstein")
+#     diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 1,p = 2,distance = "wasserstein")
+#     diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 2,p = 2,distance = "wasserstein")
+#     end_time_TDAInference = Sys.time()
+#     time_diff_TDAInference = as.numeric(end_time_TDAInference - start_time_TDAInference,units = "secs")
+#     
+#     start_time_TDA = Sys.time()
+#     TDA::wasserstein(Diag1 = diagram_torus$diagram,Diag2 = diagram_sphere$diagram,dimension = 0,p = 2)
+#     TDA::wasserstein(Diag1 = diagram_torus$diagram,Diag2 = diagram_sphere$diagram,dimension = 1,p = 2)
+#     TDA::wasserstein(Diag1 = diagram_torus$diagram,Diag2 = diagram_sphere$diagram,dimension = 2,p = 2)
+#     end_time_TDA = Sys.time()
+#     time_diff_TDA = as.numeric(end_time_TDA - start_time_TDA,units = "secs")
+# 
+#     runtimes_shape = rbind(runtimes_shape,data.frame(n_row = n_row,package = "TDAInference",time_in_sec = time_diff_TDAInference))
+#     runtimes_shape = rbind(runtimes_shape,data.frame(n_row = n_row,package = "TDA",time_in_sec = time_diff_TDA))
+# 
+#   }
+#   print(paste0("Done ",n_row," rows"))
+# 
+# }
+# 
+# # compute means and sd's at each value of rows for both packages
+# summary_table = data.frame(n_row = numeric(),mean = numeric(),sd = numeric(),package = character())
+# for(n_row in seq(100,1000,100))
+# {
+# 
+#   for(p in c("TDAInference","TDA"))
+#   {
+# 
+#     summary_table = rbind(summary_table,data.frame(n_row = n_row,mean = mean(runtimes_shape[which(runtimes_shape$n_row == n_row & runtimes_shape$package == p),3]),sd = sd(runtimes_shape[which(runtimes_shape$n_row == n_row & runtimes_shape$package == p),3]),package = p))
+# 
+#   }
+# 
+# }
+
+# here is the output that I got on my local computer
+summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.133,0.220,0.398,3.430,0.953,17.054,1.955,53.896,3.760,142.524,6.604,294.552,10.466,601.802,16.169,1130.289,23.458,2091.953,35.098,3518.517),sd = c(0.022,0.016,0.035,0.186,0.094,1.1889,0.130,4.501,0.211,5.924,0.772,11.244,0.623,9.064,0.989,43.385,1.989,88.432,2.747,172.684),package = rep(c("TDAInference","TDA"),10))
+
+# plot table
+plot(summary_table$n_row[summary_table$package=="TDA"], summary_table$mean[summary_table$package=="TDA"], type="b",
+     xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd),xlab = "Points in shapes",ylab = "Mean execution time (sec)",main = "Benchmarking diagram_distance function on Torus and Sphere")
+lines(summary_table$n_row[summary_table$package=="TDAInference"], summary_table$mean[summary_table$package=="TDAInference"], col=2, type="b")
+legend(x = 200,y = 2000,legend = c("TDAInference","TDA"),col = c("red","black"),lty = c(1,1),cex = 0.8)
+arrows(summary_table$n_row, summary_table$mean-1.96*summary_table$sd/sqrt(10), summary_table$n_row, summary_table$mean+1.96*summary_table$sd/sqrt(10), length=0.05, angle=90, code=3)
+
+```
+
+Once again, the runtime of the diagram\_distance function is significantly smaller. The ratio of runtimes grew at each subsequent number of tested data points in the shapes, with a 100x speed up with 1000 data points. These two simulations point towards TDAInference a fast distance calculation between persistence diagrams, and that performing many such computations, like in the case of a permutation test of persistence diagrams, could become much more feasible.
+
+## Case study: `Using the permutation_test function`
 
 Now we will compare the permutation test results of multiple groups of persistence diagram drawn from the same distribution of points, and multiple groups of diagrams drawn from different shapes.
 

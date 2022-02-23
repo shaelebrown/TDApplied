@@ -20,7 +20,7 @@
 #' @param D1 the first persistence diagram, either computed from TDA or converted to a data frame with diagram_to_df.
 #' @param D2 the second persistence diagram, either computed from TDA or converted to a data frame with diagram_to_df.
 #' @param dim the homological dimension in which the distance is to be computed.
-#' @param p  the wasserstein power parameter.
+#' @param p  the wasserstein power parameter. Default value is 2.
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "Turner".
 #'
 #' @return the numeric value of the distance calculation.
@@ -50,7 +50,7 @@
 #' diag2_df <- diagram_to_df(d = diag2)
 #' wass_df <- diagram_distance(D1 = diag1_df,D2 = diag2_df,dim = 1,p = 2,distance = "wasserstein")
 
-diagram_distance <- function(D1,D2,dim,p,distance){
+diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein"){
 
   # function to compute the wasserstein/bottleneck metric between two diagrams
   # D1 and D2 are diagrams stored as data frames

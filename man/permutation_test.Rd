@@ -18,19 +18,19 @@ permutation_test(
 \arguments{
 \item{...}{groups of persistence diagrams, outputted from a homology calculation in TDA.}
 
-\item{iterations}{nthe umber of iterations for permuting group labels.}
+\item{iterations}{the number of iterations for permuting group labels. Default value is 100.}
 
-\item{p}{the wasserstein parameter, number at least 1 (and bottleneck distance if == Inf).}
+\item{p}{the wasserstein parameter, number at least 1 (and bottleneck distance if == Inf). Default value is 2.}
 
-\item{q}{a finite number at least 1 for exponentiation in Turner loss function.}
+\item{q}{a finite number at least 1 for exponentiation in Turner loss function. Default value is 2.}
 
-\item{dims}{a numeric vector of the homological dimensions in which the test is to be carried out.}
+\item{dims}{a numeric vector of the homological dimensions in which the test is to be carried out. Default value is c(0,1).}
 
-\item{paired}{a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups.}
+\item{paired}{a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups. Default value is False.}
 
 \item{distance}{a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "Turner".}
 
-\item{verbose}{a boolean flag for if the time duration of the function call should be printed.}
+\item{verbose}{a boolean flag for if the time duration of the function call should be printed. Default value is False.}
 }
 \value{
 list with dimensions used (named vector), permutation loss values in each dimension (named list), test statistics in each dimension (named vector)

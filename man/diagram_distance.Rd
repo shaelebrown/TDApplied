@@ -4,7 +4,7 @@
 \alias{diagram_distance}
 \title{Calculate distances between pairs of persistence diagrams}
 \usage{
-diagram_distance(D1, D2, dim, p, distance)
+diagram_distance(D1, D2, dim, p = 2, distance = "wasserstein")
 }
 \arguments{
 \item{D1}{the first persistence diagram, either computed from TDA or converted to a data frame with diagram_to_df.}
@@ -13,7 +13,7 @@ diagram_distance(D1, D2, dim, p, distance)
 
 \item{dim}{the homological dimension in which the distance is to be computed.}
 
-\item{p}{the wasserstein power parameter.}
+\item{p}{the wasserstein power parameter. Default value is 2.}
 
 \item{distance}{a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "Turner".}
 }

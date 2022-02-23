@@ -18,13 +18,13 @@
 #' function call should be printed.
 #'
 #' @param ... groups of persistence diagrams, outputted from a homology calculation in TDA.
-#' @param iterations nthe umber of iterations for permuting group labels.
-#' @param p the wasserstein parameter, number at least 1 (and bottleneck distance if == Inf).
-#' @param q  a finite number at least 1 for exponentiation in Turner loss function.
-#' @param dims a numeric vector of the homological dimensions in which the test is to be carried out.
-#' @param paired a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups.
+#' @param iterations the number of iterations for permuting group labels. Default value is 100.
+#' @param p the wasserstein parameter, number at least 1 (and bottleneck distance if == Inf). Default value is 2.
+#' @param q  a finite number at least 1 for exponentiation in Turner loss function. Default value is 2.
+#' @param dims a numeric vector of the homological dimensions in which the test is to be carried out. Default value is c(0,1).
+#' @param paired a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups. Default value is False.
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "Turner".
-#' @param verbose a boolean flag for if the time duration of the function call should be printed.
+#' @param verbose a boolean flag for if the time duration of the function call should be printed. Default value is False.
 #'
 #' @return list with dimensions used (named vector), permutation loss values in each dimension (named list), test statistics in each dimension (named vector)
 #'                   a p-value for each dimension (all stored in a named vector) and the time duration of the function call.
