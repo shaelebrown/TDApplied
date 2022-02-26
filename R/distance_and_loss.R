@@ -228,7 +228,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
 
   # export necessary libraries and variables to cl
   parallel::clusterEvalQ(cl,c(library(clue),library(rdist)))
-  parallel::clusterExport(cl,c("diagram_distance","diagram_groups","dist_mats","dims","combinations","p"),envir = environment())
+  parallel::clusterExport(cl,c("check_diagram","diagram_distance","diagram_groups","dist_mats","dims","combinations","p"),envir = environment())
 
   # initialize return vector of statistics, one for each dimension
   statistics <- c()

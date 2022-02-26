@@ -98,9 +98,9 @@ To demonstrate the utility of the TDAInference package, we will go through sever
 
 
 ```{r setup}
-if(interactive()){
-  devtools::load_all()
-}
+# if(interactive()){
+#  devtools::load_all()
+# }
 library("TDAInference")
 ```
 
@@ -167,7 +167,7 @@ We include more tests of correctness for the diagram_distance function in the te
 
 ## Case study: `Benchmarking the diagram_distance function`
 
-Now we will benchmark the runtime of the distance calculations on pairs of different-sized random persistence diagrams compared to calculations using the package TDA. We will first simulate random diagrams of various sizes to compare runtimes, with $n$ points ($n \in \{100,200,300,\dots,10000\}$) with 10 iterations at each value of $n$. The code took much too long to generate with this vignette, but can be viewed in the .Rmd file for this vignette. The runtimes were computed on a Windows 10 64-bit machine, an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM. The benchmarking plot can be seen below:
+Now we will benchmark the runtime of the distance calculations on pairs of different-sized random persistence diagrams compared to calculations using the package TDA. We will first simulate random diagrams of various sizes to compare runtimes, with $n$ points ($n \in \{100,200,300,\dots,10000\}$) with 10 iterations at each value of $n$. Each diagram has birth values of 0.1 multiplied by a random sample of a chi squared distribution with 10 degrees of freedom, and the death was the birth plus 0.1 times a sample from a chi squared distribution with 1 degree of freedom. The code took much too long to generate with this vignette, but can be viewed in the .Rmd file for this vignette. The runtimes were computed on a Windows 10 64-bit machine, an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM. The benchmarking plot can be seen below:
 
 ```{r,echo = F,warning=F,out.width="80%",out.height="90%"}
 # simulate random barcodes with sizes 100,200,...,1000
@@ -235,7 +235,7 @@ arrows(summary_table$n_row, summary_table$mean-1.96*summary_table$sd/sqrt(10), s
 
 The TDAInference diagram\_distance function gives a significant speedup compared to the TDA wasserstein function (with similar results expected for the bottleneck distance function since the two use the same underlying engine). As the diagrams get larger the speedup appears to increase, with almost a 26x speedup for diagrams with 1000 points, however this ratio looks like it would plateau around 30x above 1000 points, or at least it would grow slowly. 
 
-Now, we will repeat the same experiment but instead computing diagrams from shapes provided in the TDA package (a uniformly sampled Torus and sphere) with the same number of data points as in the previous example, $n \in \{100,200,\dots,1000\}$ with 10 repetitions per size. Again, to avoid a long build for this vignette the results were computed on the same computer as listed above, and can be generated using the code in the .Rmd file. The plot is as follows:
+Now, we will repeat the same experiment but instead computing diagrams from shapes provided in the TDA package (a uniformly sampled Torus and sphere) with the same number of data points as in the previous example, $n \in \{100,200,\dots,1000\}$ with 10 repetitions per size. The homology calculations had a maximum dimension of two, and the maximum scale for each was 2 (for the Torus) and 1 (for the sphere). The Torus had tube radius 1 and cross-radius 2. Again, to avoid a long build for this vignette the results were computed on the same computer as listed above, and can be generated using the code in the .Rmd file. The plot is as follows:
 
 ```{r,echo = F,warning=F}
 # generate persistence diagrams from circles, Tori and spheres with  100,200,...,1000 data points.
@@ -303,7 +303,75 @@ Once again, the runtime of the diagram\_distance function is significantly small
 
 ## Case study: `Using the permutation_test function`
 
-Now we will compare the permutation test results of multiple groups of persistence diagram drawn from the same distribution of points, and multiple groups of diagrams drawn from different shapes.
+The permutation\_test function can be used to make statistical inferences about any number of groups of persistence diagrams computed from the TDA package. To see this functionality, we will create three groups of diagrams with unequal numbers of elements:
+
+```{r,echo = T}
+
+g1 <- lapply(X = 1:3,FUN = function(X){
+
+  diag <- TDA::ripsDiag(TDA::circleUnif(n = 100,r = 1),
+                                   maxscale = 1,
+                                   maxdimension = 1)
+  df <- diagram_to_df(d = diag)
+  return(df)
+
+})
+
+g2 <- lapply(X = 1:3,FUN = function(X){
+
+  diag <- TDA::ripsDiag(TDA::torusUnif(n = 100,c = 2,a = 1),
+                                   maxscale = 1,
+                                   maxdimension = 1)
+  df <- diagram_to_df(d = diag)
+  return(df)
+
+})
+
+g3 <- lapply(X = 1:2,FUN = function(X){
+
+  diag <- TDA::ripsDiag(TDA::sphereUnif(n = 100,r = 1,d = 2),
+                                   maxscale = 1,
+                                   maxdimension = 1)
+  df <- diagram_to_df(d = diag)
+  return(df)
+
+})
+
+```
+
+Since the groups are not of the same size, we cannot set the paired argument to be True. The permutation test could be carried out, with mostly default parameters, by
+
+```{r,warning=FALSE}
+perm_test = permutation_test(g1,g2,g3,verbose = TRUE)
+```
+
+We can access the various components of the test easily. The p-values in each dimension can be viewed with
+
+```{r}
+perm_test$p_value
+```
+
+The test statistic can be viewed with
+
+```{r}
+perm_test$test_statistic
+```
+
+The permutation values can be accessed in a list, with one element for each desired dimension.
+
+```{r}
+perm_test$permvals$`0`
+```
+
+Other parameter values that can be viewed are the dimensions in which the test was carried out and the runtime of the test. Lastly, we will carry out the same calculation, but with pairing. To that end all groups must have the same number of elements:
+
+```{r}
+g3[3] <- g3[1]
+perm_test_paired = permutation_test(g1,g2,g3,verbose = T,paired = T)
+```
+
+This paired parameter should be set to True when there is a natural pairing between the diagrams in the groups. For example, if each group represents the persistence diagram of (in this case) three subject's fMRI data, and the three groups represent three different fMRI tasks, then a pairing between the groups exists. Setting the pairing parameter to True in this case can reduce the variance in permutation values, thereby reducing the likelihood of spurious significant test results.
+
 
 ## References
 
