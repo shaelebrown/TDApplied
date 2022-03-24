@@ -1,4 +1,4 @@
 library(testthat)
-library(TDAInference)
+library(TDAML)
 
-test_check("TDAInference")
+test_check("TDAML")

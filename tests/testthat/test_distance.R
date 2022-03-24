@@ -1,5 +1,5 @@
 context("Test distances between diagrams")
-library(TDAInference)
+library(TDAML)
 
 test_that("diagram_distance detects incorrect parameters correctly",{
   

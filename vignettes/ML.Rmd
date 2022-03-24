@@ -101,7 +101,7 @@ To demonstrate the utility of the TDAInference package, we will go through sever
 # if(interactive()){
 #  devtools::load_all()
 # }
-library("TDAInference")
+library("TDAML")
 ```
 
 ## Case study: `Using the diagram_distance function`
