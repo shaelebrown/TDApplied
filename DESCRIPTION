@@ -1,4 +1,4 @@
-Package: TDAInference
+Package: TDAML
 Type: Package
 Title: Permutation Testing for Groups of Persistence Diagrams
 Version: 0.1.0

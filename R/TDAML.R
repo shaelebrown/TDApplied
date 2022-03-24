@@ -7,7 +7,7 @@
 #' present. Also, a fast version of wasserstein and bottleneck distances is provided.
 #'
 #' @docType package
-#' @name TDAInference
+#' @name TDAML
 #' @import TDA
 #' @importFrom clue solve_LSAP
 #' @importFrom doParallel registerDoParallel
