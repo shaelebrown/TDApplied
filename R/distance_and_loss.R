@@ -201,6 +201,7 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = 1)
       sum <- 0
       for(i in 1:nrow(D1_subset))
       {
+        # compute mvn normal pdf values and sum up
         u <- as.numeric(D1_subset[i,])
         sum <- sum + exp(-1*((x[[1]]-u[[1]])^2 + (x[[2]]-u[[2]])^2)/(2*sigma^2))/(2*pi*sigma^2)
       }
@@ -215,8 +216,9 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = 1)
       sum <- 0
       for(i in 1:nrow(D2_subset))
       {
+        # compute mvn normal pdf values and sum up
         u <- as.numeric(D2_subset[i,])
-        sum <- sum + exp(-2*((x[[2]]-u[[2]])^2 + (x[[2]]-u[[2]])^2)/(2*sigma^2))/(2*pi*sigma^2)
+        sum <- sum + exp(-1*((x[[1]]-u[[1]])^2 + (x[[2]]-u[[2]])^2)/(2*sigma^2))/(2*pi*sigma^2)
       }
       return(sum)
       
@@ -224,7 +226,7 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = 1)
     rho_2 <- rho_2/sum(rho_2)
     
     # return dot product of elementwise square root
-    return(sqrt(rho_1) %*% sqrt(rho_2))
+    return(as.numeric(sqrt(rho_1) %*% sqrt(rho_2)))
     
   }
 

@@ -24,6 +24,17 @@ references:
   type: article-journal
   issued:
     year: 2017
+- id: persistence_fisher
+  title: 'Persistence fisher kernel: a riemannian manifold kernel for persistence diagrams'
+  author:
+  - family: Le
+    given: Tam
+  - family: Yamada
+    given: Makoto
+  container-title: Neurips
+  type: article-conference
+  issued:
+    year: 2018
 - id: distance_calc
   title: 'Geometry Helps to Compare Persistence Diagrams'
   author:
@@ -78,9 +89,11 @@ knitr::opts_chunk$set(
 
 In this package functionality is provided to carry out machine learning methods and to make statistical inference on groups of persistence diagrams. For machine learning, currently we can project a group of persistence diagrams into low dimensions using kernel multidimensional scaling (MDS) or perform support vector machine (SVM) classification or regression where the inputs are the persistence diagrams. For inference, we have groups of persistence diagrams and test if there is either a difference between them using a permutation test, or if the (two) groups are independent or not. The permutation test is detailed in @Robinson_Turner, where we compute an analogue to within group variance by calculating distances between each same-group pair of persistence diagrams, and then repeat this calculation many times for permuted group labels. The p-value for the test is computed as a smoothed ratio of the number of permutations which resulted in a within-group variance which was lower than the originally-calculated test statistic to the total number of permutations. The independence test is parametric, based on the paper WHAT, and with a small p-value we can find evidence that the two groups are not independent. Now, we'll provide more details as to how the computations are actually carried out.
 
-One of the central objects of interest in topological data analysis (TDA) is called a persistence diagram. A persistence diagram for a point cloud data set is a topological descriptor which keeps track of various topological features of the data set. A persistence diagram is represented as a set of 2D points above the diagonal, for each topological dimension. We can compute distances between persistence diagrams in the same dimension by finding optimal matching of their 2D points, either using a $p$-Minkowski distance leading to the ''$p$-wasserstein distance'' or using the infinity-norm distance leading to the ''bottleneck distance'' @distance_calc. The inifinity-norm distance between two 2D points is just the maximum absolute distance between either coordinate: $d_{\infty} = \max\{|x_{1}-x_{2}|,|y_{1}-y_{2}|\}$. The $p$-Minkowski distance between two 2D points is either defined as $d_{p}((x_{1},y_{1}),(x_{2},y_{2})) = (|x_{1}-x_{2}|^p+|y_{1}-y_{2}|^p)^{1/p}$ in @Robinson_Turner, or $d_{p}((x_{1},y_{1}),(x_{2},y_{2})) = d_{\infty}((x_{1},y_{1}),(x_{2},y_{2}))^{1/p}$ in @distance_calc. The difference between these two definitions of the wasserstein distance are subtle but important -  the infinity-norm distance tends to find extreme distances whereas Minkowki distances are averaged over both coordinates and are often smaller. A matching of two persistence diagrams $D_{1},D_{2}$ in the same dimension $dim$ is $\phi:D_{1} \rightarrow D_{2}$ where each point $p_{1}$ in $D_{1}$ is "matched" to a point $\phi(p_{1})$ which is either a point in $D_{2}$ or is the projection (nearest point) of $p_{1}$ onto the diagonal, and every point in $D_{2}$ is matched to either a point in $D_{1}$ or to its projection on the diagonal. We can compute the optimal matching  by minimizing the loss function 
+One of the central objects of interest in topological data analysis (TDA) is called a persistence diagram. A persistence diagram for a point cloud data set is a topological descriptor which keeps track of various topological features of the data set. A persistence diagram is represented as a set of 2D points above the diagonal, for each topological dimension. We can compute distances between persistence diagrams in the same dimension by finding optimal matching of their 2D points, either using a $p$-Minkowski distance leading to the ''$p$-wasserstein distance'' or using the infinity-norm distance leading to the ''bottleneck distance'' @distance_calc. The inifinity-norm distance between two 2D points is just the maximum absolute distance between either coordinate: $d_{\infty} = \max\{|x_{1}-x_{2}|,|y_{1}-y_{2}|\}$. A matching of two persistence diagrams $D_{1},D_{2}$ in the same dimension $dim$ is $\phi:D_{1} \rightarrow D_{2}$ where each point $p_{1}$ in $D_{1}$ is "matched" to a point $\phi(p_{1})$ which is either a point in $D_{2}$ or is the projection (nearest point) of $p_{1}$ onto the diagonal, and every point in $D_{2}$ is matched to either a point in $D_{1}$ or to its projection on the diagonal. To compute the $p$-wasserstein distance we find the optimal matching by minimizing the loss function 
 
-$$\sum_{p_{1},p_{2}}d(p_{1},\phi(p_{1}))$$ where $d$ is the desired metric (one of the two wasserstein definitions or the inifinity-norm distance). This optimization problem can be solved exactly by the Hungarian algorithm in the clue package.
+$[\sum_{p_{1}}d_{\infty}(p_{1},\phi(p_{1}))^p]^{1/p}$, and the bottleneck distance is found by minimizing the loss function $\mbox{max}\{d_{\infty}(p_{1},\phi(p_{1}))\}$. These optimization problems can be solved exactly by the Hungarian algorithm in the clue package.
+
+Another distance metric between persistence diagrams is called the persistence Fisher metric (details can be found in @persistence_fisher). The idea is to represent the two persistence diagrams as probability density functions, with a Gaussian point mass centered at each point (including the diagonal projections of the other diagram), and computing the Fisher information metric between the two distributions. Specifically, we calculate the following two vectors: $\rho_1 = [\sum_{u \in D_1 \cup \Delta D_2}N(x;u,\sigma^2)|u \in D_1 \cup \Delta D_2 \cup D_2 \cup \Delta D_1]$ and $\rho_2 = [\sum_{u \in D_2 \cup \Delta D_1}N(x;u,\sigma^2)|u \in D_1 \cup \Delta D_2 \cup D_2 \cup \Delta D_1]$. Then we noramlize them by their sums, $\overline{\rho_1} = \frac{\rho_1}{\sum \rho_1}$ and $\overline{\rho_2} = \frac{\rho_2}{\sum \rho_2}$. Finally, we compute $<\sqrt{\rho_1},\sqrt{\rho_2}>$, i.e. the dot product of the elementwise square root of both of the noramlized vectors.
 
 Now that we have defined distances between persistence diagrams we can discuss how to make inferences about groups of persistence diagrams. For the basic idea we will consider two groups of persistence diagrams, $G_{1}$ and $G_{2}$, containing $n_{1}$ and $n_{2}$ persistence diagrams respectively. Each persistence diagram comes from a dataset, which could be viewed as a sample from a true "underlying" manifold (geometric object). Therefore, we might want to test if the groups $G_{1}$ and $G_{2}$ are samples of persistence diagrams coming from the same manifold, $H_{0}$, or if the underlying manifolds are different $H_{A}$. We start by computing a test-statistic, $L$, which is essentially the sum of within-group variances:
 
@@ -124,7 +137,7 @@ abline(a = 0,b = 1)
 Now, let's compute the distance between $D_1$ and $D_2$ using the various distance metrics, and confirm that  it's clear what the distance value should be. Note that for all metrics the optimal matching is the same: $(2,3)$ is matched with $(2,3.1)$ and $(5,6)$ is matched with its diagonal projection, $(5.5,5.5)$. Therefore, using the 2-wasserstein metric (like in the package TDA) the distance should be $\sqrt{0.1^2+0.5^2} \approx 0.509902$:
 
 ```{r}
-diagram_distance(D1 = D1,D2 = D2,distance = "fisher",dim = 0,sigma = 1)
+diagram_distance(D1 = D1,D2 = D2,p = 2,distance = "wasserstein",dim = 0)
 ```
 
 The same distance but with $p = 3$ should be $(0.1^3+0.5^3)^{1/3} \approx 0.5013298$:
@@ -133,13 +146,11 @@ The same distance but with $p = 3$ should be $(0.1^3+0.5^3)^{1/3} \approx 0.5013
 diagram_distance(D1 = D1,D2 = D2,p = 3,distance = "wasserstein",dim = 0)
 ```
 
-While the TDA package, based on the C++ package Dionysus, computes the bottleneck distance between matched points, another popular alternative is to compute Euclidean (or Minkowski) distances between matched points, like in the Robinson and Turner paper. The Euclidean case can be acheived by setting $p=2$ for the "Turner" distance, which should result in a distance of $\sqrt{0.1^2+0.5^2 + 0.5^2} \approx 0.7141428$:
+The persistence Fisher distance between $D_1$ and $D_2$ using sigma = 1 should be calculated as follows. $\rho_1 = \frac{1}{2\pi}(e^0+e^{-0.2525}+e^{-9.25},e^{-0.2525}+e^0+e^{-8.7025},e^{-9.25}+e^{-8.7025}+e^0,e^{-0.005}+e^{-0.3025}+e^{-9.005},e^{-9}+e^{-8.9525}+e^{-0.25},e^{-0.25}+e^{-0.0025}+e^{-9})$ and $\rho_2 = \frac{1}{2\pi}(e^{-0.005}+e^{-9}+e^{-0.25},e^{-0.3025}+e^{-8.9525}+e^{-0.0025},e^{-9.005}+e^{-0.25}+e^{-9},e^{0}+e^{-8.705}+e^{-0.305},e^{-8.705}+e^{0}+e^{-9.25},e^{-0.305} + e^{-9.25} + e^{0})$. Then the distance metric should equal $<\sqrt{\overline{\rho_1}},\sqrt{\overline{\rho_2}}> \approx 0.9984164$. When we use the diagram distance function with distance set to fisher we see that we get the same result:
 
 ```{r}
 diagram_distance(D1 = D1,D2 = D2,distance = "fisher",dim = 0,sigma = 1)
 ```
-
-Again, it is easy to switch to a Minkowski metric by changing the $p$ parameter. If we set $p=3$ the distance should be $(0.1^3+0.5^3+0.5^3)^{1/3} \approx 0.6307994$:
 
 Finally, we can compute the standard bottleneck distance between the diagrams, which is just the maximum bottleneck distance between any pair of matched points, 0.5:
 
