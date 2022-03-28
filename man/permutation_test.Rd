@@ -98,6 +98,6 @@ return(df)
 perm_test = permutation_test(g1,g2,g3,
 iterations = 20,
 distance = "fisher",
-sigma = 1
+sigma = 1,
 verbose = TRUE)
 }

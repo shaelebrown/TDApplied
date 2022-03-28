@@ -146,9 +146,9 @@ check_params <- function(iterations,p,q,dims,paired,distance,sigma){
     stop("paired must be T or F.")
   }
 
-  if(!is.character(distance) | distance %in% c("wasserstein","Turner") == F)
+  if(!is.character(distance) | distance %in% c("wasserstein","fisher") == F)
   {
-    stop("distance must be a single character, either wasserstein or Turner.")
+    stop("distance must be a single character, either \'wasserstein\' or \'fisher\'")
   }
   
   if(distance == "fisher" & (is.null(sigma) | !is.numeric(sigma)))
