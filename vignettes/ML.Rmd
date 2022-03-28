@@ -10,7 +10,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 references:
 - id: Robinson_Turner
-  title: 'Hypothesis testing for topological data analysis'
+  title: 'Machine learning and inference for topological data analysis'
   author:
   - family: Robinson
     given: Andrew
@@ -76,7 +76,7 @@ knitr::opts_chunk$set(
 
 ## Statistical inference of persistence diagrams
 
-In this package functionality is provided to make statistical inference on groups of persistence diagrams. At a high level, we have groups of objects called persistence diagrams and wish to know if there is a difference between them. As detailed in @Robinson_Turner we compute an analogue to within group variance by calculating distances between each same-group pair of persistence diagrams, and then repeat this calculation many times for permuted group labels. The p-value for the test is computed as a smoothed ratio of the number of permutations which resulted in a within-group variance which was lower than the originally-calculated test statistic to the total number of permutations. Now, we'll provide more details as to how the computations are actually carried out.
+In this package functionality is provided to carry out machine learning methods and to make statistical inference on groups of persistence diagrams. For machine learning, currently we can project a group of persistence diagrams into low dimensions using kernel multidimensional scaling (MDS) or perform support vector machine (SVM) classification or regression where the inputs are the persistence diagrams. For inference, we have groups of persistence diagrams and test if there is either a difference between them using a permutation test, or if the (two) groups are independent or not. The permutation test is detailed in @Robinson_Turner, where we compute an analogue to within group variance by calculating distances between each same-group pair of persistence diagrams, and then repeat this calculation many times for permuted group labels. The p-value for the test is computed as a smoothed ratio of the number of permutations which resulted in a within-group variance which was lower than the originally-calculated test statistic to the total number of permutations. The independence test is parametric, based on the paper WHAT, and with a small p-value we can find evidence that the two groups are not independent. Now, we'll provide more details as to how the computations are actually carried out.
 
 One of the central objects of interest in topological data analysis (TDA) is called a persistence diagram. A persistence diagram for a point cloud data set is a topological descriptor which keeps track of various topological features of the data set. A persistence diagram is represented as a set of 2D points above the diagonal, for each topological dimension. We can compute distances between persistence diagrams in the same dimension by finding optimal matching of their 2D points, either using a $p$-Minkowski distance leading to the ''$p$-wasserstein distance'' or using the infinity-norm distance leading to the ''bottleneck distance'' @distance_calc. The inifinity-norm distance between two 2D points is just the maximum absolute distance between either coordinate: $d_{\infty} = \max\{|x_{1}-x_{2}|,|y_{1}-y_{2}|\}$. The $p$-Minkowski distance between two 2D points is either defined as $d_{p}((x_{1},y_{1}),(x_{2},y_{2})) = (|x_{1}-x_{2}|^p+|y_{1}-y_{2}|^p)^{1/p}$ in @Robinson_Turner, or $d_{p}((x_{1},y_{1}),(x_{2},y_{2})) = d_{\infty}((x_{1},y_{1}),(x_{2},y_{2}))^{1/p}$ in @distance_calc. The difference between these two definitions of the wasserstein distance are subtle but important -  the infinity-norm distance tends to find extreme distances whereas Minkowki distances are averaged over both coordinates and are often smaller. A matching of two persistence diagrams $D_{1},D_{2}$ in the same dimension $dim$ is $\phi:D_{1} \rightarrow D_{2}$ where each point $p_{1}$ in $D_{1}$ is "matched" to a point $\phi(p_{1})$ which is either a point in $D_{2}$ or is the projection (nearest point) of $p_{1}$ onto the diagonal, and every point in $D_{2}$ is matched to either a point in $D_{1}$ or to its projection on the diagonal. We can compute the optimal matching  by minimizing the loss function 
 
@@ -124,7 +124,7 @@ abline(a = 0,b = 1)
 Now, let's compute the distance between $D_1$ and $D_2$ using the various distance metrics, and confirm that  it's clear what the distance value should be. Note that for all metrics the optimal matching is the same: $(2,3)$ is matched with $(2,3.1)$ and $(5,6)$ is matched with its diagonal projection, $(5.5,5.5)$. Therefore, using the 2-wasserstein metric (like in the package TDA) the distance should be $\sqrt{0.1^2+0.5^2} \approx 0.509902$:
 
 ```{r}
-diagram_distance(D1 = D1,D2 = D2,p = 2,distance = "wasserstein",dim = 0)
+diagram_distance(D1 = D1,D2 = D2,distance = "fisher",dim = 0,sigma = 1)
 ```
 
 The same distance but with $p = 3$ should be $(0.1^3+0.5^3)^{1/3} \approx 0.5013298$:
@@ -136,14 +136,10 @@ diagram_distance(D1 = D1,D2 = D2,p = 3,distance = "wasserstein",dim = 0)
 While the TDA package, based on the C++ package Dionysus, computes the bottleneck distance between matched points, another popular alternative is to compute Euclidean (or Minkowski) distances between matched points, like in the Robinson and Turner paper. The Euclidean case can be acheived by setting $p=2$ for the "Turner" distance, which should result in a distance of $\sqrt{0.1^2+0.5^2 + 0.5^2} \approx 0.7141428$:
 
 ```{r}
-diagram_distance(D1 = D1,D2 = D2,p = 2,distance = "Turner",dim = 0)
+diagram_distance(D1 = D1,D2 = D2,distance = "fisher",dim = 0,sigma = 1)
 ```
 
 Again, it is easy to switch to a Minkowski metric by changing the $p$ parameter. If we set $p=3$ the distance should be $(0.1^3+0.5^3+0.5^3)^{1/3} \approx 0.6307994$:
-
-```{r}
-diagram_distance(D1 = D1,D2 = D2,p = 3,distance = "Turner",dim = 0)
-```
 
 Finally, we can compute the standard bottleneck distance between the diagrams, which is just the maximum bottleneck distance between any pair of matched points, 0.5:
 

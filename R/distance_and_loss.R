@@ -21,7 +21,8 @@
 #' @param D2 the second persistence diagram, either computed from TDA or converted to a data frame with diagram_to_df.
 #' @param dim the homological dimension in which the distance is to be computed.
 #' @param p  the wasserstein power parameter. Default value is 2.
-#' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "Turner".
+#' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".
+#' @param sigma either NULLl (default) or a positive number representing the bandwith for the persistence Fisher distance
 #'
 #' @return the numeric value of the distance calculation.
 #' @importFrom rdist cdist
@@ -49,16 +50,18 @@
 #' diag1_df <- diagram_to_df(d = diag1)
 #' diag2_df <- diagram_to_df(d = diag2)
 #' wass_df <- diagram_distance(D1 = diag1_df,D2 = diag2_df,dim = 1,p = 2,distance = "wasserstein")
+#' 
+#' # now do persistence Fisher calculation
+#' fisher_df <- diagram_distance(D1 = diag1_df,D2 = diag2_df,dim = 1,distance = "fisher",sigma = 1)
 
-diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein"){
+diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = 1){
 
-  # function to compute the wasserstein/bottleneck metric between two diagrams
-  # D1 and D2 are diagrams stored as data frames
+  # function to compute the wasserstein/bottleneck/persistence Fisher metric between two diagrams
+  # D1 and D2 are diagrams, possibly stored as data frames
   # dim is the dimension to subset
   # p is the power of the wasserstein distance, p >= 1
-  # distance is either "wasserstein" (default) or "Turner"
-  # if p == Inf or distance == "wasserstein" then the underlying matching distance is
-  # the bottleneck distance
+  # distance is either "wasserstein" (default) or "fisher"
+  # sigma is the positive bandwidth for the persistence Fisher distance, default 1
 
   # for standalone usage force D1 and D2 to be data frames if they are the output of a homology calculation
   if(is.list(D1) && length(D1) == 1 && names(D1) == "diagram" && class(D1$diagram) == "diagram")
@@ -90,6 +93,33 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein"){
 
   # error check D2
   check_diagram(D2)
+  
+  # error check dim
+  if(is.null(dim) | is.na(dim) | is.nan(dim) | !is.numeric(dim) | length(dim) > 1 | as.integer(dim) != dim | dim < 0)
+  {
+    stop("dim must be a non-negative whole number.")
+  }
+  
+  # error check distance
+  if(is.null(distance) | !is.character(distance) | length(distance) > 1 | distance %in% c("wasserstein","fisher") == F)
+  {
+    stop("distance must be either \'wasserstein\' or \'fisher\'.")
+  }
+  
+  # error check p
+  if((is.null(p) & distance == "wasserstein") | is.na(p) | is.nan(p) | !is.numeric(p) | length(p) > 1 | p < 1)
+  {
+    stop("p must be a number at least one for the wasserstein metric.")
+  }
+  
+  # if persistence Fisher distance, sigma must be a positive number
+  if(distance == "fisher" & is.null(sigma))
+  {
+    if(is.na(sigma) | is.nan(sigma) | !is.numeric(sigma) | length(sigma) > 1 | sigma <= 0)
+    {
+      stop("For persistence Fisher distance sigma must be a positive number.") 
+    }
+  }
 
   # subset both diagrams by dimension dim and for birth and death columns
   D1_subset <- D1[which(D1$dimension == dim),1:3]
@@ -136,33 +166,67 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein"){
   D1_subset <- rbind(D1_subset,diag2)
   D2_subset <- rbind(D2_subset,diag1)
 
-  # compute the distance matrix between rows of D1_subset and D2_subset
-  if(is.finite(p) & distance == "Turner")
+  if(distance == "wasserstein")
   {
-    # compute the p-wasserstein distance for matching pairs
-    dist_mat <- as.matrix(rdist::cdist(D1_subset,D2_subset,metric = "minkowski",p = p))
+    # compute the bottleneck distance matrix between rows of D1_subset and D2_subset
+    dist_mat <- as.matrix(rdist::cdist(D1_subset,D2_subset,metric = "maximum"))
+    
+    # use the Hungarian algorithm from the clue package to find the minimal weight matching
+    best_match <- as.numeric(clue::solve_LSAP(x = dist_mat,maximum = F))
+    seq_match <- 1:length(best_match)
+    
+    # subset best match by removing all pairs between diagonal points
+    indices <- cbind(seq_match,best_match)
+    indices <- indices[which(indices[,1] <= (nrow(D1_subset) - nrow(diag2)) | indices[,2] <= (nrow(D2_subset) - nrow(diag1))),]
+    
+    # if p is finite, exponentiate each matched distance and take the p-th root of their sum
+    if(is.finite(p))
+    {
+      return((sum(dist_mat[indices]^(p)))^(1/p))
+    }
+    
+    # otherwise, return the regular bottleneck distance
+    return(max(dist_mat[indices]))
+    
   }else
   {
-    # compute the bottleneck distance for matching pairs
-    dist_mat <- as.matrix(rdist::cdist(D1_subset,D2_subset,metric = "maximum"))
+    # compute the persistence Fisher distance
+    
+    # get all unique points in both diagrams and their diagonal projections
+    theta <- unique(rbind(D1_subset,D2_subset))
+    
+    rho_1 <- unlist(lapply(X = 1:nrow(theta),FUN = function(X){
+      
+      x <- as.numeric(theta[X,])
+      sum <- 0
+      for(i in 1:nrow(D1_subset))
+      {
+        u <- as.numeric(D1_subset[i,])
+        sum <- sum + exp(-1*((x[[1]]-u[[1]])^2 + (x[[2]]-u[[2]])^2)/(2*sigma^2))/(2*pi*sigma^2)
+      }
+      return(sum)
+      
+    }))
+    rho_1 <- rho_1/sum(rho_1)
+    
+    rho_2 <- unlist(lapply(X = 1:nrow(theta),FUN = function(X){
+      
+      x <- as.numeric(theta[X,])
+      sum <- 0
+      for(i in 1:nrow(D2_subset))
+      {
+        u <- as.numeric(D2_subset[i,])
+        sum <- sum + exp(-2*((x[[2]]-u[[2]])^2 + (x[[2]]-u[[2]])^2)/(2*sigma^2))/(2*pi*sigma^2)
+      }
+      return(sum)
+      
+    }))
+    rho_2 <- rho_2/sum(rho_2)
+    
+    # return dot product of elementwise square root
+    return(sqrt(rho_1) %*% sqrt(rho_2))
+    
   }
-
-  # use the Hungarian algorithm from the clue package to find the minimal weight matching
-  best_match <- as.numeric(clue::solve_LSAP(x = dist_mat,maximum = F))
-  seq_match <- 1:length(best_match)
-
-  # subset best match by removing all pairs between diagonal points
-  indices <- cbind(seq_match,best_match)
-  indices <- indices[which(indices[,1] <= (nrow(D1_subset) - nrow(diag2)) | indices[,2] <= (nrow(D2_subset) - nrow(diag1))),]
-
-  # if p is finite, exponentiate each matched distance and take the p-th root of their sum
-  if(is.finite(p))
-  {
-    return((sum(dist_mat[indices]^(p)))^(1/p))
-  }
-
-  # otherwise, return the regular bottleneck distance
-  return(max(dist_mat[indices]))
 
 }
 
@@ -181,7 +245,8 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein"){
 #' which stores a matrix of distance calculations (with -1 entries for distance calculations yet to be completed).
 #' The `p` parameter should be a number at least 1 and possibly Inf.
 #' The `q` parameter should be a finite number at least 1. The `distance` parameter should be a string
-#' either "wasserstein" or "Turner".
+#' either "wasserstein" or "Turner". The `sigma` parameter is the positive bandwith for the persistence
+#' Fisher distance.
 #'
 #' @param diagram_groups groups (lists/vectors) of persistence diagrams, stored as lists of a data frame and
 #'                          an index of the diagram in all the diagrams across all groups.
@@ -191,6 +256,7 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein"){
 #' @param p a positive wasserstein parameter, if Inf then the bottleneck distance.
 #' @param q a finite exponent at least 1.
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "Turner".
+#' @param sigma the positive bandwith for the persistence Fisher distance.
 #'
 #' @importFrom parallel makeCluster clusterEvalQ clusterExport stopCluster
 #' @importFrom parallelly availableCores
@@ -199,7 +265,7 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein"){
 #' @importFrom utils combn
 #' @return numeric value of the loss function
 
-loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
+loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma){
 
   # function to compute the F_{p,q} loss between groups of diagrams
   # diagram_groups are the (possibly permuted) groups of diagrams
@@ -207,7 +273,8 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
   # dims are the homological dimensions of diagrams to consider
   # p is a number >=1
   # q is a finite number >= 1
-  # distance is the distance metric to use, either "wasserstein" (default) or "Turner"
+  # distance is the distance metric to use, either "wasserstein" or "fisher"
+  # sigma is the positive bandwith for persistence fisher distance
 
   # create combination of all pairs of diagram group elements and their group indices
   combinations <- do.call(rbind,lapply(X = 1:length(diagram_groups),FUN = function(X){
@@ -252,7 +319,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance){
       # if the distance between these two diagrams has not already been computed, compute their distance
       if(dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind] == -1)
       {
-        return(diagram_distance(D1 = diagram_groups[[g]][[d1]]$diag,D2 = diagram_groups[[g]][[d2]]$diag,p = p,dim = dim,distance = distance)^q)
+        return(diagram_distance(D1 = diagram_groups[[g]][[d1]]$diag,D2 = diagram_groups[[g]][[d2]]$diag,p = p,dim = dim,distance = distance,sigma = sigma)^q)
       }
 
       # else return the already stored distance value

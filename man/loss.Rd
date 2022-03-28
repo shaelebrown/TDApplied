@@ -4,7 +4,7 @@
 \alias{loss}
 \title{Calculate Turner loss function for groups of persistence diagrams}
 \usage{
-loss(diagram_groups, dist_mats, dims, p, q, distance)
+loss(diagram_groups, dist_mats, dims, p, q, distance, sigma)
 }
 \arguments{
 \item{diagram_groups}{groups (lists/vectors) of persistence diagrams, stored as lists of a data frame and
@@ -20,6 +20,8 @@ storing the current distances which have been precomputed.}
 \item{q}{a finite exponent at least 1.}
 
 \item{distance}{a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "Turner".}
+
+\item{sigma}{the positive bandwith for the persistence Fisher distance.}
 }
 \value{
 numeric value of the loss function
@@ -38,5 +40,6 @@ to calculate the loss function in. The `dist_mats` parameter should be a list, w
 which stores a matrix of distance calculations (with -1 entries for distance calculations yet to be completed).
 The `p` parameter should be a number at least 1 and possibly Inf.
 The `q` parameter should be a finite number at least 1. The `distance` parameter should be a string
-either "wasserstein" or "Turner".
+either "wasserstein" or "Turner". The `sigma` parameter is the positive bandwith for the persistence
+Fisher distance.
 }

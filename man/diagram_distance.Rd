@@ -4,7 +4,7 @@
 \alias{diagram_distance}
 \title{Calculate distances between pairs of persistence diagrams}
 \usage{
-diagram_distance(D1, D2, dim, p = 2, distance = "wasserstein")
+diagram_distance(D1, D2, dim, p = 2, distance = "wasserstein", sigma = 1)
 }
 \arguments{
 \item{D1}{the first persistence diagram, either computed from TDA or converted to a data frame with diagram_to_df.}
@@ -15,7 +15,9 @@ diagram_distance(D1, D2, dim, p = 2, distance = "wasserstein")
 
 \item{p}{the wasserstein power parameter. Default value is 2.}
 
-\item{distance}{a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "Turner".}
+\item{distance}{a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".}
+
+\item{sigma}{either NULLl (default) or a positive number representing the bandwith for the persistence Fisher distance}
 }
 \value{
 the numeric value of the distance calculation.
@@ -60,4 +62,7 @@ bottleneck <- diagram_distance(D1 = diag2,D2 = diag2,dim = 1,p = Inf,distance = 
 diag1_df <- diagram_to_df(d = diag1)
 diag2_df <- diagram_to_df(d = diag2)
 wass_df <- diagram_distance(D1 = diag1_df,D2 = diag2_df,dim = 1,p = 2,distance = "wasserstein")
+
+# now do persistence Fisher calculation
+fisher_df <- diagram_distance(D1 = diag1_df,D2 = diag2_df,dim = 1,distance = "fisher",sigma = 1)
 }

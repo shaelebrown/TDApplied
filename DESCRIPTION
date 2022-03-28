@@ -1,6 +1,6 @@
 Package: TDAML
 Type: Package
-Title: Permutation Testing for Groups of Persistence Diagrams
+Title: Machine learning and inference for topological data analysis
 Version: 0.1.0
 Authors@R: c(person("Shael", "Brown", email = "shaelebrown@gmail.com", role = c("aut","cre")))
 Author: Shael Brown [aut, cre]
@@ -9,11 +9,10 @@ Description: Topological data analysis (TDA) is a suite of powerful tools
     that can find non-linear structure in data which common multivariate methods
     can miss. The most common TDA tool, persistent homology, produces a 
     "shape descriptor" of its input data called a persistence diagram which 
-    finds holes in the dataset. This package implements code from several 
-    papers which have described a permutation test for conducting statistical
-    inferences on groups of persistence diagrams (Robinson & Turner (2017) 
-    <doi:10.1007/s41468-017-0008-7> is the basic introduction) to be used with
-    persistence diagrams computed with package 'TDA'.
+    finds various dimensional holes in the dataset. This package implements 
+    methods for machine learning and inference with persistence diagrams.
+    The basis for these methods are distance and kernel calculations, which
+    are provided in a fast native-R implementation.
 Depends: R (>= 3.2.2), TDA
 Imports: parallel, doParallel, foreach, clue, rdist, parallelly
 License: GPL-3

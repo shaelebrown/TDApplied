@@ -12,6 +12,7 @@ permutation_test(
   dims = c(0, 1),
   paired = F,
   distance = "wasserstein",
+  sigma = NULL,
   verbose = FALSE
 )
 }
@@ -29,6 +30,8 @@ permutation_test(
 \item{paired}{a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups. Default value is False.}
 
 \item{distance}{a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "Turner".}
+
+\item{sigma}{the positive bandwith for the persistence Fisher distance, default NULL.}
 
 \item{verbose}{a boolean flag for if the time duration of the function call should be printed. Default value is False.}
 }
@@ -51,8 +54,8 @@ is the exponent for distances. `dims` is a numeric vector of the homological dim
 to carry out the test. The `paired` parameter is a boolean flag for whether there are correspondences
 between diagrams at the same location across groups, as this affects which permutations are permissible
 when generating the null distribution. The `distance` parameter determines which distance metric
-should be used between persistence diagrams. `verbose` determines if the time duration of the
-function call should be printed.
+should be used between persistence diagrams. The `sigma` parameter is the positive bandwith for the
+persistence Fisher distance. `verbose` determines if the time duration of the function call should be printed.
 }
 \examples{
 
@@ -90,10 +93,11 @@ return(df)
 
 })
 
-# do permutation test with 20 iterations, p,q = 2, in dimensions 0 and 1, with
-# no pairing using Turner distance and printing the time duration
+# do permutation test with 20 iterations, q = 2, in dimensions 0 and 1, with
+# no pairing using persistence Fisher distance, sigma = 1, and printing the time duration
 perm_test = permutation_test(g1,g2,g3,
 iterations = 20,
-distance = "Turner",
+distance = "fisher",
+sigma = 1
 verbose = TRUE)
 }

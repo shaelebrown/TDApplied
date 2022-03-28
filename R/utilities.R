@@ -87,7 +87,7 @@ all_diagrams <- function(diagram_groups){
 
 }
 
-check_params <- function(iterations,p,q,dims,paired,distance){
+check_params <- function(iterations,p,q,dims,paired,distance,sigma){
 
   # error checks on the parameters for the permutation_test function
 
@@ -149,6 +149,24 @@ check_params <- function(iterations,p,q,dims,paired,distance){
   if(!is.character(distance) | distance %in% c("wasserstein","Turner") == F)
   {
     stop("distance must be a single character, either wasserstein or Turner.")
+  }
+  
+  if(distance == "fisher" & (is.null(sigma) | !is.numeric(sigma)))
+  {
+    stop("For the persistence Fisher distance sigma must be a number.")
+  }
+  
+  if(!is.null(sigma) & length(sigma) > 1)
+  {
+    stop("sigma must be single number.")
+  }
+  
+  if(!is.null(sigma))
+  {
+    if(sigma <= 0)
+    {
+      stop("sigma must be greater than 0.")
+    }
   }
 
 }

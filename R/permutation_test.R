@@ -14,8 +14,8 @@
 #' to carry out the test. The `paired` parameter is a boolean flag for whether there are correspondences
 #' between diagrams at the same location across groups, as this affects which permutations are permissible
 #' when generating the null distribution. The `distance` parameter determines which distance metric
-#' should be used between persistence diagrams. `verbose` determines if the time duration of the
-#' function call should be printed.
+#' should be used between persistence diagrams. The `sigma` parameter is the positive bandwith for the
+#' persistence Fisher distance. `verbose` determines if the time duration of the function call should be printed.
 #'
 #' @param ... groups of persistence diagrams, outputted from a homology calculation in TDA.
 #' @param iterations the number of iterations for permuting group labels. Default value is 100.
@@ -24,6 +24,7 @@
 #' @param dims a numeric vector of the homological dimensions in which the test is to be carried out. Default value is c(0,1).
 #' @param paired a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups. Default value is False.
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "Turner".
+#' @param sigma the positive bandwith for the persistence Fisher distance, default NULL.
 #' @param verbose a boolean flag for if the time duration of the function call should be printed. Default value is False.
 #'
 #' @return list with dimensions used (named vector), permutation loss values in each dimension (named list), test statistics in each dimension (named vector)
@@ -65,14 +66,15 @@
 #'
 #' })
 #'
-#' # do permutation test with 20 iterations, p,q = 2, in dimensions 0 and 1, with
-#' # no pairing using Turner distance and printing the time duration
+#' # do permutation test with 20 iterations, q = 2, in dimensions 0 and 1, with
+#' # no pairing using persistence Fisher distance, sigma = 1, and printing the time duration
 #' perm_test = permutation_test(g1,g2,g3,
 #' iterations = 20,
-#' distance = "Turner",
+#' distance = "fisher",
+#' sigma = 1,
 #' verbose = TRUE)
 
-permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),paired = F,distance = "wasserstein",verbose = FALSE){
+permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),paired = F,distance = "wasserstein",sigma = NULL,verbose = FALSE){
 
   # function to test whether or not multiple groups of persistence diagrams come from the same geometric process
   # ... are the groups of diagrams, either stored as lists or vectors
@@ -82,6 +84,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   # dims is a vector of desired homological dimensions
   # paired is a boolean which determines if dependencies exist between diagrams of the same indices in different groups
   # distance is either "wasserstein" or "Turner" and determines how distances will be computed between diagrams
+  # sigma is the positive bandwith for the persistence Fisher distance, NULL by default
   # verbose is either TRUE or FALSE (default), printing runtime of function call
 
   # retrieve diagram groups
@@ -97,7 +100,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   diagram_groups <- all_diagrams(diagram_groups)
 
   # error check function parameters
-  check_params(iterations,p,q,dims,paired,distance)
+  check_params(iterations,p,q,dims,paired,distance,sigma)
 
   # make sure that if paired == T then all groups have the same number of diagrams
   if(paired)
@@ -117,7 +120,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   dist_mats <- lapply(X = dims,FUN = function(X){return(matrix(data = -1,nrow = n,ncol = n))})
 
   # compute loss function on observed data and update dist_mats
-  test_loss <- loss(diagram_groups = diagram_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance)
+  test_loss <- loss(diagram_groups = diagram_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance,sigma = sigma)
   dist_mats <- test_loss$dist_mats
   test_statistics <- test_loss$statistics
 
@@ -172,7 +175,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
     }
 
     # compute loss function, add to permutation values and updated distance matrices
-    permuted_loss <- loss(permuted_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance)
+    permuted_loss <- loss(permuted_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance,sigma = sigma)
     dist_mats <- permuted_loss$dist_mats
     for(d in 1:length(dims))
     {
