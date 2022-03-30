@@ -3,11 +3,16 @@
 \docType{package}
 \name{TDAML}
 \alias{TDAML}
-\title{Permutation testing for groups of persistence barcodes}
+\title{Machine learning and inference for persistence diagrams}
 \description{
-This package implements a permutation test which can be used to detect differences
-in multiple groups of persistence barcodes - the most common output of the most
-common tool in Topological Data Analysis (TDA), persistent homology. Additional
-functionality is included to account for between-group dependencies if they are
-present. Also, a fast version of wasserstein and bottleneck distances is provided.
+This package aims to bridge topological data analysis (TDA) with data, statistical
+and machine learning practitioners so that more analyses may benefit from the
+power of TDA. The main tool of TDA is persistent homology, which computes a 
+shape descriptor of a dataset, called a persistence diagram. There are four
+goals of this package: (1) convert the output from the persistent homology
+calculations in the popular TDA package for R, 'TDA', into a data frame which can
+easily be used in personalized analyses, (2) provide a fast method for computing
+distances between persistence diagrams, (3) implement kernel machine learning
+method for persistence diagrams (currently kernel multidimensional scaling and
+kernel SVM), and (4) provide methods for inference on groups of persistence diagrams.
 }

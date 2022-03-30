@@ -1,7 +1,7 @@
 
 #' Permutation test for persistence diagrams
 #'
-#' Calculates the turner loss function for a number of groups of persistence diagrams,
+#' Calculates the Turner loss function for a number of groups of persistence diagrams,
 #' and then generates a null distribution by permuting group labels several times and
 #' recomputing the loss function. A p-value for each desired homological dimension is generated.
 #' This function keeps track of distance calculations as to not repeat calculations
@@ -15,7 +15,7 @@
 #' between diagrams at the same location across groups, as this affects which permutations are permissible
 #' when generating the null distribution. The `distance` parameter determines which distance metric
 #' should be used between persistence diagrams. The `sigma` parameter is the positive bandwith for the
-#' persistence Fisher distance. `verbose` determines if the time duration of the function call should be printed.
+#' Fisher information metric `verbose` determines if the time duration of the function call should be printed.
 #'
 #' @param ... groups of persistence diagrams, outputted from a homology calculation in TDA.
 #' @param iterations the number of iterations for permuting group labels. Default value is 100.
@@ -23,8 +23,8 @@
 #' @param q  a finite number at least 1 for exponentiation in Turner loss function. Default value is 2.
 #' @param dims a numeric vector of the homological dimensions in which the test is to be carried out. Default value is c(0,1).
 #' @param paired a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups. Default value is False.
-#' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "Turner".
-#' @param sigma the positive bandwith for the persistence Fisher distance, default NULL.
+#' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".
+#' @param sigma the positive bandwith for the Fisher information metric, default NULL.
 #' @param verbose a boolean flag for if the time duration of the function call should be printed. Default value is False.
 #'
 #' @return list with dimensions used (named vector), permutation loss values in each dimension (named list), test statistics in each dimension (named vector)
@@ -66,7 +66,7 @@
 #'
 #' })
 #'
-#' # do permutation test with 20 iterations, q = 2, in dimensions 0 and 1, with
+#' # do permutation test with 20 iterations, p,q = 2, in dimensions 0 and 1, with
 #' # no pairing using persistence Fisher distance, sigma = 1, and printing the time duration
 #' perm_test = permutation_test(g1,g2,g3,
 #' iterations = 20,
@@ -83,8 +83,8 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   # q is the finite distance exponential, q >= 1
   # dims is a vector of desired homological dimensions
   # paired is a boolean which determines if dependencies exist between diagrams of the same indices in different groups
-  # distance is either "wasserstein" or "Turner" and determines how distances will be computed between diagrams
-  # sigma is the positive bandwith for the persistence Fisher distance, NULL by default
+  # distance is either "wasserstein" or "fisher" and determines how distances will be computed between diagrams
+  # sigma is the positive bandwith for the Fisher information metric, NULL by default
   # verbose is either TRUE or FALSE (default), printing runtime of function call
 
   # retrieve diagram groups
@@ -97,7 +97,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   }
 
   # check each diagram, converting each to a data frame and storing their indices in all the diagrams
-  diagram_groups <- all_diagrams(diagram_groups)
+  diagram_groups <- all_diagrams(diagram_groups,inference = "difference")
 
   # error check function parameters
   check_params(iterations,p,q,dims,paired,distance,sigma)
@@ -217,4 +217,198 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
 
   return(results)
 
+}
+
+#### INDEPENDENCE TEST FOR PERSISTENCE DIAGRAMS ####
+#' Independence test for persistence diagrams
+#'
+#' Calculates (an estimate of) the Hilbert-Schmidt independence criteria for 
+#' two groups of paired persistence diagrams, the approximate null distribution
+#' and a p-value for each desired homological dimension.
+#' This function computes kernel calculations in parallel since they
+#' can individually take a long time.
+#'
+#' The `g1` and `g2` parameters should be lists of persistence diagrams, outputted from a
+#' homology calculation in TDA. `dims` is a numeric vector of the homological dimensions in which
+#' to carry out the test. The `sigma` parameter is the positive bandwith for the
+#' Fisher information metric, `t` is the scale parameter for the persistence Fisher kernel. 
+#' `verbose` determines if the time duration of the function call should be printed.
+#'
+#' @param g1 the first group of persistence diagrams, outputted from a homology calculation in TDA.
+#' @param g2 the second group of persistence diagrams, outputted from a homology calculation in TDA.
+#' @param dims a numeric vector of the homological dimensions in which the test is to be carried out. Default value is c(0,1).
+#' @param sigma the positive bandwith for the Fisher information metric, default 1.
+#' @param t the positive scale for the persistence Fisher kernel, default 1.
+#' @param verbose a boolean flag for if the time duration of the function call should be printed. Default value is False.
+#'
+#' @return list with dimensions used (named vector), test statistics in each dimension (named vector)
+#'                   a p-value for each dimension (all stored in a named vector) and the time duration of the function call.
+#' @importFrom foreach foreach %dopar%
+#' @importFrom stats pgamma
+#' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
+#' @importFrom parallelly availableCores
+#' @importFrom doParallel registerDoParallel
+#' @importFrom iterators iter
+#' @export
+#' @examples
+#'
+#' # create two groups of persistence diagrams on 2D Gaussians using TDA
+#' g1 <- lapply(X = 1:6,FUN = function(X){
+#'
+#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
+#' y = rnorm(100,mean = 0,sd = 1)),
+#' maxscale = 1,
+#' maxdimension = 1)
+#' df <- diagram_to_df(d = diag)
+#' return(df)
+#'
+#' })
+#'
+#' g2 <- lapply(X = 1:6,FUN = function(X){
+#'
+#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
+#' y = rnorm(100,mean = 0,sd = 1)),
+#' maxscale = 1,
+#' maxdimension = 1)
+#' df <- diagram_to_df(d = diag)
+#' return(df)
+#'
+#' })
+#'
+#' # do independence test with sigma = 1, t = 1, in dimensions 0 and 1, printing the time duration
+#' ind_test = independence_test(g1,g2,verbose = TRUE)
+
+independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,verbose = FALSE){
+  
+  # function to test whether or not two groups of persistence diagrams are independent
+  # g1 and g2 are the groups of diagrams, either stored as lists or vectors
+  # dims is a vector of desired homological dimensions
+  # sigma is the positive bandwith for the Fisher information metric, 1 by default
+  # t is the positive scale for the persistence Fisher kernel, 1 by default
+  # verbose is either TRUE or FALSE (default), printing runtime of function call
+  
+  # set internal variables to NULL to avoid build issues
+  r <- NULL
+  
+  # retrieve diagram groups
+  diagram_groups <- list(g1,g2)
+  
+  # make sure there are at least two groups
+  if(length(diagram_groups) < 2)
+  {
+    stop("At least two groups of persistence diagrams must be supplied.")
+  }
+  
+  # check each diagram, converting each to a data frame and storing their indices in all the diagrams
+  diagram_groups <- all_diagrams(diagram_groups,inference = "independence")
+  
+  # error check function parameters
+  check_params(iterations = 10,p = 2,q = 2,dims,paired = T,distance = "fisher",sigma)
+  if(is.null(t))
+  {
+    stop("t must not be NULL.")
+  }
+  if(!is.numeric(t) | length(t) > 1 | is.na(t) | is.nan(t) | t <= 0)
+  {
+    stop("t must be a positive number.")
+  }
+  
+  # make sure that the two groups have the same number of diagrams
+  if(length(g1) != length(g2))
+  {
+    stop("g1 and g2 must be the same length.")
+  }
+  
+  # make sure that the two groups each have at least 5 elements
+  m <- length(g1)
+  if(m < 6)
+  {
+    stop("g1 and g2 must have at least 6 elements each.")
+  }
+  
+  # time computations
+  start_time <- Sys.time()
+  
+  # conduct test in each dimension
+  test_statistics <- c()
+  p_value <- c()
+  
+  # determine maximum available number of cores
+  num_workers <- parallelly::availableCores(omit = 1)
+  
+  # set up cluster for parallel computations
+  cl <- parallel::makeCluster(num_workers)
+  doParallel::registerDoParallel(cl)
+  parallel::clusterEvalQ(cl,c(library(clue),library(rdist)))
+  parallel::clusterExport(cl,c("diagram_distance"))
+  force(diagram_groups) # required for parallel computation in this environment
+  force(check_diagram)
+  
+  for(dim in dims)
+  {
+    # create kernel for this dimension
+    kernel_dim = diagram_kernel(sigma = sigma,t = t,dim = dim)
+    
+    # compute test statistics in parallel
+    K <- matrix(data = 0,nrow = m,ncol = m)
+    k <- foreach::`%dopar%`(obj = foreach::foreach(r = iterators::iter(which(upper.tri(K),arr.ind = T),by = 'row'),.combine = c),ex = {
+      
+      return(kernel_dim(D1 = diagram_groups[[1]][[r[[1]]]],D2 = diagram_groups[[1]][[r[[2]]]]))
+      
+    })
+    K[upper.tri(K)] <- k
+    K[which(upper.tri(K),arr.ind = T)[,c("col","row")]] <- k
+    diag(K) <- rep(1,m)
+    
+    L <- matrix(data = 0,nrow = m,ncol = m)
+    l <- foreach::`%dopar%`(obj = foreach::foreach(r = iterators::iter(which(upper.tri(L),arr.ind = T),by = 'row'),.combine = c),ex = {
+      
+      return(kernel_dim(D1 = diagram_groups[[2]][[r[[1]]]],D2 = diagram_groups[[2]][[r[[2]]]]))
+      
+    })
+    L[upper.tri(L)] <- l
+    L[which(upper.tri(L),arr.ind = T)[,c("col","row")]] <- l
+    diag(L) <- rep(1,m)
+
+    H <- matrix(data = -1/m,nrow = m,ncol = m)
+    diag(H) <- rep((m-1)/m,nrow(H))
+    
+    HSIC <- sum(diag(K %*% H %*% L %*% H))/(m^2) # normalized trace
+    test_statistics <- c(test_statistics,HSIC)
+    
+    # compute null distribution parameters
+    mu_x_sq <- mean(K[upper.tri(K)])
+    mu_y_sq <- mean(L[upper.tri(L)])
+    mu <- (1 + mu_x_sq*mu_y_sq - mu_x_sq - mu_y_sq)/m
+    B <- (H %*% K %*% H) * (H %*% L %*% H)
+    B <- B * B
+    diag(B) <- rep(0,m)
+    var <- 2*(m-4)*(m-5)*factorial(m - 4)*(sum(colSums(B)))/factorial(m)
+    
+    # compute p-value
+    p_val <- stats::pgamma(q = HSIC,rate = mu/var,shape = mu^2/var,lower.tail = F)
+    p_value <- c(p_value,p_val)
+    
+  }
+  
+  parallel::stopCluster(cl)
+  
+  # set up return lists
+  names(test_statistics) <- as.character(dims)
+  names(p_value) <- as.character(dims)
+  runtime = Sys.time() - start_time
+  
+  results <- list(dimensions = dims,
+                  test_statistic = test_statistics,
+                  p_value = p_value,
+                  run_time = runtime)
+  
+  if(verbose == T)
+  {
+    # print time duration of function call
+    print(runtime)
+  }
+  
+  return(results)
+  
 }

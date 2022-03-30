@@ -1,5 +1,5 @@
 ---
-title: "Statistical inference on persistence diagrams with TDAInference"
+title: "Machine learning and statistical inference on persistence diagrams with TDAInference"
 author: "Shael Brown"
 output: 
   rmarkdown::html_vignette:
@@ -32,7 +32,7 @@ references:
   - family: Yamada
     given: Makoto
   container-title: Neurips
-  type: article-conference
+  type: article-journal
   issued:
     year: 2018
 - id: distance_calc

@@ -17,7 +17,7 @@ diagram_distance(D1, D2, dim, p = 2, distance = "wasserstein", sigma = 1)
 
 \item{distance}{a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".}
 
-\item{sigma}{either NULLl (default) or a positive number representing the bandwith for the persistence Fisher distance}
+\item{sigma}{either NULL (default) or a positive number representing the bandwith for the Fisher information metric}
 }
 \value{
 the numeric value of the distance calculation.
@@ -29,8 +29,8 @@ in a particular homological dimension. Different TDA sources define distances
 differently, and this function has functionality to compute distances like
 in the R package TDA (based on the C++ library Dionysus, see
 <https://mrzv.org/software/dionysus2/>) or like in the
-original paper for inference of persistence diagrams by Robinson and Turner in 2017
-<https://link.springer.com/article/10.1007/s41468-017-0008-7>.
+paper for kernel calculations of persistence diagrams (
+<https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf>).
 }
 \details{
 The `D1` and `D2` parameters should be persistence diagrams, outputted
@@ -38,7 +38,7 @@ from a homology calculation in the package TDA, or such a
 persistence diagram converted to a data frame via the function diagram_to_df.
 The `dim` parameter should be a positive finite integer.
 The `p` parameter should be a positive integer or Inf. The `distance` parameter
-should be a string, either "wasserstein" or "Turner".
+should be a string, either "wasserstein" or "fisher". The `sigma` parameter is a single positive number representing the bandwith for the Fisher information metric.
 }
 \examples{
 
@@ -63,6 +63,6 @@ diag1_df <- diagram_to_df(d = diag1)
 diag2_df <- diagram_to_df(d = diag2)
 wass_df <- diagram_distance(D1 = diag1_df,D2 = diag2_df,dim = 1,p = 2,distance = "wasserstein")
 
-# now do persistence Fisher calculation
+# now do Fisher information metric calculation
 fisher_df <- diagram_distance(D1 = diag1_df,D2 = diag2_df,dim = 1,distance = "fisher",sigma = 1)
 }

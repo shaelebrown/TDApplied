@@ -7,22 +7,22 @@
 #' differently, and this function has functionality to compute distances like
 #' in the R package TDA (based on the C++ library Dionysus, see
 #' <https://mrzv.org/software/dionysus2/>) or like in the
-#' original paper for inference of persistence diagrams by Robinson and Turner in 2017
-#' <https://link.springer.com/article/10.1007/s41468-017-0008-7>.
+#' paper for kernel calculations of persistence diagrams (
+#' <https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf>).
 #'
 #' The `D1` and `D2` parameters should be persistence diagrams, outputted
 #' from a homology calculation in the package TDA, or such a
 #' persistence diagram converted to a data frame via the function diagram_to_df.
 #' The `dim` parameter should be a positive finite integer.
 #' The `p` parameter should be a positive integer or Inf. The `distance` parameter
-#' should be a string, either "wasserstein" or "Turner".
+#' should be a string, either "wasserstein" or "fisher". The `sigma` parameter is a single positive number representing the bandwith for the Fisher information metric.
 #'
 #' @param D1 the first persistence diagram, either computed from TDA or converted to a data frame with diagram_to_df.
 #' @param D2 the second persistence diagram, either computed from TDA or converted to a data frame with diagram_to_df.
 #' @param dim the homological dimension in which the distance is to be computed.
 #' @param p  the wasserstein power parameter. Default value is 2.
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".
-#' @param sigma either NULLl (default) or a positive number representing the bandwith for the persistence Fisher distance
+#' @param sigma either NULL (default) or a positive number representing the bandwith for the Fisher information metric
 #'
 #' @return the numeric value of the distance calculation.
 #' @importFrom rdist cdist
@@ -51,17 +51,17 @@
 #' diag2_df <- diagram_to_df(d = diag2)
 #' wass_df <- diagram_distance(D1 = diag1_df,D2 = diag2_df,dim = 1,p = 2,distance = "wasserstein")
 #' 
-#' # now do persistence Fisher calculation
+#' # now do Fisher information metric calculation
 #' fisher_df <- diagram_distance(D1 = diag1_df,D2 = diag2_df,dim = 1,distance = "fisher",sigma = 1)
 
 diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = 1){
 
-  # function to compute the wasserstein/bottleneck/persistence Fisher metric between two diagrams
+  # function to compute the wasserstein/bottleneck/Fisher information metric between two diagrams
   # D1 and D2 are diagrams, possibly stored as data frames
   # dim is the dimension to subset
   # p is the power of the wasserstein distance, p >= 1
   # distance is either "wasserstein" (default) or "fisher"
-  # sigma is the positive bandwidth for the persistence Fisher distance, default 1
+  # sigma is the positive bandwidth for the Fisher information metric, default 1
 
   # for standalone usage force D1 and D2 to be data frames if they are the output of a homology calculation
   if(is.list(D1) && length(D1) == 1 && names(D1) == "diagram" && class(D1$diagram) == "diagram")
@@ -113,7 +113,7 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = 1)
   }
   
   # if persistence Fisher distance, sigma must be a positive number
-  if(distance == "fisher" & is.null(sigma))
+  if(distance == "fisher" & !is.null(sigma))
   {
     if(is.na(sigma) | is.nan(sigma) | !is.numeric(sigma) | length(sigma) > 1 | sigma <= 0)
     {
@@ -247,7 +247,7 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = 1)
 #' which stores a matrix of distance calculations (with -1 entries for distance calculations yet to be completed).
 #' The `p` parameter should be a number at least 1 and possibly Inf.
 #' The `q` parameter should be a finite number at least 1. The `distance` parameter should be a string
-#' either "wasserstein" or "Turner". The `sigma` parameter is the positive bandwith for the persistence
+#' either "wasserstein" or "fisher". The `sigma` parameter is the positive bandwith for the persistence
 #' Fisher distance.
 #'
 #' @param diagram_groups groups (lists/vectors) of persistence diagrams, stored as lists of a data frame and
@@ -257,7 +257,7 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = 1)
 #' @param dims a numeric vector of which homological dimensions in which the loss function is to be computed.
 #' @param p a positive wasserstein parameter, if Inf then the bottleneck distance.
 #' @param q a finite exponent at least 1.
-#' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "Turner".
+#' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".
 #' @param sigma the positive bandwith for the persistence Fisher distance.
 #'
 #' @importFrom parallel makeCluster clusterEvalQ clusterExport stopCluster

@@ -5,16 +5,18 @@ Version: 0.1.0
 Authors@R: c(person("Shael", "Brown", email = "shaelebrown@gmail.com", role = c("aut","cre")))
 Author: Shael Brown [aut, cre]
 Maintainer: Shael Brown <shaelebrown@gmail.com>
-Description: Topological data analysis (TDA) is a suite of powerful tools 
-    that can find non-linear structure in data which common multivariate methods
-    can miss. The most common TDA tool, persistent homology, produces a 
-    "shape descriptor" of its input data called a persistence diagram which 
-    finds various dimensional holes in the dataset. This package implements 
-    methods for machine learning and inference with persistence diagrams.
-    The basis for these methods are distance and kernel calculations, which
-    are provided in a fast native-R implementation.
+Description: This package aims to bridge topological data analysis (TDA) with data, statistical 
+    and machine learning practitioners so that more analyses may benefit from the
+    power of TDA. The main tool of TDA is persistent homology, which computes a 
+    shape descriptor of a dataset, called a persistence diagram. There are four
+    goals of this package: (1) convert the output from the persistent homology
+    calculations in the popular TDA package for R, 'TDA', into a data frame which can
+    easily be used in personalized analyses, (2) provide a fast method for computing
+    distances between persistence diagrams, (3) implement kernel machine learning
+    method for persistence diagrams (currently kernel multidimensional scaling and
+    kernel SVM), and (4) provide methods for inference on groups of persistence diagrams.
 Depends: R (>= 3.2.2), TDA
-Imports: parallel, doParallel, foreach, clue, rdist, parallelly
+Imports: parallel, doParallel, foreach, clue, rdist, parallelly, kernlab, iterators
 License: GPL-3
 URL: https://github.com/shaelebrown/TDAInference
 BugReports: https://github.com/shaelebrown/TDAInference/issues

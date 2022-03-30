@@ -44,16 +44,21 @@ check_diagram <- function(d){
 
 }
 
-all_diagrams <- function(diagram_groups){
+all_diagrams <- function(diagram_groups,inference){
 
   # function to make sure all diagram groups are lists or vectors of diagrams,
   # to convert the diagrams to data frames and to error check each diagram.
   # diagram_groups is a vector or list of vectors or lists of diagrams
-
-  # compute cumulative sums of groups lengths in order to correctly compute diagram indices
-  csum_group_sizes <- cumsum(unlist(lapply(diagram_groups,FUN = length)))
-  csum_group_sizes <- c(0,csum_group_sizes)
-
+  # inference is a string, either 'difference' for the permutation test or
+  # 'independence' for the independence test
+  
+  if(inference == "difference")
+  {
+    # compute cumulative sums of groups lengths in order to correctly compute diagram indices
+    csum_group_sizes <- cumsum(unlist(lapply(diagram_groups,FUN = length)))
+    csum_group_sizes <- c(0,csum_group_sizes)
+  }
+  
   # loop through all diagram groups
   for(g in 1:length(diagram_groups))
   {
@@ -69,27 +74,40 @@ all_diagrams <- function(diagram_groups){
         # if of the right form, format into a data frame and store diagram index
         if(class(diagram_groups[[g]][[diag]]) == "data.frame")
         {
-          diagram_groups[[g]][[diag]] <- list(diag = diagram_groups[[g]][[diag]],ind = csum_group_sizes[g] + diag)
+          if(inference == "difference")
+          {
+            diagram_groups[[g]][[diag]] <- list(diag = diagram_groups[[g]][[diag]],ind = csum_group_sizes[g] + diag)
+          }
         }else
         {
-          diagram_groups[[g]][[diag]] <- list(diag = diagram_to_df(diagram_groups[[g]][[diag]]),ind = csum_group_sizes[g] + diag)
+          if(inference == "difference")
+          {
+            diagram_groups[[g]][[diag]] <- list(diag = diagram_to_df(diagram_groups[[g]][[diag]]),ind = csum_group_sizes[g] + diag)
+          }
         }
       }
-
+      
       # make sure the converted diagram has appropriate attributes for further use
-      check_diagram(diagram_groups[[g]][[diag]]$diag)
-
+      if(inference == "difference")
+      {
+        check_diagram(diagram_groups[[g]][[diag]]$diag)
+      }else
+      {
+        check_diagram(diagram_groups[[g]][[diag]]) 
+      }
+      
     }
   }
-
+  
   # return diagram groups with reformatted diagrams
   return(diagram_groups)
+  
 
 }
 
 check_params <- function(iterations,p,q,dims,paired,distance,sigma){
 
-  # error checks on the parameters for the permutation_test function
+  # error checks on the parameters for the inference functions
 
   if(!is.numeric(iterations))
   {
