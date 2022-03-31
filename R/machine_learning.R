@@ -49,9 +49,6 @@
 
 diagram_MDS <- function(diagrams,distance = "wasserstein",dim = 0,p = 2,sigma = NULL,k = 2,eig = FALSE,add = FALSE,x.ret = FALSE,list. = eig || add || x.ret){
   
-  # set internal variables to NULL to avoid build errors
-  r <- NULL
-  
   # error check diagrams argument
   if(is.null(diagrams))
   {
@@ -94,7 +91,7 @@ diagram_MDS <- function(diagrams,distance = "wasserstein",dim = 0,p = 2,sigma = 
 #' @param features number of features (principal components) to return, default 1.
 #' @param ... additional parameters.
 #'
-#' @return the output of cmdscale on the diagram distance matrix, either just the embedding matrix or a list.
+#' @return a list containing the output of cmdscale on the diagram distance matrix, either just the embedding matrix or a list, the diagram groups, dimension, t, sigma and features. The class of this object is 'diagram_kpca'.
 #' @export
 #' @examples
 #'
@@ -143,11 +140,125 @@ diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,...){
   K <- gram_matrix(diagrams = diagrams,t = t,sigma = sigma,dim = dim)
   
   # return kernlab computation
-  return(kernlab::kpca(x = K,features = features,...))
+  ret_list <- list(pca = kernlab::kpca(x = K,features = features,...),diagrams = diagrams,t = t,sigma = sigma,dim = dim)
+  class(ret_list) <- "diagram_kpca"
+  return(ret_list)
   
 }
 
+#### PREDICT WITH KERNEL PCA OBJECT ####
+#' Predict the kernel PCA embedding of new persistence diagrams using a precomputed diagram_kpca object
+#'
+#' Returns the embedding matrix for the new points.
+#'
+#' The `new_diagrams` parameter should be a list of persistence diagrams computed from TDA.
+#' The `embedding` parameter is the diagram_kpca embedding object to be used for embedding
+#' the new diagrams.
+#'
+#' @param new_diagrams a list of persistence diagrams, as the output of a TDA calculation.
+#' @param embedding the output to a diagram_kpca function call.
+#'
+#' @return the embedding matrix.
+#' @export
+#' @importFrom foreach foreach %dopar% %do%
+#' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
+#' @importFrom parallelly availableCores
+#' @importFrom doParallel registerDoParallel
+#' @examples
+#'
+#' # create ten diagrams with package TDA based on 2D Gaussians
+#' g <- lapply(X = 1:10,FUN = function(X){
+#'
+#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
+#' y = rnorm(100,mean = 0,sd = 1)),
+#' maxscale = 1,
+#' maxdimension = 1)
+#' df <- diagram_to_df(d = diag)
+#' return(df)
+#'
+#' })
+#'
+#' # calculate their 2D PCA embedding in dimension 1 with sigma = t = 2
+#' embedding <- diagram_kpca(diagrams = g,dim = 1,t = 2,sigma = 2,features = 2)
+#' 
+#' # create ten new diagrams with package TDA based on 2D Gaussians
+#' g_new <- lapply(X = 1:10,FUN = function(X){
+#'
+#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
+#' y = rnorm(100,mean = 0,sd = 1)),
+#' maxscale = 1,
+#' maxdimension = 1)
+#' df <- diagram_to_df(d = diag)
+#' return(df)
+#'
+#' })
+#'
+#' # calculate their 2D PCA embedding using the embedding object
+#' embedding_new <- predict_diagram_kpca(new_diagrams = g_new,embedding = embedding)
 
+predict_diagram_kpca <- function(new_diagrams,embedding){
+  
+  # set internal variables to NULL to avoid build issues
+  r <- NULL
+  X <- NULL
+  
+  # error check new_diagrams argument
+  if(is.null(new_diagrams))
+  {
+    stop("new_diagrams must be a list of persistence diagrams.")
+  }
+  if(!is.list(new_diagrams) | length(new_diagrams) < 1)
+  {
+    stop("new_diagrams must be a list of persistence diagrams of length at least 1.")
+  }
+  new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
+  
+  # error check embedding argument
+  if(is.null(embedding))
+  {
+    stop("embedding must be supplied.")
+  }
+  if(class(embedding) != "diagram_kpca")
+  {
+    stop("embedding must be the output of a diagram_kpca function call.")
+  }
+  
+  # compute kernel matrix, storing the value of each kernel computation between the new diagrams and the old ones
+  num_workers <- parallelly::availableCores(omit = 1)
+  cl <- parallel::makeCluster(num_workers)
+  doParallel::registerDoParallel(cl)
+  parallel::clusterExport(cl,c("diagram_distance","diagram_kernel"))
+  force(new_diagrams) # required for parallel computation in this environment
+  force(embedding)
+  force(check_diagram)
+  
+  # compute in parallel along the diagram list (new or old) which has more elements
+  if(length(new_diagrams) > length(embedding$diagrams))
+  {
+    K <- foreach::`%dopar%`(obj = foreach::foreach(r = 1:length(new_diagrams),.combine = rbind),ex = {
+      
+      return(unlist(lapply(X = 1:length(embedding$diagrams),FUN = function(X){return(diagram_kernel(D1 = new_diagrams[[r]],D2 = embedding$diagrams[[X]],dim = embedding$dim,sigma = embedding$sigma,t = embedding$t))})))
+      
+    })
+  }else
+  {
+    K <- foreach::`%do%`(obj = foreach::foreach(r = 1:length(new_diagrams),.combine = rbind),ex = {
+      
+      return(foreach::`%dopar%`(obj = foreach::foreach(X = 1:length(new_diagrams),.combine = c),ex = {
+        
+        return(diagram_kernel(D1 = new_diagrams[[r]],D2 = embedding$diagrams[[X]],dim = embedding$dim,sigma = embedding$sigma,t = embedding$t))
+        
+      }))
+
+    })
+  }
+  
+  parallel::stopCluster(cl)
+  
+  # project the new diagrams into the embedding space
+  return(K %*% embedding$pca@pcv)
+  
+}
 
 
 
