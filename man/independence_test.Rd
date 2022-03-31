@@ -27,8 +27,6 @@ list with dimensions used (named vector), test statistics in each dimension (nam
 Calculates (an estimate of) the Hilbert-Schmidt independence criteria for 
 two groups of paired persistence diagrams, the approximate null distribution
 and a p-value for each desired homological dimension.
-This function computes kernel calculations in parallel since they
-can individually take a long time.
 }
 \details{
 The `g1` and `g2` parameters should be lists of persistence diagrams, outputted from a

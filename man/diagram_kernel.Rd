@@ -4,9 +4,13 @@
 \alias{diagram_kernel}
 \title{Calculate persistence Fisher kernel between a pair of persistence diagrams}
 \usage{
-diagram_kernel(dim = 0, sigma = 1, t = 1)
+diagram_kernel(D1, D2, dim = 0, sigma = 1, t = 1)
 }
 \arguments{
+\item{D1}{the first persistence diagram, either outputted from TDA or from diagram_to_df function.}
+
+\item{D2}{the second persistence diagram, either outputted from TDA or from diagram_to_df function.}
+
 \item{dim}{the homological dimension in which the distance is to be computed.}
 
 \item{sigma}{a positive number representing the bandwith for the Fisher information metric, default 1.}
@@ -14,13 +18,14 @@ diagram_kernel(dim = 0, sigma = 1, t = 1)
 \item{t}{a positive number representing the scale for the kernel, default 1.}
 }
 \value{
-the kernel function.
+the kernel value
 }
 \description{
-Returns a function which calculates the persistence Fisher kenel between a pair of persistce diagrams, stored as
-data frames (as the output from diagram_to_df) in a particular homological dimension.
+Returns the persistence Fisher kenel between a pair of persistence diagrams
+in a particular homological dimension.
 }
 \details{
+The `D1` and `D2` parameters are the two persistence diagrams.
 The `dim` parameter should be a positive finite integer.
 The `sigma` parameter is the positive bandwith for the Fisher information metric, and
 `t` is the scale parameter for persistence Fisher kernel.
@@ -38,6 +43,5 @@ maxscale = 1,
 maxdimension = 1)
 
 # calculate their kernel value in dimension 1 with sigma = 2, t = 2
-fisher_kernel <- diagram_kernel(dim = 1,sigma = 2,t = 2)
-k <- fisher_kernel(D1 = diag1,D2 = diag2)
+k <- diagram_kernel(D1 = diag1,D2 = diag2,dim = 1,sigma = 2,t = 2)
 }

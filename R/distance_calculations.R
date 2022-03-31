@@ -232,6 +232,90 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = 1)
 
 }
 
+#### DISTANCE MATRIX ####
+#' Calculate the distance matrix d for a list of persistence diagrams, i.e. d[i,j] = d(D[i],D[j]), in parallel.
+#'
+#' Returns the distance matrix for a list of persistence diagrams.
+#'
+#' `diagrams` is the list of persistence diagrams.
+#' The `dim` parameter should be a positive finite integer.
+#' The `distance` parameter is the string determining which distance metric to use, `p` is the 
+#' wasserstein power parameter, and
+#' `t` is the positive scale parameter for the persistence Fisher kernel.
+#'
+#' @param diagrams the list of persistence diagrams, either the output from TDA calculations or the diagram_to_df function.
+#' @param dim the homological dimension in which the distance is to be computed.
+#' @param distance a character determining which metric to use, either "wasserstein" (default) or "fisher".
+#' @param p the positive wasserstein power, default 2.
+#' @param sigma a positive number representing the bandwith of the Fisher information metric, default NULL.
+#'
+#' @return the distance matrix.
+#' @export
+#' @importFrom foreach foreach %dopar%
+#' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
+#' @importFrom parallelly availableCores
+#' @importFrom doParallel registerDoParallel
+#' @importFrom iterators iter
+#' @examples
+#'
+#' # create ten diagrams with package TDA based on 2D Gaussians
+#' g <- lapply(X = 1:10,FUN = function(X){
+#'
+#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
+#' y = rnorm(100,mean = 0,sd = 1)),
+#' maxscale = 1,
+#' maxdimension = 1)
+#' df <- diagram_to_df(d = diag)
+#' return(df)
+#'
+#' })
+#'
+#' # calculate their distance matrix in dimension 1 with the 2-wasserstein metric
+#' D <- distance_matrix(diagrams = g,dim = 1,distance = "wasserstein",p = 2)
+
+distance_matrix <- function(diagrams,dim = 0,distance = "wasserstein",p = 2,sigma = NULL){
+  
+  # set internal variables to NULL to avoid build issues
+  r <- NULL
+  
+  # error check diagrams argument
+  if(is.null(diagrams))
+  {
+    stop("diagrams must be a list of persistence diagrams.")
+  }
+  if(!is.list(diagrams) | length(diagrams) < 2)
+  {
+    stop("diagrams must be a list of persistence diagrams of length at least 2.")
+  }
+  diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
+  
+  # check other parameters
+  check_params(iterations = 10,p = p,q = 2,dims = c(dim),paired = F,distance = distance,sigma = sigma)
+  
+  # compute distance matrix in parallel
+  n = length(diagrams)
+  num_workers <- parallelly::availableCores(omit = 1)
+  cl <- parallel::makeCluster(num_workers)
+  doParallel::registerDoParallel(cl)
+  parallel::clusterEvalQ(cl,c(library(clue),library(rdist)))
+  parallel::clusterExport(cl,c("diagram_distance"))
+  force(diagrams) # required for parallel computation in this environment
+  
+  d <- matrix(data = 0,nrow = n,ncol = n)
+  d_off_diag <- foreach::`%dopar%`(obj = foreach::foreach(r = iterators::iter(which(upper.tri(d),arr.ind = T),by = 'row'),.combine = c),ex = {
+    
+    return(diagram_distance(D1 = diagrams[[r[[1]]]],D2 = diagrams[[r[[2]]]],dim = dim,p = p,distance = distance,sigma = sigma))
+    
+  })
+  d[upper.tri(d)] <- d_off_diag
+  d[which(upper.tri(d),arr.ind = T)[,c("col","row")]] <- d_off_diag
+  
+  parallel::stopCluster(cl)
+  
+  return(d)
+  
+}
+
 #### LOSS FUNCTION FOR GROUPS OF PERSISTENCE DIAGRAMS ####
 #' Calculate Turner loss function for groups of persistence diagrams
 #'

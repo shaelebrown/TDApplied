@@ -225,8 +225,6 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
 #' Calculates (an estimate of) the Hilbert-Schmidt independence criteria for 
 #' two groups of paired persistence diagrams, the approximate null distribution
 #' and a p-value for each desired homological dimension.
-#' This function computes kernel calculations in parallel since they
-#' can individually take a long time.
 #'
 #' The `g1` and `g2` parameters should be lists of persistence diagrams, outputted from a
 #' homology calculation in TDA. `dims` is a numeric vector of the homological dimensions in which
@@ -243,12 +241,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
 #'
 #' @return list with dimensions used (named vector), test statistics in each dimension (named vector)
 #'                   a p-value for each dimension (all stored in a named vector) and the time duration of the function call.
-#' @importFrom foreach foreach %dopar%
 #' @importFrom stats pgamma
-#' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
-#' @importFrom parallelly availableCores
-#' @importFrom doParallel registerDoParallel
-#' @importFrom iterators iter
 #' @export
 #' @examples
 #'
@@ -333,42 +326,12 @@ independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,verbose = FALS
   test_statistics <- c()
   p_value <- c()
   
-  # determine maximum available number of cores
-  num_workers <- parallelly::availableCores(omit = 1)
-  
-  # set up cluster for parallel computations
-  cl <- parallel::makeCluster(num_workers)
-  doParallel::registerDoParallel(cl)
-  parallel::clusterEvalQ(cl,c(library(clue),library(rdist)))
-  parallel::clusterExport(cl,c("diagram_distance"))
-  force(diagram_groups) # required for parallel computation in this environment
-  force(check_diagram)
-  
   for(dim in dims)
   {
-    # create kernel for this dimension
-    kernel_dim = diagram_kernel(sigma = sigma,t = t,dim = dim)
     
     # compute test statistics in parallel
-    K <- matrix(data = 0,nrow = m,ncol = m)
-    k <- foreach::`%dopar%`(obj = foreach::foreach(r = iterators::iter(which(upper.tri(K),arr.ind = T),by = 'row'),.combine = c),ex = {
-      
-      return(kernel_dim(D1 = diagram_groups[[1]][[r[[1]]]],D2 = diagram_groups[[1]][[r[[2]]]]))
-      
-    })
-    K[upper.tri(K)] <- k
-    K[which(upper.tri(K),arr.ind = T)[,c("col","row")]] <- k
-    diag(K) <- rep(1,m)
-    
-    L <- matrix(data = 0,nrow = m,ncol = m)
-    l <- foreach::`%dopar%`(obj = foreach::foreach(r = iterators::iter(which(upper.tri(L),arr.ind = T),by = 'row'),.combine = c),ex = {
-      
-      return(kernel_dim(D1 = diagram_groups[[2]][[r[[1]]]],D2 = diagram_groups[[2]][[r[[2]]]]))
-      
-    })
-    L[upper.tri(L)] <- l
-    L[which(upper.tri(L),arr.ind = T)[,c("col","row")]] <- l
-    diag(L) <- rep(1,m)
+    K <- gram_matrix(diagrams = diagram_groups[[1]],dim = dim,t = t,sigma = sigma)
+    L <- gram_matrix(diagrams = diagram_groups[[2]],dim = dim,t = t,sigma = sigma)
 
     H <- matrix(data = -1/m,nrow = m,ncol = m)
     diag(H) <- rep((m-1)/m,nrow(H))
@@ -390,8 +353,6 @@ independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,verbose = FALS
     p_value <- c(p_value,p_val)
     
   }
-  
-  parallel::stopCluster(cl)
   
   # set up return lists
   names(test_statistics) <- as.character(dims)
