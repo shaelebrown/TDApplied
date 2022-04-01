@@ -32,7 +32,7 @@ The `dim` parameter should be a positive finite integer.
 The `sigma` and `t` parameters are the positive bandwith for the Fisher information metric and
 the positive scale for the persistence Fisher kernel respectively.
 `features` is the number of desired features (principal components) in the embedding, and
-`...` are additional parameters to eh kpca kernlab function.
+`...` are additional parameters to the kpca kernlab function.
 }
 \examples{
 
