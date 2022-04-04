@@ -6,6 +6,7 @@
 \usage{
 distance_matrix(
   diagrams,
+  other_diagrams = NULL,
   dim = 0,
   distance = "wasserstein",
   p = 2,
@@ -14,6 +15,8 @@ distance_matrix(
 }
 \arguments{
 \item{diagrams}{the list of persistence diagrams, either the output from TDA calculations or the diagram_to_df function.}
+
+\item{other_diagrams}{either NULL (default) or another list of persistence diagrams to compute a cross-distance matrix.}
 
 \item{dim}{the homological dimension in which the distance is to be computed.}
 
@@ -52,4 +55,7 @@ return(df)
 
 # calculate their distance matrix in dimension 1 with the 2-wasserstein metric
 D <- distance_matrix(diagrams = g,dim = 1,distance = "wasserstein",p = 2)
+
+# now do the cross distance matrix, should be the same as the original
+D_cross <- distance_matrix(diagrams = g,other_diagrams = g,dim = 1,distance = "wasserstein",p = 2)
 }

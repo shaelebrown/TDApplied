@@ -4,10 +4,12 @@
 \alias{gram_matrix}
 \title{Calculate the Gram matrix K for a list of persistence diagrams, i.e. K[i,j] = k(d[i],d[j]), in parallel.}
 \usage{
-gram_matrix(diagrams, dim = 0, sigma = 1, t = 1)
+gram_matrix(diagrams, other_diagrams = NULL, dim = 0, sigma = 1, t = 1)
 }
 \arguments{
 \item{diagrams}{the list of persistence diagrams, either the output from TDA calculations or the diagram_to_df function.}
+
+\item{other_diagrams}{either NULL (default) or another list of persistence diagrams to compute a cross-Gram matrix.}
 
 \item{dim}{the homological dimension in which the distance is to be computed.}
 
@@ -43,4 +45,7 @@ return(df)
 
 # calculate their Gram matrix in dimension 1 with sigma = 2, t = 2
 G <- gram_matrix(diagrams = g,dim = 1,sigma = 2,t = 2)
+
+# calculate cross-Gram matrix, should be the same as G
+G_cross <- gram_matrix(diagrams = g,other_diagrams = g,dim = 1,sigma = 2,t = 2)
 }

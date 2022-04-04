@@ -60,6 +60,7 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
 #' `t` is the positive scale parameter for the persistence Fisher kernel.
 #'
 #' @param diagrams the list of persistence diagrams, either the output from TDA calculations or the diagram_to_df function.
+#' @param other_diagrams either NULL (default) or another list of persistence diagrams to compute a cross-Gram matrix.
 #' @param dim the homological dimension in which the distance is to be computed.
 #' @param sigma a positive number representing the bandwith for the Fisher information metric, default 1.
 #' @param t a positive number representing the scale for the kernel, default 1.
@@ -87,11 +88,15 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
 #'
 #' # calculate their Gram matrix in dimension 1 with sigma = 2, t = 2
 #' G <- gram_matrix(diagrams = g,dim = 1,sigma = 2,t = 2)
+#' 
+#' # calculate cross-Gram matrix, should be the same as G
+#' G_cross <- gram_matrix(diagrams = g,other_diagrams = g,dim = 1,sigma = 2,t = 2)
 
-gram_matrix <- function(diagrams,dim = 0,sigma = 1,t = 1){
+gram_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,sigma = 1,t = 1){
   
   # set internal variables to NULL to avoid build issues
   r <- NULL
+  X <- NULL
   
   # error check diagrams argument
   if(is.null(diagrams))
@@ -104,6 +109,16 @@ gram_matrix <- function(diagrams,dim = 0,sigma = 1,t = 1){
   }
   diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
   
+  # error check other_diagrams argument
+  if(!is.null(other_diagrams))
+  {
+    if(!is.list(other_diagrams) | length(other_diagrams) < 2)
+    {
+      stop("diagrams must be a list of persistence diagrams of length at least 2.")
+    }
+    other_diagrams <- all_diagrams(diagram_groups = list(other_diagrams),inference = "independence")[[1]]
+  }
+  
   # compute Gram matrix in parallel
   m = length(diagrams)
   num_workers <- parallelly::availableCores(omit = 1)
@@ -113,14 +128,39 @@ gram_matrix <- function(diagrams,dim = 0,sigma = 1,t = 1){
   force(diagrams) # required for parallel computation in this environment
   force(check_diagram)
   
-  K <- matrix(data = 1,nrow = m,ncol = m)
-  k <- foreach::`%dopar%`(obj = foreach::foreach(r = iterators::iter(which(upper.tri(K),arr.ind = T),by = 'row'),.combine = c),ex = {
+  if(is.null(other_diagrams))
+  {
+    K <- matrix(data = 1,nrow = m,ncol = m)
+    k <- foreach::`%dopar%`(obj = foreach::foreach(r = iterators::iter(which(upper.tri(K),arr.ind = T),by = 'row'),.combine = c),ex = {
+      
+      return(diagram_kernel(D1 = diagrams[[r[[1]]]],D2 = diagrams[[r[[2]]]],dim = dim,sigma = sigma,t = t))
+      
+    })
+    K[upper.tri(K)] <- k
+    K[which(upper.tri(K),arr.ind = T)[,c("col","row")]] <- k
+  }else
+  {
+    if(length(other_diagrams) > length(diagrams))
+    {
+      K <- foreach::`%dopar%`(obj = foreach::foreach(r = 1:length(other_diagrams),.combine = cbind),ex = {
+        
+        return(unlist(lapply(X = 1:length(diagrams),FUN = function(X){return(diagram_kernel(D1 = other_diagrams[[r]],D2 = diagrams[[X]],dim = dim,sigma = sigma,t = t))})))
+        
+      })
+    }else
+    {
+      K <- foreach::`%do%`(obj = foreach::foreach(r = 1:length(other_diagrams),.combine = cbind),ex = {
+        
+        return(foreach::`%dopar%`(obj = foreach::foreach(X = 1:length(diagrams),.combine = c),ex = {
+          
+          return(diagram_kernel(D1 = other_diagrams[[r]],D2 = diagrams[[X]],dim = dim,sigma = sigma,t = t))
+          
+        }))
+        
+      })
+    }
     
-    return(diagram_kernel(D1 = diagrams[[r[[1]]]],D2 = diagrams[[r[[2]]]],dim = dim,sigma = sigma,t = t))
-    
-  })
-  K[upper.tri(K)] <- k
-  K[which(upper.tri(K),arr.ind = T)[,c("col","row")]] <- k
+  }
   
   parallel::stopCluster(cl)
   

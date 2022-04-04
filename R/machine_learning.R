@@ -71,6 +71,176 @@ diagram_MDS <- function(diagrams,distance = "wasserstein",dim = 0,p = 2,sigma = 
   
 }
 
+#### KERNEL KMEANS ####
+#' Cluster a group of persistence diagrams using kernel k-means.
+#'
+#' Returns the output of kkmeans on the desired Gram matrix of a group of persistence diagrams
+#' in a particular dimension.
+#'
+#' The `diagrams` parameter should be a list of persistence diagrams computed from TDA.
+#' The `dim` parameter should be a positive finite integer.
+#' The `sigma` and `t` parameters are the positive bandwith for the Fisher information metric and
+#' the positive scale for the persistence Fisher kernel respectively.
+#' `centers` is the number of desired clusters, and
+#' `...` are additional parameters to the kkmeans kernlab function.
+#'
+#' @param diagrams a list of persistence diagrams, as the output of a TDA calculation.
+#' @param dim the homological dimension in which the distance is to be computed.
+#' @param t the positive scale for the persistence Fisher kernel, default 1.
+#' @param sigma a positive number representing the bandwith for the Fisher information metric, default 1
+#' @param centers number of clusters to initialize.
+#' @param ... additional parameters.
+#'
+#' @return a diagram_kkmeans object containing the output of kkmeans on the diagram distance matrix, i.e. the cluster memberships, centers, sizes, and withinss's, and the diagrams, dim, t and sigma parameters.
+#' @export
+#' @importFrom kernlab kkmeans
+#' @examples
+#'
+#' # create ten diagrams with package TDA based on 2D Gaussians
+#' g <- lapply(X = 1:10,FUN = function(X){
+#'
+#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
+#' y = rnorm(100,mean = 0,sd = 1)),
+#' maxscale = 1,
+#' maxdimension = 1)
+#' df <- diagram_to_df(d = diag)
+#' return(df)
+#'
+#' })
+#'
+#' # calculate kmeans clusters with centers = 2 in dimension 1 with sigma = t = 2
+#' clusters <- diagram_kkmeans(diagrams = g,centers = 2,dim = 1,t = 2,sigma = 2)
+
+diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,...){
+  
+  # error check diagrams argument
+  if(is.null(diagrams))
+  {
+    stop("diagrams must be a list of persistence diagrams.")
+  }
+  if(!is.list(diagrams) | length(diagrams) < 2)
+  {
+    stop("diagrams must be a list of persistence diagrams of length at least 2.")
+  }
+  diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
+  
+  # error check sigma and dim parameters
+  check_params(iterations = 10,p = 2,q = 2,dims = c(dim),paired = T,distance = "fisher",sigma)
+  
+  # error check t parameter
+  if(is.null(t))
+  {
+    stop("t must not be NULL.")
+  }
+  if(!is.numeric(t) | length(t) > 1 | is.na(t) | is.nan(t) | t <= 0)
+  {
+    stop("t must be a positive number.")
+  }
+  
+  # error check centers parameter
+  if(is.null(centers))
+  {
+    stop("centers must not be NULL.")
+  }
+  if(is.na(centers) | !is.numeric(centers) | length(centers) > 1)
+  {
+    stop("centers must be a single number.")
+  }
+  if(centers < 1)
+  {
+    stop("centers must be at least 1.")
+  }
+  if(round(centers,0) != centers)
+  {
+    stop("centers must be a whole number.")
+  }
+  
+  # compute Gram matrix
+  K = gram_matrix(diagrams = diagrams,dim = dim,sigma = sigma,t = t)
+  
+  # return kernlab calculation, saving in a list of class diagram_kkmeans for later interface with prediction calculations
+  ret_list <- list(clustering = kernlab::kkmeans(x = K,centers = centers,...),diagrams = diagrams,dim = dim,sigma = sigma,t = t)
+  
+  class(ret_list) <- "diagram_kkmeans"
+  
+  return(ret_list)
+  
+}
+
+#### PREDICT KERNEL KMEANS ####
+#' Find the nearest kkmeans cluster center to a list of new diagrams to return approximate cluster labels.
+#'
+#' Returns the nearest kkmeans cluster center labels on the desired Gram matrix of a group of persistence diagrams
+#' in a particular dimension.
+#'
+#' The `new_diagrams` parameter should be a list of persistence diagrams computed from TDA, and the
+#' `clustering` parameter should be the output of a diagram_kkmeans function call.
+#'
+#' @param new_diagrams a list of persistence diagrams, as the output of a TDA calculation.
+#' @param clustering the output of a diagram_kkmeans function call.
+#'
+#' @return a vector of the predicted cluster labels for the new diagrams.
+#' @export
+#' @examples
+#'
+#' # create ten diagrams with package TDA based on 2D Gaussians
+#' g <- lapply(X = 1:10,FUN = function(X){
+#'
+#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
+#' y = rnorm(100,mean = 0,sd = 1)),
+#' maxscale = 1,
+#' maxdimension = 1)
+#' df <- diagram_to_df(d = diag)
+#' return(df)
+#'
+#' })
+#'
+#' # calculate kmeans clusters with centers = 2 in dimension 1 with sigma = t = 2
+#' clusters <- diagram_kkmeans(diagrams = g,centers = 2,dim = 1,t = 2,sigma = 2)
+#' 
+#' # predict the nearest cluster for all diagrams in g
+#' nearest_clusters <- diagram_nearest_clusters(new_diagrams = g,clustering = clusters)
+
+diagram_nearest_clusters <- function(new_diagrams,clustering){
+  
+  # set internal variables to NULL to avoid build issues
+  X <- NULL
+  
+  # error check diagrams argument
+  if(is.null(new_diagrams))
+  {
+    stop("new_diagrams must be a list of persistence diagrams.")
+  }
+  if(!is.list(new_diagrams) | length(new_diagrams) < 2)
+  {
+    stop("diagrams must be a list of persistence diagrams of length at least 2.")
+  }
+  new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
+  
+  # error check clustering argument
+  if(is.null(clustering))
+  {
+    stop("clustering must not be NULL.")
+  }
+  if(class(clustering) != "diagram_kkmeans")
+  {
+    stop("clustering object must be the output of a diagram_kkmeans function call.")
+  }
+  
+  # compute cross Gram matrix
+  K = gram_matrix(diagrams = new_diagrams,other_diagrams = clustering$diagrams,dim = clustering$dim,sigma = clustering$sigma,t = clustering$t)
+  
+  # return predicted class for each new diagram
+  predicted_clusters <- unlist(lapply(X = 1:length(new_diagrams),FUN = function(X){
+    
+    return(clustering$clustering@.Data[[as.numeric(which.max(K[X,]))]])
+    
+  }))
+  
+  return(predicted_clusters)
+  
+}
+
 #### KERNEL PCA ####
 #' Calculate the kernel PCA embedding of a group of persistence diagrams
 #'
@@ -93,6 +263,7 @@ diagram_MDS <- function(diagrams,distance = "wasserstein",dim = 0,p = 2,sigma = 
 #'
 #' @return a list containing the output of cmdscale on the diagram distance matrix, either just the embedding matrix or a list, the diagram groups, dimension, t, sigma and features. The class of this object is 'diagram_kpca'.
 #' @export
+#' @importFrom kernlab kpca
 #' @examples
 #'
 #' # create ten diagrams with package TDA based on 2D Gaussians
@@ -223,37 +394,8 @@ predict_diagram_kpca <- function(new_diagrams,embedding){
     stop("embedding must be the output of a diagram_kpca function call.")
   }
   
-  # compute kernel matrix, storing the value of each kernel computation between the new diagrams and the old ones
-  num_workers <- parallelly::availableCores(omit = 1)
-  cl <- parallel::makeCluster(num_workers)
-  doParallel::registerDoParallel(cl)
-  parallel::clusterExport(cl,c("diagram_distance","diagram_kernel"))
-  force(new_diagrams) # required for parallel computation in this environment
-  force(embedding)
-  force(check_diagram)
-  
-  # compute in parallel along the diagram list (new or old) which has more elements
-  if(length(new_diagrams) > length(embedding$diagrams))
-  {
-    K <- foreach::`%dopar%`(obj = foreach::foreach(r = 1:length(new_diagrams),.combine = rbind),ex = {
-      
-      return(unlist(lapply(X = 1:length(embedding$diagrams),FUN = function(X){return(diagram_kernel(D1 = new_diagrams[[r]],D2 = embedding$diagrams[[X]],dim = embedding$dim,sigma = embedding$sigma,t = embedding$t))})))
-      
-    })
-  }else
-  {
-    K <- foreach::`%do%`(obj = foreach::foreach(r = 1:length(new_diagrams),.combine = rbind),ex = {
-      
-      return(foreach::`%dopar%`(obj = foreach::foreach(X = 1:length(new_diagrams),.combine = c),ex = {
-        
-        return(diagram_kernel(D1 = new_diagrams[[r]],D2 = embedding$diagrams[[X]],dim = embedding$dim,sigma = embedding$sigma,t = embedding$t))
-        
-      }))
-
-    })
-  }
-  
-  parallel::stopCluster(cl)
+  # compute cross-Gram matrix
+  K <- gram_matrix(diagrams = new_diagrams,other_diagrams = embedding$diagrams,dim = embedding$dim,sigma = embedding$sigma,t = embedding$t)
   
   # project the new diagrams into the embedding space
   return(K %*% embedding$pca@pcv)
@@ -344,10 +486,10 @@ diagram_ksvm <- function(diagrams,dim,t = 1,sigma = 1,y,type = NULL,C = 1,nu = 0
   
   # return kernlab calculation
   ret_list <- list(model = kernlab::ksvm(x = K,y = y,type = type,C = C,nu = nu,epsilon = epsilon,prob.model = prob.model,class.weights = class.weights,cross = cross,fit = fit,cache = cache,tol = tol,shrinking = shrinking,...),
-                   diagrams = diagrams,
                    dim = dim,
                    sigma = sigma,
                    t = t)
+  ret_list$diagrams <- diagrams[ret_list$model@SVindex] # remove all diagrams which are not support vectors for faster predictions
   
   class(ret_list) <- "diagram_ksvm"
   
@@ -435,41 +577,10 @@ predict_diagram_ksvm <- function(new_diagrams,model){
   }
   
   # compute kernel matrix, storing the value of each kernel computation between the new diagrams and the old ones
-  num_workers <- parallelly::availableCores(omit = 1)
-  cl <- parallel::makeCluster(num_workers)
-  doParallel::registerDoParallel(cl)
-  parallel::clusterExport(cl,c("diagram_distance","diagram_kernel"))
-  force(new_diagrams) # required for parallel computation in this environment
-  force(model)
-  force(check_diagram)
-  
-  # compute in parallel along the diagram list (new or old) which has more elements
-  if(length(new_diagrams) > length(model$diagrams))
-  {
-    K <- foreach::`%dopar%`(obj = foreach::foreach(r = 1:length(new_diagrams),.combine = rbind),ex = {
-      
-      return(unlist(lapply(X = 1:length(model$diagrams),FUN = function(X){return(diagram_kernel(D1 = new_diagrams[[r]],D2 = model$diagrams[[X]],dim = model$dim,sigma = model$sigma,t = model$t))})))
-      
-    })
-  }else
-  {
-    K <- foreach::`%do%`(obj = foreach::foreach(r = 1:length(new_diagrams),.combine = rbind),ex = {
-      
-      return(foreach::`%dopar%`(obj = foreach::foreach(X = 1:length(new_diagrams),.combine = c),ex = {
-        
-        return(diagram_kernel(D1 = new_diagrams[[r]],D2 = model$diagrams[[X]],dim = model$dim,sigma = model$sigma,t = model$t))
-        
-      }))
-      
-    })
-  }
-  
-  class(K) <- "kernelMatrix"
-  
-  parallel::stopCluster(cl)
+  K <- gram_matrix(diagrams = new_diagrams,other_diagrams = model$diagrams,dim = model$dim,sigma = model$sigma,t = model$t)
   
   # return prediction
-  return(kernlab::predict(object = model$model,kernlab::as.kernelMatrix(K[,model$model@SVindex,drop = F])))
+  return(kernlab::predict(object = model$model,kernlab::as.kernelMatrix(K)))
   
 }
 
