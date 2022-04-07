@@ -6,6 +6,7 @@
 \usage{
 diagram_ksvm(
   diagrams,
+  cv = 1,
   dim,
   t = 1,
   sigma = 1,
@@ -16,16 +17,16 @@ diagram_ksvm(
   epsilon = 0.1,
   prob.model = F,
   class.weights = NULL,
-  cross = 0,
   fit = T,
   cache = 40,
   tol = 0.001,
-  shrinking = T,
-  ...
+  shrinking = T
 )
 }
 \arguments{
 \item{diagrams}{a list of persistence diagrams, as the output of a TDA calculation.}
+
+\item{cv}{a positive number at most the length of `diagrams` which determines the number of cross validation splits to be performed (default 1, aka no cross-validation).}
 
 \item{dim}{the homological dimension in which the distance is to be computed.}
 
@@ -47,8 +48,6 @@ diagram_ksvm(
 
 \item{class.weights}{a named vector of weights for the different classes, used for asymmetric class sizes. Not all factor levels have to be supplied (default weight: 1). All components have to be named.}
 
-\item{cross}{if a integer value k>0 is specified, a k-fold cross validation on the training data is performed to assess the quality of the model: the accuracy rate for classification and the Mean Squared Error for regression.}
-
 \item{fit}{indicates whether the fitted values should be computed and included in the model or not (default TRUE).}
 
 \item{cache}{cache memory in MB (default 40).}
@@ -56,11 +55,9 @@ diagram_ksvm(
 \item{tol}{tolerance of termination criteria (default 0.001).}
 
 \item{shrinking}{option whether to use the shrinking-heuristics (default TRUE).}
-
-\item{...}{additional parameters.}
 }
 \value{
-a list containing the output of cmdscale on the diagram distance matrix, either just the embedding matrix or a list, the diagram groups, dimension, t, sigma and features. The class of this object is 'diagram_kpca'.
+a list containing the cross-validation results (stored in list member 'models') and the best model, of class 'diagram_ksvm'. If `cv` == 1 then only the model is returned. best_model is the output of kernlab::ksvm on the whole dataset, using the optimal parameters found using CV, the support vector diagrams groups, dimension, t, and sigma.
 }
 \description{
 Returns the output of ksvm on the Gram matrix of a group of persistence diagrams
@@ -91,6 +88,6 @@ return(df)
 # create random response vector
 y <- stats::runif(10,min = 0,max = 1)
 
-# calculate model in dimension 1
-model_svm <- diagram_ksvm(diagrams = g,dim = 1,y = y)
+# calculate models over a grid with 5-fold CV
+model_svm <- diagram_ksvm(diagrams = g,cv = 5,dim = c(1,2),y = y,sigma = c(1,0.1))
 }

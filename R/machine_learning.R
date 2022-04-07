@@ -154,9 +154,9 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,...){
   {
     stop("centers must be a whole number.")
   }
-  
+
   # compute Gram matrix
-  K = gram_matrix(diagrams = diagrams,dim = dim,sigma = sigma,t = t)
+  K <- gram_matrix(diagrams = diagrams,dim = dim,sigma = sigma,t = t)
   
   # return kernlab calculation, saving in a list of class diagram_kkmeans for later interface with prediction calculations
   ret_list <- list(clustering = kernlab::kkmeans(x = K,centers = centers,...),diagrams = diagrams,dim = dim,sigma = sigma,t = t)
@@ -416,6 +416,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding){
 #' `...` are additional parameters to the ksvm kernlab function.
 #'
 #' @param diagrams a list of persistence diagrams, as the output of a TDA calculation.
+#' @param cv a positive number at most the length of `diagrams` which determines the number of cross validation splits to be performed (default 1, aka no cross-validation).
 #' @param dim the homological dimension in which the distance is to be computed.
 #' @param t the positive scale for the persistence Fisher kernel, default 1.
 #' @param sigma a positive number representing the bandwith for the Fisher information metric, default 1
@@ -429,12 +430,15 @@ predict_diagram_kpca <- function(new_diagrams,embedding){
 #' @param class.weights a named vector of weights for the different classes, used for asymmetric class sizes. Not all factor levels have to be supplied (default weight: 1). All components have to be named.
 #' @param cache cache memory in MB (default 40).
 #' @param tol tolerance of termination criteria (default 0.001).
-#' @param cross if a integer value k>0 is specified, a k-fold cross validation on the training data is performed to assess the quality of the model: the accuracy rate for classification and the Mean Squared Error for regression.
 #' @param shrinking option whether to use the shrinking-heuristics (default TRUE).
-#' @param ... additional parameters.
-#' @return a list containing the output of cmdscale on the diagram distance matrix, either just the embedding matrix or a list, the diagram groups, dimension, t, sigma and features. The class of this object is 'diagram_kpca'.
+#' @return a list containing the cross-validation results (stored in list member 'models') and the best model, of class 'diagram_ksvm'. If `cv` == 1 then only the model is returned. best_model is the output of kernlab::ksvm on the whole dataset, using the optimal parameters found using CV, the support vector diagrams groups, dimension, t, and sigma.
 #' @export
 #' @importFrom kernlab ksvm
+#' @importFrom foreach foreach %dopar%
+#' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
+#' @importFrom parallelly availableCores
+#' @importFrom doParallel registerDoParallel
+#' @importFrom iterators iter
 #' @examples
 #'
 #' # create ten diagrams with package TDA based on 2D Gaussians
@@ -452,10 +456,15 @@ predict_diagram_kpca <- function(new_diagrams,embedding){
 #' # create random response vector
 #' y <- stats::runif(10,min = 0,max = 1)
 #'
-#' # calculate model in dimension 1
-#' model_svm <- diagram_ksvm(diagrams = g,dim = 1,y = y)
+#' # calculate models over a grid with 5-fold CV
+#' model_svm <- diagram_ksvm(diagrams = g,cv = 5,dim = c(1,2),y = y,sigma = c(1,0.1))
 
-diagram_ksvm <- function(diagrams,dim,t = 1,sigma = 1,y,type = NULL,C = 1,nu = 0.2,epsilon = 0.1,prob.model = F,class.weights = NULL,cross = 0,fit = T,cache = 40,tol = 0.001,shrinking = T,...){
+diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1,nu = 0.2,epsilon = 0.1,prob.model = F,class.weights = NULL,fit = T,cache = 40,tol = 0.001,shrinking = T){
+  
+  # set internal variables to NULL to avoid build issues
+  r <- NULL
+  s <- NULL
+  X <- NULL
   
   # error check diagrams argument
   if(is.null(diagrams))
@@ -468,29 +477,234 @@ diagram_ksvm <- function(diagrams,dim,t = 1,sigma = 1,y,type = NULL,C = 1,nu = 0
   }
   diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
   
-  # error check sigma and dim parameters
-  check_params(iterations = 10,p = 2,q = 2,dims = c(dim),paired = T,distance = "fisher",sigma)
-  
   # error check t parameter
   if(is.null(t))
   {
-    stop("t must not be NULL.")
+    stop("t values must not be NULL.")
   }
-  if(!is.numeric(t) | length(t) > 1 | is.na(t) | is.nan(t) | t <= 0)
+  if(!is.numeric(t) | length(which(is.na(t))) > 0 | length(which(is.nan(t))) > 0 | length(which(t <= 0)) > 0)
   {
-    stop("t must be a positive number.")
+    stop("t values must be positive numbers.")
   }
   
-  # compute Gram matrix
-  K <- gram_matrix(diagrams = diagrams,t = t,sigma = sigma,dim = dim)
+  # error check dim parameter
+  if(is.null(dim))
+  {
+    stop("dim values must not be NULL.")
+  }
+  if(!is.numeric(dim) | length(which(is.na(dim))) > 0 | length(which(is.nan(dim))) > 0 | length(which(dim <= 0)) > 0 | length(which(round(dim,digits = 0) != dim)) > 0)
+  {
+    stop("dim values must be positive whole numbers.")
+  }
+  
+  # error check sigma parameter
+  if(is.null(sigma))
+  {
+    stop("sigma values must not be NULL.")
+  }
+  if(!is.numeric(sigma) | length(which(is.na(sigma))) > 0 | length(which(is.nan(sigma))) > 0 | length(which(sigma <= 0)) > 0)
+  {
+    stop("sigma values must be positive whole numbers.")
+  }
+  
+  # error check cv parameters
+  if(is.null(cv))
+  {
+    cv <- 1
+  }
+  if(is.na(cv) | !is.numeric(cv) | length(cv) > 1)
+  {
+    stop("cv must be a single number.")
+  }
+  if(cv < 1 | cv > length(diagrams))
+  {
+    stop("cv must be at least one and at most the number of diagrams.")
+  }
+  if(round(cv,0) != cv)
+  {
+    stop("cv must be a whole number.")
+  }
+  
+  # set defaults for type argument
+  if(is.null(type))
+  {
+    if(is.factor(y))
+    {
+      type <- "C-svc"
+    }else
+    {
+      type <- "eps-svr"
+    }
+  }
+  
+  # expand parameter grid
+  params <- expand.grid(dim = dim,t = t,sigma = sigma,C = C,nu = nu,epsilon = epsilon)
+  
+  # make vector of row memberships
+  v <- rep(1:cv,floor(length(diagrams)/cv))
+  if(length(v) != length(diagrams))
+  {
+    v <- c(v,1:(length(diagrams) %% floor(length(diagrams)/cv)))
+  }
+  v <- sample(v,size = length(v),replace = F)
+  
+  # split diagrams by membership vector
+  diagrams_split <- lapply(X = 1:cv,FUN = function(X){
+    
+    return(which(v == X))
+    
+  })
+  
+  # for each pair of sigma and dim values compute the Fisher distance matrix to avoid recomputing Gram matrices
+  dim_and_sigma <- expand.grid(dim = dim,sigma = sigma)
+  distance_matrices <- lapply(X = 1:nrow(dim_and_sigma),FUN = function(X){
+    
+    return(distance_matrix(diagrams = diagrams,dim = dim_and_sigma[X,1],distance = "fisher",sigma = dim_and_sigma[X,2]))
+    
+  })
+  names(distance_matrices) <- paste(dim_and_sigma$dim,dim_and_sigma$sigma,sep = "_")
+  
+  # set up for parallel computation
+  num_workers <- parallelly::availableCores(omit = 1)
+  cl <- parallel::makeCluster(num_workers)
+  doParallel::registerDoParallel(cl)
+  parallel::clusterEvalQ(cl,c(library(clue),library(rdist)))
+  parallel::clusterExport(cl,c("y","predict_diagram_ksvm"))
+  force(diagrams)
+  force(distance_matrices)
+  force(diagrams_split)
+  force(type)
+  force(prob.model)
+  force(class.weights)
+  force(fit)
+  force(cache)
+  force(tol)
+  force(shrinking)
+  
+  # for each model (combination of parameters), train the model on each subset and get the
+  # prediction error on the hold out set
+  if(cv < nrow(params))
+  {
+    model_errors <- foreach(r = iterators::iter(params,by = "row"),.combine = c) %dopar%
+      {
+        K <- exp(-1*r[[2]]*distance_matrices[[paste0(r[[1]],"_",r[[3]])]])
+        return(mean(foreach(s = 1:cv,.combine = c) %do%
+                      {
+                        if(cv > 1)
+                        {
+                          training_indices <- unlist(diagrams_split[setdiff(1:cv,s)])
+                          training_indices <- training_indices[order(training_indices)]
+                          test_indices <- setdiff(1:length(diagrams),training_indices)
+                          m <- length(test_indices)
+                          K_subset <- K[training_indices,training_indices]
+                          class(K_subset) <- "kernelMatrix"
+                          model <- list(model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking),
+                                        dim = r[[1]],
+                                        sigma = r[[3]],
+                                        t = r[[2]],
+                                        CV = NULL)
+                          model$diagrams <- diagrams[model$model@SVindex]
+                          model_list <- list(cv_results = NULL,best_model = model)
+                          class(model_list) <- "diagram_ksvm"
+                          predictions <- predict_diagram_ksvm(new_diagrams = diagrams[test_indices],model = model)
+                          
+                          if(type == "C-svc" || type == "nu-svc" || type == "spoc-svc" || type == "kbb-svc" || type == "C-bsvc")
+                          {
+                            tab <- as.matrix(table(y[test_indices],as.integer(predictions)))
+                            error  <- 1 - sum(diag(tab))/sum(as.numeric(tab))
+                          }
+                          if(type == "one-svc")
+                          {
+                            error <- sum(!predictions)/m
+                          }
+                          if(type == "eps-svr" || type == "nu-svr" || type == "eps-bsvr")
+                          {
+                            error <- drop(crossprod(predictions - y[setdiff(1:length(diagrams),training_indices)])/m)
+                          }
+                          
+                          return(error)
+                        }else
+                        {
+                          class(K) <- "kernelMatrix"
+                          model <- kernlab::ksvm(x = K,y = y,type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)
+                          return(model@error)
+                          
+                        }
+                        
+                      }))
+      }
+  }else
+  {
+    model_errors <- foreach(r = iterators::iter(params,by = "row"),.combine = c) %do%
+      {
+        K <- exp(-1*r[[2]]*distance_matrices[[paste0(r[[1]],"_",r[[3]])]])
+        return(mean(foreach(s = 1:cv,.combine = c) %dopar%
+                      {
+                        if(cv > 1)
+                        {
+                          training_indices <- unlist(diagrams_split[setdiff(1:cv,s)])
+                          training_indices <- training_indices[order(training_indices)]
+                          test_indices <- setdiff(1:length(diagrams),training_indices)
+                          m <- length(test_indices)
+                          K_subset <- K[training_indices,training_indices]
+                          class(K_subset) <- "kernelMatrix"
+                          model <- list(model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking),
+                                        dim = r[[1]],
+                                        sigma = r[[3]],
+                                        t = r[[2]],
+                                        CV = NULL)
+                          model$diagrams <- diagrams[model$model@SVindex]
+                          model_list <- list(cv_results = NULL,best_model = model)
+                          class(model_list) <- "diagram_ksvm"
+                          predictions <- predict_diagram_ksvm(new_diagrams = diagrams[test_indices],model = model_list)
+                          
+                          if(type == "C-svc" || type == "nu-svc" || type == "spoc-svc" || type == "kbb-svc" || type == "C-bsvc")
+                          {
+                            tab <- as.matrix(table(y[test_indices],as.integer(predictions)))
+                            error  <- 1 - sum(diag(tab))/sum(as.numeric(tab))
+                          }
+                          if(type == "one-svc")
+                          {
+                            error <- sum(!predictions)/m
+                          }
+                          if(type == "eps-svr" || type == "nu-svr" || type == "eps-bsvr")
+                          {
+                            error <- drop(crossprod(predictions - y[setdiff(1:length(diagrams),training_indices)])/m)
+                          }
+                          
+                          return(error)
+                        }else
+                        {
+                          class(K) <- "kernelMatrix"
+                          model <- kernlab::ksvm(x = K,y = y,type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)
+                          return(model@error)
+                          
+                        }
+                        
+                      }))
+      }
+  }
+
+  parallel::stopCluster(cl)
+  
+  # get best parameters
+  params$error <- model_errors
+  best_params <- params[which.min(model_errors),1:(ncol(params) - 1)]
+  
+  # fit full model using those parameters
+  K <- exp(-1*best_params[[2]]*distance_matrices[[paste0(best_params[[1]],"_",best_params[[3]])]])
+  class(K) <- "kernelMatrix"
   
   # return kernlab calculation
-  ret_list <- list(model = kernlab::ksvm(x = K,y = y,type = type,C = C,nu = nu,epsilon = epsilon,prob.model = prob.model,class.weights = class.weights,cross = cross,fit = fit,cache = cache,tol = tol,shrinking = shrinking,...),
-                   dim = dim,
-                   sigma = sigma,
-                   t = t)
-  ret_list$diagrams <- diagrams[ret_list$model@SVindex] # remove all diagrams which are not support vectors for faster predictions
-  
+  best_model <- list(model = kernlab::ksvm(x = K,y = y,type = type,C = best_params[[4]],nu = best_params[[5]],epsilon = best_params[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking),
+                   dim = best_params[[1]],
+                   sigma = best_params[[3]],
+                   t = best_params[[2]],
+                   CV = params)
+
+  best_model$diagrams <- diagrams[best_model$model@SVindex]
+
+  ret_list <- list(cv_results = params,best_model = best_model)
   class(ret_list) <- "diagram_ksvm"
   
   return(ret_list)
@@ -577,10 +791,9 @@ predict_diagram_ksvm <- function(new_diagrams,model){
   }
   
   # compute kernel matrix, storing the value of each kernel computation between the new diagrams and the old ones
-  K <- gram_matrix(diagrams = new_diagrams,other_diagrams = model$diagrams,dim = model$dim,sigma = model$sigma,t = model$t)
-  
-  # return prediction
-  return(kernlab::predict(object = model$model,kernlab::as.kernelMatrix(K)))
+  K <- gram_matrix(diagrams = new_diagrams,other_diagrams = model$best_model$diagrams,dim = model$best_model$dim,sigma = model$best_model$sigma,t = model$best_model$t)
+
+  return(kernlab::predict(object = model$best_model$model,kernlab::as.kernelMatrix(K)))
   
 }
 
