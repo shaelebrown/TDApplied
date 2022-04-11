@@ -7,7 +7,7 @@
 diagram_nearest_clusters(new_diagrams, clustering)
 }
 \arguments{
-\item{new_diagrams}{a list of persistence diagrams, as the output of a TDA calculation like ripsDiag or \code{\link{diagram_to_df}}.}
+\item{new_diagrams}{a list of persistence diagrams, as the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.}
 
 \item{clustering}{the output of a \code{link{diagram_kkmeans}} function call.}
 }
@@ -19,7 +19,7 @@ Returns the nearest kkmeans cluster center labels on the desired Gram matrix of 
 in a particular dimension.
 }
 \details{
-The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag or from a 
+The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like \code{\link[TDA]{ripsDiag}} or from a 
 \code{\link{diagram_to_df}} function call, and the
 `clustering` parameter should be the output of a \code{\link{diagram_kkmeans}} function call.
 }

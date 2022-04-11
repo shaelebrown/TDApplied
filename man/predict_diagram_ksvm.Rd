@@ -18,7 +18,7 @@ a vector containing the output of \code{\link[kernlab]{predict.ksvm}} on the cro
 Returns the predicted response vector of the model on the new diagrams.
 }
 \details{
-The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag or \code{\link{diagram_to_df}}.
+The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
 The `model` parameter should be the output from a diagram_ksvm function call.
 }
 \examples{
@@ -41,7 +41,7 @@ y <- stats::runif(10,min = 0,max = 1)
 # calculate model in dimension 1
 model_svm <- diagram_ksvm(diagrams = g,dim = 1,y = y)
 
-# create ten new diagrams with package TDa based on 2D Gaussians
+# create ten new diagrams with package TDA based on 2D Gaussians
 g_new <- lapply(X = 1:10,FUN = function(X){
 
 diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),

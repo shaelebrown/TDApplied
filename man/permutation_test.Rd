@@ -49,7 +49,7 @@ like it was suggested in the original paper functionality is provided for an arb
 }
 \details{
 The `...` parameter should be a number of lists of persistence diagrams, outputted from a
-TDA calculation like ripsDiag or a \code{\link{diagram_to_df}} function call. The `iterations` parameter should be the number of permutations
+TDA calculation like \code{\link[TDA]{ripsDiag}} or a \code{\link{diagram_to_df}} function call. The `iterations` parameter should be the number of permutations
 desired for generating the null distribution. The `p` parameter is the wasserstein power, and `q`
 is the exponent for distances. `dims` is a numeric vector of the homological dimensions in which
 to carry out the test. The `paired` parameter is a boolean flag for whether there are correspondences

@@ -7,9 +7,9 @@
 diagram_kernel(D1, D2, dim = 0, sigma = 1, t = 1)
 }
 \arguments{
-\item{D1}{the first persistence diagram, either outputted from a TDA calculation like ripsDiag or from a \code{\link{diagram_to_df}} function call.}
+\item{D1}{the first persistence diagram, either outputted from a TDA calculation like \code{\link[TDA]{ripsDiag}} or from a \code{\link{diagram_to_df}} function call.}
 
-\item{D2}{the second persistence diagram, either outputted from a TDA calculation like ripsDiag or from a \code{\link{diagram_to_df}} function call.}
+\item{D2}{the second persistence diagram, either outputted from a TDA calculation like \code{\link[TDA]{ripsDiag}} or from a \code{\link{diagram_to_df}} function call.}
 
 \item{dim}{the homological dimension in which the distance is to be computed.}
 

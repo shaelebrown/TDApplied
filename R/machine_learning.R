@@ -5,7 +5,7 @@
 #' Returns the output of cmdscale on the desired distance matrix of a group of persistence diagrams
 #' in a particular dimension.
 #'
-#' The `diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag or from \code{\link{diagram_to_df}}.
+#' The `diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like \code{\link[TDA]{ripsDiag}} or from \code{\link{diagram_to_df}}.
 #' The `distance` parameter is a string representing which determines which distance metric to use.
 #' The `dim` parameter should be a positive finite integer.
 #' The `sigma` parameter is the positive bandwith for the Fisher information metric, and
@@ -13,7 +13,7 @@
 #' `eig`, `add`, `x.ret` and `list.` are cmdscale parameters providing optional additional
 #' information to be returned.
 #'
-#' @param diagrams a list of persistence diagrams, as the output of a TDA calculation like ripsDiag or a \code{\link{diagram_to_df}} function call.
+#' @param diagrams a list of persistence diagrams, as the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or a \code{\link{diagram_to_df}} function call.
 #' @param distance a string representing the desired distance metric to be used, either 'wasserstein' (default) or 'fisher'.
 #' @param dim the homological dimension in which the distance is to be computed.
 #' @param p the wasserstein power, a number at least 1 (infinity for the bottleneck distance), default 2.
@@ -173,11 +173,11 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,...){
 #' Returns the nearest kkmeans cluster center labels on the desired Gram matrix of a group of persistence diagrams
 #' in a particular dimension.
 #'
-#' The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag or from a 
+#' The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like \code{\link[TDA]{ripsDiag}} or from a 
 #' \code{\link{diagram_to_df}} function call, and the
 #' `clustering` parameter should be the output of a \code{\link{diagram_kkmeans}} function call.
 #'
-#' @param new_diagrams a list of persistence diagrams, as the output of a TDA calculation like ripsDiag or \code{\link{diagram_to_df}}.
+#' @param new_diagrams a list of persistence diagrams, as the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
 #' @param clustering the output of a \code{link{diagram_kkmeans}} function call.
 #'
 #' @return a vector of the predicted cluster labels for the new diagrams.
@@ -328,7 +328,7 @@ diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,...){
 #' The `embedding` parameter is the diagram_kpca embedding object to be used for embedding
 #' the new diagrams.
 #'
-#' @param new_diagrams a list of persistence diagrams, as the output of a TDA calculation like ripsDiag or \code{\link{diagram_to_df}}.
+#' @param new_diagrams a list of persistence diagrams, as the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
 #' @param embedding the output to a diagram_kpca function call.
 #'
 #' @return the data projection.
@@ -411,7 +411,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding){
 #' in a particular dimension. Cross validation is carried out in parallel, using a trick
 #' noted in \url{https://doi.org/10.1007/s41468-017-0008-7}.
 #'
-#' The `diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag or \code{\link{diagram_to_df}}.
+#' The `diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
 #' The `dim` parameter should be a positive finite integer.
 #' The `sigma` and `t` parameters are the positive bandwith for the Fisher information metric and
 #' the positive scale for the persistence Fisher kernel respectively.
@@ -719,7 +719,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
 #'
 #' Returns the predicted response vector of the model on the new diagrams.
 #'
-#' The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag or \code{\link{diagram_to_df}}.
+#' The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
 #' The `model` parameter should be the output from a diagram_ksvm function call.
 #'
 #' @param new_diagrams a list of new persistence diagrams, as the output of a TDA calculation.
@@ -751,7 +751,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
 #' # calculate model in dimension 1
 #' model_svm <- diagram_ksvm(diagrams = g,dim = 1,y = y)
 #' 
-#' # create ten new diagrams with package TDa based on 2D Gaussians
+#' # create ten new diagrams with package TDA based on 2D Gaussians
 #' g_new <- lapply(X = 1:10,FUN = function(X){
 #'
 #' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),

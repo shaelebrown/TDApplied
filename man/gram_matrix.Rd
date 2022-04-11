@@ -7,7 +7,7 @@
 gram_matrix(diagrams, other_diagrams = NULL, dim = 0, sigma = 1, t = 1)
 }
 \arguments{
-\item{diagrams}{the list of persistence diagrams, either the output from TDA calculations or the diagram_to_df function.}
+\item{diagrams}{the list of persistence diagrams, either the output from TDA calculations like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.}
 
 \item{other_diagrams}{either NULL (default) or another list of persistence diagrams to compute a cross-Gram matrix.}
 

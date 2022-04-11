@@ -9,7 +9,7 @@
 #' like it was suggested in the original paper functionality is provided for an arbitrary number of groups (not just 2).
 #'
 #' The `...` parameter should be a number of lists of persistence diagrams, outputted from a
-#' TDA calculation like ripsDiag or a \code{\link{diagram_to_df}} function call. The `iterations` parameter should be the number of permutations
+#' TDA calculation like \code{\link[TDA]{ripsDiag}} or a \code{\link{diagram_to_df}} function call. The `iterations` parameter should be the number of permutations
 #' desired for generating the null distribution. The `p` parameter is the wasserstein power, and `q`
 #' is the exponent for distances. `dims` is a numeric vector of the homological dimensions in which
 #' to carry out the test. The `paired` parameter is a boolean flag for whether there are correspondences
@@ -229,7 +229,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
 #' \url{https://doi.org/10.1007/s41468-017-0008-7} for details.
 #'
 #' The `g1` and `g2` parameters should be lists of persistence diagrams, outputted from a
-#' TDA calculation like ripsDiag or a \code{\link{diagram_to_df}} function call. `dims` is a numeric vector of the homological dimensions in which
+#' TDA calculation like \code{\link[TDA]{ripsDiag}} or a \code{\link{diagram_to_df}} function call. `dims` is a numeric vector of the homological dimensions in which
 #' to carry out the test. The `sigma` parameter is the positive bandwith for the
 #' Fisher information metric, `t` is the scale parameter for the persistence Fisher kernel. 
 #' `verbose` determines if the time duration of the function call should be printed.

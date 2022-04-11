@@ -9,8 +9,8 @@
 #' The `sigma` parameter is the positive bandwith for the Fisher information metric, and
 #' `t` is the scale parameter for the persistence Fisher kernel.
 #'
-#' @param D1 the first persistence diagram, either outputted from a TDA calculation like ripsDiag or from a \code{\link{diagram_to_df}} function call.
-#' @param D2 the second persistence diagram, either outputted from a TDA calculation like ripsDiag or from a \code{\link{diagram_to_df}} function call.
+#' @param D1 the first persistence diagram, either outputted from a TDA calculation like \code{\link[TDA]{ripsDiag}} or from a \code{\link{diagram_to_df}} function call.
+#' @param D2 the second persistence diagram, either outputted from a TDA calculation like \code{\link[TDA]{ripsDiag}} or from a \code{\link{diagram_to_df}} function call.
 #' @param dim the homological dimension in which the distance is to be computed.
 #' @param sigma a positive number representing the bandwith for the Fisher information metric, default 1.
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
@@ -60,7 +60,7 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
 #' The `sigma` parameter is the positive bandwith for the Fisher information metric, and
 #' `t` is the positive scale parameter for the persistence Fisher kernel.
 #'
-#' @param diagrams the list of persistence diagrams, either the output from TDA calculations or the diagram_to_df function.
+#' @param diagrams the list of persistence diagrams, either the output from TDA calculations like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.
 #' @param other_diagrams either NULL (default) or another list of persistence diagrams to compute a cross-Gram matrix.
 #' @param dim the homological dimension in which the distance is to be computed.
 #' @param sigma a positive number representing the bandwith for the Fisher information metric, default 1.

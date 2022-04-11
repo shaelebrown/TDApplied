@@ -7,7 +7,7 @@
 predict_diagram_kpca(new_diagrams, embedding)
 }
 \arguments{
-\item{new_diagrams}{a list of persistence diagrams, as the output of a TDA calculation like ripsDiag or \code{\link{diagram_to_df}}.}
+\item{new_diagrams}{a list of persistence diagrams, as the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.}
 
 \item{embedding}{the output to a diagram_kpca function call.}
 }

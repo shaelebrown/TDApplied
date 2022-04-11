@@ -31,7 +31,7 @@ and a p-value for each desired homological dimension. See
 }
 \details{
 The `g1` and `g2` parameters should be lists of persistence diagrams, outputted from a
-TDA calculation like ripsDiag or a \code{\link{diagram_to_df}} function call. `dims` is a numeric vector of the homological dimensions in which
+TDA calculation like \code{\link[TDA]{ripsDiag}} or a \code{\link{diagram_to_df}} function call. `dims` is a numeric vector of the homological dimensions in which
 to carry out the test. The `sigma` parameter is the positive bandwith for the
 Fisher information metric, `t` is the scale parameter for the persistence Fisher kernel. 
 `verbose` determines if the time duration of the function call should be printed.

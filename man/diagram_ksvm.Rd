@@ -65,7 +65,7 @@ in a particular dimension. Cross validation is carried out in parallel, using a 
 noted in \url{https://doi.org/10.1007/s41468-017-0008-7}.
 }
 \details{
-The `diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag or \code{\link{diagram_to_df}}.
+The `diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
 The `dim` parameter should be a positive finite integer.
 The `sigma` and `t` parameters are the positive bandwith for the Fisher information metric and
 the positive scale for the persistence Fisher kernel respectively.
