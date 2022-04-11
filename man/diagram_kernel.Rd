@@ -7,18 +7,18 @@
 diagram_kernel(D1, D2, dim = 0, sigma = 1, t = 1)
 }
 \arguments{
-\item{D1}{the first persistence diagram, either outputted from TDA or from diagram_to_df function.}
+\item{D1}{the first persistence diagram, either outputted from a TDA calculation like ripsDiag or from a \code{\link{diagram_to_df}} function call.}
 
-\item{D2}{the second persistence diagram, either outputted from TDA or from diagram_to_df function.}
+\item{D2}{the second persistence diagram, either outputted from a TDA calculation like ripsDiag or from a \code{\link{diagram_to_df}} function call.}
 
 \item{dim}{the homological dimension in which the distance is to be computed.}
 
 \item{sigma}{a positive number representing the bandwith for the Fisher information metric, default 1.}
 
-\item{t}{a positive number representing the scale for the kernel, default 1.}
+\item{t}{a positive number representing the scale for the persistence Fisher kernel, default 1.}
 }
 \value{
-the kernel value
+the kernel value.
 }
 \description{
 Returns the persistence Fisher kenel between a pair of persistence diagrams
@@ -28,7 +28,7 @@ in a particular homological dimension.
 The `D1` and `D2` parameters are the two persistence diagrams.
 The `dim` parameter should be a positive finite integer.
 The `sigma` parameter is the positive bandwith for the Fisher information metric, and
-`t` is the scale parameter for persistence Fisher kernel.
+`t` is the scale parameter for the persistence Fisher kernel.
 }
 \examples{
 

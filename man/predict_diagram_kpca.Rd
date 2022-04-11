@@ -7,18 +7,19 @@
 predict_diagram_kpca(new_diagrams, embedding)
 }
 \arguments{
-\item{new_diagrams}{a list of persistence diagrams, as the output of a TDA calculation.}
+\item{new_diagrams}{a list of persistence diagrams, as the output of a TDA calculation like ripsDiag or \code{\link{diagram_to_df}}.}
 
 \item{embedding}{the output to a diagram_kpca function call.}
 }
 \value{
-the embedding matrix.
+the data projection.
 }
 \description{
 Returns the embedding matrix for the new points.
 }
 \details{
-The `new_diagrams` parameter should be a list of persistence diagrams computed from TDA.
+The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag
+or \code{\link{diagram_to_df}}.
 The `embedding` parameter is the diagram_kpca embedding object to be used for embedding
 the new diagrams.
 }

@@ -1,18 +1,18 @@
 #### DIAGRAM DISTANCE METRICS ####
 #' Calculate distances between pairs of persistence diagrams
 #'
-#' Calculates the distance between a pair of persistce diagrams, stored as
-#' data frames (as the output from diagram_to_df)
-#' in a particular homological dimension. Different TDA sources define distances
+#' Calculates the distance between a pair of persistce diagrams in a particular homological dimension,
+#' either the output from a \code{\link{diagram_to_df}} function call or from a TDA homology calculation like ripsDiag.
+#' Different TDA sources define distances
 #' differently, and this function has functionality to compute distances like
 #' in the R package TDA (based on the C++ library Dionysus, see
-#' <https://mrzv.org/software/dionysus2/>) or like in the
+#' \url{https://mrzv.org/software/dionysus2/}) or like in the
 #' paper for kernel calculations of persistence diagrams (
-#' <https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf>).
+#' \url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}).
 #'
 #' The `D1` and `D2` parameters should be persistence diagrams, outputted
 #' from a homology calculation in the package TDA, or such a
-#' persistence diagram converted to a data frame via the function diagram_to_df.
+#' persistence diagram converted to a data frame via the function \code{\link{diagram_to_df}}.
 #' The `dim` parameter should be a positive finite integer.
 #' The `p` parameter should be a positive integer or Inf. The `distance` parameter
 #' should be a string, either "wasserstein" or "fisher". The `sigma` parameter is a single positive number representing the bandwith for the Fisher information metric.
@@ -233,17 +233,18 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = 1)
 }
 
 #### DISTANCE MATRIX ####
-#' Calculate the distance matrix d for a list of persistence diagrams, i.e. d[i,j] = d(D[i],D[j]), in parallel.
+#' Compute a distance matrix between persistence diagrams
 #'
-#' Returns the distance matrix for a list of persistence diagrams.
+#' Calculate the distance matrix d for either a single list of persistence diagrams \eqn{D = (D_1,D_2,\dots,D_n)}, i.e. \eqn{d[i,j] = d(D_i,D_j)}, 
+#' or between two lists, \eqn{D = (D_1,D_2,\dots,D_n)} and \eqn{D' = (D'_1,D'_2,\dots,D'_n)}, \eqn{d[i,j] = d(D_i,D'_j)}, in parallel.
 #'
-#' `diagrams` is the list of persistence diagrams.
-#' The `dim` parameter should be a positive finite integer.
+#' `diagrams` is a list of persistence diagrams and `other_diagrams` is the optional second list of persistence diagrams.
+#' The `dim` parameter should be a positive finite integer, being the homological dimension in which to compute distances.
 #' The `distance` parameter is the string determining which distance metric to use, `p` is the 
 #' wasserstein power parameter, and
 #' `t` is the positive scale parameter for the persistence Fisher kernel.
 #'
-#' @param diagrams the list of persistence diagrams, either the output from TDA calculations or the diagram_to_df function.
+#' @param diagrams the list of persistence diagrams, either the output from TDA calculations or the \code{\link{diagram_to_df}} function.
 #' @param other_diagrams either NULL (default) or another list of persistence diagrams to compute a cross-distance matrix.
 #' @param dim the homological dimension in which the distance is to be computed.
 #' @param distance a character determining which metric to use, either "wasserstein" (default) or "fisher".
@@ -357,13 +358,13 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
 }
 
 #### LOSS FUNCTION FOR GROUPS OF PERSISTENCE DIAGRAMS ####
-#' Calculate Turner loss function for groups of persistence diagrams
+#' Turner loss function for a set of groups of persistence diagrams
 #'
-#' Calculates the normalized sum of within-group exponentiated distances between pairs of persistence diagrams (stored as data frames)
-#' for an arbitrary number of groups. The loss function is described in Robinson and Turner 2017
-#' <https://link.springer.com/article/10.1007/s41468-017-0008-7>, but mathematically we
+#' Calculate the normalized sum of within-group exponentiated distances between pairs of persistence diagrams (stored as data frames)
+#' for an arbitrary number of groups in parallel. The loss function is described in Robinson and Turner 2017
+#' \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}, but mathematically we
 #' compute the distances of each within-group pair of persistence diagrams and exponentiate
-#' each distance by q and take the q-th root of the sum.
+#' each distance by \eqn{q} and take the \eqn{q}-th root of the sum.
 #'
 #' The `diagram_groups` parameter should be a list or vector of persistence diagrams stored as data frames.
 #' The `dims` parameter is a vector of non-negative whole numbers, representing the homological dimensions

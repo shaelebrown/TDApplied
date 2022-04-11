@@ -5,7 +5,7 @@
 #' Returns the output of cmdscale on the desired distance matrix of a group of persistence diagrams
 #' in a particular dimension.
 #'
-#' The `diagrams` parameter should be a list of persistence diagrams computed from TDA.
+#' The `diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag or from \code{\link{diagram_to_df}}.
 #' The `distance` parameter is a string representing which determines which distance metric to use.
 #' The `dim` parameter should be a positive finite integer.
 #' The `sigma` parameter is the positive bandwith for the Fisher information metric, and
@@ -13,7 +13,7 @@
 #' `eig`, `add`, `x.ret` and `list.` are cmdscale parameters providing optional additional
 #' information to be returned.
 #'
-#' @param diagrams a list of persistence diagrams, as the output of a TDA calculation.
+#' @param diagrams a list of persistence diagrams, as the output of a TDA calculation like ripsDiag or a \code{\link{diagram_to_df}} function call.
 #' @param distance a string representing the desired distance metric to be used, either 'wasserstein' (default) or 'fisher'.
 #' @param dim the homological dimension in which the distance is to be computed.
 #' @param p the wasserstein power, a number at least 1 (infinity for the bottleneck distance), default 2.
@@ -24,7 +24,7 @@
 #' @param x.ret indicates whether the doubly centered symmetric distance matrix should be returned.
 #' @param list. local indicating if a list should be returned or just the n*k matrix.
 #'
-#' @return the output of cmdscale on the diagram distance matrix, either just the embedding matrix or a list.
+#' @return the output of \code{\link[stats]{cmdscale}} on the diagram distance matrix, either just the embedding matrix or a list containing the embedding and additional information.
 #' @importFrom stats cmdscale
 #' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
 #' @importFrom parallelly availableCores
@@ -72,7 +72,7 @@ diagram_MDS <- function(diagrams,distance = "wasserstein",dim = 0,p = 2,sigma = 
 }
 
 #### KERNEL KMEANS ####
-#' Cluster a group of persistence diagrams using kernel k-means.
+#' Cluster a group of persistence diagrams using kernel k-means
 #'
 #' Returns the output of kkmeans on the desired Gram matrix of a group of persistence diagrams
 #' in a particular dimension.
@@ -91,7 +91,7 @@ diagram_MDS <- function(diagrams,distance = "wasserstein",dim = 0,p = 2,sigma = 
 #' @param centers number of clusters to initialize.
 #' @param ... additional parameters.
 #'
-#' @return a diagram_kkmeans object containing the output of kkmeans on the diagram distance matrix, i.e. the cluster memberships, centers, sizes, and withinss's, and the diagrams, dim, t and sigma parameters.
+#' @return a diagram_kkmeans object containing the output of \code{\link[kernlab]{kkmeans}} on the diagram distance matrix, i.e. the cluster memberships, centers, sizes, and withinss's, and the diagrams, dim, t and sigma parameters.
 #' @export
 #' @importFrom kernlab kkmeans
 #' @examples
@@ -168,16 +168,17 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,...){
 }
 
 #### PREDICT KERNEL KMEANS ####
-#' Find the nearest kkmeans cluster center to a list of new diagrams to return approximate cluster labels.
+#' Find the nearest kkmeans cluster center to a list of new diagrams to return approximate cluster labels
 #'
 #' Returns the nearest kkmeans cluster center labels on the desired Gram matrix of a group of persistence diagrams
 #' in a particular dimension.
 #'
-#' The `new_diagrams` parameter should be a list of persistence diagrams computed from TDA, and the
-#' `clustering` parameter should be the output of a diagram_kkmeans function call.
+#' The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag or from a 
+#' \code{\link{diagram_to_df}} function call, and the
+#' `clustering` parameter should be the output of a \code{\link{diagram_kkmeans}} function call.
 #'
-#' @param new_diagrams a list of persistence diagrams, as the output of a TDA calculation.
-#' @param clustering the output of a diagram_kkmeans function call.
+#' @param new_diagrams a list of persistence diagrams, as the output of a TDA calculation like ripsDiag or \code{\link{diagram_to_df}}.
+#' @param clustering the output of a \code{link{diagram_kkmeans}} function call.
 #'
 #' @return a vector of the predicted cluster labels for the new diagrams.
 #' @export
@@ -261,7 +262,7 @@ diagram_nearest_clusters <- function(new_diagrams,clustering){
 #' @param features number of features (principal components) to return, default 1.
 #' @param ... additional parameters.
 #'
-#' @return a list containing the output of cmdscale on the diagram distance matrix, either just the embedding matrix or a list, the diagram groups, dimension, t, sigma and features. The class of this object is 'diagram_kpca'.
+#' @return a list containing the output of \code{\link[kernlab]{kpca}} on the Gram matrix, containing the principal components, eigenvalues and other information, and the diagram groups, dimension, t, sigma and features. The class of this object is 'diagram_kpca'.
 #' @export
 #' @importFrom kernlab kpca
 #' @examples
@@ -322,14 +323,15 @@ diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,...){
 #'
 #' Returns the embedding matrix for the new points.
 #'
-#' The `new_diagrams` parameter should be a list of persistence diagrams computed from TDA.
+#' The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag
+#' or \code{\link{diagram_to_df}}.
 #' The `embedding` parameter is the diagram_kpca embedding object to be used for embedding
 #' the new diagrams.
 #'
-#' @param new_diagrams a list of persistence diagrams, as the output of a TDA calculation.
+#' @param new_diagrams a list of persistence diagrams, as the output of a TDA calculation like ripsDiag or \code{\link{diagram_to_df}}.
 #' @param embedding the output to a diagram_kpca function call.
 #'
-#' @return the embedding matrix.
+#' @return the data projection.
 #' @export
 #' @importFrom foreach foreach %dopar% %do%
 #' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
@@ -403,17 +405,18 @@ predict_diagram_kpca <- function(new_diagrams,embedding){
 }
 
 #### KERNEL SVM ####
-#' Fit a support vector machine model to a regression task where the training set is a list of persistence diagrams
+#' Fit a support vector machine model where the training set is a list of persistence diagrams
 #'
 #' Returns the output of ksvm on the Gram matrix of a group of persistence diagrams
-#' in a particular dimension.
+#' in a particular dimension. Cross validation is carried out in parallel, using a trick
+#' noted in \url{https://doi.org/10.1007/s41468-017-0008-7}.
 #'
-#' The `diagrams` parameter should be a list of persistence diagrams computed from TDA.
+#' The `diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag or \code{\link{diagram_to_df}}.
 #' The `dim` parameter should be a positive finite integer.
 #' The `sigma` and `t` parameters are the positive bandwith for the Fisher information metric and
 #' the positive scale for the persistence Fisher kernel respectively.
-#' `type`, `C`, `nu`, `epsilon`, `prob.model`, `class.weights`, `cross`, `fit`, `cache`, `tol`, `shrinking` and
-#' `...` are additional parameters to the ksvm kernlab function.
+#' `type`, `C`, `nu`, `epsilon`, `prob.model`, `class.weights`, `cross`, `fit`, `cache`, `tol`, and `shrinking` 
+#' are additional parameters to the ksvm kernlab function.
 #'
 #' @param diagrams a list of persistence diagrams, as the output of a TDA calculation.
 #' @param cv a positive number at most the length of `diagrams` which determines the number of cross validation splits to be performed (default 1, aka no cross-validation).
@@ -431,7 +434,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding){
 #' @param cache cache memory in MB (default 40).
 #' @param tol tolerance of termination criteria (default 0.001).
 #' @param shrinking option whether to use the shrinking-heuristics (default TRUE).
-#' @return a list containing the cross-validation results (stored in list member 'models') and the best model, of class 'diagram_ksvm'. If `cv` == 1 then only the model is returned. best_model is the output of kernlab::ksvm on the whole dataset, using the optimal parameters found using CV, the support vector diagrams groups, dimension, t, and sigma.
+#' @return a list containing the cross-validation results (stored in list member 'models') and the best model, of class 'diagram_ksvm'. If `cv` == 1 then only the model is returned. best_model is the output of \code{\link[kernlab]{ksvm}} on the whole dataset, using the optimal parameters found using CV, the support vector diagrams groups, dimension, t, and sigma.
 #' @export
 #' @importFrom kernlab ksvm
 #' @importFrom foreach foreach %dopar%
@@ -712,16 +715,16 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
 }
 
 #### PREDICT KERNEL SVM ####
-#' Predict the response to a new group of persistence diagrams from a compute diagram_ksvm model.
+#' Predict the response to a new group of persistence diagrams from a computed diagram_ksvm model
 #'
 #' Returns the predicted response vector of the model on the new diagrams.
 #'
-#' The `new_diagrams` parameter should be a list of persistence diagrams computed from TDA.
+#' The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag or \code{\link{diagram_to_df}}.
 #' The `model` parameter should be the output from a diagram_ksvm function call.
 #'
 #' @param new_diagrams a list of new persistence diagrams, as the output of a TDA calculation.
 #' @param model the diagram_ksvm model to be used for prediction.
-#' @return a list containing the output of ksvm on the Gram matrix, the diagram groups, dimension, t, and sigma. The class of this object is 'diagram_ksvm'.
+#' @return a vector containing the output of \code{\link[kernlab]{predict.ksvm}} on the cross Gram matrix of the new diagrams and the diagrams used to train the model.
 #' @export
 #' @importFrom foreach foreach %dopar% %do%
 #' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ

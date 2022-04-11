@@ -2,14 +2,14 @@
 % Please edit documentation in R/machine_learning.R
 \name{diagram_nearest_clusters}
 \alias{diagram_nearest_clusters}
-\title{Find the nearest kkmeans cluster center to a list of new diagrams to return approximate cluster labels.}
+\title{Find the nearest kkmeans cluster center to a list of new diagrams to return approximate cluster labels}
 \usage{
 diagram_nearest_clusters(new_diagrams, clustering)
 }
 \arguments{
-\item{new_diagrams}{a list of persistence diagrams, as the output of a TDA calculation.}
+\item{new_diagrams}{a list of persistence diagrams, as the output of a TDA calculation like ripsDiag or \code{\link{diagram_to_df}}.}
 
-\item{clustering}{the output of a diagram_kkmeans function call.}
+\item{clustering}{the output of a \code{link{diagram_kkmeans}} function call.}
 }
 \value{
 a vector of the predicted cluster labels for the new diagrams.
@@ -19,8 +19,9 @@ Returns the nearest kkmeans cluster center labels on the desired Gram matrix of 
 in a particular dimension.
 }
 \details{
-The `new_diagrams` parameter should be a list of persistence diagrams computed from TDA, and the
-`clustering` parameter should be the output of a diagram_kkmeans function call.
+The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag or from a 
+\code{\link{diagram_to_df}} function call, and the
+`clustering` parameter should be the output of a \code{\link{diagram_kkmeans}} function call.
 }
 \examples{
 

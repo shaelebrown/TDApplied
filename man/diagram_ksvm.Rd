@@ -2,7 +2,7 @@
 % Please edit documentation in R/machine_learning.R
 \name{diagram_ksvm}
 \alias{diagram_ksvm}
-\title{Fit a support vector machine model to a regression task where the training set is a list of persistence diagrams}
+\title{Fit a support vector machine model where the training set is a list of persistence diagrams}
 \usage{
 diagram_ksvm(
   diagrams,
@@ -57,19 +57,20 @@ diagram_ksvm(
 \item{shrinking}{option whether to use the shrinking-heuristics (default TRUE).}
 }
 \value{
-a list containing the cross-validation results (stored in list member 'models') and the best model, of class 'diagram_ksvm'. If `cv` == 1 then only the model is returned. best_model is the output of kernlab::ksvm on the whole dataset, using the optimal parameters found using CV, the support vector diagrams groups, dimension, t, and sigma.
+a list containing the cross-validation results (stored in list member 'models') and the best model, of class 'diagram_ksvm'. If `cv` == 1 then only the model is returned. best_model is the output of \code{\link[kernlab]{ksvm}} on the whole dataset, using the optimal parameters found using CV, the support vector diagrams groups, dimension, t, and sigma.
 }
 \description{
 Returns the output of ksvm on the Gram matrix of a group of persistence diagrams
-in a particular dimension.
+in a particular dimension. Cross validation is carried out in parallel, using a trick
+noted in \url{https://doi.org/10.1007/s41468-017-0008-7}.
 }
 \details{
-The `diagrams` parameter should be a list of persistence diagrams computed from TDA.
+The `diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag or \code{\link{diagram_to_df}}.
 The `dim` parameter should be a positive finite integer.
 The `sigma` and `t` parameters are the positive bandwith for the Fisher information metric and
 the positive scale for the persistence Fisher kernel respectively.
-`type`, `C`, `nu`, `epsilon`, `prob.model`, `class.weights`, `cross`, `fit`, `cache`, `tol`, `shrinking` and
-`...` are additional parameters to the ksvm kernlab function.
+`type`, `C`, `nu`, `epsilon`, `prob.model`, `class.weights`, `cross`, `fit`, `cache`, `tol`, and `shrinking` 
+are additional parameters to the ksvm kernlab function.
 }
 \examples{
 

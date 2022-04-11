@@ -2,7 +2,7 @@
 % Please edit documentation in R/kernel_calculations.R
 \name{gram_matrix}
 \alias{gram_matrix}
-\title{Calculate the Gram matrix K for a list of persistence diagrams, i.e. K[i,j] = k(d[i],d[j]), in parallel.}
+\title{Compute Gram matrix for a group of persistence diagrams}
 \usage{
 gram_matrix(diagrams, other_diagrams = NULL, dim = 0, sigma = 1, t = 1)
 }
@@ -18,13 +18,14 @@ gram_matrix(diagrams, other_diagrams = NULL, dim = 0, sigma = 1, t = 1)
 \item{t}{a positive number representing the scale for the kernel, default 1.}
 }
 \value{
-the Gram matrix of class 'kernelMatrix' for downstream analyses with the kernlab package.
+the (cross) Gram matrix of class 'kernelMatrix' for downstream analyses with the kernlab package.
 }
 \description{
-Returns the Gram matrix for a list of persistence diagrams.
+Calculate the Gram matrix K for either a single list of persistence diagrams \eqn{(D_1,D_2,\dots,D_n)}, i.e. \eqn{K[i,j] = k(D_i,D_j)}, 
+or between two lists of persistence diagrams, \eqn{(D_1,D_2,\dots,D_n)} and \eqn{(D'_1,D'_2,\dots,D'_n)}, \eqn{K[i,j] = k(D_i,D'_j)}, in parallel.
 }
 \details{
-`diagrams` is the list of persistence diagrams.
+`diagrams` is the a of persistence diagrams, and `other_diagrams` is an optional second list of persistence diagrams.
 The `dim` parameter should be a positive finite integer.
 The `sigma` parameter is the positive bandwith for the Fisher information metric, and
 `t` is the positive scale parameter for the persistence Fisher kernel.

@@ -23,19 +23,19 @@ diagram_distance(D1, D2, dim, p = 2, distance = "wasserstein", sigma = 1)
 the numeric value of the distance calculation.
 }
 \description{
-Calculates the distance between a pair of persistce diagrams, stored as
-data frames (as the output from diagram_to_df)
-in a particular homological dimension. Different TDA sources define distances
+Calculates the distance between a pair of persistce diagrams in a particular homological dimension,
+either the output from a \code{\link{diagram_to_df}} function call or from a TDA homology calculation like ripsDiag.
+Different TDA sources define distances
 differently, and this function has functionality to compute distances like
 in the R package TDA (based on the C++ library Dionysus, see
-<https://mrzv.org/software/dionysus2/>) or like in the
+\url{https://mrzv.org/software/dionysus2/}) or like in the
 paper for kernel calculations of persistence diagrams (
-<https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf>).
+\url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}).
 }
 \details{
 The `D1` and `D2` parameters should be persistence diagrams, outputted
 from a homology calculation in the package TDA, or such a
-persistence diagram converted to a data frame via the function diagram_to_df.
+persistence diagram converted to a data frame via the function \code{\link{diagram_to_df}}.
 The `dim` parameter should be a positive finite integer.
 The `p` parameter should be a positive integer or Inf. The `distance` parameter
 should be a string, either "wasserstein" or "fisher". The `sigma` parameter is a single positive number representing the bandwith for the Fisher information metric.

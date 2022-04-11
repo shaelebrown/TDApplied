@@ -18,7 +18,7 @@ diagram_MDS(
 )
 }
 \arguments{
-\item{diagrams}{a list of persistence diagrams, as the output of a TDA calculation.}
+\item{diagrams}{a list of persistence diagrams, as the output of a TDA calculation like ripsDiag or a \code{\link{diagram_to_df}} function call.}
 
 \item{distance}{a string representing the desired distance metric to be used, either 'wasserstein' (default) or 'fisher'.}
 
@@ -39,14 +39,14 @@ diagram_MDS(
 \item{list.}{local indicating if a list should be returned or just the n*k matrix.}
 }
 \value{
-the output of cmdscale on the diagram distance matrix, either just the embedding matrix or a list.
+the output of \code{\link[stats]{cmdscale}} on the diagram distance matrix, either just the embedding matrix or a list containing the embedding and additional information.
 }
 \description{
 Returns the output of cmdscale on the desired distance matrix of a group of persistence diagrams
 in a particular dimension.
 }
 \details{
-The `diagrams` parameter should be a list of persistence diagrams computed from TDA.
+The `diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag or from \code{\link{diagram_to_df}}.
 The `distance` parameter is a string representing which determines which distance metric to use.
 The `dim` parameter should be a positive finite integer.
 The `sigma` parameter is the positive bandwith for the Fisher information metric, and

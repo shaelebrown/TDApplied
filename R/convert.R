@@ -10,7 +10,7 @@
 #' The `d` parameter should be the output of a TDA homology calculation.
 #'
 #' @param d the output of a TDA homology calculation, like ripsDiag.
-#' @return a 3-column data frame, with each row representing a topological feature.
+#' @return a 3-column data frame, with each row representing a topological feature. The first column is the feature dimension (a non-negative integer), the second column is the birth radius of the feature and the third column is the death radius.
 #' @export
 #' @examples
 #'

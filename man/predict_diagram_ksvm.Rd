@@ -2,7 +2,7 @@
 % Please edit documentation in R/machine_learning.R
 \name{predict_diagram_ksvm}
 \alias{predict_diagram_ksvm}
-\title{Predict the response to a new group of persistence diagrams from a compute diagram_ksvm model.}
+\title{Predict the response to a new group of persistence diagrams from a computed diagram_ksvm model}
 \usage{
 predict_diagram_ksvm(new_diagrams, model)
 }
@@ -12,13 +12,13 @@ predict_diagram_ksvm(new_diagrams, model)
 \item{model}{the diagram_ksvm model to be used for prediction.}
 }
 \value{
-a list containing the output of ksvm on the Gram matrix, the diagram groups, dimension, t, and sigma. The class of this object is 'diagram_ksvm'.
+a vector containing the output of \code{\link[kernlab]{predict.ksvm}} on the cross Gram matrix of the new diagrams and the diagrams used to train the model.
 }
 \description{
 Returns the predicted response vector of the model on the new diagrams.
 }
 \details{
-The `new_diagrams` parameter should be a list of persistence diagrams computed from TDA.
+The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag or \code{\link{diagram_to_df}}.
 The `model` parameter should be the output from a diagram_ksvm function call.
 }
 \examples{

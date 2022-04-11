@@ -2,7 +2,7 @@
 % Please edit documentation in R/distance_calculations.R
 \name{distance_matrix}
 \alias{distance_matrix}
-\title{Calculate the distance matrix d for a list of persistence diagrams, i.e. d[i,j] = d(D[i],D[j]), in parallel.}
+\title{Compute a distance matrix between persistence diagrams}
 \usage{
 distance_matrix(
   diagrams,
@@ -14,7 +14,7 @@ distance_matrix(
 )
 }
 \arguments{
-\item{diagrams}{the list of persistence diagrams, either the output from TDA calculations or the diagram_to_df function.}
+\item{diagrams}{the list of persistence diagrams, either the output from TDA calculations or the \code{\link{diagram_to_df}} function.}
 
 \item{other_diagrams}{either NULL (default) or another list of persistence diagrams to compute a cross-distance matrix.}
 
@@ -30,11 +30,12 @@ distance_matrix(
 the distance matrix.
 }
 \description{
-Returns the distance matrix for a list of persistence diagrams.
+Calculate the distance matrix d for either a single list of persistence diagrams \eqn{D = (D_1,D_2,\dots,D_n)}, i.e. \eqn{d[i,j] = d(D_i,D_j)}, 
+or between two lists, \eqn{D = (D_1,D_2,\dots,D_n)} and \eqn{D' = (D'_1,D'_2,\dots,D'_n)}, \eqn{d[i,j] = d(D_i,D'_j)}, in parallel.
 }
 \details{
-`diagrams` is the list of persistence diagrams.
-The `dim` parameter should be a positive finite integer.
+`diagrams` is a list of persistence diagrams and `other_diagrams` is the optional second list of persistence diagrams.
+The `dim` parameter should be a positive finite integer, being the homological dimension in which to compute distances.
 The `distance` parameter is the string determining which distance metric to use, `p` is the 
 wasserstein power parameter, and
 `t` is the positive scale parameter for the persistence Fisher kernel.

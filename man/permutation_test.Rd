@@ -19,13 +19,13 @@ permutation_test(
 \arguments{
 \item{...}{groups of persistence diagrams, outputted from a homology calculation in TDA.}
 
-\item{iterations}{the number of iterations for permuting group labels. Default value is 100.}
+\item{iterations}{the number of iterations for permuting group labels, default 100.}
 
-\item{p}{the wasserstein parameter, number at least 1 (and bottleneck distance if == Inf). Default value is 2.}
+\item{p}{the wasserstein parameter, number at least 1 (and Inf if using the bottleneck distance), default 2.}
 
-\item{q}{a finite number at least 1 for exponentiation in Turner loss function. Default value is 2.}
+\item{q}{a finite number at least 1 for exponentiation in the Turner loss function, default 2.}
 
-\item{dims}{a numeric vector of the homological dimensions in which the test is to be carried out. Default value is c(0,1).}
+\item{dims}{a numeric vector of the homological dimensions in which the test is to be carried out, default c(0,1).}
 
 \item{paired}{a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups. Default value is False.}
 
@@ -33,22 +33,23 @@ permutation_test(
 
 \item{sigma}{the positive bandwith for the Fisher information metric, default NULL.}
 
-\item{verbose}{a boolean flag for if the time duration of the function call should be printed. Default value is False.}
+\item{verbose}{a boolean flag for if the time duration of the function call should be printed, default False.}
 }
 \value{
 list with dimensions used (named vector), permutation loss values in each dimension (named list), test statistics in each dimension (named vector)
-                  a p-value for each dimension (all stored in a named vector) and the time duration of the function call.
+                  a p-value for each dimension (named vector) and the time duration of the function call.
 }
 \description{
-Calculates the Turner loss function for a number of groups of persistence diagrams,
-and then generates a null distribution by permuting group labels several times and
-recomputing the loss function. A p-value for each desired homological dimension is generated.
-This function keeps track of distance calculations as to not repeat calculations
-which can individually take a long time.
+Permutation test for finding differences between groups of persistence diagrams,
+based on the paper \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}. The test is
+carried out in parallel and optimized in order to not recompute already-calculated distances.
+Like in \url{https://github.com/hassan-abdallah/Statistical_Inference_PH_fMRI/blob/main/Abdallah_et_al_Statistical_Inference_PH_fMRI.pdf}
+an option is provided for pairing diagrams between groups to reduce variance (boost statistical power), and
+like it was suggested in the original paper functionality is provided for an arbitrary number of groups (not just 2).
 }
 \details{
-The `...` parameter should be a list of lists of persistence diagrams, outputted from a
-homology calculation in TDA. The `iterations` parameter should be the number of permutations
+The `...` parameter should be a number of lists of persistence diagrams, outputted from a
+TDA calculation like ripsDiag or a \code{\link{diagram_to_df}} function call. The `iterations` parameter should be the number of permutations
 desired for generating the null distribution. The `p` parameter is the wasserstein power, and `q`
 is the exponent for distances. `dims` is a numeric vector of the homological dimensions in which
 to carry out the test. The `paired` parameter is a boolean flag for whether there are correspondences

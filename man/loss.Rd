@@ -2,7 +2,7 @@
 % Please edit documentation in R/distance_calculations.R
 \name{loss}
 \alias{loss}
-\title{Calculate Turner loss function for groups of persistence diagrams}
+\title{Turner loss function for a set of groups of persistence diagrams}
 \usage{
 loss(diagram_groups, dist_mats, dims, p, q, distance, sigma)
 }
@@ -27,11 +27,11 @@ storing the current distances which have been precomputed.}
 numeric value of the loss function
 }
 \description{
-Calculates the normalized sum of within-group exponentiated distances between pairs of persistence diagrams (stored as data frames)
-for an arbitrary number of groups. The loss function is described in Robinson and Turner 2017
-<https://link.springer.com/article/10.1007/s41468-017-0008-7>, but mathematically we
+Calculate the normalized sum of within-group exponentiated distances between pairs of persistence diagrams (stored as data frames)
+for an arbitrary number of groups in parallel. The loss function is described in Robinson and Turner 2017
+\url{https://link.springer.com/article/10.1007/s41468-017-0008-7}, but mathematically we
 compute the distances of each within-group pair of persistence diagrams and exponentiate
-each distance by q and take the q-th root of the sum.
+each distance by \eqn{q} and take the \eqn{q}-th root of the sum.
 }
 \details{
 The `diagram_groups` parameter should be a list or vector of persistence diagrams stored as data frames.

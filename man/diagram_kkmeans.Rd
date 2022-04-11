@@ -2,7 +2,7 @@
 % Please edit documentation in R/machine_learning.R
 \name{diagram_kkmeans}
 \alias{diagram_kkmeans}
-\title{Cluster a group of persistence diagrams using kernel k-means.}
+\title{Cluster a group of persistence diagrams using kernel k-means}
 \usage{
 diagram_kkmeans(diagrams, centers, dim = 0, t = 1, sigma = 1, ...)
 }
@@ -20,7 +20,7 @@ diagram_kkmeans(diagrams, centers, dim = 0, t = 1, sigma = 1, ...)
 \item{...}{additional parameters.}
 }
 \value{
-a diagram_kkmeans object containing the output of kkmeans on the diagram distance matrix, i.e. the cluster memberships, centers, sizes, and withinss's, and the diagrams, dim, t and sigma parameters.
+a diagram_kkmeans object containing the output of \code{\link[kernlab]{kkmeans}} on the diagram distance matrix, i.e. the cluster memberships, centers, sizes, and withinss's, and the diagrams, dim, t and sigma parameters.
 }
 \description{
 Returns the output of kkmeans on the desired Gram matrix of a group of persistence diagrams

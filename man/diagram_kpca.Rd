@@ -20,7 +20,7 @@ diagram_kpca(diagrams, dim = 0, t = 1, sigma = 1, features = 1, ...)
 \item{...}{additional parameters.}
 }
 \value{
-a list containing the output of cmdscale on the diagram distance matrix, either just the embedding matrix or a list, the diagram groups, dimension, t, sigma and features. The class of this object is 'diagram_kpca'.
+a list containing the output of \code{\link[kernlab]{kpca}} on the Gram matrix, containing the principal components, eigenvalues and other information, and the diagram groups, dimension, t, sigma and features. The class of this object is 'diagram_kpca'.
 }
 \description{
 Returns the output of cmdscale on the desired distance matrix of a group of persistence diagrams

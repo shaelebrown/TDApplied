@@ -7,15 +7,15 @@
 #' The `D1` and `D2` parameters are the two persistence diagrams.
 #' The `dim` parameter should be a positive finite integer.
 #' The `sigma` parameter is the positive bandwith for the Fisher information metric, and
-#' `t` is the scale parameter for persistence Fisher kernel.
+#' `t` is the scale parameter for the persistence Fisher kernel.
 #'
-#' @param D1 the first persistence diagram, either outputted from TDA or from diagram_to_df function.
-#' @param D2 the second persistence diagram, either outputted from TDA or from diagram_to_df function.
+#' @param D1 the first persistence diagram, either outputted from a TDA calculation like ripsDiag or from a \code{\link{diagram_to_df}} function call.
+#' @param D2 the second persistence diagram, either outputted from a TDA calculation like ripsDiag or from a \code{\link{diagram_to_df}} function call.
 #' @param dim the homological dimension in which the distance is to be computed.
 #' @param sigma a positive number representing the bandwith for the Fisher information metric, default 1.
-#' @param t a positive number representing the scale for the kernel, default 1.
+#' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
 #'
-#' @return the kernel value
+#' @return the kernel value.
 #' @export
 #' @examples
 #'
@@ -50,11 +50,12 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
 }
 
 #### GRAM MATRIX ####
-#' Calculate the Gram matrix K for a list of persistence diagrams, i.e. K[i,j] = k(d[i],d[j]), in parallel.
+#' Compute Gram matrix for a group of persistence diagrams
+#' 
+#' Calculate the Gram matrix K for either a single list of persistence diagrams \eqn{(D_1,D_2,\dots,D_n)}, i.e. \eqn{K[i,j] = k(D_i,D_j)}, 
+#' or between two lists of persistence diagrams, \eqn{(D_1,D_2,\dots,D_n)} and \eqn{(D'_1,D'_2,\dots,D'_n)}, \eqn{K[i,j] = k(D_i,D'_j)}, in parallel.
 #'
-#' Returns the Gram matrix for a list of persistence diagrams.
-#'
-#' `diagrams` is the list of persistence diagrams.
+#' `diagrams` is the a of persistence diagrams, and `other_diagrams` is an optional second list of persistence diagrams.
 #' The `dim` parameter should be a positive finite integer.
 #' The `sigma` parameter is the positive bandwith for the Fisher information metric, and
 #' `t` is the positive scale parameter for the persistence Fisher kernel.
@@ -65,7 +66,7 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
 #' @param sigma a positive number representing the bandwith for the Fisher information metric, default 1.
 #' @param t a positive number representing the scale for the kernel, default 1.
 #'
-#' @return the Gram matrix of class 'kernelMatrix' for downstream analyses with the kernlab package.
+#' @return the (cross) Gram matrix of class 'kernelMatrix' for downstream analyses with the kernlab package.
 #' @export
 #' @importFrom foreach foreach %dopar%
 #' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ

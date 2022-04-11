@@ -7,30 +7,31 @@
 independence_test(g1, g2, dims = c(0, 1), sigma = 1, t = 1, verbose = FALSE)
 }
 \arguments{
-\item{g1}{the first group of persistence diagrams, outputted from a homology calculation in TDA.}
+\item{g1}{the first group of persistence diagrams, outputted from a TDA calculation or \code{\link{diagram_to_df}}.}
 
-\item{g2}{the second group of persistence diagrams, outputted from a homology calculation in TDA.}
+\item{g2}{the second group of persistence diagrams, outputted from a TDA calculation or \code{\link{diagram_to_df}}.}
 
-\item{dims}{a numeric vector of the homological dimensions in which the test is to be carried out. Default value is c(0,1).}
+\item{dims}{a numeric vector of the homological dimensions in which the test is to be carried out, default c(0,1).}
 
 \item{sigma}{the positive bandwith for the Fisher information metric, default 1.}
 
 \item{t}{the positive scale for the persistence Fisher kernel, default 1.}
 
-\item{verbose}{a boolean flag for if the time duration of the function call should be printed. Default value is False.}
+\item{verbose}{a boolean flag for if the time duration of the function call should be printed, default False.}
 }
 \value{
-list with dimensions used (named vector), test statistics in each dimension (named vector)
-                  a p-value for each dimension (all stored in a named vector) and the time duration of the function call.
+a list with dimensions used (named vector), test statistics in each dimension (named vector)
+                  a p-value for each dimension (named vector) and the time duration of the function call.
 }
 \description{
 Calculates (an estimate of) the Hilbert-Schmidt independence criteria for 
 two groups of paired persistence diagrams, the approximate null distribution
-and a p-value for each desired homological dimension.
+and a p-value for each desired homological dimension. See 
+\url{https://doi.org/10.1007/s41468-017-0008-7} for details.
 }
 \details{
 The `g1` and `g2` parameters should be lists of persistence diagrams, outputted from a
-homology calculation in TDA. `dims` is a numeric vector of the homological dimensions in which
+TDA calculation like ripsDiag or a \code{\link{diagram_to_df}} function call. `dims` is a numeric vector of the homological dimensions in which
 to carry out the test. The `sigma` parameter is the positive bandwith for the
 Fisher information metric, `t` is the scale parameter for the persistence Fisher kernel. 
 `verbose` determines if the time duration of the function call should be printed.
