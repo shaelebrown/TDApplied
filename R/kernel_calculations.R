@@ -15,8 +15,11 @@
 #' @param sigma a positive number representing the bandwith for the Fisher information metric, default 1.
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
 #'
-#' @return the kernel value.
+#' @return the numeric kernel value.
 #' @export
+#' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @references
+#' Le T, Yamada M (2018). "Persistence fisher kernel: a riemannian manifold kernel for persistence diagrams." \url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}.
 #' @examples
 #'
 #' # create two diagrams with package TDA based on 2D Gaussians
@@ -66,8 +69,9 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
 #' @param sigma a positive number representing the bandwith for the Fisher information metric, default 1.
 #' @param t a positive number representing the scale for the kernel, default 1.
 #'
-#' @return the (cross) Gram matrix of class 'kernelMatrix' for downstream analyses with the kernlab package.
+#' @return the numeric (cross) Gram matrix of class 'kernelMatrix'.
 #' @export
+#' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @importFrom foreach foreach %dopar%
 #' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
 #' @importFrom parallelly availableCores

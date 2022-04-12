@@ -12,7 +12,7 @@ predict_diagram_ksvm(new_diagrams, model)
 \item{model}{the diagram_ksvm model to be used for prediction.}
 }
 \value{
-a vector containing the output of \code{\link[kernlab]{predict.ksvm}} on the cross Gram matrix of the new diagrams and the diagrams used to train the model.
+a vector containing the output of \code{\link[kernlab]{predict.ksvm}} on the cross Gram matrix of the new diagrams and the support vector diagrams stored in the model.
 }
 \description{
 Returns the predicted response vector of the model on the new diagrams.
@@ -55,4 +55,10 @@ return(df)
 
 # predict responses
 y_pred <- predict_diagram_ksvm(new_diagrams = g_new,model = model_svm)
+}
+\seealso{
+\code{\link{diagram_ksvm}} for training a SVM model on a training set of persistence diagrams.
+}
+\author{
+Shael Brown - \email{shaelebrown@gmail.com}
 }

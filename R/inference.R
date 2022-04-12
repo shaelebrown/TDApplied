@@ -28,9 +28,27 @@
 #' @param sigma the positive bandwith for the Fisher information metric, default NULL.
 #' @param verbose a boolean flag for if the time duration of the function call should be printed, default False.
 #'
-#' @return list with dimensions used (named vector), permutation loss values in each dimension (named list), test statistics in each dimension (named vector)
-#'                   a p-value for each dimension (named vector) and the time duration of the function call.
+#' @return a list with the following elements:
+#' \describe{
+#' 
+#'  \item{dimensions}{the input `dims` argument.}
+#' 
+#'  \item{permvals}{a numeric vector of length `iterations` with the permuted loss function value for each permutation.}
+#'  
+#'  \item{test_statisics}{a numeric vector of the test statistic value in each dimension.}
+#'  
+#'  \item{p_values}{a numeric vector of the p-values in each dimension.}
+#'  
+#'  \item{run_time}{the run time of the function call, containing time units.}
+#' 
+#' }
+#' 
 #' @export
+#' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @references
+#' Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.
+#' 
+#' Abdallah H et al (2021). "Statistical Inference for Persistent Homology applied to fMRI." \url{https://github.com/hassan-abdallah/Statistical_Inference_PH_fMRI/blob/main/Abdallah_et_al_Statistical_Inference_PH_fMRI.pdf}.
 #' @examples
 #'
 #' # create three groups of persistence diagrams on 2D Gaussians using TDA
@@ -206,8 +224,8 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
 
   results <- list(dimensions = dims,
                   permvals = perm_values,
-                  test_statistic = test_statistics,
-                  p_value = pval,
+                  test_statistics = test_statistics,
+                  p_values = pval,
                   run_time = runtime)
 
   if(verbose == T)
@@ -226,7 +244,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
 #' Calculates (an estimate of) the Hilbert-Schmidt independence criteria for 
 #' two groups of paired persistence diagrams, the approximate null distribution
 #' and a p-value for each desired homological dimension. See 
-#' \url{https://doi.org/10.1007/s41468-017-0008-7} for details.
+#' \url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf} for details.
 #'
 #' The `g1` and `g2` parameters should be lists of persistence diagrams, outputted from a
 #' TDA calculation like \code{\link[TDA]{ripsDiag}} or a \code{\link{diagram_to_df}} function call. `dims` is a numeric vector of the homological dimensions in which
@@ -241,10 +259,26 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
 #' @param t the positive scale for the persistence Fisher kernel, default 1.
 #' @param verbose a boolean flag for if the time duration of the function call should be printed, default False.
 #'
-#' @return a list with dimensions used (named vector), test statistics in each dimension (named vector)
-#'                   a p-value for each dimension (named vector) and the time duration of the function call.
+#' @return a list with the following elements:
+#' \describe{
+#' 
+#'  \item{dimensions}{the input `dims` argument.}
+#' 
+#'  \item{permvals}{a numeric vector of length `iterations` with the permuted loss function value for each permutation.}
+#'  
+#'  \item{test_statisics}{a numeric vector of the test statistic value in each dimension.}
+#'  
+#'  \item{p_values}{a numeric vector of the p-values in each dimension.}
+#'  
+#'  \item{run_time}{the run time of the function call, containing time units.}
+#' 
+#' }
+#' 
 #' @importFrom stats pgamma
 #' @export
+#' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @references
+#' Gretton A et al (2007). "A Kernel Statistical Test of Independence." \url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf}.
 #' @examples
 #'
 #' # create two groups of persistence diagrams on 2D Gaussians using TDA

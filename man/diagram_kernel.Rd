@@ -18,7 +18,7 @@ diagram_kernel(D1, D2, dim = 0, sigma = 1, t = 1)
 \item{t}{a positive number representing the scale for the persistence Fisher kernel, default 1.}
 }
 \value{
-the kernel value.
+the numeric kernel value.
 }
 \description{
 Returns the persistence Fisher kenel between a pair of persistence diagrams
@@ -44,4 +44,10 @@ maxdimension = 1)
 
 # calculate their kernel value in dimension 1 with sigma = 2, t = 2
 k <- diagram_kernel(D1 = diag1,D2 = diag2,dim = 1,sigma = 2,t = 2)
+}
+\references{
+Le T, Yamada M (2018). "Persistence fisher kernel: a riemannian manifold kernel for persistence diagrams." \url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}.
+}
+\author{
+Shael Brown - \email{shaelebrown@gmail.com}
 }

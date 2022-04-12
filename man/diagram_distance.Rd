@@ -66,3 +66,11 @@ wass_df <- diagram_distance(D1 = diag1_df,D2 = diag2_df,dim = 1,p = 2,distance =
 # now do Fisher information metric calculation
 fisher_df <- diagram_distance(D1 = diag1_df,D2 = diag2_df,dim = 1,distance = "fisher",sigma = 1)
 }
+\references{
+Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.
+
+Le T, Yamada M (2018). "Persistence fisher kernel: a riemannian manifold kernel for persistence diagrams." \url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}.
+}
+\author{
+Shael Brown - \email{shaelebrown@gmail.com}
+}

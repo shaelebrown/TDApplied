@@ -20,7 +20,21 @@ diagram_kkmeans(diagrams, centers, dim = 0, t = 1, sigma = 1, ...)
 \item{...}{additional parameters.}
 }
 \value{
-a diagram_kkmeans object containing the output of \code{\link[kernlab]{kkmeans}} on the diagram distance matrix, i.e. the cluster memberships, centers, sizes, and withinss's, and the diagrams, dim, t and sigma parameters.
+a 'diagram_kkmeans' object containing the output of \code{\link[kernlab]{kkmeans}} on the diagram distance matrix, i.e. a list containing
+
+\describe{
+
+\item{clustering}{an S4 object of class specc, the output of a \code{\link[kernlab]{kkmeans}} function call. The .Data slot of this object contains cluster memberships, withinss contains the within-cluster sum of squares for each cluster, etc.}
+
+\item{diagrams}{the input `diagrams` argument.}
+
+\item{dim}{the input `dim` argument.}
+
+\item{t}{the input `t` argument.}
+
+\item{sigma}{the input `sigma` argument.}
+
+}
 }
 \description{
 Returns the output of kkmeans on the desired Gram matrix of a group of persistence diagrams
@@ -50,4 +64,10 @@ return(df)
 
 # calculate kmeans clusters with centers = 2 in dimension 1 with sigma = t = 2
 clusters <- diagram_kkmeans(diagrams = g,centers = 2,dim = 1,t = 2,sigma = 2)
+}
+\seealso{
+\code{\link{diagram_nearest_clusters}} for predicting clusters of new diagrams.
+}
+\author{
+Shael Brown - \email{shaelebrown@gmail.com}
 }

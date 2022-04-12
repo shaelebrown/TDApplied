@@ -57,7 +57,23 @@ diagram_ksvm(
 \item{shrinking}{option whether to use the shrinking-heuristics (default TRUE).}
 }
 \value{
-a list containing the cross-validation results (stored in list member 'models') and the best model, of class 'diagram_ksvm'. If `cv` == 1 then only the model is returned. best_model is the output of \code{\link[kernlab]{ksvm}} on the whole dataset, using the optimal parameters found using CV, the support vector diagrams groups, dimension, t, and sigma.
+a list containing 
+
+\describe{
+
+\item{models}{the cross-validation results - a matrix storing the parameters for each model in the tuning grid and its mean cross-validation error over all split.}
+
+\item{best_model}{the output of \code{\link[kernlab]{ksvm}} run on the whole dataset with the optimal model parameters found during cross-validation. See the help page for \code{\link[kernlab]{ksvm}} for more details about this object.}
+
+\item{diagrams}{the diagrams which were support vectors in the best_model. These are used for downstream prediction.}
+
+\item{dim}{the input `dim` argument.}
+
+\item{t}{the input `t` argument.}
+
+\item{sigma}{the input `sigma` argument.}
+
+}
 }
 \description{
 Returns the output of ksvm on the Gram matrix of a group of persistence diagrams
@@ -91,4 +107,10 @@ y <- stats::runif(10,min = 0,max = 1)
 
 # calculate models over a grid with 5-fold CV
 model_svm <- diagram_ksvm(diagrams = g,cv = 5,dim = c(1,2),y = y,sigma = c(1,0.1))
+}
+\seealso{
+\code{\link{predict_diagram_ksvm}} for predicting labels of new diagrams.
+}
+\author{
+Shael Brown - \email{shaelebrown@gmail.com}
 }

@@ -20,7 +20,21 @@ diagram_kpca(diagrams, dim = 0, t = 1, sigma = 1, features = 1, ...)
 \item{...}{additional parameters.}
 }
 \value{
-a list containing the output of \code{\link[kernlab]{kpca}} on the Gram matrix, containing the principal components, eigenvalues and other information, and the diagram groups, dimension, t, sigma and features. The class of this object is 'diagram_kpca'.
+a list containing 
+
+\describe{
+
+\item{pca}{the output of \code{\link[kernlab]{kpca}} on the Gram matrix, an S4 object containing the slots pcv (a matrix containing the principal component vectors (column wise)), eig (the corresponding eigenvalues), rotated (the original data projected (rotated) on the principal components) and xmatrix (the original data matrix).}
+
+\item{diagrams}{the input `diagrams` argument.}
+
+\item{t}{the input `t` argument.}
+
+\item{sigma}{the input `sigma` argument.}
+
+\item{dim}{the input `dim` argument.}
+
+}
 }
 \description{
 Returns the output of cmdscale on the desired distance matrix of a group of persistence diagrams
@@ -50,4 +64,10 @@ return(df)
 
 # calculate their 2D PCA embedding in dimension 1 with sigma = t = 2
 embedding <- diagram_kpca(diagrams = g,dim = 1,t = 2,sigma = 2,features = 2)
+}
+\seealso{
+\code{\link{predict_diagram_kpca}} for predicting embedding coordinates of new diagrams.
+}
+\author{
+Shael Brown - \email{shaelebrown@gmail.com}
 }

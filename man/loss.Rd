@@ -24,7 +24,7 @@ storing the current distances which have been precomputed.}
 \item{sigma}{the positive bandwith for the persistence Fisher distance.}
 }
 \value{
-numeric value of the loss function
+the numeric value of the Turner loss function.
 }
 \description{
 Calculate the normalized sum of within-group exponentiated distances between pairs of persistence diagrams (stored as data frames)
@@ -42,4 +42,10 @@ The `p` parameter should be a number at least 1 and possibly Inf.
 The `q` parameter should be a finite number at least 1. The `distance` parameter should be a string
 either "wasserstein" or "fisher". The `sigma` parameter is the positive bandwith for the persistence
 Fisher distance.
+}
+\references{
+Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.
+}
+\author{
+Shael Brown - \email{shaelebrown@gmail.com}
 }

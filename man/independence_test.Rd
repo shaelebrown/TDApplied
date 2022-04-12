@@ -20,14 +20,26 @@ independence_test(g1, g2, dims = c(0, 1), sigma = 1, t = 1, verbose = FALSE)
 \item{verbose}{a boolean flag for if the time duration of the function call should be printed, default False.}
 }
 \value{
-a list with dimensions used (named vector), test statistics in each dimension (named vector)
-                  a p-value for each dimension (named vector) and the time duration of the function call.
+a list with the following elements:
+\describe{
+
+ \item{dimensions}{the input `dims` argument.}
+
+ \item{permvals}{a numeric vector of length `iterations` with the permuted loss function value for each permutation.}
+ 
+ \item{test_statisics}{a numeric vector of the test statistic value in each dimension.}
+ 
+ \item{p_values}{a numeric vector of the p-values in each dimension.}
+ 
+ \item{run_time}{the run time of the function call, containing time units.}
+
+}
 }
 \description{
 Calculates (an estimate of) the Hilbert-Schmidt independence criteria for 
 two groups of paired persistence diagrams, the approximate null distribution
 and a p-value for each desired homological dimension. See 
-\url{https://doi.org/10.1007/s41468-017-0008-7} for details.
+\url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf} for details.
 }
 \details{
 The `g1` and `g2` parameters should be lists of persistence diagrams, outputted from a
@@ -63,4 +75,10 @@ return(df)
 
 # do independence test with sigma = 1, t = 1, in dimensions 0 and 1, printing the time duration
 ind_test = independence_test(g1,g2,verbose = TRUE)
+}
+\references{
+Gretton A et al (2007). "A Kernel Statistical Test of Independence." \url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf}.
+}
+\author{
+Shael Brown - \email{shaelebrown@gmail.com}
 }

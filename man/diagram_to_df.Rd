@@ -33,3 +33,6 @@ phom = TDA::ripsDiag(X = df,maxdimension = 1,maxscale = 1)
 # convert to data frame
 phom_df = diagram_to_df(d = phom)
 }
+\author{
+Shael Brown - \email{shaelebrown@gmail.com}
+}

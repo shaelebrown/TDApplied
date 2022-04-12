@@ -10,7 +10,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 references:
 - id: Robinson_Turner
-  title: 'Machine learning and inference for topological data analysis'
+  title: 'Hypothesis testing for topological data analysis'
   author:
   - family: Robinson
     given: Andrew
@@ -43,7 +43,7 @@ references:
   - family: Morozov
     given: Dmitriy
   - family: Nigmetov
-  given: Arnur
+    given: Arnur
   container-title: ACM Journal of Experimental Algorithmics
   volume: 22
   URL: 'https://doi.org/10.1145/3064175'
@@ -76,6 +76,25 @@ references:
   type: article-journal
   issued:
     year: 2021
+- id: kernel_test
+  title: 'A Kernel Statistical Test of Independence'
+  author:
+  - family: Gretton
+    given: Arthur
+  - family: Fukumizu
+    given: Kenji
+  - family: Hui Teo
+    given: Choon
+  - family: Song
+    given: Le
+  - family: Scholkopf
+    given: Bernhard
+  - family: Smola
+    given: Alexander
+  container-title: NEURIPS
+  type: article-journal
+  issued:
+    year: 2007
 ---
 
 ```{r, include = FALSE}
@@ -87,13 +106,15 @@ knitr::opts_chunk$set(
 
 ## Statistical inference of persistence diagrams
 
-In this package functionality is provided to carry out machine learning methods and to make statistical inference on groups of persistence diagrams. For machine learning, currently we can project a group of persistence diagrams into low dimensions using kernel multidimensional scaling (MDS) or perform support vector machine (SVM) classification or regression where the inputs are the persistence diagrams. For inference, we have groups of persistence diagrams and test if there is either a difference between them using a permutation test, or if the (two) groups are independent or not. The permutation test is detailed in @Robinson_Turner, where we compute an analogue to within group variance by calculating distances between each same-group pair of persistence diagrams, and then repeat this calculation many times for permuted group labels. The p-value for the test is computed as a smoothed ratio of the number of permutations which resulted in a within-group variance which was lower than the originally-calculated test statistic to the total number of permutations. The independence test is parametric, based on the paper WHAT, and with a small p-value we can find evidence that the two groups are not independent. Now, we'll provide more details as to how the computations are actually carried out.
+In this package functionality is provided to carry out machine learning methods and to make statistical inference on groups of persistence diagrams. For machine learning, currently we can project a group of persistence diagrams into low dimensions using either metric multidimensional scaling (MDS) or kernel principal components analysis (kPCA), cluster a group of diagrams with kernel k-means (kkmeans) or perform kernel support vector machine (kSVM) classification or regression where the inputs are the persistence diagrams. For inference, we have groups of persistence diagrams and can test if there is either a difference between them using a permutation test, or if the (two) groups are independent or not. The permutation test is detailed in @Robinson_Turner, where we compute an analogue to within group variance by calculating distances between each same-group pair of persistence diagrams, and then repeat this calculation many times for permuted group labels. The p-value for the test is computed as a smoothed ratio of the number of permutations which resulted in a within-group variance which was lower than the originally-calculated test statistic to the total number of permutations. The independence test is parametric, based on the paper @kernel_test, and with a small p-value we can find evidence that the two groups are not independent. Now, we'll provide more details as to how the computations are actually carried out.
 
-One of the central objects of interest in topological data analysis (TDA) is called a persistence diagram. A persistence diagram for a point cloud data set is a topological descriptor which keeps track of various topological features of the data set. A persistence diagram is represented as a set of 2D points above the diagonal, for each topological dimension. We can compute distances between persistence diagrams in the same dimension by finding optimal matching of their 2D points, either using a $p$-Minkowski distance leading to the ''$p$-wasserstein distance'' or using the infinity-norm distance leading to the ''bottleneck distance'' @distance_calc. The inifinity-norm distance between two 2D points is just the maximum absolute distance between either coordinate: $d_{\infty} = \max\{|x_{1}-x_{2}|,|y_{1}-y_{2}|\}$. A matching of two persistence diagrams $D_{1},D_{2}$ in the same dimension $dim$ is $\phi:D_{1} \rightarrow D_{2}$ where each point $p_{1}$ in $D_{1}$ is "matched" to a point $\phi(p_{1})$ which is either a point in $D_{2}$ or is the projection (nearest point) of $p_{1}$ onto the diagonal, and every point in $D_{2}$ is matched to either a point in $D_{1}$ or to its projection on the diagonal. To compute the $p$-wasserstein distance we find the optimal matching by minimizing the loss function 
+One of the central objects of interest in topological data analysis (TDA) is called a persistence diagram. A persistence diagram for a point cloud data set is a topological descriptor which keeps track of various topological features of the data set. A persistence diagram is represented as a set of 2D points above the diagonal (i.e. where $y \geq x$), for each topological dimension. One way we can compute distances between persistence diagrams in the same dimension is by finding optimal matching of their 2D points, either using a $p$-Minkowski distance leading to the $p$-wasserstein distance or using the infinity-norm distance leading to the ''bottleneck distance'' @distance_calc. The inifinity-norm distance between two 2D points is just the maximum absolute distance between either coordinate: $d_{\infty} = \max\{|x_{1}-x_{2}|,|y_{1}-y_{2}|\}$. A matching of two persistence diagrams $D_{1},D_{2}$ in the same dimension $dim$ is $\phi:D_{1} \rightarrow D_{2}$ where each point $p_{1}$ in $D_{1}$ is "matched" to a point $\phi(p_{1})$ which is either a point in $D_{2}$ or is the projection (nearest point) of $p_{1}$ onto the diagonal, and every point in $D_{2}$ is matched to either a point in $D_{1}$ or to its projection on the diagonal. To compute the $p$-wasserstein distance we find the optimal matching by minimizing the loss function
 
 $[\sum_{p_{1}}d_{\infty}(p_{1},\phi(p_{1}))^p]^{1/p}$, and the bottleneck distance is found by minimizing the loss function $\mbox{max}\{d_{\infty}(p_{1},\phi(p_{1}))\}$. These optimization problems can be solved exactly by the Hungarian algorithm in the clue package.
 
-Another distance metric between persistence diagrams is called the persistence Fisher metric (details can be found in @persistence_fisher). The idea is to represent the two persistence diagrams as probability density functions, with a Gaussian point mass centered at each point (including the diagonal projections of the other diagram), and computing the Fisher information metric between the two distributions. Specifically, we calculate the following two vectors: $\rho_1 = [\sum_{u \in D_1 \cup \Delta D_2}N(x;u,\sigma^2)|u \in D_1 \cup \Delta D_2 \cup D_2 \cup \Delta D_1]$ and $\rho_2 = [\sum_{u \in D_2 \cup \Delta D_1}N(x;u,\sigma^2)|u \in D_1 \cup \Delta D_2 \cup D_2 \cup \Delta D_1]$. Then we noramlize them by their sums, $\overline{\rho_1} = \frac{\rho_1}{\sum \rho_1}$ and $\overline{\rho_2} = \frac{\rho_2}{\sum \rho_2}$. Finally, we compute $<\sqrt{\rho_1},\sqrt{\rho_2}>$, i.e. the dot product of the elementwise square root of both of the noramlized vectors.
+Another distance metric between persistence diagrams is called the Fisher information metric, $d_{FIM}$ (details can be found in @persistence_fisher). The idea is to represent the two persistence diagrams as probability density functions, with a Gaussian point mass centered at each pointin the diagram (including the diagonal projections of the opposite diagram), and computing the Fisher information metric between the two distributions. Specifically, we calculate the following two vectors: $\rho_1 = [\sum_{u \in D_1 \cup \Delta D_2}N(x;u,\sigma^2)|u \in D_1 \cup \Delta D_2 \cup D_2 \cup \Delta D_1]$ and $\rho_2 = [\sum_{u \in D_2 \cup \Delta D_1}N(x;u,\sigma^2)|u \in D_1 \cup \Delta D_2 \cup D_2 \cup \Delta D_1]$. Then we noramlize them by their sums, $\overline{\rho_1} = \frac{\rho_1}{\sum \rho_1}$ and $\overline{\rho_2} = \frac{\rho_2}{\sum \rho_2}$. Finally, we compute $<\sqrt{\rho_1},\sqrt{\rho_2}>$, i.e. the dot product of the elementwise square root of both of the noramlized vectors.
+
+One use of distances between diagrams is embedding a group of diagrams into a low-dimensional space using metric MDS. Metric MDS takes as input a $n$ by $n$ distance matrix and returns an embedding of $n$ points into $d$-dimensional Euclidean space such that the Euclidean distance between the embedded points are as close as possible to the original distance matrix. 
 
 Now that we have defined distances between persistence diagrams we can discuss how to make inferences about groups of persistence diagrams. For the basic idea we will consider two groups of persistence diagrams, $G_{1}$ and $G_{2}$, containing $n_{1}$ and $n_{2}$ persistence diagrams respectively. Each persistence diagram comes from a dataset, which could be viewed as a sample from a true "underlying" manifold (geometric object). Therefore, we might want to test if the groups $G_{1}$ and $G_{2}$ are samples of persistence diagrams coming from the same manifold, $H_{0}$, or if the underlying manifolds are different $H_{A}$. We start by computing a test-statistic, $L$, which is essentially the sum of within-group variances:
 
@@ -106,6 +127,8 @@ Since relatively little is known about the distribution of persistence diagrams 
 The extension to multiple groups, noted at the end of the paper @Robinson_Turner, is extremely straightforward and is implemented in this package. The null hypothesis is that all the groups are sampled from the same geometric object, and the alternative hypothesis is that some of the groups are sampled from different geometric objects. The test statistic is still the sum of the (essentially) within-group variances across all the groups, the permutations shuffle the persistence diagrams between all the groups, and the p-value is computed in the same way.
 
 There is one additional functionality that this package provides, and it is an idea that was discussed in @dependencies. One of the assumptions of the inference procedure listed in @Robinson_Turner is that the persistence diagrams are all independent, however this is not always reasonable to assume in practice. For example, suppose we had point cloud data for several subjects in a pharmaceutical study both before and after a drug intervention. We might want to know if the geometric structure of the point clouds changed after the drug intervention, so our two groups of persistence diagrams would be the before intervention and after invention groups. Since there is a pairing between some of the persistence diagrams (the diagrams belonging to the same patient) these diagrams will not be independent of each other. From this perspective, we will only allow permutations which keep the two (or more in the case of many diagram groups) persistence diagrams of each patient (i.e. dependency) separated. So after each permutation each group still contains one persistence diagram per patient. Not only is this more ideal theoretically, but it also offers a practical advantage. If there was truly a difference between the groups then if there are subject differences the permuted-within-group variances would be larger when each group contains one persistence diagram from each subject, enhancing the test power.
+
+In order to use kernel methods for machine learning of persistence diagrams, this package implements the kernel described in @persistence_fisher. The idea is quite simple, let $\sigma,t > 0$. Then the persistence fisher kernel is defined as $\rho(D_1,D_2) = \mbox{exp}(-t*d_{FIM}(D_1,D_2))$, and the Gram matrix of a list of persistence diagrams $D_1,D_2,\dots,D_n$ is the matrix which stores the kernel values: $G[i,j] = \rho(D_i,D_j)$. We can use this kernel to perform several machine learning tasks with persistence diagrams: we can embed a group of persistence diagrams into a low-dimensional space using kPCA by computing eigenvectors of the Gram matrix, we can cluster a group of persistence diagrams using kkmeans, and we can train classification and regression models where the training set is a list of persistence diagrams using kSVM's. TDAML also provides prediction methods for kkmeans, kPCA and kSVM.
 
 To demonstrate the utility of the TDAInference package, we will go through several examples. Firstly, we will give some examples to show that the various distances between persistence diagrams are being computed correctly. Secondly, we will benchmark the distance calculations to show that they are faster than those provided in the TDA package. Thirdly, we will carry out various permutation tests with multiple groups either sampled from the same or different objects to show that the permutation test returns expected results.
 

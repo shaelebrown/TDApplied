@@ -43,3 +43,9 @@ clusters <- diagram_kkmeans(diagrams = g,centers = 2,dim = 1,t = 2,sigma = 2)
 # predict the nearest cluster for all diagrams in g
 nearest_clusters <- diagram_nearest_clusters(new_diagrams = g,clustering = clusters)
 }
+\seealso{
+\code{\link{diagram_kkmeans}} for clustering persistence diagrams.
+}
+\author{
+Shael Brown - \email{shaelebrown@gmail.com}
+}

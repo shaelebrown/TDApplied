@@ -28,6 +28,11 @@
 #' @importFrom rdist cdist
 #' @importFrom clue solve_LSAP
 #' @export
+#' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @references
+#' Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.
+#' 
+#' Le T, Yamada M (2018). "Persistence fisher kernel: a riemannian manifold kernel for persistence diagrams." \url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}.
 #' @examples
 #'
 #' # create two diagrams with package TDA based on 2D Gaussians
@@ -251,8 +256,9 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = 1)
 #' @param p the positive wasserstein power, default 2.
 #' @param sigma a positive number representing the bandwith of the Fisher information metric, default NULL.
 #'
-#' @return the distance matrix.
+#' @return the numeric distance matrix.
 #' @export
+#' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @importFrom foreach foreach %dopar%
 #' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
 #' @importFrom parallelly availableCores
@@ -390,7 +396,10 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
 #' @importFrom doParallel registerDoParallel
 #' @importFrom foreach foreach %dopar%
 #' @importFrom utils combn
-#' @return numeric value of the loss function
+#' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @references
+#' Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.
+#' @return the numeric value of the Turner loss function.
 
 loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma){
 

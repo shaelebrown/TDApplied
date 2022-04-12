@@ -27,7 +27,7 @@ distance_matrix(
 \item{sigma}{a positive number representing the bandwith of the Fisher information metric, default NULL.}
 }
 \value{
-the distance matrix.
+the numeric distance matrix.
 }
 \description{
 Calculate the distance matrix d for either a single list of persistence diagrams \eqn{D = (D_1,D_2,\dots,D_n)}, i.e. \eqn{d[i,j] = d(D_i,D_j)}, 
@@ -59,4 +59,7 @@ D <- distance_matrix(diagrams = g,dim = 1,distance = "wasserstein",p = 2)
 
 # now do the cross distance matrix, should be the same as the original
 D_cross <- distance_matrix(diagrams = g,other_diagrams = g,dim = 1,distance = "wasserstein",p = 2)
+}
+\author{
+Shael Brown - \email{shaelebrown@gmail.com}
 }

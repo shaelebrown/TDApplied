@@ -18,7 +18,7 @@ gram_matrix(diagrams, other_diagrams = NULL, dim = 0, sigma = 1, t = 1)
 \item{t}{a positive number representing the scale for the kernel, default 1.}
 }
 \value{
-the (cross) Gram matrix of class 'kernelMatrix' for downstream analyses with the kernlab package.
+the numeric (cross) Gram matrix of class 'kernelMatrix'.
 }
 \description{
 Calculate the Gram matrix K for either a single list of persistence diagrams \eqn{(D_1,D_2,\dots,D_n)}, i.e. \eqn{K[i,j] = k(D_i,D_j)}, 
@@ -49,4 +49,7 @@ G <- gram_matrix(diagrams = g,dim = 1,sigma = 2,t = 2)
 
 # calculate cross-Gram matrix, should be the same as G
 G_cross <- gram_matrix(diagrams = g,other_diagrams = g,dim = 1,sigma = 2,t = 2)
+}
+\author{
+Shael Brown - \email{shaelebrown@gmail.com}
 }

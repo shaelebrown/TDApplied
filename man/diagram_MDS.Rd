@@ -39,7 +39,24 @@ diagram_MDS(
 \item{list.}{local indicating if a list should be returned or just the n*k matrix.}
 }
 \value{
-the output of \code{\link[stats]{cmdscale}} on the diagram distance matrix, either just the embedding matrix or a list containing the embedding and additional information.
+the output of \code{\link[stats]{cmdscale}} on the diagram distance matrix. If `list.` is false (as per default),
+a matrix with `k` columns whose rows give the coordinates of the points chosen to represent the dissimilarities.
+
+Otherwise, a list containing the following components.
+
+\describe{
+
+ \item{points}{a matrix with up to `k` columns whose rows give the coordinates of the points chosen to represent the dissimilarities.}
+
+ \item{eig}{the \eqn{n} eigenvalues computed during the scaling process if `eig` is true.}
+ 
+ \item{x}{the doubly centered distance matrix if `x.ret` is true.}
+ 
+ \item{ac}{the additive constant \eqn{c^*}, 0 if `add` = FALSE.}
+ 
+ \item{GOF}{the numeric vector of length 2, representing the sum of all the eigenvalues divided by the sum of their absolute values (first vector element) or by the sum of the max of each eigenvalue and 0 (second vector element).}
+
+}
 }
 \description{
 Returns the output of cmdscale on the desired distance matrix of a group of persistence diagrams
@@ -70,4 +87,7 @@ return(df)
 
 # calculate their 2D mds embedding in dimension 1 with the bottleneck distance
 embedding <- diagram_MDS(diagrams = g,dim = 1,p = Inf,k = 2)
+}
+\author{
+Shael Brown - \email{shaelebrown@gmail.com}
 }

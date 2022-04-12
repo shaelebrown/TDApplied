@@ -36,8 +36,20 @@ permutation_test(
 \item{verbose}{a boolean flag for if the time duration of the function call should be printed, default False.}
 }
 \value{
-list with dimensions used (named vector), permutation loss values in each dimension (named list), test statistics in each dimension (named vector)
-                  a p-value for each dimension (named vector) and the time duration of the function call.
+a list with the following elements:
+\describe{
+
+ \item{dimensions}{the input `dims` argument.}
+
+ \item{permvals}{a numeric vector of length `iterations` with the permuted loss function value for each permutation.}
+ 
+ \item{test_statisics}{a numeric vector of the test statistic value in each dimension.}
+ 
+ \item{p_values}{a numeric vector of the p-values in each dimension.}
+ 
+ \item{run_time}{the run time of the function call, containing time units.}
+
+}
 }
 \description{
 Permutation test for finding differences between groups of persistence diagrams,
@@ -101,4 +113,12 @@ iterations = 20,
 distance = "fisher",
 sigma = 1, 
 verbose = TRUE)
+}
+\references{
+Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.
+
+Abdallah H et al (2021). "Statistical Inference for Persistent Homology applied to fMRI." \url{https://github.com/hassan-abdallah/Statistical_Inference_PH_fMRI/blob/main/Abdallah_et_al_Statistical_Inference_PH_fMRI.pdf}.
+}
+\author{
+Shael Brown - \email{shaelebrown@gmail.com}
 }

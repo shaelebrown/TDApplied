@@ -12,6 +12,7 @@
 #' @param d the output of a TDA homology calculation, like \code{\link[TDA]{ripsDiag}}.
 #' @return a 3-column data frame, with each row representing a topological feature. The first column is the feature dimension (a non-negative integer), the second column is the birth radius of the feature and the third column is the death radius.
 #' @export
+#' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @examples
 #'
 #' # create a persistence diagram from a 2D Gaussian using TDA

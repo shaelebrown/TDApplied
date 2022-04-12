@@ -12,7 +12,7 @@ predict_diagram_kpca(new_diagrams, embedding)
 \item{embedding}{the output to a diagram_kpca function call.}
 }
 \value{
-the data projection.
+the data projection (rotation), stored as a numeric matrix. Each row corresponds to the same-index diagram in `new_diagrams`.
 }
 \description{
 Returns the embedding matrix for the new points.
@@ -54,4 +54,10 @@ return(df)
 
 # calculate their 2D PCA embedding using the embedding object
 embedding_new <- predict_diagram_kpca(new_diagrams = g_new,embedding = embedding)
+}
+\seealso{
+\code{\link{diagram_kpca}} for embedding persistence diagrams into a low-dimensional space.
+}
+\author{
+Shael Brown - \email{shaelebrown@gmail.com}
 }

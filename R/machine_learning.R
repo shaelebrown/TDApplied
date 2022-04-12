@@ -24,12 +24,31 @@
 #' @param x.ret indicates whether the doubly centered symmetric distance matrix should be returned.
 #' @param list. local indicating if a list should be returned or just the n*k matrix.
 #'
-#' @return the output of \code{\link[stats]{cmdscale}} on the diagram distance matrix, either just the embedding matrix or a list containing the embedding and additional information.
+#' @return the output of \code{\link[stats]{cmdscale}} on the diagram distance matrix. If `list.` is false (as per default),
+#' a matrix with `k` columns whose rows give the coordinates of the points chosen to represent the dissimilarities.
+#' 
+#' Otherwise, a list containing the following components.
+#' 
+#' \describe{
+#' 
+#'  \item{points}{a matrix with up to `k` columns whose rows give the coordinates of the points chosen to represent the dissimilarities.}
+#' 
+#'  \item{eig}{the \eqn{n} eigenvalues computed during the scaling process if `eig` is true.}
+#'  
+#'  \item{x}{the doubly centered distance matrix if `x.ret` is true.}
+#'  
+#'  \item{ac}{the additive constant \eqn{c^*}, 0 if `add` = FALSE.}
+#'  
+#'  \item{GOF}{the numeric vector of length 2, representing the sum of all the eigenvalues divided by the sum of their absolute values (first vector element) or by the sum of the max of each eigenvalue and 0 (second vector element).}
+#' 
+#' }
+#' 
 #' @importFrom stats cmdscale
 #' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
 #' @importFrom parallelly availableCores
 #' @importFrom doParallel registerDoParallel
 #' @export
+#' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @examples
 #'
 #' # create ten diagrams with package TDA based on 2D Gaussians
@@ -91,9 +110,26 @@ diagram_MDS <- function(diagrams,distance = "wasserstein",dim = 0,p = 2,sigma = 
 #' @param centers number of clusters to initialize.
 #' @param ... additional parameters.
 #'
-#' @return a diagram_kkmeans object containing the output of \code{\link[kernlab]{kkmeans}} on the diagram distance matrix, i.e. the cluster memberships, centers, sizes, and withinss's, and the diagrams, dim, t and sigma parameters.
+#' @return a 'diagram_kkmeans' object containing the output of \code{\link[kernlab]{kkmeans}} on the diagram distance matrix, i.e. a list containing
+#' 
+#' \describe{
+#' 
+#' \item{clustering}{an S4 object of class specc, the output of a \code{\link[kernlab]{kkmeans}} function call. The .Data slot of this object contains cluster memberships, withinss contains the within-cluster sum of squares for each cluster, etc.}
+#' 
+#' \item{diagrams}{the input `diagrams` argument.}
+#' 
+#' \item{dim}{the input `dim` argument.}
+#' 
+#' \item{t}{the input `t` argument.}
+#' 
+#' \item{sigma}{the input `sigma` argument.}
+#' 
+#' }
+#' 
 #' @export
+#' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @importFrom kernlab kkmeans
+#' @seealso \code{\link{diagram_nearest_clusters}} for predicting clusters of new diagrams.
 #' @examples
 #'
 #' # create ten diagrams with package TDA based on 2D Gaussians
@@ -182,6 +218,8 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,...){
 #'
 #' @return a vector of the predicted cluster labels for the new diagrams.
 #' @export
+#' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @seealso \code{\link{diagram_kkmeans}} for clustering persistence diagrams.
 #' @examples
 #'
 #' # create ten diagrams with package TDA based on 2D Gaussians
@@ -262,9 +300,26 @@ diagram_nearest_clusters <- function(new_diagrams,clustering){
 #' @param features number of features (principal components) to return, default 1.
 #' @param ... additional parameters.
 #'
-#' @return a list containing the output of \code{\link[kernlab]{kpca}} on the Gram matrix, containing the principal components, eigenvalues and other information, and the diagram groups, dimension, t, sigma and features. The class of this object is 'diagram_kpca'.
+#' @return a list containing 
+#' 
+#' \describe{
+#' 
+#' \item{pca}{the output of \code{\link[kernlab]{kpca}} on the Gram matrix, an S4 object containing the slots pcv (a matrix containing the principal component vectors (column wise)), eig (the corresponding eigenvalues), rotated (the original data projected (rotated) on the principal components) and xmatrix (the original data matrix).}
+#' 
+#' \item{diagrams}{the input `diagrams` argument.}
+#' 
+#' \item{t}{the input `t` argument.}
+#' 
+#' \item{sigma}{the input `sigma` argument.}
+#' 
+#' \item{dim}{the input `dim` argument.}
+#' 
+#' }
+#' 
 #' @export
+#' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @importFrom kernlab kpca
+#' @seealso \code{\link{predict_diagram_kpca}} for predicting embedding coordinates of new diagrams.
 #' @examples
 #'
 #' # create ten diagrams with package TDA based on 2D Gaussians
@@ -331,12 +386,14 @@ diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,...){
 #' @param new_diagrams a list of persistence diagrams, as the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
 #' @param embedding the output to a diagram_kpca function call.
 #'
-#' @return the data projection.
+#' @return the data projection (rotation), stored as a numeric matrix. Each row corresponds to the same-index diagram in `new_diagrams`.
 #' @export
+#' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @importFrom foreach foreach %dopar% %do%
 #' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
 #' @importFrom parallelly availableCores
 #' @importFrom doParallel registerDoParallel
+#' @seealso \code{\link{diagram_kpca}} for embedding persistence diagrams into a low-dimensional space.
 #' @examples
 #'
 #' # create ten diagrams with package TDA based on 2D Gaussians
@@ -434,8 +491,27 @@ predict_diagram_kpca <- function(new_diagrams,embedding){
 #' @param cache cache memory in MB (default 40).
 #' @param tol tolerance of termination criteria (default 0.001).
 #' @param shrinking option whether to use the shrinking-heuristics (default TRUE).
-#' @return a list containing the cross-validation results (stored in list member 'models') and the best model, of class 'diagram_ksvm'. If `cv` == 1 then only the model is returned. best_model is the output of \code{\link[kernlab]{ksvm}} on the whole dataset, using the optimal parameters found using CV, the support vector diagrams groups, dimension, t, and sigma.
+#' @return a list containing 
+#' 
+#' \describe{
+#' 
+#' \item{models}{the cross-validation results - a matrix storing the parameters for each model in the tuning grid and its mean cross-validation error over all split.}
+#' 
+#' \item{best_model}{the output of \code{\link[kernlab]{ksvm}} run on the whole dataset with the optimal model parameters found during cross-validation. See the help page for \code{\link[kernlab]{ksvm}} for more details about this object.}
+#' 
+#' \item{diagrams}{the diagrams which were support vectors in the best_model. These are used for downstream prediction.}
+#' 
+#' \item{dim}{the input `dim` argument.}
+#' 
+#' \item{t}{the input `t` argument.}
+#' 
+#' \item{sigma}{the input `sigma` argument.}
+#' 
+#' }
+#' 
 #' @export
+#' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @seealso \code{\link{predict_diagram_ksvm}} for predicting labels of new diagrams.
 #' @importFrom kernlab ksvm
 #' @importFrom foreach foreach %dopar%
 #' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
@@ -724,8 +800,10 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
 #'
 #' @param new_diagrams a list of new persistence diagrams, as the output of a TDA calculation.
 #' @param model the diagram_ksvm model to be used for prediction.
-#' @return a vector containing the output of \code{\link[kernlab]{predict.ksvm}} on the cross Gram matrix of the new diagrams and the diagrams used to train the model.
+#' @return a vector containing the output of \code{\link[kernlab]{predict.ksvm}} on the cross Gram matrix of the new diagrams and the support vector diagrams stored in the model.
 #' @export
+#' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @seealso \code{\link{diagram_ksvm}} for training a SVM model on a training set of persistence diagrams.
 #' @importFrom foreach foreach %dopar% %do%
 #' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
 #' @importFrom parallelly availableCores
