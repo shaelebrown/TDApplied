@@ -12,9 +12,11 @@ Description: This package aims to bridge topological data analysis (TDA) with da
     goals of this package: (1) convert the output from the persistent homology
     calculations in the popular TDA package for R, 'TDA', into a data frame which can
     easily be used in personalized analyses, (2) provide a fast method for computing
-    distances between persistence diagrams, (3) implement kernel machine learning
-    method for persistence diagrams (currently kernel multidimensional scaling and
-    kernel SVM), and (4) provide methods for inference on groups of persistence diagrams.
+    distances between persistence diagrams (which can be used to project a group of 
+    diagrams into a low-dimensional space using metric multidimensional scaling), 
+    (3) implement kernel machine learning methods for persistence diagrams 
+    (currently kernel principal components analysis, kernel kmeans and kernel svm), 
+    and (4) provide methods for inference on groups of persistence diagrams.
 Depends: R (>= 3.2.2), TDA
 Imports: parallel, doParallel, foreach, clue, rdist, parallelly, kernlab, iterators
 License: GPL-3
