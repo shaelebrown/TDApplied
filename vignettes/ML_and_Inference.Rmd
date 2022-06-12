@@ -38,23 +38,113 @@ The main tool of TDA is called persistent homology (see @PHoriginal for the intr
 
 # TDAML methods and underlying theory
 
+```{r setup}
+devtools::load_all()
+#library("TDAML")
+```
+
 ## Distance between persistence diagrams
 
 There are several ways to compute distances between persistence diagrams in the same dimension - the most common two are called the 2-wasserstein and bottleneck distances. These techniques find an optimal matching of the 2D points in their input two diagrams, and compute a cost of that optimal matching @distance_calc. A point from one diagram is allowed either to be paired (matched) with a point in the other diagram or its diagonal projection, i.e. the nearest point on the diagonal line $y=x$ using Euclidean distance. Allowing points to be paired with their diagonal projections both allows for matchings of persistence diagrams with different numbers of points (which is almost always the case in practice) and also concretely applies the idea that some points in a persistence diagram really just represent noise. The "cost" value associated with a matching is given by either (i) the maximum of infinity-norm distances between paired points, or (ii) the square-root of the sum of squared Euclidean distances between matched points. The cost of the optimal matching under loss (i) is called the bottleneck distance of persistence diagrams, and the cost of the optimal matching of cost (ii) is called the 2-wasserstein metric of persistence diagrams. Both distance metrics have been used in a number of applications, but the 2-wasserstein metric is able to find more fine-scale differences in persistence diagrams compared to the bottleneck distance. The problem of finding an optimal matching can be solved with the Hungarian algorithm, which is implemented in the R package clue.
 
 Another distance metric between persistence diagrams, which will be useful for kernel calculations, is called the Fisher information metric, $d_{FIM}(D_1,D_2,\sigma)$ (details can be found in @persistence_fisher). The idea is to represent the two persistence diagrams as probability density functions, with a 2D-Gaussian point mass centered at each point in both diagrams (including the diagonal projections of the points in the opposite diagram) all of variance $\sigma^2 > 0$, and computing the Fisher information metric between the two distributions. Algorithmically, we calculate the following two vectors: $\rho_1 = [\sum_{u \in D_1 \cup \Delta D_2}N(x;u,\sigma^2)|u \in D_1 \cup \Delta D_2 \cup D_2 \cup \Delta D_1]$ and $\rho_2 = [\sum_{u \in D_2 \cup \Delta D_1}N(x;u,\sigma^2)|u \in D_1 \cup \Delta D_2 \cup D_2 \cup \Delta D_1]$. Then we noramlize them by their sums, $\overline{\rho_1} = \frac{\rho_1}{\sum \rho_1}$ and $\overline{\rho_2} = \frac{\rho_2}{\sum \rho_2}$. Finally, we compute $<\sqrt{\rho_1},\sqrt{\rho_2}>$, i.e. the dot product of the elementwise square root of both of the noramlized vectors.
 
-These distance calculations have been implemented in the `diagram_distance` function, providing a fast native-R computation for all three distance metrics which can be used for standalone analyses or machine learning/inference in other package functions. Note that there is a generalization of the 2-wasserstein distance for any $p \geq 1$, the $p$-wasserstein distance, which can also be computed using the `diagram_distance` function, although analyses where researchers use $p \neq 2$ for distance calculations seem to be rare.
+These distance calculations have been implemented in the `diagram_distance` function, providing a fast native-R computation for all three distance metrics which can be used for standalone analyses or machine learning/inference in other package functions. Note that there is a generalization of the 2-wasserstein distance for any $p \geq 1$, the $p$-wasserstein distance, which can also be computed using the `diagram_distance` function, although analyses where researchers use $p \neq 2$ for distance calculations seem to be rare. Here is an example of computing distances between a persistence diagram sampled from a sphere and from a torus:
+
+```{r,echo = T}
+# create two diagrams with package TDA based on torus and sphere
+torus <- TDA::ripsDiag(TDA::torusUnif(n = 100,a = 1,c = 2),
+maxscale = 2,
+maxdimension = 2)
+sphere <- TDA::ripsDiag(TDA::sphereUnif(n = 100,d = 2,r = 1),
+maxscale = 2,
+maxdimension = 2)
+
+# calculate their wasserstein distance in dimension 1
+wass <- diagram_distance(D1 = torus,D2 = sphere,dim = 1,p = 2,distance = "wasserstein")
+
+# calculate their bottleneck distance in dimension 2
+bottleneck <- diagram_distance(D1 = torus,D2 = sphere,dim = 2,p = Inf,distance = "wasserstein")
+
+# now do Fisher information metric calculation in dimension 1
+fisher_df <- diagram_distance(D1 = torus,D2 = sphere,dim = 1,distance = "fisher",sigma = 1)
+```
 
 ## Metric multidimensional scaling of persistence diagrams
 
-One common dimension-reduction technique in machine learning is called multidimensional scaling (MDS) @Cox2008. MDS takes as input an $n$ by $n$ distance (or dissimilarity) matrix $D$, computed from $n$ points in a dataset, and outputs an embedding of those points into a Euclidean space which best preserves the inter-point distances/dissimliarities. To find the optimal embedding we compute $A = -\frac{1}{2}D^2$, and $B$ where $B_{i,j}$ is $A_{i,j}$ subtract the sum the row $i$ and column $j$ means in $A$ plus the overall mean of $A$. Let $v_1,v_2,\dots,v_k$ be the eigenvectors of $B$ ordered from largest to smallest eigenvalue. Then the matrix $V = [v_1|v_2|\dots|v_k]$ is the optimal $k$-dimensional linear embedding of $D$, where the $i$-th row of $V$ is the embedding of the $n$-th point in the dataset. Using the R function `cmdscale` from the package stats we can compute the optimal embedding of a set of persistence diagrams using any of the three distance metrics using the function `diagram_MDS`.
+One common dimension-reduction technique in machine learning is called multidimensional scaling (MDS) @Cox2008. MDS takes as input an $n$ by $n$ distance (or dissimilarity) matrix $D$, computed from $n$ points in a dataset, and outputs an embedding of those points into a Euclidean space which best preserves the inter-point distances/dissimliarities. To find the optimal embedding we compute $A = -\frac{1}{2}D^2$, and $B$ where $B_{i,j}$ is $A_{i,j}$ subtract the sum the row $i$ and column $j$ means in $A$ plus the overall mean of $A$. Let $v_1,v_2,\dots,v_k$ be the eigenvectors of $B$ ordered from largest to smallest eigenvalue. Then the matrix $V = [v_1|v_2|\dots|v_k]$ is the optimal $k$-dimensional linear embedding of $D$, where the $i$-th row of $V$ is the embedding of the $n$-th point in the dataset. Using the R function `cmdscale` from the package stats we can compute the optimal embedding of a set of persistence diagrams using any of the three distance metrics using the function `diagram_MDS`. Here is an example of the `diagram_MDS` function on nine persistence diagrams, three sampled from each of a circle, sphere and a torus:
+
+```{r,echo = T}
+# create 9 diagrams with package TDA based on spheres, circles and tori
+g <- lapply(X = 1:9,FUN = function(X){
+
+  if(X %% 3 == 0)
+  {
+    df <- TDA::ripsDiag(TDA::circleUnif(n = 100,r = 1),maxdimension = 1,maxscale = 2)
+  }
+  if(X %% 3 == 1)
+  {
+    df <- TDA::ripsDiag(TDA::sphereUnif(n = 100,d = 2,r = 1),maxdimension = 1,maxscale = 2)
+  }
+  if(X %% 3 == 2)
+  {
+    df <- TDA::ripsDiag(TDA::torusUnif(n = 100,a = 1,c = 2),maxdimension = 1,maxscale = 2)
+  }
+  df <- diagram_to_df(d = df)
+  return(df)
+
+})
+
+# calculate their 2D mds embedding in dimension 1 with the bottleneck distance
+embedding <- diagram_MDS(diagrams = g,dim = 1,p = Inf,k = 2)
+```
 
 ## Testing for group differences of persistence diagrams
 
 Distributions of persistence diagrams can be complicated, and are likely non-parametric. Moreover, there is no unique "mean" of a set of persistence diagrams, so there is no straightforward analogue to a t-test in standard statistics. However, there is an analogue of analysis of variance (ANOVA), for persistence diagrams which can be used to find differences in groups of persistence diagrams. This test was proposed in @Robinson_Turner, and some variations have been suggested. Originally, two groups of persistence diagrams would be compared. The null hypothesis, $H_0$, is that the diagrams from the two groups are generated from the same underlying geometric object. The alternative hypothesis, $H_A$, is that the underlying geometric objects are different. In each dimension a p-value is computed, finding evidence against $H_0$ in those dimensions. A loss function is defined for the two groups which computes the square-root of the sum of within-group sum of squared distances of the persistence diagrams (again we can generalize this measure for other values of $q \geq 1$). We first compute the test statistic as the loss function of the original two groups in each dimension. Then, we permute the group labels many times to obtain shuffled groups and recompute the loss function on these shuffled groups to estimate the null distribution of the test statistic. If the test statistic is smaller than most of these "permutation values" then it is likely that the groups are very different in that dimension, otherwise we cannot say. Formally, a p-value is calculated as $p = \frac{Z+1}{N+1}$ where $Z$ is the number of permutation values smaller than the test statistic, and $N$ is the number of permutations.
 
-This inference procedure is implemented in the `permutation_test` function, with several speedups and additional functionalities. Firstly, the loss function is computed in parallel since distance computations can be expensive. Secondly, we store distance calculations because otherwise we would have to recompute the same distances many times with high likelihood. Additional functionality includes allowing for any number groups (not just two) and to allow for a pairing between groups of the same size as described in @dependencies, which calculates a more realistic estimate of the null distribution of the test statistic when there is a natural pairing between persistence diagrams (like if the groups represent persistence diagrams from the same subject of a study in different conditions for example).
+This inference procedure is implemented in the `permutation_test` function, with several speedups and additional functionalities. Firstly, the loss function is computed in parallel since distance computations can be expensive. Secondly, we store distance calculations because otherwise we would have to recompute the same distances many times with high likelihood. Additional functionality includes allowing for any number groups (not just two) and to allow for a pairing between groups of the same size as described in @dependencies, which calculates a more realistic estimate of the null distribution of the test statistic when there is a natural pairing between persistence diagrams (like if the groups represent persistence diagrams from the same subject of a study in different conditions for example). Here is an example where three groups are each 3 samples of persistence diagrams from a sphere, circle and torus respectively.
+
+```{r,echo = T}
+# create three groups of persistence diagrams from a circle, sphere and torus using TDA
+circles <- lapply(X = 1:3,FUN = function(X){
+
+  diag <- TDA::ripsDiag(TDA::circleUnif(n = 100,r = 1),
+  maxscale = 2,
+  maxdimension = 1)
+  df <- diagram_to_df(d = diag)
+  return(df)
+
+})
+
+spheres <- lapply(X = 1:3,FUN = function(X){
+
+  diag <- TDA::ripsDiag(TDA::sphereUnif(n = 100,d = 2,r = 1),
+  maxscale = 2,
+  maxdimension = 1)
+  df <- diagram_to_df(d = diag)
+  return(df)
+
+})
+
+tori <- lapply(X = 1:3,FUN = function(X){
+
+  diag <- TDA::ripsDiag(TDA::torusUnif(n = 100,a = 1,c = 2),
+  maxscale = 2,
+  maxdimension = 1)
+  df <- diagram_to_df(d = diag)
+  return(df)
+
+})
+
+# do permutation test with 20 iterations, p,q = 2, in dimensions 0 and 1, with
+# no pairing using persistence Fisher distance, sigma = 1, and printing the time duration
+permutation_test(circles,spheres,tori,
+                 iterations = 20,
+                 distance = "fisher",
+                 sigma = 1, 
+                 verbose = TRUE)
+```
 
 ## Kernels between persistence diagrams
 
@@ -62,21 +152,169 @@ A kernel function is a symmetric similarity measure between objects in some comp
 
 There have been, to date, four main kernels proposed for persistence diagrams. In TDAML the persistence Fisher kernel @persistence_fisher has been implemented because of its demonstrated practical advantages over the other kernels, in particular smaller cross-validation SVM error compared to the other kernels on a number of datasets and a fast method for cross validation. However, for information on the other three kernels see @kernel_TDA, @sliced_wasserstein, and @kernel_TDA_original.
 
-The persistence Fisher kernel is directly derived from the Fisher information metric between two persistence diagrams: let $\sigma > 0$ be the parameter for $d_{FIM}$, and let $t > 0$. Then the persistence Fisher kernel is defined as $k_{PF}(D_1,D_2) = \mbox{exp}(-t*d_{FIM}(D_1,D_2,\sigma))$. Computing the persistence Fisher kernel can be acheived with the `diagram_kernel` function in TDAML.
+The persistence Fisher kernel is directly derived from the Fisher information metric between two persistence diagrams: let $\sigma > 0$ be the parameter for $d_{FIM}$, and let $t > 0$. Then the persistence Fisher kernel is defined as $k_{PF}(D_1,D_2) = \mbox{exp}(-t*d_{FIM}(D_1,D_2,\sigma))$. Computing the persistence Fisher kernel can be acheived with the `diagram_kernel` function in TDAML - here is an example for a torus and sphere:
+
+```{r,echo = T}
+# create two diagrams with package TDA based on torus and sphere
+torus <- TDA::ripsDiag(TDA::torusUnif(n = 100,a = 1,c = 2),
+maxscale = 2,
+maxdimension = 2)
+sphere <- TDA::ripsDiag(TDA::sphereUnif(n = 100,d = 2,r = 1),
+maxscale = 2,
+maxdimension = 2)
+
+# calculate their kernel value in dimension 2 with sigma = 2, t = 2
+diagram_kernel(D1 = torus,D2 = sphere,dim = 2,sigma = 2,t = 2)
+```
 
 ## Kernel k-means of persistence diagrams
 
-Kernel k-means @kkmeans is a method which extends regular k-means clustering via a non-linear mapping into a high dimensional space using the kernel trick. The Euclidean distance from a persistence diagram to a cluster center is calculated using kernels, and the algorithm converges like regular k-means. This algorithm is implemented in the function `diagram_kkmeans` as a wrapper of the kernlab function `kkmeans`. Moreover, a prediction function `diagram_nearest_clusters` can be used to find the nearest cluster label for a new set of diagrams.
+Kernel k-means @kkmeans is a method which extends regular k-means clustering via a non-linear mapping into a high dimensional space using the kernel trick. The Euclidean distance from a persistence diagram to a cluster center is calculated using kernels, and the algorithm converges like regular k-means. This algorithm is implemented in the function `diagram_kkmeans` as a wrapper of the kernlab function `kkmeans`. Moreover, a prediction function `diagram_nearest_clusters` can be used to find the nearest cluster label for a new set of diagrams. Here is an example usage clustering two groups of different diagrams:
+
+```{r,echo = T}
+# create ten diagrams with package TDA based on spheres and circles
+g <- lapply(X = 1:10,FUN = function(X){
+  
+  if(X <= 5)
+  {
+    diag <- TDA::ripsDiag(TDA::circleUnif(n = 100,r = 1),maxscale = 2,maxdimension = 1)
+  }else
+  {
+    diag <- TDA::ripsDiag(TDA::sphereUnif(n = 100,d = 2,r = 1),maxscale = 2,maxdimension = 1)
+  }
+  
+  df <- diagram_to_df(d = diag)
+  return(df)
+
+})
+
+# calculate kmeans clusters with centers = 2 in dimension 1 with sigma = t = 2
+clust <- diagram_kkmeans(diagrams = g,centers = 2,dim = 1,t = 2,sigma = 2)
+```
+
+If we wish to predict the cluster label for new persistence diagrams (computed via the largest kernel value to any cluster center), we can use the `diagram_nearest_clusters` function as follows:
+
+```{r,echo = T}
+# create ten new diagrams with package TDA based on spheres and circles
+g_new <- lapply(X = 1:10,FUN = function(X){
+  
+  if(X <= 5)
+  {
+    diag <- TDA::ripsDiag(TDA::circleUnif(n = 100,r = 1),maxscale = 2,maxdimension = 1)
+  }else
+  {
+    diag <- TDA::ripsDiag(TDA::sphereUnif(n = 100,d = 2,r = 1),maxscale = 2,maxdimension = 1)
+  }
+  
+  df <- diagram_to_df(d = diag)
+  return(df)
+
+})
+
+# predict cluster labels
+diagram_nearest_clusters(new_diagrams = g_new,clustering = clust)
+```
 
 ## Kernel principal components analysis of persistence diagrams
 
-Kernel PCA @kpca is an extension of regular PCA which uses the kernel trick to project data into a low-dimensional space. The key is to replace objects with their high-dimensional kernel vectors, dot products with kernels and Euclidean distances with kernel calculations. The `diagram_kpca` method computes the kPCA embedding of a set of persistence diagrams, and the `predict_diagram_kpca` function can be used to project new diagrams using the pretrained model.
+Kernel PCA @kpca is an extension of regular PCA which uses the kernel trick to project data into a low-dimensional space. The key is to replace objects with their high-dimensional kernel vectors, dot products with kernels and Euclidean distances with kernel calculations. The `diagram_kpca` method computes the kPCA embedding of a set of persistence diagrams, and the `predict_diagram_kpca` function can be used to project new diagrams using the pretrained model. Here is an example using a group of persistence diagrams from spheres and circles:
+
+```{r,echo = T}
+# create ten diagrams with package TDA based on spheres and circles
+g <- lapply(X = 1:10,FUN = function(X){
+  
+  if(X <= 5)
+  {
+    diag <- TDA::ripsDiag(TDA::circleUnif(n = 100,r = 1),maxscale = 2,maxdimension = 1)
+  }else
+  {
+    diag <- TDA::ripsDiag(TDA::sphereUnif(n = 100,d = 2,r = 1),maxscale = 2,maxdimension = 1)
+  }
+  
+  df <- diagram_to_df(d = diag)
+  return(df)
+
+})
+
+# calculate their 2D PCA embedding in dimension 1 with sigma = t = 2
+pca_embedding <- diagram_kpca(diagrams = g,dim = 1,t = 2,sigma = 2,features = 2)
+```
+
+We can use the `predict_diagram_ksvm` function to project new persistence diagrams into low dimensions using a predefined PCA embedding as follows:
+
+```{r,echo = T}
+# create ten new diagrams with package TDA based on spheres and circles
+g_new <- lapply(X = 1:10,FUN = function(X){
+  
+  if(X <= 5)
+  {
+    diag <- TDA::ripsDiag(TDA::circleUnif(n = 100,r = 1),maxscale = 2,maxdimension = 1)
+  }else
+  {
+    diag <- TDA::ripsDiag(TDA::sphereUnif(n = 100,d = 2,r = 1),maxscale = 2,maxdimension = 1)
+  }
+  
+  df <- diagram_to_df(d = diag)
+  return(df)
+
+})
+
+# project new diagrams onto old model
+predict_diagram_kpca(new_diagrams = g_new,embedding = pca_embedding)
+```
 
 ## Kernel support-vector machines of persistence diagrams
 
 Support vector machines @murphyML are one of the most popular machine learning techniques for regression and classification tasks. They are based on the kernel trick and find a sparse set of training examples, called "support vectors", which maximally linearly separate the training classes (or yield the highest explained variance in the case of regression) in the high-dimensional space defined in the kernel trick. SVMs have shown comparable performance to neural network approaches, and the sparsity constraint of support vectors may yield less overfitting (depending on the chosen penalty term C).
 
-SVMs have been implemented in the function `diagram_ksvm` for when the training set consists of a single feature which is a persistence diagram and a label vector. A prediction method is supplied called `predict_diagram_ksvm` which can be used to predict the label value of a set of new persistence diagrams given a pretrained model. A parallelized implementation of model-fitting is implemented based on the remarks in @persistence_fisher for scalability. 
+SVMs have been implemented in the function `diagram_ksvm` for when the training set consists of a single feature which is a persistence diagram and a label vector. A prediction method is supplied called `predict_diagram_ksvm` which can be used to predict the label value of a set of new persistence diagrams given a pretrained model. A parallelized implementation of model-fitting is implemented based on the remarks in @persistence_fisher for scalability. Here is an example of fitting an SVM model on a list of persistence diagrams for a classification task (guessing whether the diagram comes from a sphere or a circle):
+
+```{r,echo = T}
+# create thirty diagrams with package TDA based on tori and circles
+g <- lapply(X = 1:30,FUN = function(X){
+  
+  if(X <= 15)
+  {
+    diag <- TDA::ripsDiag(TDA::torusUnif(n = 100,a = 1,c = 2),maxscale = 2,maxdimension = 2)
+  }else
+  {
+    diag <- TDA::ripsDiag(TDA::sphereUnif(n = 100,d = 2,r = 1),maxscale = 2,maxdimension = 2)
+  }
+  
+  df <- diagram_to_df(d = diag)
+  return(df)
+
+})
+
+# create response vector
+y <- as.factor(c(rep("circle",5),rep("sphere",5)))
+
+# fit model with cross validation
+model_svm <- diagram_ksvm(diagrams = g,cv = 5,dim = c(1,2),y = y,sigma = c(1,0.1))
+```
+
+We can use the function `predict_diagram_ksvm` to predict new diagrams like so:
+
+```{r,echo = T}
+# create ten new diagrams with package TDA based on spheres and circles
+g_new <- lapply(X = 1:10,FUN = function(X){
+  
+  if(X <= 5)
+  {
+    diag <- TDA::ripsDiag(TDA::circleUnif(n = 100,r = 1),maxscale = 2,maxdimension = 1)
+  }else
+  {
+    diag <- TDA::ripsDiag(TDA::sphereUnif(n = 100,d = 2,r = 1),maxscale = 2,maxdimension = 1)
+  }
+  
+  df <- diagram_to_df(d = diag)
+  return(df)
+
+})
+
+# answer should be c(rep("circle",5),rep("sphere",5))
+predict_diagram_ksvm(new_diagrams = g_new,model = model_svm)
+```
 
 ## Testing for independence between two groups of paired persistence diagrams
 
@@ -90,54 +328,75 @@ $\frac{2(m-4)(m-5)}{m_4}1(B-diag(B))1^T$,
 
 where $1$ is the vector of length $m$ consisting of all 1's and $B$ is the matrix computed as the elementwise squared matrix of the Hadamard (element-wise) product of the matrices $HKH$ and $HLH$, where $H$, $K$ and $L$ are as before.
 
-This inference procedure has been implemented in the `independence_test` function, and returns the p-value of the test in each desired dimension of the diagrams (among other additional information).
+This inference procedure has been implemented in the `independence_test` function, and returns the p-value of the test in each desired dimension of the diagrams (among other additional information). Here is an example comparing two groups of independent diagrams sampled from circles and spheres:
+
+```{r,echo = T}
+# create two groups of persistence diagrams from circles and spheres using TDA
+circles <- lapply(X = 1:10,FUN = function(X){
+
+  diag <- TDA::ripsDiag(TDA::circleUnif(n = 100,r = 1),
+  maxscale = 2,
+  maxdimension = 1)
+  df <- diagram_to_df(d = diag)
+  return(df)
+
+})
+
+spheres <- lapply(X = 1:10,FUN = function(X){
+
+  diag <- TDA::ripsDiag(TDA::sphereUnif(n = 100,d = 2,r = 1),
+  maxscale = 2,
+  maxdimension = 1)
+  df <- diagram_to_df(d = diag)
+  return(df)
+
+})
+
+# do independence test with sigma = 1, t = 1, in dimensions 0 and 1, printing the time duration
+independence_test(circles,spheres,verbose = TRUE)
+```
 
 # Case study: `Benchmarking the diagram_distance and diagram_kernel functions`
-
-```{r setup}
- devtools::load_all()
-# library("TDAML")
-```
 
 # Case study: `Benchmarking the diagram_ksvm function`
 
 First we will construct a pair of small diagrams for which we can easily calculate by hand what their distance should be (according to the various types of distance metrics available in this package), and then we will do the same with diagrams generated from the TDA package. Let $D_1 = \{(2,3)\}$ be the diagram with a single point $(2,3)$, and let $D_2 = \{(2,3.1),(5,6)\}$ have two points. We will construct these diagrams as data frames, as if they were the output of the diagram_to_df function, and plot them:
 
 ```{r}
-# D1
-D1 = data.frame(dimension = 0,birth = 2,death = 3)
-plot(x = D1$birth,y = D1$death,xlab = "Birth",ylab = "Death",main = bquote("" ~ D[1]),xlim = c(0,6),ylim = c(0,6),pch = 16)
-abline(a = 0,b = 1)
-
-# D2
-D2 = data.frame(dimension = 0,birth = c(2,5),death = c(3.1,6))
-plot(x = D2$birth,y = D2$death,xlab = "Birth",ylab = "Death",main = bquote("" ~ D[2]),xlim = c(0,6),ylim = c(0,6),pch = 16)
-abline(a = 0,b = 1)
+# # D1
+# D1 = data.frame(dimension = 0,birth = 2,death = 3)
+# plot(x = D1$birth,y = D1$death,xlab = "Birth",ylab = "Death",main = bquote("" ~ D[1]),xlim = c(0,6),ylim = c(0,6),pch = 16)
+# abline(a = 0,b = 1)
+# 
+# # D2
+# D2 = data.frame(dimension = 0,birth = c(2,5),death = c(3.1,6))
+# plot(x = D2$birth,y = D2$death,xlab = "Birth",ylab = "Death",main = bquote("" ~ D[2]),xlim = c(0,6),ylim = c(0,6),pch = 16)
+# abline(a = 0,b = 1)
 
 ```
 
 Now, let's compute the distance between $D_1$ and $D_2$ using the various distance metrics, and confirm that  it's clear what the distance value should be. Note that for all metrics the optimal matching is the same: $(2,3)$ is matched with $(2,3.1)$ and $(5,6)$ is matched with its diagonal projection, $(5.5,5.5)$. Therefore, using the 2-wasserstein metric (like in the package TDA) the distance should be $\sqrt{0.1^2+0.5^2} \approx 0.509902$:
 
 ```{r}
-diagram_distance(D1 = D1,D2 = D2,p = 2,distance = "wasserstein",dim = 0)
+# diagram_distance(D1 = D1,D2 = D2,p = 2,distance = "wasserstein",dim = 0)
 ```
 
 The same distance but with $p = 3$ should be $(0.1^3+0.5^3)^{1/3} \approx 0.5013298$:
 
 ```{r}
-diagram_distance(D1 = D1,D2 = D2,p = 3,distance = "wasserstein",dim = 0)
+# diagram_distance(D1 = D1,D2 = D2,p = 3,distance = "wasserstein",dim = 0)
 ```
 
 The persistence Fisher distance between $D_1$ and $D_2$ using sigma = 1 should be calculated as follows. $\rho_1 = \frac{1}{2\pi}(e^0+e^{-0.2525}+e^{-9.25},e^{-0.2525}+e^0+e^{-8.7025},e^{-9.25}+e^{-8.7025}+e^0,e^{-0.005}+e^{-0.3025}+e^{-9.005},e^{-9}+e^{-8.9525}+e^{-0.25},e^{-0.25}+e^{-0.0025}+e^{-9})$ and $\rho_2 = \frac{1}{2\pi}(e^{-0.005}+e^{-9}+e^{-0.25},e^{-0.3025}+e^{-8.9525}+e^{-0.0025},e^{-9.005}+e^{-0.25}+e^{-9},e^{0}+e^{-8.705}+e^{-0.305},e^{-8.705}+e^{0}+e^{-9.25},e^{-0.305} + e^{-9.25} + e^{0})$. Then the distance metric should equal $<\sqrt{\overline{\rho_1}},\sqrt{\overline{\rho_2}}> \approx 0.9984164$. When we use the diagram distance function with distance set to fisher we see that we get the same result:
 
 ```{r}
-diagram_distance(D1 = D1,D2 = D2,distance = "fisher",dim = 0,sigma = 1)
+# diagram_distance(D1 = D1,D2 = D2,distance = "fisher",dim = 0,sigma = 1)
 ```
 
 Finally, we can compute the standard bottleneck distance between the diagrams, which is just the maximum bottleneck distance between any pair of matched points, 0.5:
 
 ```{r}
-diagram_distance(D1 = D1,D2 = D2,p = Inf,distance = "wasserstein",dim = 0)
+# diagram_distance(D1 = D1,D2 = D2,p = Inf,distance = "wasserstein",dim = 0)
 ```
 
 We include more tests of correctness for the diagram_distance function in the test folder, should the reader be interested in further validation.
@@ -210,15 +469,15 @@ Now we will benchmark the runtime of the distance calculations on pairs of diffe
 #   
 # }
 
-# since this code takes a very long time to run, we will hard code the table that resulted from the above section^
-summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.087,0.137,0.278,1.880,0.859,8.742,1.782,28.908,3.928,63.544,6.648,141.373,11.158,252.689,18.409,427.515,28.220,725.520,39.675,1024.007),sd = c(0.021,0.010,0.018,0.170,0.100,0.630,0.161,1.849,0.245,3.927,0.455,12.202,0.806,14.315,1.350,37.318,2.675,63.963,2.983,102.328),package = rep(c("TDAInference","TDA"),10))
-
-# plot table
-plot(summary_table$n_row[summary_table$package=="TDA"], summary_table$mean[summary_table$package=="TDA"], type="b",
-     xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd),xlab = "Points in diagram",ylab = "Mean execution time (sec)",main = "Benchmarking diagram_distance function")
-lines(summary_table$n_row[summary_table$package=="TDAInference"], summary_table$mean[summary_table$package=="TDAInference"], col=2, type="b")
-legend(x = 200,y = 800,legend = c("TDAInference","TDA"),col = c("red","black"),lty = c(1,1),cex = 0.8)
-arrows(summary_table$n_row, summary_table$mean-1.96*summary_table$sd/sqrt(10), summary_table$n_row, summary_table$mean+1.96*summary_table$sd/sqrt(10), length=0.05, angle=90, code=3)
+# # since this code takes a very long time to run, we will hard code the table that resulted from the above section^
+# summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.087,0.137,0.278,1.880,0.859,8.742,1.782,28.908,3.928,63.544,6.648,141.373,11.158,252.689,18.409,427.515,28.220,725.520,39.675,1024.007),sd = c(0.021,0.010,0.018,0.170,0.100,0.630,0.161,1.849,0.245,3.927,0.455,12.202,0.806,14.315,1.350,37.318,2.675,63.963,2.983,102.328),package = rep(c("TDAInference","TDA"),10))
+# 
+# # plot table
+# plot(summary_table$n_row[summary_table$package=="TDA"], summary_table$mean[summary_table$package=="TDA"], type="b",
+#      xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd),xlab = "Points in diagram",ylab = "Mean execution time (sec)",main = "Benchmarking diagram_distance function")
+# lines(summary_table$n_row[summary_table$package=="TDAInference"], summary_table$mean[summary_table$package=="TDAInference"], col=2, type="b")
+# legend(x = 200,y = 800,legend = c("TDAInference","TDA"),col = c("red","black"),lty = c(1,1),cex = 0.8)
+# arrows(summary_table$n_row, summary_table$mean-1.96*summary_table$sd/sqrt(10), summary_table$n_row, summary_table$mean+1.96*summary_table$sd/sqrt(10), length=0.05, angle=90, code=3)
 
 ```
 
@@ -276,15 +535,15 @@ Now, we will repeat the same experiment but instead computing diagrams from shap
 # 
 # }
 
-# here is the output that I got on my local computer
-summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.133,0.220,0.398,3.430,0.953,17.054,1.955,53.896,3.760,142.524,6.604,294.552,10.466,601.802,16.169,1130.289,23.458,2091.953,35.098,3518.517),sd = c(0.022,0.016,0.035,0.186,0.094,1.1889,0.130,4.501,0.211,5.924,0.772,11.244,0.623,9.064,0.989,43.385,1.989,88.432,2.747,172.684),package = rep(c("TDAInference","TDA"),10))
-
-# plot table
-plot(summary_table$n_row[summary_table$package=="TDA"], summary_table$mean[summary_table$package=="TDA"], type="b",
-     xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd),xlab = "Points in shapes",ylab = "Mean execution time (sec)",main = "Benchmarking diagram_distance function on Torus and Sphere")
-lines(summary_table$n_row[summary_table$package=="TDAInference"], summary_table$mean[summary_table$package=="TDAInference"], col=2, type="b")
-legend(x = 200,y = 2000,legend = c("TDAInference","TDA"),col = c("red","black"),lty = c(1,1),cex = 0.8)
-arrows(summary_table$n_row, summary_table$mean-1.96*summary_table$sd/sqrt(10), summary_table$n_row, summary_table$mean+1.96*summary_table$sd/sqrt(10), length=0.05, angle=90, code=3)
+# # here is the output that I got on my local computer
+# summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.133,0.220,0.398,3.430,0.953,17.054,1.955,53.896,3.760,142.524,6.604,294.552,10.466,601.802,16.169,1130.289,23.458,2091.953,35.098,3518.517),sd = c(0.022,0.016,0.035,0.186,0.094,1.1889,0.130,4.501,0.211,5.924,0.772,11.244,0.623,9.064,0.989,43.385,1.989,88.432,2.747,172.684),package = rep(c("TDAInference","TDA"),10))
+# 
+# # plot table
+# plot(summary_table$n_row[summary_table$package=="TDA"], summary_table$mean[summary_table$package=="TDA"], type="b",
+#      xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd),xlab = "Points in shapes",ylab = "Mean execution time (sec)",main = "Benchmarking diagram_distance function on Torus and Sphere")
+# lines(summary_table$n_row[summary_table$package=="TDAInference"], summary_table$mean[summary_table$package=="TDAInference"], col=2, type="b")
+# legend(x = 200,y = 2000,legend = c("TDAInference","TDA"),col = c("red","black"),lty = c(1,1),cex = 0.8)
+# arrows(summary_table$n_row, summary_table$mean-1.96*summary_table$sd/sqrt(10), summary_table$n_row, summary_table$mean+1.96*summary_table$sd/sqrt(10), length=0.05, angle=90, code=3)
 
 ```
 
@@ -296,67 +555,67 @@ The permutation\_test function can be used to make statistical inferences about 
 
 ```{r,echo = T}
 
-g1 <- lapply(X = 1:3,FUN = function(X){
-
-  diag <- TDA::ripsDiag(TDA::circleUnif(n = 100,r = 1),
-                                   maxscale = 1,
-                                   maxdimension = 1)
-  df <- diagram_to_df(d = diag)
-  return(df)
-
-})
-
-g2 <- lapply(X = 1:3,FUN = function(X){
-
-  diag <- TDA::ripsDiag(TDA::torusUnif(n = 100,c = 2,a = 1),
-                                   maxscale = 1,
-                                   maxdimension = 1)
-  df <- diagram_to_df(d = diag)
-  return(df)
-
-})
-
-g3 <- lapply(X = 1:2,FUN = function(X){
-
-  diag <- TDA::ripsDiag(TDA::sphereUnif(n = 100,r = 1,d = 2),
-                                   maxscale = 1,
-                                   maxdimension = 1)
-  df <- diagram_to_df(d = diag)
-  return(df)
-
-})
+# g1 <- lapply(X = 1:3,FUN = function(X){
+# 
+#   diag <- TDA::ripsDiag(TDA::circleUnif(n = 100,r = 1),
+#                                    maxscale = 1,
+#                                    maxdimension = 1)
+#   df <- diagram_to_df(d = diag)
+#   return(df)
+# 
+# })
+# 
+# g2 <- lapply(X = 1:3,FUN = function(X){
+# 
+#   diag <- TDA::ripsDiag(TDA::torusUnif(n = 100,c = 2,a = 1),
+#                                    maxscale = 1,
+#                                    maxdimension = 1)
+#   df <- diagram_to_df(d = diag)
+#   return(df)
+# 
+# })
+# 
+# g3 <- lapply(X = 1:2,FUN = function(X){
+# 
+#   diag <- TDA::ripsDiag(TDA::sphereUnif(n = 100,r = 1,d = 2),
+#                                    maxscale = 1,
+#                                    maxdimension = 1)
+#   df <- diagram_to_df(d = diag)
+#   return(df)
+# 
+# })
 
 ```
 
 Since the groups are not of the same size, we cannot set the paired argument to be True. The permutation test could be carried out, with mostly default parameters, by
 
 ```{r,warning=FALSE}
-perm_test = permutation_test(g1,g2,g3,verbose = TRUE)
+# perm_test = permutation_test(g1,g2,g3,verbose = TRUE)
 ```
 
 We can access the various components of the test easily. The p-values in each dimension can be viewed with
 
 ```{r}
-perm_test$p_value
+# perm_test$p_value
 ```
 
 The test statistic can be viewed with
 
 ```{r}
-perm_test$test_statistic
+# perm_test$test_statistic
 ```
 
 The permutation values can be accessed in a list, with one element for each desired dimension.
 
 ```{r}
-perm_test$permvals$`0`
+# perm_test$permvals$`0`
 ```
 
 Other parameter values that can be viewed are the dimensions in which the test was carried out and the runtime of the test. Lastly, we will carry out the same calculation, but with pairing. To that end all groups must have the same number of elements:
 
 ```{r}
-g3[3] <- g3[1]
-perm_test_paired = permutation_test(g1,g2,g3,verbose = T,paired = T)
+# g3[3] <- g3[1]
+# perm_test_paired = permutation_test(g1,g2,g3,verbose = T,paired = T)
 ```
 
 This paired parameter should be set to True when there is a natural pairing between the diagrams in the groups. For example, if each group represents the persistence diagram of (in this case) three subject's fMRI data, and the three groups represent three different fMRI tasks, then a pairing between the groups exists. Setting the pairing parameter to True in this case can reduce the variance in permutation values, thereby reducing the likelihood of spurious significant test results.

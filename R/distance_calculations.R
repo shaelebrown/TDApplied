@@ -320,8 +320,9 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
   cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
   parallel::clusterEvalQ(cl,c(library(clue),library(rdist)))
-  parallel::clusterExport(cl,c("diagram_distance"))
+  parallel::clusterExport(cl,c("diagram_distance","check_diagram"))
   force(diagrams) # required for parallel computation in this environment
+  #force(check_diagram)
   
   if(is.null(other_diagrams))
   {
