@@ -287,7 +287,7 @@ g <- lapply(X = 1:30,FUN = function(X){
 })
 
 # create response vector
-y <- as.factor(c(rep("circle",5),rep("sphere",5)))
+y <- as.factor(c(rep("circle",15),rep("sphere",15)))
 
 # fit model with cross validation
 model_svm <- diagram_ksvm(diagrams = g,cv = 5,dim = c(1,2),y = y,sigma = c(1,0.1))
