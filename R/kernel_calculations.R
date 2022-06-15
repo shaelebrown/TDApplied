@@ -144,6 +144,7 @@ gram_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,sigma = 1,t = 1){
     })
     K[upper.tri(K)] <- k
     K[which(upper.tri(K),arr.ind = T)[,c("col","row")]] <- k
+    diag(K) <- rep(1,m)
   }else
   {
     if(length(other_diagrams) > length(diagrams))

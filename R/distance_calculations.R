@@ -348,6 +348,7 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
     })
     d[upper.tri(d)] <- d_off_diag
     d[which(upper.tri(d),arr.ind = T)[,c("col","row")]] <- d_off_diag
+    diag(d) <- rep(0,m)
   }else
   {
     if(length(other_diagrams) > length(diagrams))
