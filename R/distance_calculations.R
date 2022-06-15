@@ -117,6 +117,12 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = 1)
     stop("p must be a number at least one for the wasserstein metric.")
   }
   
+  # error check distance
+  if(is.null(distance) | is.na(distance) | is.nan(distance) | distance %in% c("wasserstein","fisher") == F)
+  {
+    stop("distance must be either wasserstein or fisher.")
+  }
+  
   # if persistence Fisher distance, sigma must be a positive number
   if(distance == "fisher" & !is.null(sigma))
   {
@@ -230,8 +236,17 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = 1)
     }))
     rho_2 <- rho_2/sum(rho_2)
     
-    # return dot product of elementwise square root
-    return(as.numeric(sqrt(rho_1) %*% sqrt(rho_2)))
+    # return arc cos of dot product of elementwise square root
+    norm <- as.numeric(sqrt(rho_1) %*% sqrt(rho_2))
+    if(norm > 1)
+    {
+      norm <- 1
+    }
+    if(norm < -1)
+    {
+      norm <- -1
+    }
+    return(acos(norm))
     
   }
 

@@ -1,4 +1,3 @@
-context("Test inferences of persistence diagrams")
 library(TDAML)
 
 test_that("permutation_test detects incorrect parameters correctly",{
