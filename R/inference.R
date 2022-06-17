@@ -110,16 +110,22 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   diagram_groups <- list(...)
 
   # make sure there are at least two groups
-  if(length(diagram_groups) < 2)
-  {
-    stop("At least two groups of persistence diagrams must be supplied.")
-  }
+  check_param("diagram_groups",diagram_groups)
 
   # check each diagram, converting each to a data frame and storing their indices in all the diagrams
   diagram_groups <- all_diagrams(diagram_groups,inference = "difference")
 
   # error check function parameters
-  check_params(iterations,p,q,dims,paired,distance,sigma)
+  check_param("iterations",iterations,whole_numbers = T)
+  check_param("p",p,finite = F,at_least_one = T)
+  check_param("q",q,at_least_one = T)
+  check_param("dims",dims,multiple = T,whole_numbers = T)
+  check_param("paired",paired,numeric = F)
+  check_param("distance",distance)
+  if(distance == "fisher")
+  {
+    check_param("sigma",sigma)
+  }
 
   # make sure that if paired == T then all groups have the same number of diagrams
   if(paired)
@@ -323,23 +329,18 @@ independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,verbose = FALS
   diagram_groups <- list(g1,g2)
   
   # make sure there are at least two groups
-  if(length(diagram_groups) < 2)
-  {
-    stop("At least two groups of persistence diagrams must be supplied.")
-  }
+  check_param("diagram_groups",diagram_groups,min_length = 2)
   
   # check each diagram, converting each to a data frame and storing their indices in all the diagrams
   diagram_groups <- all_diagrams(diagram_groups,inference = "independence")
   
   # error check function parameters
-  check_params(iterations = 10,p = 2,q = 2,dims,paired = T,distance = "fisher",sigma)
-  if(is.null(t))
+  check_param("dims",dims,multiple = T,whole_numbers = T)
+  check_param("sigma",sigma)
+  check_param("t",t)
+  if(t == 0)
   {
-    stop("t must not be NULL.")
-  }
-  if(!is.numeric(t) | length(t) > 1 | is.na(t) | is.nan(t) | t <= 0)
-  {
-    stop("t must be a positive number.")
+    stop("t must be greater than 0.")
   }
   
   # make sure that the two groups have the same number of diagrams

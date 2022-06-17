@@ -4,7 +4,7 @@
 \alias{diagram_distance}
 \title{Calculate distances between pairs of persistence diagrams}
 \usage{
-diagram_distance(D1, D2, dim, p = 2, distance = "wasserstein", sigma = 1)
+diagram_distance(D1, D2, dim, p = 2, distance = "wasserstein", sigma = NULL)
 }
 \arguments{
 \item{D1}{the first persistence diagram, either computed from TDA or converted to a data frame with diagram_to_df.}

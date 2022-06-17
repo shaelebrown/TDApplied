@@ -37,14 +37,11 @@
 
 diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
   
-  # check kernel-specific parameters, other inputs are checked in distance calculation
-  if(is.null(t))
+  # check kernel-specific parameter, other inputs are checked in distance calculation
+  check_param("t",t)
+  if(t == 0)
   {
-    stop("t must not be NULL.")
-  }
-  if(!is.numeric(t) | length(t) > 1 | is.na(t) | is.nan(t) | t <= 0)
-  {
-    stop("t must be a positive number.")
+    stop("t must be greater than 0.")
   }
   
   # return kernel calculation
@@ -103,25 +100,12 @@ gram_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,sigma = 1,t = 1){
   r <- NULL
   X <- NULL
   
-  # error check diagrams argument
-  if(is.null(diagrams))
-  {
-    stop("diagrams must be a list of persistence diagrams.")
-  }
-  if(!is.list(diagrams) | length(diagrams) < 2)
-  {
-    stop("diagrams must be a list of persistence diagrams of length at least 2.")
-  }
+  # error check diagrams and other_diagrams arguments
+  check_param("diagrams",diagrams,numeric = F,multiple = T)
   diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
-  
-  # error check other_diagrams argument
   if(!is.null(other_diagrams))
   {
-    if(!is.list(other_diagrams) | length(other_diagrams) < 2)
-    {
-      stop("diagrams must be a list of persistence diagrams of length at least 2.")
-    }
-    other_diagrams <- all_diagrams(diagram_groups = list(other_diagrams),inference = "independence")[[1]]
+    check_param("other_diagrams",other_diagrams,numeric = F,multiple = T)
   }
   
   # compute Gram matrix in parallel
@@ -130,9 +114,8 @@ gram_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,sigma = 1,t = 1){
   cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
   force(check_diagram)
-  parallel::clusterExport(cl,c("diagram_distance","diagram_kernel","check_diagram"),envir = environment())
+  parallel::clusterExport(cl,c("diagram_distance","diagram_kernel","check_diagram","check_param"),envir = environment())
   force(diagrams) # required for parallel computation in this environment
-  #force(check_diagram)
   
   if(is.null(other_diagrams))
   {

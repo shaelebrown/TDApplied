@@ -3,9 +3,20 @@
 
 # error checks for permutation_test function parameters
 
-check_diagram <- function(d){
+check_diagram <- function(d,ret){
 
-  # error checks for a diagram d stored as a data frame
+  # error checks for a diagram d stored as a data frame, and conversion
+  if(is.list(d) && length(d) == 1 && names(d) == "diagram" && class(d$diagram) == "diagram")
+  {
+    # d is the output from a TDA calculation
+    d <- diagram_to_df(d)
+  }else
+  {
+    if(class(d) != "data.frame")
+    {
+      stop("Diagrams must either be the output of a TDA computation or data frame.")
+    }
+  }
 
   if(nrow(d) == 0)
   {
@@ -40,6 +51,11 @@ check_diagram <- function(d){
   if(length(which(stats::complete.cases(d))) != nrow(d))
   {
     stop("Diagrams can't have missing values.")
+  }
+  
+  if(ret == T)
+  {
+    return(d) 
   }
 
 }
@@ -90,10 +106,10 @@ all_diagrams <- function(diagram_groups,inference){
       # make sure the converted diagram has appropriate attributes for further use
       if(inference == "difference")
       {
-        check_diagram(diagram_groups[[g]][[diag]]$diag)
+        check_diagram(diagram_groups[[g]][[diag]]$diag,ret = F)
       }else
       {
-        check_diagram(diagram_groups[[g]][[diag]]) 
+        check_diagram(diagram_groups[[g]][[diag]],ret = F) 
       }
       
     }
@@ -105,86 +121,78 @@ all_diagrams <- function(diagram_groups,inference){
 
 }
 
-check_params <- function(iterations,p,q,dims,paired,distance,sigma){
-
-  # error checks on the parameters for the inference functions
-
-  if(!is.numeric(iterations))
+check_param <- function(param_name,param,numeric = T,multiple = F,whole_numbers = F,finite = T,at_least_one = F,positive = T,min_length = 1){
+  
+  # check if a single parameter satisfies certain constraints
+  if(!is.list(param) & !is.vector(param))
   {
-    stop("Iterations must be numeric.")
+    if(is.null(param))
+    {
+      stop(paste0(param_name," must not be NULL."))
+    }
+    if(is.na(param))
+    {
+      stop(paste0(param_name," must not be NA/NaN."))
+    }
   }
-
-  if(iterations != as.integer(iterations))
+  
+  if(param_name == "diagrams" | param_name == "other_diagrams" | param_name == "diagram_groups" | param_name == "new_diagrams")
   {
-    stop("Iterations must be a whole number.")
+    if(!is.list(param) | length(param) < min_length)
+    {
+      stop(paste0(param_name," must be a list of persistence diagrams of length at least ",min_length,"."))
+    }
+    return()
   }
-
-  if(iterations <= 1 | is.infinite(iterations))
+  
+  if(multiple == F & length(param) > 1)
   {
-    stop("Iterations must be a finite number at least 1.")
+    stop(paste0(param_name," must be a single value."))
   }
-
-  if(!as.numeric(p))
+  
+  if(param_name == "distance")
   {
-    stop("p must be numeric.")
+    if(is.null(param) | length(param) > 1 | (param %in% c("wasserstein","fisher")) == F)
+    {
+      stop("distance must either be \'wasserstein\' or \'fisher\'.")
+    }
+    return()
   }
-
-  if(p < 1)
+  
+  if(numeric == T)
   {
-    stop("p must be at least 1.")
-  }
-
-  if(!is.numeric(q))
+    if(is.numeric(param) == F)
+    {
+      stop(paste0(param_name," must be numeric."))
+    }
+  }else
   {
-    stop("q must be numeric.")
+    if(is.logical(param) == F)
+    {
+      stop(paste0(param_name," must be T or F."))
+    }
+    
+    return()
   }
-
-  if(q < 1 | is.infinite(q))
-  {
-    stop("q must be a finite number at least 1.")
-  }
-
-  if(!is.numeric(dims))
-  {
-    stop("dims must be a numeric vector or value.")
-  }
-
-  if(!all.equal(dims,as.integer(dims)))
+  
+  if(numeric == T & whole_numbers == T & length(which(floor(param) != param)) > 0)
   {
     stop("dims must be whole numbers.")
   }
-
-  if(length(which(dims < 0 | is.infinite(dims))) > 0)
+  
+  if(finite == T & length(which(!is.finite(param))) > 0)
   {
-    stop("dims must be positive and finite.")
-  }
-
-  if(!is.logical(paired))
-  {
-    stop("paired must be T or F.")
-  }
-
-  if(!is.character(distance) | distance %in% c("wasserstein","fisher") == F)
-  {
-    stop("distance must be a single character, either \'wasserstein\' or \'fisher\'")
+    stop(paste0(param_name," must be finite."))
   }
   
-  if(distance == "fisher" & (is.null(sigma) | !is.numeric(sigma)))
+  if(positive == T & length(which(param < 0)) > 0)
   {
-    stop("For the persistence Fisher distance sigma must be a number.")
+    stop(paste0(param_name," must be positive."))
   }
   
-  if(!is.null(sigma) & length(sigma) > 1)
+  if(at_least_one == T & length(which(param < 1)) > 0)
   {
-    stop("sigma must be single number.")
+    stop(paste0(param_name," must be at least one."))
   }
   
-  if(!is.null(sigma))
-  {
-    if(sigma <= 0)
-    {
-      stop("sigma must be greater than 0.")
-    }
-  }
-
 }

@@ -4,9 +4,9 @@ test_that("diagram_kernel detects incorrect parameters correctly",{
   D <- data.frame(dimension = c(0),birth = c(0),death = c(1))
   expect_error(diagram_kernel(D1 = NULL,D2 = D,dim = 1),"TDA computation or data frame")
   expect_error(diagram_kernel(D1 = D,D2 = NULL,dim = 1),"TDA computation or data frame")
-  expect_error(diagram_kernel(D1 = D,D2 = D,dim = "2"),"whole number")
-  expect_error(diagram_kernel(D1 = D,D2 = D,sigma = "2"),"number")
-  expect_error(diagram_kernel(D1 = D,D2 = D,t = NA),"number")
+  expect_error(diagram_kernel(D1 = D,D2 = D,dim = "2"),"numeric")
+  expect_error(diagram_kernel(D1 = D,D2 = D,sigma = "2"),"numeric")
+  expect_error(diagram_kernel(D1 = D,D2 = D,t = NA),"numeric")
 
 })
 

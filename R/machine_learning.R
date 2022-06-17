@@ -69,19 +69,9 @@
 diagram_MDS <- function(diagrams,distance = "wasserstein",dim = 0,p = 2,sigma = NULL,k = 2,eig = FALSE,add = FALSE,x.ret = FALSE,list. = eig || add || x.ret){
   
   # error check diagrams argument
-  if(is.null(diagrams))
-  {
-    stop("diagrams must be a list of persistence diagrams.")
-  }
-  if(!is.list(diagrams) | length(diagrams) < 2)
-  {
-    stop("diagrams must be a list of persistence diagrams of length at least 2.")
-  }
+  check_param("diagrams",diagrams,numeric = F,multiple = T)
   diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
-  
-  # error check other distance parameters
-  check_params(iterations = 10,p = p,q = 2,dims = c(dim),paired = F,distance = distance,sigma = sigma)
-  
+
   # compute distance matrix
   d <- distance_matrix(diagrams = diagrams,dim = dim,distance = distance,p = p,sigma = sigma)
 
@@ -149,48 +139,11 @@ diagram_MDS <- function(diagrams,distance = "wasserstein",dim = 0,p = 2,sigma = 
 
 diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,...){
   
-  # error check diagrams argument
-  if(is.null(diagrams))
-  {
-    stop("diagrams must be a list of persistence diagrams.")
-  }
-  if(!is.list(diagrams) | length(diagrams) < 2)
-  {
-    stop("diagrams must be a list of persistence diagrams of length at least 2.")
-  }
+  # error check arguments
+  check_param("diagrams",diagrams,numeric = F,multiple = T)
   diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
+  check_param("centers",centers,whole_numbers = T,at_least_one = T)
   
-  # error check sigma and dim parameters
-  check_params(iterations = 10,p = 2,q = 2,dims = c(dim),paired = T,distance = "fisher",sigma)
-  
-  # error check t parameter
-  if(is.null(t))
-  {
-    stop("t must not be NULL.")
-  }
-  if(!is.numeric(t) | length(t) > 1 | is.na(t) | is.nan(t) | t <= 0)
-  {
-    stop("t must be a positive number.")
-  }
-  
-  # error check centers parameter
-  if(is.null(centers))
-  {
-    stop("centers must not be NULL.")
-  }
-  if(is.na(centers) | !is.numeric(centers) | length(centers) > 1)
-  {
-    stop("centers must be a single number.")
-  }
-  if(centers < 1)
-  {
-    stop("centers must be at least 1.")
-  }
-  if(round(centers,0) != centers)
-  {
-    stop("centers must be a whole number.")
-  }
-
   # compute Gram matrix
   K <- gram_matrix(diagrams = diagrams,dim = dim,sigma = sigma,t = t)
   
@@ -246,14 +199,7 @@ diagram_nearest_clusters <- function(new_diagrams,clustering){
   X <- NULL
   
   # error check diagrams argument
-  if(is.null(new_diagrams))
-  {
-    stop("new_diagrams must be a list of persistence diagrams.")
-  }
-  if(!is.list(new_diagrams) | length(new_diagrams) < 2)
-  {
-    stop("diagrams must be a list of persistence diagrams of length at least 2.")
-  }
+  check_param("new_diagrams",new_diagrams,numeric = F,multiple = T)
   new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
   
   # error check clustering argument
@@ -340,28 +286,8 @@ diagram_nearest_clusters <- function(new_diagrams,clustering){
 diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,...){
   
   # error check diagrams argument
-  if(is.null(diagrams))
-  {
-    stop("diagrams must be a list of persistence diagrams.")
-  }
-  if(!is.list(diagrams) | length(diagrams) < 2)
-  {
-    stop("diagrams must be a list of persistence diagrams of length at least 2.")
-  }
+  check_param("diagrams",diagrams,numeric = F,multiple = T)
   diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
-  
-  # error check sigma and dim parameters
-  check_params(iterations = 10,p = 2,q = 2,dims = c(dim),paired = T,distance = "fisher",sigma)
-  
-  # error check t parameter
-  if(is.null(t))
-  {
-    stop("t must not be NULL.")
-  }
-  if(!is.numeric(t) | length(t) > 1 | is.na(t) | is.nan(t) | t <= 0)
-  {
-    stop("t must be a positive number.")
-  }
   
   # compute Gram matrix
   K <- gram_matrix(diagrams = diagrams,t = t,sigma = sigma,dim = dim)
@@ -433,14 +359,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding){
   X <- NULL
   
   # error check new_diagrams argument
-  if(is.null(new_diagrams))
-  {
-    stop("new_diagrams must be a list of persistence diagrams.")
-  }
-  if(!is.list(new_diagrams) | length(new_diagrams) < 1)
-  {
-    stop("new_diagrams must be a list of persistence diagrams of length at least 1.")
-  }
+  check_param("new_diagrams",new_diagrams,numeric = F,multiple = T)
   new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
   
   # error check embedding argument
@@ -546,62 +465,14 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
   X <- NULL
   
   # error check diagrams argument
-  if(is.null(diagrams))
-  {
-    stop("diagrams must be a list of persistence diagrams.")
-  }
-  if(!is.list(diagrams) | length(diagrams) < 2)
-  {
-    stop("diagrams must be a list of persistence diagrams of length at least 2.")
-  }
+  check_param("diagrams",diagrams,numeric = F,multiple = T)
   diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
   
-  # error check t parameter
-  if(is.null(t))
-  {
-    stop("t values must not be NULL.")
-  }
-  if(!is.numeric(t) | length(which(is.na(t))) > 0 | length(which(is.nan(t))) > 0 | length(which(t <= 0)) > 0)
-  {
-    stop("t values must be positive numbers.")
-  }
-  
-  # error check dim parameter
-  if(is.null(dim))
-  {
-    stop("dim values must not be NULL.")
-  }
-  if(!is.numeric(dim) | length(which(is.na(dim))) > 0 | length(which(is.nan(dim))) > 0 | length(which(dim <= 0)) > 0 | length(which(round(dim,digits = 0) != dim)) > 0)
-  {
-    stop("dim values must be positive whole numbers.")
-  }
-  
-  # error check sigma parameter
-  if(is.null(sigma))
-  {
-    stop("sigma values must not be NULL.")
-  }
-  if(!is.numeric(sigma) | length(which(is.na(sigma))) > 0 | length(which(is.nan(sigma))) > 0 | length(which(sigma <= 0)) > 0)
-  {
-    stop("sigma values must be positive whole numbers.")
-  }
-  
   # error check cv parameters
-  if(is.null(cv))
-  {
-    cv <- 1
-  }
-  if(is.na(cv) | !is.numeric(cv) | length(cv) > 1)
-  {
-    stop("cv must be a single number.")
-  }
+  check_param("cv",cv,whole_numbers = T)
   if(cv < 1 | cv > length(diagrams))
   {
     stop("cv must be at least one and at most the number of diagrams.")
-  }
-  if(round(cv,0) != cv)
-  {
-    stop("cv must be a whole number.")
   }
   
   # basic error check for y
@@ -654,7 +525,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
   cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
   parallel::clusterEvalQ(cl,c(library(clue),library(rdist)))
-  parallel::clusterExport(cl,c("y","predict_diagram_ksvm","all_diagrams","check_diagram","gram_matrix","diagram_distance","diagram_kernel"),envir = environment())
+  parallel::clusterExport(cl,c("y","predict_diagram_ksvm","all_diagrams","check_diagram","gram_matrix","diagram_distance","diagram_kernel","check_param"),envir = environment())
   force(diagrams)
   force(distance_matrices)
   force(diagrams_split)
@@ -857,14 +728,7 @@ predict_diagram_ksvm <- function(new_diagrams,model){
   X <- NULL
   
   # error check new_diagrams argument
-  if(is.null(new_diagrams))
-  {
-    stop("new_diagrams must be a list of persistence diagrams.")
-  }
-  if(!is.list(new_diagrams) | length(new_diagrams) < 1)
-  {
-    stop("new_diagrams must be a list of persistence diagrams of length at least 1.")
-  }
+  check_param("new_diagrams",new_diagrams,numeric = F,multiple = T)
   new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
   
   # error check model argument

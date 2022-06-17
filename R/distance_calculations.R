@@ -59,79 +59,28 @@
 #' # now do Fisher information metric calculation
 #' fisher_df <- diagram_distance(D1 = diag1_df,D2 = diag2_df,dim = 1,distance = "fisher",sigma = 1)
 
-diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = 1){
+diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = NULL){
 
   # function to compute the wasserstein/bottleneck/Fisher information metric between two diagrams
   # D1 and D2 are diagrams, possibly stored as data frames
   # dim is the dimension to subset
-  # p is the power of the wasserstein distance, p >= 1
+  # p is the power of the wasserstein distance, p >= 1, default 2
   # distance is either "wasserstein" (default) or "fisher"
-  # sigma is the positive bandwidth for the Fisher information metric, default 1
+  # sigma is the positive bandwidth for the Fisher information metric, default NULL
 
   # for standalone usage force D1 and D2 to be data frames if they are the output of a homology calculation
-  if(is.list(D1) && length(D1) == 1 && names(D1) == "diagram" && class(D1$diagram) == "diagram")
-  {
-    # D1 is the output from a TDA calculation
-    D1 <- diagram_to_df(D1)
-  }else
-  {
-    if(class(D1) != "data.frame")
-    {
-      stop("D1 must either be the output of a TDA computation or data frame.")
-    }
-  }
-
-  # error check D1
-  check_diagram(D1)
-
-  if(is.list(D2) && length(D2) == 1 && names(D2) == "diagram" && class(D2$diagram) == "diagram")
-  {
-    # D1 is the output from a TDA calculation
-    D2 <- diagram_to_df(D2)
-  }else
-  {
-    if(class(D2) != "data.frame")
-    {
-      stop("D2 must either be the output of a TDA computation or data frame.")
-    }
-  }
-
-  # error check D2
-  check_diagram(D2)
+  D1 <- check_diagram(D1,ret = T)
+  D2 <- check_diagram(D2,ret = T)
   
-  # error check dim
-  if(is.null(dim) | is.na(dim) | is.nan(dim) | !is.numeric(dim) | length(dim) > 1 | as.integer(dim) != dim | dim < 0)
+  # error check other parameters
+  check_param("dim",dim,whole_numbers = T,positive = T)
+  check_param("distance",distance)
+  check_param("p",p,at_least_one = T,finite = F)
+  if(distance == "fisher")
   {
-    stop("dim must be a non-negative whole number.")
+    check_param("sigma",sigma)
   }
   
-  # error check distance
-  if(is.null(distance) | !is.character(distance) | length(distance) > 1 | distance %in% c("wasserstein","fisher") == F)
-  {
-    stop("distance must be either \'wasserstein\' or \'fisher\'.")
-  }
-  
-  # error check p
-  if((is.null(p) & distance == "wasserstein") | is.na(p) | is.nan(p) | !is.numeric(p) | length(p) > 1 | p < 1)
-  {
-    stop("p must be a number at least one for the wasserstein metric.")
-  }
-  
-  # error check distance
-  if(is.null(distance) | is.na(distance) | is.nan(distance) | distance %in% c("wasserstein","fisher") == F)
-  {
-    stop("distance must be either wasserstein or fisher.")
-  }
-  
-  # if persistence Fisher distance, sigma must be a positive number
-  if(distance == "fisher" & !is.null(sigma))
-  {
-    if(is.na(sigma) | is.nan(sigma) | !is.numeric(sigma) | length(sigma) > 1 | sigma <= 0)
-    {
-      stop("For persistence Fisher distance sigma must be a positive number.") 
-    }
-  }
-
   # subset both diagrams by dimension dim and for birth and death columns
   D1_subset <- D1[which(D1$dimension == dim),1:3]
   D2_subset <- D2[which(D2$dimension == dim),1:3]
@@ -306,36 +255,30 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
   X <- NULL
   
   # error check diagrams argument
-  if(is.null(diagrams))
-  {
-    stop("diagrams must be a list of persistence diagrams.")
-  }
-  if(!is.list(diagrams) | length(diagrams) < 2)
-  {
-    stop("diagrams must be a list of persistence diagrams of length at least 2.")
-  }
+  check_param("diagrams",diagrams,numeric = F,multiple = T)
   diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
-  
-  # error check other_diagrams argument
   if(!is.null(other_diagrams))
   {
-    if(!is.list(other_diagrams) | length(other_diagrams) < 2)
-    {
-      stop("diagrams must be a list of persistence diagrams of length at least 2.")
-    }
+    check_param("other_diagrams",other_diagrams,numeric = F,multiple = T)
     other_diagrams <- all_diagrams(diagram_groups = list(other_diagrams),inference = "independence")[[1]]
   }
   
   # check other parameters
-  check_params(iterations = 10,p = p,q = 2,dims = c(dim),paired = F,distance = distance,sigma = sigma)
-  
+  check_param("p",p,finite = F,at_least_one = T)
+  check_param("dim",dim,whole_numbers = T)
+  check_param("distance",distance)
+  if(distance == "fisher")
+  {
+    check_param("sigma",sigma)
+  }
+
   # compute distance matrix in parallel
   m = length(diagrams)
   num_workers <- parallelly::availableCores(omit = 1)
   cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
   parallel::clusterEvalQ(cl,c(library(clue),library(rdist)))
-  parallel::clusterExport(cl,c("diagram_distance","check_diagram"),envir = environment())
+  parallel::clusterExport(cl,c("diagram_distance","check_diagram","check_param"),envir = environment())
   force(diagrams) # required for parallel computation in this environment
   
   if(is.null(other_diagrams))
