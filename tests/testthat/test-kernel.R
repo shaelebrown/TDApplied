@@ -6,7 +6,7 @@ test_that("diagram_kernel detects incorrect parameters correctly",{
   expect_error(diagram_kernel(D1 = D,D2 = NULL,dim = 1),"TDA computation or data frame")
   expect_error(diagram_kernel(D1 = D,D2 = D,dim = "2"),"numeric")
   expect_error(diagram_kernel(D1 = D,D2 = D,sigma = "2"),"numeric")
-  expect_error(diagram_kernel(D1 = D,D2 = D,t = NA),"numeric")
+  expect_error(diagram_kernel(D1 = D,D2 = D,t = NA),"NA")
 
 })
 
