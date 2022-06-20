@@ -384,6 +384,10 @@ independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,verbose = FALS
     B <- B * B
     diag(B) <- rep(0,m)
     var <- 2*(m-4)*(m-5)*factorial(m - 4)*(sum(colSums(B)))/factorial(m)
+    if(var == 0)
+    {
+      stop("A zero variance was calculated, please make sure that both g1 and g2 contain at least 2 distinct diagrams.")
+    }
     
     # compute p-value
     p_val <- stats::pgamma(q = HSIC,rate = mu/var,shape = mu^2/var,lower.tail = F)

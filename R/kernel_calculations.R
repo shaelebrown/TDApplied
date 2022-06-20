@@ -114,7 +114,7 @@ gram_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,sigma = 1,t = 1){
   cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
   force(check_diagram)
-  parallel::clusterExport(cl,c("diagram_distance","diagram_kernel","check_diagram","check_param"),envir = environment())
+  parallel::clusterExport(cl,c("diagram_distance","diagram_kernel","check_diagram","check_param","diagram_to_df"),envir = environment())
   force(diagrams) # required for parallel computation in this environment
   
   if(is.null(other_diagrams))
