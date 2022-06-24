@@ -121,7 +121,7 @@ all_diagrams <- function(diagram_groups,inference){
 
 }
 
-check_param <- function(param_name,param,numeric = T,multiple = F,whole_numbers = F,finite = T,at_least_one = F,positive = T,min_length = 1){
+check_param <- function(param_name,param,numeric = T,multiple = F,whole_numbers = F,finite = T,at_least_one = F,positive = F,non_negative = T,min_length = 1){
   
   # check if a single parameter satisfies certain constraints
   if(!is.list(param) & (!is.vector(param) | length(param) == 1))
@@ -177,7 +177,7 @@ check_param <- function(param_name,param,numeric = T,multiple = F,whole_numbers 
   
   if(numeric == T & whole_numbers == T & length(which(floor(param) != param)) > 0)
   {
-    stop("dims must be whole numbers.")
+    stop(paste0(param_name," must be whole numbers."))
   }
   
   if(finite == T & length(which(!is.finite(param))) > 0)
@@ -185,7 +185,12 @@ check_param <- function(param_name,param,numeric = T,multiple = F,whole_numbers 
     stop(paste0(param_name," must be finite."))
   }
   
-  if(positive == T & length(which(param < 0)) > 0)
+  if(non_negative == T & length(which(param < 0)) > 0)
+  {
+    stop(paste0(param_name," must be non-negative"))
+  }
+  
+  if(positive == T & length(which(param <= 0)) > 0)
   {
     stop(paste0(param_name," must be positive."))
   }

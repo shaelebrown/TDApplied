@@ -73,12 +73,12 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = NU
   D2 <- check_diagram(D2,ret = T)
   
   # error check other parameters
-  check_param("dim",dim,whole_numbers = T,positive = T)
+  check_param("dim",dim,whole_numbers = T,positive = F)
   check_param("distance",distance)
-  check_param("p",p,at_least_one = T,finite = F)
+  check_param("p",p,at_least_one = T,finite = F,non_negative = F)
   if(distance == "fisher")
   {
-    check_param("sigma",sigma)
+    check_param("sigma",sigma,positive = T,non_negative = F)
   }
   
   # subset both diagrams by dimension dim and for birth and death columns
@@ -265,11 +265,11 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
   
   # check other parameters
   check_param("p",p,finite = F,at_least_one = T)
-  check_param("dim",dim,whole_numbers = T)
+  check_param("dim",dim,whole_numbers = T,non_negative = T,positive = F)
   check_param("distance",distance)
   if(distance == "fisher")
   {
-    check_param("sigma",sigma)
+    check_param("sigma",sigma,positive = T)
   }
 
   # compute distance matrix in parallel

@@ -8,7 +8,7 @@ test_that("permutation_test detects incorrect parameters correctly",{
   expect_error(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = NA,p = 2,q = 2,dims = c(0,1),paired = F,distance = "wasserstein",sigma = NULL,verbose = F),"NA")
   expect_error(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = 5,p = NULL,q = 2,dims = c(0,1),paired = F,distance = "wasserstein",sigma = NULL,verbose = F),"NULL")
   expect_error(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = 5,p = 2,q = NA,dims = c(0,1),paired = F,distance = "wasserstein",sigma = NULL,verbose = F),"NA")
-  expect_error(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = 5,p = 2,q = 2,dims = c(-1,1),paired = F,distance = "wasserstein",sigma = NULL,verbose = F),"positive")
+  expect_error(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = 5,p = 2,q = 2,dims = c(-1,1),paired = F,distance = "wasserstein",sigma = NULL,verbose = F),"non-negative")
   expect_error(permutation_test(list(circle,circle),list(sphere,sphere,sphere),iterations = 5,p = 2,q = 2,dims = c(0,1),paired = T,distance = "wasserstein",sigma = NULL,verbose = F),"same number")
   expect_error(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = 5,p = 2,q = 2,dims = c(0,1),paired = F,distance = "Wasserstein",sigma = NULL,verbose = F),"wasserstein")
   expect_error(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = 5,p = 2,q = 2,dims = c(0,1),paired = F,distance = "fisher",sigma = NULL,verbose = F),"sigma")
@@ -44,7 +44,7 @@ test_that("independence_test detects incorrect parameters correctly",{
   expect_error(independence_test(g1,g2[1:5],dims = c(0,1),sigma = 1,t = 1),"same length")
   expect_error(independence_test(g1[1:5],g2[1:5],dims = c(0,1),sigma = 1,t = 1),"6")
   expect_error(independence_test(list(g1[[1]],g1[[2]],g1[[3]],g1[[4]],g1[[5]],data.frame(dimension = numeric(),birth = numeric(),death = numeric())),g2,dims = c(0,1),sigma = 1,t = 1),"empty")
-  expect_equal(independence_test(list(g1[[1]],g1[[1]],g1[[1]],g1[[1]],g1[[1]],g1[[1]]),list(g1[[2]],g1[[2]],g1[[2]],g1[[2]],g1[[2]],g1[[2]]),dims = c(0),sigma = 1,t = 1)$p_value[[1]],1,tolerance = 0.02)
+  # expect_warning(independence_test(list(g1[[1]],g1[[1]],g1[[1]],g1[[1]],g1[[1]],g1[[1]]),list(g1[[2]],g1[[2]],g1[[2]],g1[[2]],g1[[2]],g1[[2]]),dims = c(0),sigma = 1,t = 1)$p_value[[1]],"NaNs")
 
 })
 
@@ -60,7 +60,7 @@ test_that("independence_test is working",{
   mu_x_sq <- (10 + 5*k13)/15
   mu_y_sq <- (10 + 5*k23)/15
   mu <- (1 + mu_x_sq*mu_y_sq - mu_x_sq - mu_y_sq)/6
-  v <- 209*((k13_0 - 1)^2)*((k23_0 - 1)^2)/314928
+  v <- 209*((k13 - 1)^2)*((k23 - 1)^2)/314928
   expect_equal(independence_test(g1 = list(D1,D1,D1,D1,D1,D3),g2 = list(D2,D2,D2,D2,D2,D3),dims = c(0))$test_statistic[[1]],HSIC)
   expect_equal(independence_test(g1 = list(D1,D1,D1,D1,D1,D3),g2 = list(D2,D2,D2,D2,D2,D3),dims = c(0))$p_value[[1]],stats::pgamma(q = HSIC,rate = mu/v,shape = mu^2/v,lower.tail = F))
   

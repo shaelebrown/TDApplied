@@ -38,11 +38,7 @@
 diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
   
   # check kernel-specific parameter, other inputs are checked in distance calculation
-  check_param("t",t)
-  if(t == 0)
-  {
-    stop("t must be greater than 0.")
-  }
+  check_param("t",t,non_negative = T,positive = F)
   
   # return kernel calculation
   return(exp(-1*t*diagram_distance(D1 = D1,D2 = D2,dim = dim,distance = "fisher",sigma = sigma)))

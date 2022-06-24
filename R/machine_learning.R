@@ -372,8 +372,10 @@ predict_diagram_kpca <- function(new_diagrams,embedding){
     stop("embedding must be the output of a diagram_kpca function call.")
   }
   
-  # compute cross-Gram matrix
+  # compute cross-Gram matrix and scale twice
   K <- gram_matrix(diagrams = new_diagrams,other_diagrams = embedding$diagrams,dim = embedding$dim,sigma = embedding$sigma,t = embedding$t)
+  K <- scale(K,center = T,scale = F)
+  K <- t(scale(t(K),center = T,scale = F))
   
   # project the new diagrams into the embedding space
   return(K %*% embedding$pca@pcv)
