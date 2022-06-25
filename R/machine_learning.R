@@ -477,10 +477,14 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
     stop("cv must be at least one and at most the number of diagrams.")
   }
   
-  # basic error check for y
+  # basic error checks for y
   if(length(y) != length(diagrams))
   {
     stop("y must be a vector with the same number of elements as diagrams.")
+  }
+  if(class(y) %in% c("numeric","factor") == F)
+  {
+    stop("y should be either a numeric or factor vector.")
   }
   
   # set defaults for type argument
@@ -527,7 +531,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
   cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
   parallel::clusterEvalQ(cl,c(library(clue),library(rdist)))
-  parallel::clusterExport(cl,c("y","predict_diagram_ksvm","all_diagrams","check_diagram","gram_matrix","diagram_distance","diagram_kernel","check_param"),envir = environment())
+  parallel::clusterExport(cl,c("y","predict_diagram_ksvm","all_diagrams","check_diagram","gram_matrix","diagram_distance","diagram_kernel","check_param","diagram_to_df"),envir = environment())
   force(diagrams)
   force(distance_matrices)
   force(diagrams_split)

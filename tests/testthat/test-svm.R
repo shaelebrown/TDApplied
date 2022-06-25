@@ -13,6 +13,7 @@ test_that("diagram_ksvm detects incorrect parameters correctly",{
   expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),dim = 0,sigma = 0,y = c(0,1,2)),"sigma")
   expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),dim = NaN,y = c(0,1,2)),"dim")
   expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),dim = 1,y = c(0,1)),"number of elements")
+  expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),dim = 1,y = c("0","1","2")),"factor")
   
 })
 
