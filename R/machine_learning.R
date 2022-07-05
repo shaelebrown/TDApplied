@@ -531,7 +531,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
   cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
   parallel::clusterEvalQ(cl,c(library(clue),library(rdist)))
-  parallel::clusterExport(cl,c("y","predict_diagram_ksvm","all_diagrams","check_diagram","gram_matrix","diagram_distance","diagram_kernel","check_param","diagram_to_df"),envir = environment())
+  parallel::clusterExport(cl,c("y","predict_diagram_ksvm","all_diagrams","check_diagram","gram_matrix","diagram_distance","diagram_kernel","check_param","diagram_to_df","%do%","%dopar%"),envir = environment())
   force(diagrams)
   force(distance_matrices)
   force(diagrams_split)
@@ -547,10 +547,10 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
   # prediction error on the hold out set
   if(cv < nrow(params))
   {
-    model_errors <- foreach(r = iterators::iter(params,by = "row"),.combine = c) %dopar%
+    model_errors <- foreach::`%dopar%`(obj = foreach::foreach(r = iterators::iter(params,by = "row"),.combine = c),ex = 
       {
         K <- exp(-1*r[[2]]*distance_matrices[[paste0(r[[1]],"_",r[[3]])]])
-        return(mean(foreach(s = 1:cv,.combine = c) %do%
+        return(mean(foreach::`%do%`(obj = foreach::foreach(s = 1:cv,.combine = c),ex =
                       {
                         if(cv > 1)
                         {
@@ -560,31 +560,33 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
                           m <- length(test_indices)
                           K_subset <- K[training_indices,training_indices]
                           class(K_subset) <- "kernelMatrix"
-                          model <- list(model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking),
-                                        dim = r[[1]],
-                                        sigma = r[[3]],
-                                        t = r[[2]],
-                                        CV = NULL)
-                          model$diagrams <- diagrams[model$model@SVindex]
-                          model_list <- list(cv_results = NULL,best_model = model)
-                          class(model_list) <- "diagram_ksvm"
-                          predictions <- predict_diagram_ksvm(new_diagrams = diagrams[test_indices],model = model)
-                          
-                          if(type == "C-svc" || type == "nu-svc" || type == "spoc-svc" || type == "kbb-svc" || type == "C-bsvc")
-                          {
-                            tab <- as.matrix(table(y[test_indices],as.integer(predictions)))
-                            error  <- 1 - sum(diag(tab))/sum(as.numeric(tab))
-                          }
-                          if(type == "one-svc")
-                          {
-                            error <- sum(!predictions)/m
-                          }
-                          if(type == "eps-svr" || type == "nu-svr" || type == "eps-bsvr")
-                          {
-                            error <- drop(crossprod(predictions - y[setdiff(1:length(diagrams),training_indices)])/m)
-                          }
-                          
-                          return(error)
+                          model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)
+                          # model <- list(model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking),
+                                        # dim = r[[1]],
+                                        # sigma = r[[3]],
+                                        # t = r[[2]],
+                                        # CV = NULL)
+                          # model$diagrams <- diagrams[model$model@SVindex]
+                          # model_list <- list(cv_results = NULL,best_model = model)
+                          # class(model_list) <- "diagram_ksvm"
+                          # predictions <- predict_diagram_ksvm(new_diagrams = diagrams[test_indices],model = model_list)
+                          # 
+                          # if(type == "C-svc" || type == "nu-svc" || type == "spoc-svc" || type == "kbb-svc" || type == "C-bsvc")
+                          # {
+                          #   tab <- as.matrix(table(y[test_indices],as.integer(predictions)))
+                          #   error  <- 1 - sum(diag(tab))/sum(as.numeric(tab))
+                          # }
+                          # if(type == "one-svc")
+                          # {
+                          #   error <- sum(!predictions)/m
+                          # }
+                          # if(type == "eps-svr" || type == "nu-svr" || type == "eps-bsvr")
+                          # {
+                          #   error <- drop(crossprod(predictions - y[setdiff(1:length(diagrams),training_indices)])/m)
+                          # }
+                          # 
+                          # return(error)
+                          return(model@error)
                         }else
                         {
                           class(K) <- "kernelMatrix"
@@ -593,14 +595,14 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
                           
                         }
                         
-                      }))
-      }
+                      })))
+      })
   }else
   {
-    model_errors <- foreach(r = iterators::iter(params,by = "row"),.combine = c) %do%
+    model_errors <- foreach::`%do%`(obj = foreach::foreach(r = iterators::iter(params,by = "row"),.combine = c),ex =
       {
         K <- exp(-1*r[[2]]*distance_matrices[[paste0(r[[1]],"_",r[[3]])]])
-        return(mean(foreach(s = 1:cv,.combine = c) %dopar%
+        return(mean(foreach::`%dopar%`(obj = foreach::foreach(s = 1:cv,.combine = c),ex = 
                       {
                         if(cv > 1)
                         {
@@ -610,31 +612,33 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
                           m <- length(test_indices)
                           K_subset <- K[training_indices,training_indices]
                           class(K_subset) <- "kernelMatrix"
-                          model <- list(model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking),
-                                        dim = r[[1]],
-                                        sigma = r[[3]],
-                                        t = r[[2]],
-                                        CV = NULL)
-                          model$diagrams <- diagrams[model$model@SVindex]
-                          model_list <- list(cv_results = NULL,best_model = model)
-                          class(model_list) <- "diagram_ksvm"
-                          predictions <- predict_diagram_ksvm(new_diagrams = diagrams[test_indices],model = model_list)
-                          
-                          if(type == "C-svc" || type == "nu-svc" || type == "spoc-svc" || type == "kbb-svc" || type == "C-bsvc")
-                          {
-                            tab <- as.matrix(table(y[test_indices],as.integer(predictions)))
-                            error  <- 1 - sum(diag(tab))/sum(as.numeric(tab))
-                          }
-                          if(type == "one-svc")
-                          {
-                            error <- sum(!predictions)/m
-                          }
-                          if(type == "eps-svr" || type == "nu-svr" || type == "eps-bsvr")
-                          {
-                            error <- drop(crossprod(predictions - y[setdiff(1:length(diagrams),training_indices)])/m)
-                          }
-                          
-                          return(error)
+                          model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)
+                          # model <- list(model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking),
+                          #               dim = r[[1]],
+                          #               sigma = r[[3]],
+                          #               t = r[[2]],
+                          #               CV = NULL)
+                          # model$diagrams <- diagrams[model$model@SVindex]
+                          # model_list <- list(cv_results = NULL,best_model = model)
+                          # class(model_list) <- "diagram_ksvm"
+                          # predictions <- predict_diagram_ksvm(new_diagrams = diagrams[test_indices],model = model_list)
+                          # 
+                          # if(type == "C-svc" || type == "nu-svc" || type == "spoc-svc" || type == "kbb-svc" || type == "C-bsvc")
+                          # {
+                          #   tab <- as.matrix(table(y[test_indices],as.integer(predictions)))
+                          #   error  <- 1 - sum(diag(tab))/sum(as.numeric(tab))
+                          # }
+                          # if(type == "one-svc")
+                          # {
+                          #   error <- sum(!predictions)/m
+                          # }
+                          # if(type == "eps-svr" || type == "nu-svr" || type == "eps-bsvr")
+                          # {
+                          #   error <- drop(crossprod(predictions - y[setdiff(1:length(diagrams),training_indices)])/m)
+                          # }
+                          # 
+                          # return(error)
+                          return(model@error)
                         }else
                         {
                           class(K) <- "kernelMatrix"
@@ -643,8 +647,8 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
                           
                         }
                         
-                      }))
-      }
+                      })))
+      })
   }
 
   parallel::stopCluster(cl)

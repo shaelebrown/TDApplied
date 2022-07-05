@@ -29,7 +29,7 @@ a list with the following elements:
  
  \item{test_statisics}{a numeric vector of the test statistic value in each dimension.}
  
- \item{p_values}{a numeric vector of the p-values in each dimension.}
+ \item{p_values}{a numeric vector of the p-values in each dimension. Note that if all of the diagrams in either g1 or g2 are the same in some dimension, then some p-values may be NaN.}
  
  \item{run_time}{the run time of the function call, containing time units.}
 
