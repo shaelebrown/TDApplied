@@ -54,13 +54,15 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
 #' `diagrams` is the a of persistence diagrams, and `other_diagrams` is an optional second list of persistence diagrams.
 #' The `dim` parameter should be a positive finite integer.
 #' The `sigma` parameter is the positive bandwith for the Fisher information metric, and
-#' `t` is the positive scale parameter for the persistence Fisher kernel.
+#' `t` is the positive scale parameter for the persistence Fisher kernel. `num_workers` is the
+#' number of cores used for parallel computation.
 #'
 #' @param diagrams the list of persistence diagrams, either the output from TDA calculations like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.
 #' @param other_diagrams either NULL (default) or another list of persistence diagrams to compute a cross-Gram matrix.
 #' @param dim the homological dimension in which the distance is to be computed.
 #' @param sigma a positive number representing the bandwith for the Fisher information metric, default 1.
 #' @param t a positive number representing the scale for the kernel, default 1.
+#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
 #'
 #' @return the numeric (cross) Gram matrix of class 'kernelMatrix'.
 #' @export
@@ -90,7 +92,7 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
 #' # calculate cross-Gram matrix, should be the same as G
 #' G_cross <- gram_matrix(diagrams = g,other_diagrams = g,dim = 1,sigma = 2,t = 2)
 
-gram_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,sigma = 1,t = 1){
+gram_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,sigma = 1,t = 1,num_workers = parallely::availableCores(omit = 1)){
   
   # set internal variables to NULL to avoid build issues
   r <- NULL
@@ -104,9 +106,16 @@ gram_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,sigma = 1,t = 1){
     check_param("other_diagrams",other_diagrams,numeric = F,multiple = T)
   }
   
+  # error check num_workers argument
+  check_param("num_workers",whole_numbers = T,at_least_one = T)
+  if(num_workers > parallely::availableCores())
+  {
+    warning("num_workers is greater than the number of available cores - setting to maximum value.")
+    num_workers <- parallely::availableCores()
+  }
+  
   # compute Gram matrix in parallel
   m = length(diagrams)
-  num_workers <- parallelly::availableCores(omit = 1)
   cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
   force(check_diagram)

@@ -11,7 +11,7 @@
 #' The `sigma` parameter is the positive bandwith for the Fisher information metric, and
 #' `p` is the wasserstein power parameter. `k` is the desired dimension of the embedding, and
 #' `eig`, `add`, `x.ret` and `list.` are cmdscale parameters providing optional additional
-#' information to be returned.
+#' information to be returned. `num_workers` is the number of cores used for parallel computation.
 #'
 #' @param diagrams a list of persistence diagrams, as the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or a \code{\link{diagram_to_df}} function call.
 #' @param distance a string representing the desired distance metric to be used, either 'wasserstein' (default) or 'fisher'.
@@ -23,6 +23,7 @@
 #' @param add logical indicating if an additive constant c* should be computed, and added to the non-diagonal dissimilarities such that the modified dissimilarities are Euclidean.
 #' @param x.ret indicates whether the doubly centered symmetric distance matrix should be returned.
 #' @param list. local indicating if a list should be returned or just the n*k matrix.
+#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
 #'
 #' @return the output of \code{\link[stats]{cmdscale}} on the diagram distance matrix. If `list.` is false (as per default),
 #' a matrix with `k` columns whose rows give the coordinates of the points chosen to represent the dissimilarities.
@@ -66,14 +67,14 @@
 #' # calculate their 2D mds embedding in dimension 1 with the bottleneck distance
 #' embedding <- diagram_MDS(diagrams = g,dim = 1,p = Inf,k = 2)
 
-diagram_MDS <- function(diagrams,distance = "wasserstein",dim = 0,p = 2,sigma = NULL,k = 2,eig = FALSE,add = FALSE,x.ret = FALSE,list. = eig || add || x.ret){
+diagram_MDS <- function(diagrams,distance = "wasserstein",dim = 0,p = 2,sigma = NULL,k = 2,eig = FALSE,add = FALSE,x.ret = FALSE,list. = eig || add || x.ret,num_workers = parallely::availableCores(omit = 1)){
   
   # error check diagrams argument
   check_param("diagrams",diagrams,numeric = F,multiple = T)
   diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
 
   # compute distance matrix
-  d <- distance_matrix(diagrams = diagrams,dim = dim,distance = distance,p = p,sigma = sigma)
+  d <- distance_matrix(diagrams = diagrams,dim = dim,distance = distance,p = p,sigma = sigma,num_workers = num_workers)
 
   # return metric multidimensional scaling with d as input
   return(stats::cmdscale(d = d,k = k,eig = eig,add = add,x.ret = x.ret,list. = list.))
@@ -89,7 +90,8 @@ diagram_MDS <- function(diagrams,distance = "wasserstein",dim = 0,p = 2,sigma = 
 #' The `diagrams` parameter should be a list of persistence diagrams computed from TDA.
 #' The `dim` parameter should be a positive finite integer.
 #' The `sigma` and `t` parameters are the positive bandwith for the Fisher information metric and
-#' the positive scale for the persistence Fisher kernel respectively.
+#' the positive scale for the persistence Fisher kernel respectively. `num_workers` is the
+#' number of cores used for parallel computation.
 #' `centers` is the number of desired clusters, and
 #' `...` are additional parameters to the kkmeans kernlab function.
 #'
@@ -98,6 +100,7 @@ diagram_MDS <- function(diagrams,distance = "wasserstein",dim = 0,p = 2,sigma = 
 #' @param t the positive scale for the persistence Fisher kernel, default 1.
 #' @param sigma a positive number representing the bandwith for the Fisher information metric, default 1
 #' @param centers number of clusters to initialize.
+#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
 #' @param ... additional parameters.
 #'
 #' @return a 'diagram_kkmeans' object containing the output of \code{\link[kernlab]{kkmeans}} on the diagram distance matrix, i.e. a list containing
@@ -137,7 +140,7 @@ diagram_MDS <- function(diagrams,distance = "wasserstein",dim = 0,p = 2,sigma = 
 #' # calculate kmeans clusters with centers = 2 in dimension 1 with sigma = t = 2
 #' clusters <- diagram_kkmeans(diagrams = g,centers = 2,dim = 1,t = 2,sigma = 2)
 
-diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,...){
+diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers = parallely::availableCores(omit = 1),...){
   
   # error check arguments
   check_param("diagrams",diagrams,numeric = F,multiple = T)
@@ -145,7 +148,7 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,...){
   check_param("centers",centers,whole_numbers = T,at_least_one = T)
   
   # compute Gram matrix
-  K <- gram_matrix(diagrams = diagrams,dim = dim,sigma = sigma,t = t)
+  K <- gram_matrix(diagrams = diagrams,dim = dim,sigma = sigma,t = t,num_workers = num_workers)
   
   # return kernlab calculation, saving in a list of class diagram_kkmeans for later interface with prediction calculations
   ret_list <- list(clustering = kernlab::kkmeans(x = K,centers = centers,...),diagrams = diagrams,dim = dim,sigma = sigma,t = t)
@@ -165,9 +168,11 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,...){
 #' The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like \code{\link[TDA]{ripsDiag}} or from a 
 #' \code{\link{diagram_to_df}} function call, and the
 #' `clustering` parameter should be the output of a \code{\link{diagram_kkmeans}} function call.
+#' `num_workers` is the number of cores used for parallel computation.
 #'
 #' @param new_diagrams a list of persistence diagrams, as the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
 #' @param clustering the output of a \code{link{diagram_kkmeans}} function call.
+#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
 #'
 #' @return a vector of the predicted cluster labels for the new diagrams.
 #' @export
@@ -193,7 +198,7 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,...){
 #' # predict the nearest cluster for all diagrams in g
 #' nearest_clusters <- diagram_nearest_clusters(new_diagrams = g,clustering = clusters)
 
-diagram_nearest_clusters <- function(new_diagrams,clustering){
+diagram_nearest_clusters <- function(new_diagrams,clustering,num_workers = parallely::availableCores(omit = 1)){
   
   # set internal variables to NULL to avoid build issues
   X <- NULL
@@ -213,7 +218,7 @@ diagram_nearest_clusters <- function(new_diagrams,clustering){
   }
   
   # compute cross Gram matrix
-  K = gram_matrix(diagrams = new_diagrams,other_diagrams = clustering$diagrams,dim = clustering$dim,sigma = clustering$sigma,t = clustering$t)
+  K = gram_matrix(diagrams = new_diagrams,other_diagrams = clustering$diagrams,dim = clustering$dim,sigma = clustering$sigma,t = clustering$t,num_workers = num_workers)
   
   # return predicted class for each new diagram
   predicted_clusters <- unlist(lapply(X = 1:length(new_diagrams),FUN = function(X){
@@ -235,7 +240,8 @@ diagram_nearest_clusters <- function(new_diagrams,clustering){
 #' The `diagrams` parameter should be a list of persistence diagrams computed from TDA.
 #' The `dim` parameter should be a positive finite integer.
 #' The `sigma` and `t` parameters are the positive bandwith for the Fisher information metric and
-#' the positive scale for the persistence Fisher kernel respectively.
+#' the positive scale for the persistence Fisher kernel respectively. `num_workers` is the
+#' number of cores used for parallel computation.
 #' `features` is the number of desired features (principal components) in the embedding, and
 #' `...` are additional parameters to the kpca kernlab function.
 #'
@@ -244,6 +250,7 @@ diagram_nearest_clusters <- function(new_diagrams,clustering){
 #' @param t the positive scale for the persistence Fisher kernel, default 1.
 #' @param sigma a positive number representing the bandwith for the Fisher information metric, default 1
 #' @param features number of features (principal components) to return, default 1.
+#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
 #' @param ... additional parameters.
 #'
 #' @return a list containing 
@@ -283,14 +290,14 @@ diagram_nearest_clusters <- function(new_diagrams,clustering){
 #' # calculate their 2D PCA embedding in dimension 1 with sigma = t = 2
 #' embedding <- diagram_kpca(diagrams = g,dim = 1,t = 2,sigma = 2,features = 2)
 
-diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,...){
+diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_workers = parallely::availableCores(omit = 1),...){
   
   # error check diagrams argument
   check_param("diagrams",diagrams,numeric = F,multiple = T)
   diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
   
   # compute Gram matrix
-  K <- gram_matrix(diagrams = diagrams,t = t,sigma = sigma,dim = dim)
+  K <- gram_matrix(diagrams = diagrams,t = t,sigma = sigma,dim = dim,num_workers = num_workers)
   
   # return kernlab computation
   ret_list <- list(pca = kernlab::kpca(x = K,features = features,...),diagrams = diagrams,t = t,sigma = sigma,dim = dim)
@@ -307,10 +314,11 @@ diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,...){
 #' The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag
 #' or \code{\link{diagram_to_df}}.
 #' The `embedding` parameter is the diagram_kpca embedding object to be used for embedding
-#' the new diagrams.
+#' the new diagrams. `num_workers` is the number of cores used for parallel computation.
 #'
 #' @param new_diagrams a list of persistence diagrams, as the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
 #' @param embedding the output to a diagram_kpca function call.
+#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
 #'
 #' @return the data projection (rotation), stored as a numeric matrix. Each row corresponds to the same-index diagram in `new_diagrams`.
 #' @export
@@ -352,7 +360,7 @@ diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,...){
 #' # calculate their 2D PCA embedding using the embedding object
 #' embedding_new <- predict_diagram_kpca(new_diagrams = g_new,embedding = embedding)
 
-predict_diagram_kpca <- function(new_diagrams,embedding){
+predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallely::availableCores(omit = 1)){
   
   # set internal variables to NULL to avoid build issues
   r <- NULL
@@ -373,7 +381,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding){
   }
   
   # compute cross-Gram matrix and scale twice
-  K <- gram_matrix(diagrams = new_diagrams,other_diagrams = embedding$diagrams,dim = embedding$dim,sigma = embedding$sigma,t = embedding$t)
+  K <- gram_matrix(diagrams = new_diagrams,other_diagrams = embedding$diagrams,dim = embedding$dim,sigma = embedding$sigma,t = embedding$t,num_workers = num_workers)
   K <- scale(K,center = T,scale = F)
   K <- t(scale(t(K),center = T,scale = F))
   
@@ -394,7 +402,8 @@ predict_diagram_kpca <- function(new_diagrams,embedding){
 #' The `sigma` and `t` parameters are the positive bandwith for the Fisher information metric and
 #' the positive scale for the persistence Fisher kernel respectively.
 #' `type`, `C`, `nu`, `epsilon`, `prob.model`, `class.weights`, `cross`, `fit`, `cache`, `tol`, and `shrinking` 
-#' are additional parameters to the ksvm kernlab function.
+#' are additional parameters to the ksvm kernlab function. `num_workers` is the
+#' number of cores used for parallel computation.
 #'
 #' @param diagrams a list of persistence diagrams, as the output of a TDA calculation.
 #' @param cv a positive number at most the length of `diagrams` which determines the number of cross validation splits to be performed (default 1, aka no cross-validation).
@@ -412,6 +421,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding){
 #' @param cache cache memory in MB (default 40).
 #' @param tol tolerance of termination criteria (default 0.001).
 #' @param shrinking option whether to use the shrinking-heuristics (default TRUE).
+#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
 #' @return a list containing 
 #' 
 #' \describe{
@@ -459,7 +469,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding){
 #' # calculate models over a grid with 5-fold CV
 #' model_svm <- diagram_ksvm(diagrams = g,cv = 5,dim = c(1,2),y = y,sigma = c(1,0.1))
 
-diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1,nu = 0.2,epsilon = 0.1,prob.model = F,class.weights = NULL,fit = T,cache = 40,tol = 0.001,shrinking = T){
+diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1,nu = 0.2,epsilon = 0.1,prob.model = F,class.weights = NULL,fit = T,cache = 40,tol = 0.001,shrinking = T,num_workers = parallely::availableCores(omit = 1)){
   
   # set internal variables to NULL to avoid build issues
   r <- NULL
@@ -521,13 +531,12 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
   dim_and_sigma <- expand.grid(dim = dim,sigma = sigma)
   distance_matrices <- lapply(X = 1:nrow(dim_and_sigma),FUN = function(X){
     
-    return(distance_matrix(diagrams = diagrams,dim = dim_and_sigma[X,1],distance = "fisher",sigma = dim_and_sigma[X,2]))
+    return(distance_matrix(diagrams = diagrams,dim = dim_and_sigma[X,1],distance = "fisher",sigma = dim_and_sigma[X,2],num_workers = num_workers))
     
   })
   names(distance_matrices) <- paste(dim_and_sigma$dim,dim_and_sigma$sigma,sep = "_")
   
   # set up for parallel computation
-  num_workers <- parallelly::availableCores(omit = 1)
   cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
   parallel::clusterEvalQ(cl,c(library(clue),library(rdist)))
@@ -561,31 +570,6 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
                           K_subset <- K[training_indices,training_indices]
                           class(K_subset) <- "kernelMatrix"
                           model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)
-                          # model <- list(model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking),
-                                        # dim = r[[1]],
-                                        # sigma = r[[3]],
-                                        # t = r[[2]],
-                                        # CV = NULL)
-                          # model$diagrams <- diagrams[model$model@SVindex]
-                          # model_list <- list(cv_results = NULL,best_model = model)
-                          # class(model_list) <- "diagram_ksvm"
-                          # predictions <- predict_diagram_ksvm(new_diagrams = diagrams[test_indices],model = model_list)
-                          # 
-                          # if(type == "C-svc" || type == "nu-svc" || type == "spoc-svc" || type == "kbb-svc" || type == "C-bsvc")
-                          # {
-                          #   tab <- as.matrix(table(y[test_indices],as.integer(predictions)))
-                          #   error  <- 1 - sum(diag(tab))/sum(as.numeric(tab))
-                          # }
-                          # if(type == "one-svc")
-                          # {
-                          #   error <- sum(!predictions)/m
-                          # }
-                          # if(type == "eps-svr" || type == "nu-svr" || type == "eps-bsvr")
-                          # {
-                          #   error <- drop(crossprod(predictions - y[setdiff(1:length(diagrams),training_indices)])/m)
-                          # }
-                          # 
-                          # return(error)
                           return(model@error)
                         }else
                         {
@@ -613,31 +597,6 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
                           K_subset <- K[training_indices,training_indices]
                           class(K_subset) <- "kernelMatrix"
                           model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)
-                          # model <- list(model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking),
-                          #               dim = r[[1]],
-                          #               sigma = r[[3]],
-                          #               t = r[[2]],
-                          #               CV = NULL)
-                          # model$diagrams <- diagrams[model$model@SVindex]
-                          # model_list <- list(cv_results = NULL,best_model = model)
-                          # class(model_list) <- "diagram_ksvm"
-                          # predictions <- predict_diagram_ksvm(new_diagrams = diagrams[test_indices],model = model_list)
-                          # 
-                          # if(type == "C-svc" || type == "nu-svc" || type == "spoc-svc" || type == "kbb-svc" || type == "C-bsvc")
-                          # {
-                          #   tab <- as.matrix(table(y[test_indices],as.integer(predictions)))
-                          #   error  <- 1 - sum(diag(tab))/sum(as.numeric(tab))
-                          # }
-                          # if(type == "one-svc")
-                          # {
-                          #   error <- sum(!predictions)/m
-                          # }
-                          # if(type == "eps-svr" || type == "nu-svr" || type == "eps-bsvr")
-                          # {
-                          #   error <- drop(crossprod(predictions - y[setdiff(1:length(diagrams),training_indices)])/m)
-                          # }
-                          # 
-                          # return(error)
                           return(model@error)
                         }else
                         {
@@ -683,10 +642,12 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
 #' Returns the predicted response vector of the model on the new diagrams.
 #'
 #' The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
-#' The `model` parameter should be the output from a diagram_ksvm function call.
+#' The `model` parameter should be the output from a diagram_ksvm function call. `num_workers` is the
+#' number of cores used for parallel computation.
 #'
 #' @param new_diagrams a list of new persistence diagrams, as the output of a TDA calculation.
 #' @param model the diagram_ksvm model to be used for prediction.
+#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
 #' @return a vector containing the output of \code{\link[kernlab]{predict.ksvm}} on the cross Gram matrix of the new diagrams and the support vector diagrams stored in the model.
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
@@ -731,7 +692,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
 #' # predict responses
 #' y_pred <- predict_diagram_ksvm(new_diagrams = g_new,model = model_svm)
 
-predict_diagram_ksvm <- function(new_diagrams,model){
+predict_diagram_ksvm <- function(new_diagrams,model,num_workers = parallely::availableCores(omit = 1)){
   
   # set internal variables to NULL to avoid build issues
   r <- NULL
@@ -752,7 +713,7 @@ predict_diagram_ksvm <- function(new_diagrams,model){
   }
   
   # compute kernel matrix, storing the value of each kernel computation between the new diagrams and the old ones
-  K <- gram_matrix(diagrams = new_diagrams,other_diagrams = model$best_model$diagrams,dim = model$best_model$dim,sigma = model$best_model$sigma,t = model$best_model$t)
+  K <- gram_matrix(diagrams = new_diagrams,other_diagrams = model$best_model$diagrams,dim = model$best_model$dim,sigma = model$best_model$sigma,t = model$best_model$t,num_workers = num_workers)
 
   return(kernlab::predict(object = model$best_model$model,kernlab::as.kernelMatrix(K)))
   

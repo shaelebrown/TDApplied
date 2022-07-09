@@ -211,7 +211,8 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = NU
 #' The `dim` parameter should be a positive finite integer, being the homological dimension in which to compute distances.
 #' The `distance` parameter is the string determining which distance metric to use, `p` is the 
 #' wasserstein power parameter, and
-#' `t` is the positive scale parameter for the persistence Fisher kernel.
+#' `t` is the positive scale parameter for the persistence Fisher kernel. `num_workers` is the
+#' number of cores used for parallel computation.
 #'
 #' @param diagrams the list of persistence diagrams, either the output from TDA calculations or the \code{\link{diagram_to_df}} function.
 #' @param other_diagrams either NULL (default) or another list of persistence diagrams to compute a cross-distance matrix.
@@ -219,6 +220,7 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = NU
 #' @param distance a character determining which metric to use, either "wasserstein" (default) or "fisher".
 #' @param p the positive wasserstein power, default 2.
 #' @param sigma a positive number representing the bandwith of the Fisher information metric, default NULL.
+#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
 #'
 #' @return the numeric distance matrix.
 #' @export
@@ -248,7 +250,7 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = NU
 #' # now do the cross distance matrix, should be the same as the original
 #' D_cross <- distance_matrix(diagrams = g,other_diagrams = g,dim = 1,distance = "wasserstein",p = 2)
 
-distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "wasserstein",p = 2,sigma = NULL){
+distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "wasserstein",p = 2,sigma = NULL,num_workers = parallelly::availableCores(omit = 1)){
   
   # set internal variables to NULL to avoid build issues
   r <- NULL
@@ -271,10 +273,17 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
   {
     check_param("sigma",sigma,positive = T)
   }
+  
+  # error check num_workers argument
+  check_param("num_workers",whole_numbers = T,at_least_one = T)
+  if(num_workers > parallely::availableCores())
+  {
+    warning("num_workers is greater than the number of available cores - setting to maximum value.")
+    num_workers <- parallely::availableCores()
+  }
 
   # compute distance matrix in parallel
   m = length(diagrams)
-  num_workers <- parallelly::availableCores(omit = 1)
   cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
   parallel::clusterEvalQ(cl,c(library(clue),library(rdist)))
@@ -338,7 +347,7 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
 #' The `p` parameter should be a number at least 1 and possibly Inf.
 #' The `q` parameter should be a finite number at least 1. The `distance` parameter should be a string
 #' either "wasserstein" or "fisher". The `sigma` parameter is the positive bandwith for the persistence
-#' Fisher distance.
+#' Fisher distance. `num_workers` is the number of cores used for parallel computation.
 #'
 #' @param diagram_groups groups (lists/vectors) of persistence diagrams, stored as lists of a data frame and
 #'                          an index of the diagram in all the diagrams across all groups.
@@ -349,9 +358,9 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
 #' @param q a finite exponent at least 1.
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".
 #' @param sigma the positive bandwith for the persistence Fisher distance.
+#' @param num_workers the number of cores used for parallel computation.
 #'
 #' @importFrom parallel makeCluster clusterEvalQ clusterExport stopCluster
-#' @importFrom parallelly availableCores
 #' @importFrom doParallel registerDoParallel
 #' @importFrom foreach foreach %dopar%
 #' @importFrom utils combn
@@ -360,7 +369,7 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
 #' Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.
 #' @return the numeric value of the Turner loss function.
 
-loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma){
+loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,num_workers){
 
   # function to compute the F_{p,q} loss between groups of diagrams
   # diagram_groups are the (possibly permuted) groups of diagrams
@@ -380,9 +389,6 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma){
     return(distance_pairs[,c(3,1,2)])
 
   }))
-
-  # determine maximum available number of cores
-  num_workers <- parallelly::availableCores(omit = 1)
 
   # initialize a cluster cl for computing distances between diagrams in parallel
   cl <- parallel::makeCluster(num_workers)

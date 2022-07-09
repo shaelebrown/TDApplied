@@ -17,15 +17,17 @@
 #' when generating the null distribution. The `distance` parameter determines which distance metric
 #' should be used between persistence diagrams. The `sigma` parameter is the positive bandwith for the
 #' Fisher information metric `verbose` determines if the time duration of the function call should be printed.
+#' `num_workers` is the number of cores used for parallel computation.
 #'
 #' @param ... groups of persistence diagrams, outputted from a homology calculation in TDA.
-#' @param iterations the number of iterations for permuting group labels, default 100.
+#' @param iterations the number of iterations for permuting group labels, default 20.
 #' @param p the wasserstein parameter, number at least 1 (and Inf if using the bottleneck distance), default 2.
 #' @param q  a finite number at least 1 for exponentiation in the Turner loss function, default 2.
 #' @param dims a numeric vector of the homological dimensions in which the test is to be carried out, default c(0,1).
 #' @param paired a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups. Default value is False.
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".
 #' @param sigma the positive bandwith for the Fisher information metric, default NULL.
+#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
 #' @param verbose a boolean flag for if the time duration of the function call should be printed, default False.
 #'
 #' @return a list with the following elements:
@@ -43,6 +45,7 @@
 #' 
 #' }
 #' 
+#' @importFrom parallely availableCores
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @references
@@ -88,12 +91,11 @@
 #' # do permutation test with 20 iterations, p,q = 2, in dimensions 0 and 1, with
 #' # no pairing using persistence Fisher distance, sigma = 1, and printing the time duration
 #' perm_test = permutation_test(g1,g2,g3,
-#' iterations = 20,
 #' distance = "fisher",
 #' sigma = 1, 
 #' verbose = TRUE)
 
-permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),paired = F,distance = "wasserstein",sigma = NULL,verbose = FALSE){
+permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paired = F,distance = "wasserstein",sigma = NULL,num_workers = parallely::availableCores(omit = 1),verbose = FALSE){
 
   # function to test whether or not multiple groups of persistence diagrams come from the same geometric process
   # ... are the groups of diagrams, either stored as lists or vectors
@@ -104,6 +106,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   # paired is a boolean which determines if dependencies exist between diagrams of the same indices in different groups
   # distance is either "wasserstein" or "fisher" and determines how distances will be computed between diagrams
   # sigma is the positive bandwith for the Fisher information metric, NULL by default
+  # num_workers is the number of cores used for parallelization, default available number of cores minus 1.
   # verbose is either TRUE or FALSE (default), printing runtime of function call
 
   # retrieve diagram groups
@@ -125,6 +128,12 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
   if(distance == "fisher")
   {
     check_param("sigma",sigma,non_negative = T,positive = F)
+  }
+  check_param("num_workers",whole_numbers = T,at_least_one = T)
+  if(num_workers > parallely::availableCores())
+  {
+    warning("num_workers is greater than the number of available cores - setting to maximum value.")
+    num_workers <- parallely::availableCores()
   }
 
   # make sure that if paired == T then all groups have the same number of diagrams
@@ -200,7 +209,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
     }
 
     # compute loss function, add to permutation values and updated distance matrices
-    permuted_loss <- loss(permuted_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance,sigma = sigma)
+    permuted_loss <- loss(permuted_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance,sigma = sigma,num_workers = num_workers)
     dist_mats <- permuted_loss$dist_mats
     for(d in 1:length(dims))
     {
@@ -257,12 +266,14 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
 #' to carry out the test. The `sigma` parameter is the positive bandwith for the
 #' Fisher information metric, `t` is the scale parameter for the persistence Fisher kernel. 
 #' `verbose` determines if the time duration of the function call should be printed.
+#' `num_workers` is the number of cores used for parallel computation.
 #'
 #' @param g1 the first group of persistence diagrams, outputted from a TDA calculation or \code{\link{diagram_to_df}}.
 #' @param g2 the second group of persistence diagrams, outputted from a TDA calculation or \code{\link{diagram_to_df}}.
 #' @param dims a numeric vector of the homological dimensions in which the test is to be carried out, default c(0,1).
 #' @param sigma the positive bandwith for the Fisher information metric, default 1.
 #' @param t the positive scale for the persistence Fisher kernel, default 1.
+#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
 #' @param verbose a boolean flag for if the time duration of the function call should be printed, default False.
 #'
 #' @return a list with the following elements:
@@ -281,6 +292,7 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
 #' }
 #' 
 #' @importFrom stats pgamma
+#' @importFrom parallely availableCores
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @references
@@ -313,13 +325,14 @@ permutation_test <- function(...,iterations = 100,p = 2,q = 2,dims = c(0,1),pair
 #' # do independence test with sigma = 1, t = 1, in dimensions 0 and 1, printing the time duration
 #' ind_test = independence_test(g1,g2,verbose = TRUE)
 
-independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,verbose = FALSE){
+independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,num_workers = parallely::availableCores(omit = 1),verbose = FALSE){
   
   # function to test whether or not two groups of persistence diagrams are independent
   # g1 and g2 are the groups of diagrams, either stored as lists or vectors
   # dims is a vector of desired homological dimensions
   # sigma is the positive bandwith for the Fisher information metric, 1 by default
   # t is the positive scale for the persistence Fisher kernel, 1 by default
+  # num_workers is the number of cores used in parallelization, maximum minus 1 by default.
   # verbose is either TRUE or FALSE (default), printing runtime of function call
   
   # set internal variables to NULL to avoid build issues
@@ -363,8 +376,8 @@ independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,verbose = FALS
   {
     
     # compute test statistics in parallel
-    K <- gram_matrix(diagrams = diagram_groups[[1]],dim = dim,t = t,sigma = sigma)
-    L <- gram_matrix(diagrams = diagram_groups[[2]],dim = dim,t = t,sigma = sigma)
+    K <- gram_matrix(diagrams = diagram_groups[[1]],dim = dim,t = t,sigma = sigma,num_workers = num_workers)
+    L <- gram_matrix(diagrams = diagram_groups[[2]],dim = dim,t = t,sigma = sigma,num_workers = num_workers)
 
     H <- matrix(data = -1/m,nrow = m,ncol = m)
     diag(H) <- rep((m-1)/m,nrow(H))
