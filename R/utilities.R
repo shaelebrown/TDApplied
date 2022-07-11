@@ -201,3 +201,68 @@ check_param <- function(param_name,param,numeric = T,multiple = F,whole_numbers 
   }
   
 }
+
+#### CREATE NOISY COPIES OF D1 D2 and D3 ####
+#' Creates persistence diagrams from D1, D2 and D3 with random (Gaussian) noise
+#' added to each point in each diagram.
+#'
+#' Uses the three example persistence diagrams to create a list of diagrams
+#' for further analysis. Intended for use within this package, however can also
+#' be used for replicating results.
+#' 
+#' The `num_D1`, `num_D2` and `num_D3` parameters should be the number of desired copies
+#' of D1, D2 and D3 respectively.
+#'
+#' @param num_D1 the number of desired noisy copies of D1.
+#' @param num_D2 the number of desired noisy copies of D2.
+#' @param num_D3 the number of desired noisy copies of D3.
+#' 
+#' @return a list of `num_D1` copies of D1, `num_D2` copies of D2 and `num_D3` copies of D3
+#' with independent Gaussian noise added to the birth and death values, each with variance 0.05^2.
+#' @export
+#' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @references
+#' @examples
+#'
+#' # create three copies of each of D1, D2 and D3
+#' noisy_copies_D1_D2_D3(3,3,3)
+
+noisy_copies_D1_D2_D3 <- function(num_D1,num_D2,num_D3){
+  
+  # error check parameters
+  check_param("num_D1",num_D1,whole_numbers = T)
+  check_param("num_D2",num_D2,whole_numbers = T)
+  check_param("num_D3",num_D3,whole_numbers = T)
+  
+  # load data
+  data("D1")
+  data("D2")
+  data("D3")
+  
+  # create noisy copies and return list
+  num_copies <- num_D1 + num_D2 + num_D3
+  noisy_copies <- lapply(X = 1:num_copies,FUN = function(X){
+    
+    i <- 1
+    if(X > num_D1 & X <= num_D1 + num_D2)
+    {
+      i <- 2
+    }
+    if(X > num_D1 + num_D2)
+    {
+      i <- 3
+    }
+    noisy_copy <- get(paste0("D",i))
+    n <- nrow(noisy_copy)
+    noisy_copy$dimension <- as.numeric(as.character(noisy_copy$dimension))
+    noisy_copy$birth <- noisy_copy$birth + stats::rnorm(n = n,mean = 0,sd = 0.05)
+    noisy_copy[which(noisy_copy$birth < 0),2] <- 0
+    noisy_copy$death <- noisy_copy$death + stats::rnorm(n = n,mean = 0,sd = 0.05)
+    noisy_copy[which(noisy_copy$birth > noisy_copy$death),2] <- noisy_copy[which(noisy_copy$birth > noisy_copy$death),3]
+    return(noisy_copy)
+    
+  })
+  
+  return(noisy_copies)
+  
+}
