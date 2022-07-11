@@ -16,10 +16,13 @@
 #' @import TDA
 #' @importFrom clue solve_LSAP
 #' @importFrom doParallel registerDoParallel
-#' @importFrom foreach foreach %dopar%
+#' @importFrom foreach foreach %dopar% %do%
+#' @importFrom iterators iter
+#' @importFrom kernlab as.kernelMatrix kkmeans kpca ksvm predict
 #' @importFrom parallel clusterEvalQ clusterExport detectCores makeCluster stopCluster
+#' @importFrom parallelly availableCores
 #' @importFrom rdist cdist
-#' @importFrom stats complete.cases pgamma
+#' @importFrom stats cmdscale complete.cases pgamma
 #' @importFrom utils combn
 #' @importFrom iterators iter
 NULL
