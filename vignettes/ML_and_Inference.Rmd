@@ -19,10 +19,9 @@ knitr::opts_chunk$set(
 ```
 
 STILL TO DO:
-1. Fix image formatting in this vignette
-2. Change all the tests to be the same as in this vignette
-3. Change parallel code to be able to run with only 2 cores for CRAN (set as parameter with checks everywhere)
-4. Check package build on R devel and multiple platforms
+1. Debug kkmeans function
+2. Fix image formatting in this vignette
+3. Check package build on R devel and multiple platforms
 
 # Introduction
 
@@ -38,7 +37,7 @@ There are a number of current shortcomings of available topological data analysi
 
 The package TDAML aims to solve the three goals outlined in the introductory paragraph. TDAML is built to use as input the output of persistent homology calculations from the package TDA. Firstly, the function `diagram_to_df` allows the conversion of the output of TDA persistent homology calculations to a data frame. Secondly, the functions `diagram_distance` and `diagram_kernel` allow for fast distance and kernel calculations respectively, and their counterparts `distance_matrix` and `gram_matrix` compute in parallel, for scalability, the (cross) distance and (cross) Gram matrices respectively. Thirdly, these distance and kernel calculations are used to perform machine learning and inference on persistence diagrams - methods include 
 
-1. dimension reduction with metric multidimensional scaling (MDS) and kernel princpal components analysis (kpca),
+1. dimension reduction with metric multidimensional scaling (MDS) and kernel prinicpal components analysis (kpca),
 2. clustering with kernel k-means,
 3. regression and classification with kernel support-vector machines (ksvm), and
 4. inference with distance and kernel calculations looking for group differences and group independence respectively
@@ -103,13 +102,19 @@ Since persistence diagrams can contain different numbers of points, and the orde
 
 # TDAML methods and underlying theory
 
-In this section we will describe the various computational tools implemented in the package TDAML to analyze persistence diagrams, both explaining the mathematics and providing functional examples. All examples will analyze simple diagrams which are random deviations of three persistence diagrams called D1, D2 and D3 (each with points in dimension 0 only):
+In this section we will describe the various computational tools implemented in the package TDAML to analyze persistence diagrams, both explaining the mathematics and providing functional examples. To run our examples we must start by loading the TDAML package:
 
+```{r setup}
+devtools::load_all()
+#library("TDAML")
+``` 
+
+All examples will analyze simple diagrams which are random deviations of three persistence diagrams called D1, D2 and D3 (each with points in dimension 0 only):
 
 ```{r,echo = F}
-D1 = data.frame(dimension = c(0),birth = c(2),death = c(3))
-D2 = data.frame(dimension = c(0),birth = c(2,0),death = c(3.3,0.5))
-D3 = data.frame(dimension = c(0),birth = c(0),death = c(0.5))
+D1 = generate_TDAML_test_data(1,0,0)
+D2 = generate_TDAML_test_data(0,1,0)
+D3 = generate_TDAML_test_data(0,0,1)
 par(mfrow = c(1,3))
 plot(x = D1$birth,y = D1$death,main = "D1",xlab = "",ylab = "",xlim = c(0,4),ylim = c(0,4))
 abline(a = 0,b = 1)
@@ -120,26 +125,7 @@ abline(a = 0,b = 1)
 par(mfrow = c(1,1))
 ```
 
-When desired, random Gaussian noise with a small variance will be added to the birth and death values of the points in these three diagrams (being careful make sure the points always have appropriate birth and death values), resulting in a "noisy copy". The code used in this vignette to obtain noisy copies is:
-
-```{r,echo = T}
-noisy_copy <- function(diag){
-  t <- diag
-  t$dimension <- as.numeric(as.character(t$dimension))
-  t$birth <- t$birth + stats::rnorm(n = nrow(diag),mean = 0,sd = 0.05)
-  t[which(t$birth < 0),2] <- 0
-  t$death <- t$death + stats::rnorm(n = nrow(diag),mean = 0,sd = 0.05)
-  t[which(t$birth > t$death),2] <- t[which(t$birth > t$death),3]
-  return(t)
-}
-```
-
-To run our examples we must start by loading the TDAML package:
-
-```{r setup}
-devtools::load_all()
-#library("TDAML")
-```
+When desired, random Gaussian noise with a small variance will be added to the birth and death values of the points in these three diagrams (being careful make sure the points always have appropriate birth and death values), which will be achieved with the TDAML internal (but documented) function `generate_TDAML_test_data`.
 
 ## Distance between persistence diagrams
 
@@ -238,12 +224,10 @@ One common dimension-reduction technique in machine learning is called multidime
 
 ```{r,echo = T,out.width="80%",out.height="90%"}
 # create 9 diagrams based on D1, D2 and D3
-g <- list(noisy_copy(D1),noisy_copy(D1),noisy_copy(D1),
-          noisy_copy(D2),noisy_copy(D2),noisy_copy(D2),
-          noisy_copy(D3),noisy_copy(D3),noisy_copy(D3))
+g <- generate_TDAML_test_data(3,3,3)
 
 # calculate their 2D MDS embedding in dimension 1 with the bottleneck distance
-mds <- diagram_MDS(diagrams = g,dim = 0,p = Inf,k = 2)
+mds <- diagram_MDS(diagrams = g,dim = 0,p = Inf,k = 2,num_workers = 2)
 
 # plot
 par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
@@ -265,23 +249,12 @@ This inference procedure is implemented in the `permutation_test` function, with
 In order to demonstrate the utility of the permutation test we will detect differences between noisy copies of D1, D2, D3:
 
 ```{r,echo = T}
-# permutation test between all three diagrams with 20 iterations
-perm_test <- permutation_test(list(noisy_copy(D1),
-                                   noisy_copy(D1),
-                                   noisy_copy(D1),
-                                   noisy_copy(D1),
-                                   noisy_copy(D1)),
-                              list(noisy_copy(D2),
-                                   noisy_copy(D2),
-                                   noisy_copy(D2),
-                                   noisy_copy(D2),
-                                   noisy_copy(D2)),
-                              list(noisy_copy(D3),
-                                   noisy_copy(D3),
-                                   noisy_copy(D3),
-                                   noisy_copy(D3),
-                                   noisy_copy(D3)),
-                              iterations = 20,
+# permutation test between three diagrams
+g1 <- generate_TDAML_test_data(3,0,0)
+g2 <- generate_TDAML_test_data(0,3,0)
+g3 <- generate_TDAML_test_data(0,0,3)
+perm_test <- permutation_test(g1,g2,g3,
+                              num_workers = 2,
                               dims = c(0))
 perm_test$p_values
 ```
@@ -299,6 +272,7 @@ The persistence Fisher kernel is computed directly from the Fisher information m
 ```{r,echo = T}
 # calculate the kernel value between D1 and D2 with sigma = 2, t = 2
 diagram_kernel(D1,D2,dim = 0,sigma = 2,t = 2)
+# calculate the kernel value between D1 and D3 with sigma = 2, t = 2
 diagram_kernel(D1,D3,dim = 0,sigma = 2,t = 2)
 ```
 
@@ -310,18 +284,10 @@ Kernel k-means (@kkmeans) is a method which extends regular k-means clustering v
 
 ```{r,echo = T}
 # create noisy copies of D1, D2 and D3
-g <- list(noisy_copy(D1),
-          noisy_copy(D1),
-          noisy_copy(D1),
-          noisy_copy(D2),
-          noisy_copy(D2),
-          noisy_copy(D2),
-          noisy_copy(D3),
-          noisy_copy(D3),
-          noisy_copy(D3))
+g <- generate_TDAML_test_data(3,3,3)
                               
 # calculate kmeans clusters with centers = 3, and sigma = t = 2
-clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2)
+clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
 
 # display cluster labels
 clust$clustering@.Data
@@ -333,18 +299,10 @@ If we wish to predict the cluster label for new persistence diagrams (computed v
 
 ```{r,echo = T}
 # create nine new diagrams
-g_new <- list(noisy_copy(D1),
-              noisy_copy(D1),
-              noisy_copy(D1),
-              noisy_copy(D2),
-              noisy_copy(D2),
-              noisy_copy(D2),
-              noisy_copy(D3),
-              noisy_copy(D3),
-              noisy_copy(D3))
+g_new <- generate_TDAML_test_data(3,3,3)
 
 # predict cluster labels
-diagram_nearest_clusters(new_diagrams = g_new,clustering = clust)
+diagram_nearest_clusters(new_diagrams = g_new,clustering = clust,num_workers = 2)
 ```
 
 This function correctly predicted the cluster for each new diagram (assigning each diagram to the cluster label by D1, D2 or D3, depending on which diagram it was generated from).
@@ -355,18 +313,10 @@ Kernel PCA (@kpca) is an extension of regular PCA which uses a kernel to project
 
 ```{r,echo = T,out.width="80%",out.height="90%"}
 # create noisy copies of D1, D2 and D3
-g <- list(noisy_copy(D1),
-          noisy_copy(D1),
-          noisy_copy(D1),
-          noisy_copy(D2),
-          noisy_copy(D2),
-          noisy_copy(D2),
-          noisy_copy(D3),
-          noisy_copy(D3),
-          noisy_copy(D3))
+g <- generate_TDAML_test_data(3,3,3)
 
 # calculate their 2D PCA embedding with sigma = t = 2
-pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2)
+pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_workers = 2)
 
 # plot
 par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
@@ -381,18 +331,10 @@ The function was able to recognize the three groups, and the embedding coordinat
 
 ```{r,echo = T,out.width="80%",out.height="90%"}
 # create nine new diagrams
-g_new <- list(noisy_copy(D1),
-              noisy_copy(D1),
-              noisy_copy(D1),
-              noisy_copy(D2),
-              noisy_copy(D2),
-              noisy_copy(D2),
-              noisy_copy(D3),
-              noisy_copy(D3),
-              noisy_copy(D3))
+g_new <- generate_TDAML_test_data(3,3,3)
 
 # project new diagrams onto old model
-new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca)
+new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers = 2)
 
 # plot
 par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
@@ -412,32 +354,26 @@ Support vector machines (SVM) (@murphyML) are one of the most popular machine le
 SVMs have been implemented in the function `diagram_ksvm` for when the input data set consists of a single feature which is a persistence diagram and an outcome-variable vector. A prediction method is supplied called `predict_diagram_ksvm` which can be used to predict the label value of a set of new persistence diagrams given a pretrained model. A parallelized implementation of cross-validation model-fitting is used based on the remarks in (@persistence_fisher) for scalability (which avoids needlessly recomputing persistence Fisher information metric values). Here is an example of fitting an SVM model on a list of persistence diagrams for a classification task (guessing whether the diagram comes from D1, D2 or D3):
 
 ```{r,echo = T}
-# create thirty diagrams with package TDA based on the circle and torus
-g <- lapply(X = 1:30,FUN = function(X){
-  
-  return(noisy_copy(get(paste0("D",(X %% 3) + 1))))
-  
-})
+# create thirty noisy copies of D1, D2 and D3
+g <- generate_TDAML_test_data(10,10,10)
 
 # create response vector
-y <- as.factor(rep(c("D1","D2","D3"),10))
+y <- as.factor(rep(c("D1","D2","D3"),each = 10))
 
 # fit model with cross validation
-model_svm <- diagram_ksvm(diagrams = g,cv = 2,dim = c(0),y = y,sigma = c(1,0.1),t = c(1,2))
+model_svm <- diagram_ksvm(diagrams = g,cv = 2,dim = c(0),
+                          y = y,sigma = c(1,0.1),t = c(1,2),
+                          num_workers = 2)
 ```
 
 We can use the function `predict_diagram_ksvm` to predict new diagrams like so:
 
 ```{r,echo = T}
-# create ten new diagrams with package TDA based on spheres and circles
-g_new <- lapply(X = 1:9,FUN = function(X){
-  
-  return(noisy_copy(get(paste0("D",(X %% 3) + 1))))
-  
-})
+# create nine new diagrams
+g_new <- generate_TDAML_test_data(3,3,3)
 
 # predict
-predict_diagram_ksvm(new_diagrams = g_new,model = model_svm)
+predict_diagram_ksvm(new_diagrams = g_new,model = model_svm,num_workers = 2)
 ```
 
 As we can see the best SVM model was able to separate the three diagrams We can gain more information about the best model found during model fitting and the CV results by accessing different list elements of `model_svm`.
@@ -450,11 +386,11 @@ This inference procedure has been implemented in the `independence_test` functio
 
 ```{r,echo = T}
 # create 10 noisy copies of D1 and D2
-D1_copies <- lapply(X = 1:10,FUN = function(X){noisy_copy(D1)})
-D2_copies <- lapply(X = 1:10,FUN = function(X){noisy_copy(D2)})
+g1 <- generate_TDAML_test_data(10,0,0)
+g2 <- generate_TDAML_test_data(0,10,0)
 
 # do independence test with sigma = t = 1
-indep_test <- independence_test(D1_copies,D2_copies,dims = c(0))
+indep_test <- independence_test(g1,g2,dims = c(0),num_workers = 2)
 indep_test$p_value
 ```
 
