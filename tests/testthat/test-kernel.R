@@ -61,6 +61,16 @@ test_that("diagram_kernel is computing correctly",{
   
 })
 
+test_that("gram_matrix detect incorrect parameters correctly",{
+  
+  D1 <- data.frame(dimension = 0,birth = 2,death = 3)
+  D2 <- data.frame(dimension = 0,birth = 2,death = 3.1)
+  D3 <- data.frame(dimension = 0,birth = c(2,5),death = c(3.1,6))
+  expect_error(gram_matrix(diagrams = list(D1,D2,D3),num_workers = NaN),"NaN")
+  expect_error(gram_matrix(diagrams = list(D1,D2,D3),num_workers = "1"),"numeric")
+  
+})
+
 test_that("gram_matrix is computing correctly",{
   
   D1 <- data.frame(dimension = 0,birth = 2,death = 3)
@@ -73,9 +83,9 @@ test_that("gram_matrix is computing correctly",{
   m3 <- matrix(data = c(1,diagram_kernel(D1,D3,dim = 0,sigma = 1,t = 1),diagram_kernel(D1,D2,dim = 0,sigma = 1,t = 1),diagram_kernel(D2,D3,dim = 0,sigma = 1,t = 1)),byrow = T,nrow = 2,ncol = 2)
   class(m3) <- "kernelMatrix"
   colnames(m3) <- c("result.1","result.2")
-  expect_identical(gram_matrix(diagrams = list(D1,D2),dim = 0,sigma = 1,t = 1),m1)
-  expect_equal(gram_matrix(diagrams = list(D1,D2,D3),dim = 0,sigma = 1,t = 1),m2)
-  expect_equal(gram_matrix(diagrams = list(D1,D2),other_diagrams = list(D1,D3),dim = 0,sigma = 1,t = 1),m3)
+  expect_identical(gram_matrix(diagrams = list(D1,D2),dim = 0,sigma = 1,t = 1,num_workers = 2),m1)
+  expect_equal(gram_matrix(diagrams = list(D1,D2,D3),dim = 0,sigma = 1,t = 1,num_workers = 2),m2)
+  expect_equal(gram_matrix(diagrams = list(D1,D2),other_diagrams = list(D1,D3),dim = 0,sigma = 1,t = 1,num_workers = 2),m3)
   
 })
 
