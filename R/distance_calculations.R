@@ -235,7 +235,9 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = NU
 #' D <- distance_matrix(diagrams = g,dim = 1,distance = "wasserstein",p = 2,num_workers = 2)
 #' 
 #' # now do the cross distance matrix, should be the same as the original
-#' D_cross <- distance_matrix(diagrams = g,other_diagrams = g,dim = 1,distance = "wasserstein",p = 2,num_workers = 2)
+#' D_cross <- distance_matrix(diagrams = g,other_diagrams = g,
+#'                            dim = 1,distance = "wasserstein",
+#'                            p = 2,num_workers = 2)
 
 distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "wasserstein",p = 2,sigma = NULL,num_workers = parallelly::availableCores(omit = 1)){
   

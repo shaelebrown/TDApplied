@@ -231,7 +231,6 @@ check_param <- function(param_name,param,numeric = T,multiple = F,whole_numbers 
 #' @export
 #' @keywords internal
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
-#' @references
 #' @examples
 #' 
 #' # generate just D1
