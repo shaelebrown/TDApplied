@@ -32,18 +32,15 @@ The `sigma` parameter is the positive bandwith for the Fisher information metric
 }
 \examples{
 
-# create two diagrams with package TDA based on 2D Gaussians
-diag1 <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-y = rnorm(100,mean = 0,sd = 1)),
-maxscale = 1,
-maxdimension = 1)
-diag2 <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-y = rnorm(100,mean = 0,sd = 1)),
-maxscale = 1,
-maxdimension = 1)
+# load three diagrams
+D1 <- generate_TDAML_test_data(1,0,0)
+D2 <- generate_TDAML_test_data(0,1,0)
+D3 <- generate_TDAML_test_data(0,0,1)
 
-# calculate their kernel value in dimension 1 with sigma = 2, t = 2
-k <- diagram_kernel(D1 = diag1,D2 = diag2,dim = 1,sigma = 2,t = 2)
+# calculate the kernel value between D1 and D2 with sigma = 2, t = 2
+diagram_kernel(D1,D2,dim = 0,sigma = 2,t = 2)
+# calculate the kernel value between D1 and D3 with sigma = 2, t = 2
+diagram_kernel(D1,D3,dim = 0,sigma = 2,t = 2)
 }
 \references{
 Le T, Yamada M (2018). "Persistence fisher kernel: a riemannian manifold kernel for persistence diagrams." \url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}.

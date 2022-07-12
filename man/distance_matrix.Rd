@@ -10,7 +10,8 @@ distance_matrix(
   dim = 0,
   distance = "wasserstein",
   p = 2,
-  sigma = NULL
+  sigma = NULL,
+  num_workers = parallelly::availableCores(omit = 1)
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ distance_matrix(
 \item{p}{the positive wasserstein power, default 2.}
 
 \item{sigma}{a positive number representing the bandwith of the Fisher information metric, default NULL.}
+
+\item{num_workers}{the number of cores used for parallel computation, default is one less the number of cores on the machine.}
 }
 \value{
 the numeric distance matrix.
@@ -38,27 +41,22 @@ or between two lists, \eqn{D = (D_1,D_2,\dots,D_n)} and \eqn{D' = (D'_1,D'_2,\do
 The `dim` parameter should be a positive finite integer, being the homological dimension in which to compute distances.
 The `distance` parameter is the string determining which distance metric to use, `p` is the 
 wasserstein power parameter, and
-`t` is the positive scale parameter for the persistence Fisher kernel.
+`t` is the positive scale parameter for the persistence Fisher kernel. `num_workers` is the
+number of cores used for parallel computation.
 }
 \examples{
 
-# create ten diagrams with package TDA based on 2D Gaussians
-g <- lapply(X = 1:10,FUN = function(X){
+# load three diagrams
+D1 <- generate_TDAML_test_data(1,0,0)
+D2 <- generate_TDAML_test_data(0,1,0)
+D3 <- generate_TDAML_test_data(0,0,1)
+g <- list(D1,D2,D3)
 
-diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-y = rnorm(100,mean = 0,sd = 1)),
-maxscale = 1,
-maxdimension = 1)
-df <- diagram_to_df(d = diag)
-return(df)
-
-})
-
-# calculate their distance matrix in dimension 1 with the 2-wasserstein metric
-D <- distance_matrix(diagrams = g,dim = 1,distance = "wasserstein",p = 2)
+# calculate their distance matrix in dimension 1 with the 2-wasserstein metric using 2 cores
+D <- distance_matrix(diagrams = g,dim = 1,distance = "wasserstein",p = 2,num_workers = 2)
 
 # now do the cross distance matrix, should be the same as the original
-D_cross <- distance_matrix(diagrams = g,other_diagrams = g,dim = 1,distance = "wasserstein",p = 2)
+D_cross <- distance_matrix(diagrams = g,other_diagrams = g,dim = 1,distance = "wasserstein",p = 2,num_workers = 2)
 }
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}

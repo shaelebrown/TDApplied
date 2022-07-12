@@ -4,7 +4,15 @@
 \alias{diagram_kkmeans}
 \title{Cluster a group of persistence diagrams using kernel k-means}
 \usage{
-diagram_kkmeans(diagrams, centers, dim = 0, t = 1, sigma = 1, ...)
+diagram_kkmeans(
+  diagrams,
+  centers,
+  dim = 0,
+  t = 1,
+  sigma = 1,
+  num_workers = parallelly::availableCores(omit = 1),
+  ...
+)
 }
 \arguments{
 \item{diagrams}{a list of persistence diagrams, as the output of a TDA calculation.}
@@ -16,6 +24,8 @@ diagram_kkmeans(diagrams, centers, dim = 0, t = 1, sigma = 1, ...)
 \item{t}{the positive scale for the persistence Fisher kernel, default 1.}
 
 \item{sigma}{a positive number representing the bandwith for the Fisher information metric, default 1}
+
+\item{num_workers}{the number of cores used for parallel computation, default is one less the number of cores on the machine.}
 
 \item{...}{additional parameters.}
 }
@@ -44,26 +54,18 @@ in a particular dimension.
 The `diagrams` parameter should be a list of persistence diagrams computed from TDA.
 The `dim` parameter should be a positive finite integer.
 The `sigma` and `t` parameters are the positive bandwith for the Fisher information metric and
-the positive scale for the persistence Fisher kernel respectively.
+the positive scale for the persistence Fisher kernel respectively. `num_workers` is the
+number of cores used for parallel computation.
 `centers` is the number of desired clusters, and
 `...` are additional parameters to the kkmeans kernlab function.
 }
 \examples{
 
-# create ten diagrams with package TDA based on 2D Gaussians
-g <- lapply(X = 1:10,FUN = function(X){
+# create nine diagrams from three base diagrams
+g <- generate_TDAML_test_data(3,3,3)
 
-diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-y = rnorm(100,mean = 0,sd = 1)),
-maxscale = 1,
-maxdimension = 1)
-df <- diagram_to_df(d = diag)
-return(df)
-
-})
-
-# calculate kmeans clusters with centers = 2 in dimension 1 with sigma = t = 2
-clusters <- diagram_kkmeans(diagrams = g,centers = 2,dim = 1,t = 2,sigma = 2)
+# calculate kmeans clusters with centers = 3, and sigma = t = 2
+clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
 }
 \seealso{
 \code{\link{diagram_nearest_clusters}} for predicting clusters of new diagrams.

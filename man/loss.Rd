@@ -4,7 +4,7 @@
 \alias{loss}
 \title{Turner loss function for a set of groups of persistence diagrams}
 \usage{
-loss(diagram_groups, dist_mats, dims, p, q, distance, sigma)
+loss(diagram_groups, dist_mats, dims, p, q, distance, sigma, num_workers)
 }
 \arguments{
 \item{diagram_groups}{groups (lists/vectors) of persistence diagrams, stored as lists of a data frame and
@@ -22,6 +22,8 @@ storing the current distances which have been precomputed.}
 \item{distance}{a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".}
 
 \item{sigma}{the positive bandwith for the persistence Fisher distance.}
+
+\item{num_workers}{the number of cores used for parallel computation.}
 }
 \value{
 the numeric value of the Turner loss function.
@@ -41,7 +43,7 @@ which stores a matrix of distance calculations (with -1 entries for distance cal
 The `p` parameter should be a number at least 1 and possibly Inf.
 The `q` parameter should be a finite number at least 1. The `distance` parameter should be a string
 either "wasserstein" or "fisher". The `sigma` parameter is the positive bandwith for the persistence
-Fisher distance.
+Fisher distance. `num_workers` is the number of cores used for parallel computation.
 }
 \references{
 Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.

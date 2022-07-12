@@ -4,12 +4,18 @@
 \alias{predict_diagram_kpca}
 \title{Predict the kernel PCA embedding of new persistence diagrams using a precomputed diagram_kpca object}
 \usage{
-predict_diagram_kpca(new_diagrams, embedding)
+predict_diagram_kpca(
+  new_diagrams,
+  embedding,
+  num_workers = parallelly::availableCores(omit = 1)
+)
 }
 \arguments{
 \item{new_diagrams}{a list of persistence diagrams, as the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.}
 
 \item{embedding}{the output to a diagram_kpca function call.}
+
+\item{num_workers}{the number of cores used for parallel computation, default is one less the number of cores on the machine.}
 }
 \value{
 the data projection (rotation), stored as a numeric matrix. Each row corresponds to the same-index diagram in `new_diagrams`.
@@ -21,39 +27,21 @@ Returns the embedding matrix for the new points.
 The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag
 or \code{\link{diagram_to_df}}.
 The `embedding` parameter is the diagram_kpca embedding object to be used for embedding
-the new diagrams.
+the new diagrams. `num_workers` is the number of cores used for parallel computation.
 }
 \examples{
 
-# create ten diagrams with package TDA based on 2D Gaussians
-g <- lapply(X = 1:10,FUN = function(X){
+# create nine diagrams from three base diagrams
+g <- generate_TDAML_test_data(3,3,3)
 
-diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-y = rnorm(100,mean = 0,sd = 1)),
-maxscale = 1,
-maxdimension = 1)
-df <- diagram_to_df(d = diag)
-return(df)
+# calculate their 2D PCA embedding with sigma = t = 2
+pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_workers = 2)
 
-})
+# project new diagrams onto old model
+g_new <- generate_TDAML_test_data(3,3,3)
 
-# calculate their 2D PCA embedding in dimension 1 with sigma = t = 2
-embedding <- diagram_kpca(diagrams = g,dim = 1,t = 2,sigma = 2,features = 2)
-
-# create ten new diagrams with package TDA based on 2D Gaussians
-g_new <- lapply(X = 1:10,FUN = function(X){
-
-diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-y = rnorm(100,mean = 0,sd = 1)),
-maxscale = 1,
-maxdimension = 1)
-df <- diagram_to_df(d = diag)
-return(df)
-
-})
-
-# calculate their 2D PCA embedding using the embedding object
-embedding_new <- predict_diagram_kpca(new_diagrams = g_new,embedding = embedding)
+# predict cluster labels
+new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers = 2)
 }
 \seealso{
 \code{\link{diagram_kpca}} for embedding persistence diagrams into a low-dimensional space.

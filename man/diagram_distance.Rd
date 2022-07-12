@@ -23,7 +23,7 @@ diagram_distance(D1, D2, dim, p = 2, distance = "wasserstein", sigma = NULL)
 the numeric value of the distance calculation.
 }
 \description{
-Calculates the distance between a pair of persistce diagrams in a particular homological dimension,
+Calculates the distance between a pair of persistence diagrams in a particular homological dimension,
 either the output from a \code{\link{diagram_to_df}} function call or from a TDA homology calculation like ripsDiag.
 Different TDA sources define distances
 differently, and this function has functionality to compute distances like
@@ -42,29 +42,22 @@ should be a string, either "wasserstein" or "fisher". The `sigma` parameter is a
 }
 \examples{
 
-# create two diagrams with package TDA based on 2D Gaussians
-diag1 <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-y = rnorm(100,mean = 0,sd = 1)),
-maxscale = 1,
-maxdimension = 1)
-diag2 <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-y = rnorm(100,mean = 0,sd = 1)),
-maxscale = 1,
-maxdimension = 1)
+# load three diagrams
+D1 <- generate_TDAML_test_data(1,0,0)
+D2 <- generate_TDAML_test_data(0,1,0)
+D3 <- generate_TDAML_test_data(0,0,1)
 
-# calculate their wasserstein distance
-wass <- diagram_distance(D1 = diag1,D2 = diag2,dim = 1,p = 2,distance = "wasserstein")
+# calculate 2-wasserstein distance between D1 and D2
+diagram_distance(D1,D2,dim = 0,p = 2,distance = "wasserstein")
 
-# calculate their bottleneck distance
-bottleneck <- diagram_distance(D1 = diag2,D2 = diag2,dim = 1,p = Inf,distance = "wasserstein")
+# calculate bottleneck distance between D1 and D3
+diagram_distance(D1,D3,dim = 0,p = Inf,distance = "wasserstein")
 
-# repeat wasserstein calculation but with diagrams converted to data frames
-diag1_df <- diagram_to_df(d = diag1)
-diag2_df <- diagram_to_df(d = diag2)
-wass_df <- diagram_distance(D1 = diag1_df,D2 = diag2_df,dim = 1,p = 2,distance = "wasserstein")
+# Fisher information metric calculation between D1 and D2 for sigma = 1
+diagram_distance(D1,D2,dim = 0,distance = "fisher",sigma = 1)
 
-# now do Fisher information metric calculation
-fisher_df <- diagram_distance(D1 = diag1_df,D2 = diag2_df,dim = 1,distance = "fisher",sigma = 1)
+# Fisher information metric calculation between D1 and D3 for sigma = 2
+diagram_distance(D1,D3,dim = 0,distance = "fisher",sigma = 2)
 }
 \references{
 Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.

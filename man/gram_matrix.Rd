@@ -4,7 +4,14 @@
 \alias{gram_matrix}
 \title{Compute Gram matrix for a group of persistence diagrams}
 \usage{
-gram_matrix(diagrams, other_diagrams = NULL, dim = 0, sigma = 1, t = 1)
+gram_matrix(
+  diagrams,
+  other_diagrams = NULL,
+  dim = 0,
+  sigma = 1,
+  t = 1,
+  num_workers = parallelly::availableCores(omit = 1)
+)
 }
 \arguments{
 \item{diagrams}{the list of persistence diagrams, either the output from TDA calculations like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.}
@@ -16,6 +23,8 @@ gram_matrix(diagrams, other_diagrams = NULL, dim = 0, sigma = 1, t = 1)
 \item{sigma}{a positive number representing the bandwith for the Fisher information metric, default 1.}
 
 \item{t}{a positive number representing the scale for the kernel, default 1.}
+
+\item{num_workers}{the number of cores used for parallel computation, default is one less the number of cores on the machine.}
 }
 \value{
 the numeric (cross) Gram matrix of class 'kernelMatrix'.
@@ -28,27 +37,22 @@ or between two lists of persistence diagrams, \eqn{(D_1,D_2,\dots,D_n)} and \eqn
 `diagrams` is the a of persistence diagrams, and `other_diagrams` is an optional second list of persistence diagrams.
 The `dim` parameter should be a positive finite integer.
 The `sigma` parameter is the positive bandwith for the Fisher information metric, and
-`t` is the positive scale parameter for the persistence Fisher kernel.
+`t` is the positive scale parameter for the persistence Fisher kernel. `num_workers` is the
+number of cores used for parallel computation.
 }
 \examples{
 
-# create ten diagrams with package TDA based on 2D Gaussians
-g <- lapply(X = 1:10,FUN = function(X){
-
-diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-y = rnorm(100,mean = 0,sd = 1)),
-maxscale = 1,
-maxdimension = 1)
-df <- diagram_to_df(d = diag)
-return(df)
-
-})
+# load three diagrams
+D1 <- generate_TDAML_test_data(1,0,0)
+D2 <- generate_TDAML_test_data(0,1,0)
+D3 <- generate_TDAML_test_data(0,0,1)
+g <- list(D1,D2,D3)
 
 # calculate their Gram matrix in dimension 1 with sigma = 2, t = 2
-G <- gram_matrix(diagrams = g,dim = 1,sigma = 2,t = 2)
+G <- gram_matrix(diagrams = g,dim = 1,sigma = 2,t = 2,num_workers = 2)
 
 # calculate cross-Gram matrix, should be the same as G
-G_cross <- gram_matrix(diagrams = g,other_diagrams = g,dim = 1,sigma = 2,t = 2)
+G_cross <- gram_matrix(diagrams = g,other_diagrams = g,dim = 1,sigma = 2,t = 2,num_workers = 2)
 }
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}

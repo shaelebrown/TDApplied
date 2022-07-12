@@ -20,7 +20,8 @@ diagram_ksvm(
   fit = T,
   cache = 40,
   tol = 0.001,
-  shrinking = T
+  shrinking = T,
+  num_workers = parallelly::availableCores(omit = 1)
 )
 }
 \arguments{
@@ -55,6 +56,8 @@ diagram_ksvm(
 \item{tol}{tolerance of termination criteria (default 0.001).}
 
 \item{shrinking}{option whether to use the shrinking-heuristics (default TRUE).}
+
+\item{num_workers}{the number of cores used for parallel computation, default is one less the number of cores on the machine.}
 }
 \value{
 a list containing 
@@ -86,27 +89,21 @@ The `dim` parameter should be a positive finite integer.
 The `sigma` and `t` parameters are the positive bandwith for the Fisher information metric and
 the positive scale for the persistence Fisher kernel respectively.
 `type`, `C`, `nu`, `epsilon`, `prob.model`, `class.weights`, `cross`, `fit`, `cache`, `tol`, and `shrinking` 
-are additional parameters to the ksvm kernlab function.
+are additional parameters to the ksvm kernlab function. `num_workers` is the
+number of cores used for parallel computation.
 }
 \examples{
 
-# create ten diagrams with package TDA based on 2D Gaussians
-g <- lapply(X = 1:10,FUN = function(X){
+# create thirty diagrams based on three base diagrams
+g <- generate_TDAML_test_data(10,10,10)
 
-diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-y = rnorm(100,mean = 0,sd = 1)),
-maxscale = 1,
-maxdimension = 1)
-df <- diagram_to_df(d = diag)
-return(df)
+# create response vector
+y <- as.factor(rep(c("D1","D2","D3"),each = 10))
 
-})
-
-# create random response vector
-y <- stats::runif(10,min = 0,max = 1)
-
-# calculate models over a grid with 5-fold CV
-model_svm <- diagram_ksvm(diagrams = g,cv = 5,dim = c(1,2),y = y,sigma = c(1,0.1))
+# fit model with cross validation
+model_svm <- diagram_ksvm(diagrams = g,cv = 2,dim = c(0),
+                          y = y,sigma = c(1,0.1),t = c(1,2),
+                          num_workers = 2)
 }
 \seealso{
 \code{\link{predict_diagram_ksvm}} for predicting labels of new diagrams.

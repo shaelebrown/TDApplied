@@ -4,12 +4,18 @@
 \alias{diagram_nearest_clusters}
 \title{Find the nearest kkmeans cluster center to a list of new diagrams to return approximate cluster labels}
 \usage{
-diagram_nearest_clusters(new_diagrams, clustering)
+diagram_nearest_clusters(
+  new_diagrams,
+  clustering,
+  num_workers = parallelly::availableCores(omit = 1)
+)
 }
 \arguments{
 \item{new_diagrams}{a list of persistence diagrams, as the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.}
 
 \item{clustering}{the output of a \code{link{diagram_kkmeans}} function call.}
+
+\item{num_workers}{the number of cores used for parallel computation, default is one less the number of cores on the machine.}
 }
 \value{
 a vector of the predicted cluster labels for the new diagrams.
@@ -22,26 +28,21 @@ in a particular dimension.
 The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like \code{\link[TDA]{ripsDiag}} or from a 
 \code{\link{diagram_to_df}} function call, and the
 `clustering` parameter should be the output of a \code{\link{diagram_kkmeans}} function call.
+`num_workers` is the number of cores used for parallel computation.
 }
 \examples{
 
-# create ten diagrams with package TDA based on 2D Gaussians
-g <- lapply(X = 1:10,FUN = function(X){
+# create nine diagrams from three base diagrams
+g <- generate_TDAML_test_data(3,3,3)
 
-diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-y = rnorm(100,mean = 0,sd = 1)),
-maxscale = 1,
-maxdimension = 1)
-df <- diagram_to_df(d = diag)
-return(df)
+# calculate kmeans clusters with centers = 3, and sigma = t = 2
+clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
 
-})
+# create nine new diagrams
+g_new <- generate_TDAML_test_data(3,3,3)
 
-# calculate kmeans clusters with centers = 2 in dimension 1 with sigma = t = 2
-clusters <- diagram_kkmeans(diagrams = g,centers = 2,dim = 1,t = 2,sigma = 2)
-
-# predict the nearest cluster for all diagrams in g
-nearest_clusters <- diagram_nearest_clusters(new_diagrams = g,clustering = clusters)
+# predict cluster labels
+diagram_nearest_clusters(new_diagrams = g_new,clustering = clust,num_workers = 2)
 }
 \seealso{
 \code{\link{diagram_kkmeans}} for clustering persistence diagrams.

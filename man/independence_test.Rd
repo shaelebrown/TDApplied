@@ -4,7 +4,15 @@
 \alias{independence_test}
 \title{Independence test for persistence diagrams}
 \usage{
-independence_test(g1, g2, dims = c(0, 1), sigma = 1, t = 1, verbose = FALSE)
+independence_test(
+  g1,
+  g2,
+  dims = c(0, 1),
+  sigma = 1,
+  t = 1,
+  num_workers = parallelly::availableCores(omit = 1),
+  verbose = FALSE
+)
 }
 \arguments{
 \item{g1}{the first group of persistence diagrams, outputted from a TDA calculation or \code{\link{diagram_to_df}}.}
@@ -16,6 +24,8 @@ independence_test(g1, g2, dims = c(0, 1), sigma = 1, t = 1, verbose = FALSE)
 \item{sigma}{the positive bandwith for the Fisher information metric, default 1.}
 
 \item{t}{the positive scale for the persistence Fisher kernel, default 1.}
+
+\item{num_workers}{the number of cores used for parallel computation, default is one less the number of cores on the machine.}
 
 \item{verbose}{a boolean flag for if the time duration of the function call should be printed, default False.}
 }
@@ -47,34 +57,16 @@ TDA calculation like \code{\link[TDA]{ripsDiag}} or a \code{\link{diagram_to_df}
 to carry out the test. The `sigma` parameter is the positive bandwith for the
 Fisher information metric, `t` is the scale parameter for the persistence Fisher kernel. 
 `verbose` determines if the time duration of the function call should be printed.
+`num_workers` is the number of cores used for parallel computation.
 }
 \examples{
 
-# create two groups of persistence diagrams on 2D Gaussians using TDA
-g1 <- lapply(X = 1:6,FUN = function(X){
+# create two groups of diagrams which are noisy copies of D1 and D2
+g1 <- generate_TDAML_test_data(10,0,0)
+g2 <- generate_TDAML_test_data(0,10,0)
 
-diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-y = rnorm(100,mean = 0,sd = 1)),
-maxscale = 1,
-maxdimension = 1)
-df <- diagram_to_df(d = diag)
-return(df)
-
-})
-
-g2 <- lapply(X = 1:6,FUN = function(X){
-
-diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-y = rnorm(100,mean = 0,sd = 1)),
-maxscale = 1,
-maxdimension = 1)
-df <- diagram_to_df(d = diag)
-return(df)
-
-})
-
-# do independence test with sigma = 1, t = 1, in dimensions 0 and 1, printing the time duration
-ind_test = independence_test(g1,g2,verbose = TRUE)
+# do independence test with sigma = t = 1
+indep_test <- independence_test(g1,g2,dims = c(0),num_workers = 2)
 }
 \references{
 Gretton A et al (2007). "A Kernel Statistical Test of Independence." \url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf}.

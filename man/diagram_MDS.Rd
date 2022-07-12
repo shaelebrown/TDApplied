@@ -14,7 +14,8 @@ diagram_MDS(
   eig = FALSE,
   add = FALSE,
   x.ret = FALSE,
-  list. = eig || add || x.ret
+  list. = eig || add || x.ret,
+  num_workers = parallelly::availableCores(omit = 1)
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ diagram_MDS(
 \item{x.ret}{indicates whether the doubly centered symmetric distance matrix should be returned.}
 
 \item{list.}{local indicating if a list should be returned or just the n*k matrix.}
+
+\item{num_workers}{the number of cores used for parallel computation, default is one less the number of cores on the machine.}
 }
 \value{
 the output of \code{\link[stats]{cmdscale}} on the diagram distance matrix. If `list.` is false (as per default),
@@ -69,24 +72,15 @@ The `dim` parameter should be a positive finite integer.
 The `sigma` parameter is the positive bandwith for the Fisher information metric, and
 `p` is the wasserstein power parameter. `k` is the desired dimension of the embedding, and
 `eig`, `add`, `x.ret` and `list.` are cmdscale parameters providing optional additional
-information to be returned.
+information to be returned. `num_workers` is the number of cores used for parallel computation.
 }
 \examples{
 
-# create ten diagrams with package TDA based on 2D Gaussians
-g <- lapply(X = 1:10,FUN = function(X){
+# create nine diagrams from three base diagrams
+g <- generate_TDAML_test_data(3,3,3)
 
-diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-y = rnorm(100,mean = 0,sd = 1)),
-maxscale = 1,
-maxdimension = 1)
-df <- diagram_to_df(d = diag)
-return(df)
-
-})
-
-# calculate their 2D mds embedding in dimension 1 with the bottleneck distance
-embedding <- diagram_MDS(diagrams = g,dim = 1,p = Inf,k = 2)
+# calculate their 2D MDS embedding in dimension 1 with the bottleneck distance
+mds <- diagram_MDS(diagrams = g,dim = 0,p = Inf,k = 2,num_workers = 2)
 }
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}

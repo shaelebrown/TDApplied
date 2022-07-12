@@ -4,12 +4,18 @@
 \alias{predict_diagram_ksvm}
 \title{Predict the response to a new group of persistence diagrams from a computed diagram_ksvm model}
 \usage{
-predict_diagram_ksvm(new_diagrams, model)
+predict_diagram_ksvm(
+  new_diagrams,
+  model,
+  num_workers = parallelly::availableCores(omit = 1)
+)
 }
 \arguments{
 \item{new_diagrams}{a list of new persistence diagrams, as the output of a TDA calculation.}
 
 \item{model}{the diagram_ksvm model to be used for prediction.}
+
+\item{num_workers}{the number of cores used for parallel computation, default is one less the number of cores on the machine.}
 }
 \value{
 a vector containing the output of \code{\link[kernlab]{predict.ksvm}} on the cross Gram matrix of the new diagrams and the support vector diagrams stored in the model.
@@ -19,42 +25,27 @@ Returns the predicted response vector of the model on the new diagrams.
 }
 \details{
 The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
-The `model` parameter should be the output from a diagram_ksvm function call.
+The `model` parameter should be the output from a diagram_ksvm function call. `num_workers` is the
+number of cores used for parallel computation.
 }
 \examples{
 
-# create ten diagrams with package TDA based on 2D Gaussians
-g <- lapply(X = 1:10,FUN = function(X){
+# create thirty diagrams based on three base diagrams
+g <- generate_TDAML_test_data(10,10,10)
 
-diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-y = rnorm(100,mean = 0,sd = 1)),
-maxscale = 1,
-maxdimension = 1)
-df <- diagram_to_df(d = diag)
-return(df)
+# create response vector
+y <- as.factor(rep(c("D1","D2","D3"),each = 10))
 
-})
+# fit model with cross validation
+model_svm <- diagram_ksvm(diagrams = g,cv = 2,dim = c(0),
+                          y = y,sigma = c(1,0.1),t = c(1,2),
+                          num_workers = 2)
 
-# create random response vector
-y <- stats::runif(10,min = 0,max = 1)
+# create nine new diagrams
+g_new <- generate_TDAML_test_data(3,3,3)
 
-# calculate model in dimension 1
-model_svm <- diagram_ksvm(diagrams = g,dim = 1,y = y)
-
-# create ten new diagrams with package TDA based on 2D Gaussians
-g_new <- lapply(X = 1:10,FUN = function(X){
-
-diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-y = rnorm(100,mean = 0,sd = 1)),
-maxscale = 1,
-maxdimension = 1)
-df <- diagram_to_df(d = diag)
-return(df)
-
-})
-
-# predict responses
-y_pred <- predict_diagram_ksvm(new_diagrams = g_new,model = model_svm)
+# predict
+predict_diagram_ksvm(new_diagrams = g_new,model = model_svm,num_workers = 2)
 }
 \seealso{
 \code{\link{diagram_ksvm}} for training a SVM model on a training set of persistence diagrams.

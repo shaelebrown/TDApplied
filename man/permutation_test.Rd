@@ -6,20 +6,21 @@
 \usage{
 permutation_test(
   ...,
-  iterations = 100,
+  iterations = 20,
   p = 2,
   q = 2,
   dims = c(0, 1),
   paired = F,
   distance = "wasserstein",
   sigma = NULL,
+  num_workers = parallelly::availableCores(omit = 1),
   verbose = FALSE
 )
 }
 \arguments{
 \item{...}{groups of persistence diagrams, outputted from a homology calculation in TDA.}
 
-\item{iterations}{the number of iterations for permuting group labels, default 100.}
+\item{iterations}{the number of iterations for permuting group labels, default 20.}
 
 \item{p}{the wasserstein parameter, number at least 1 (and Inf if using the bottleneck distance), default 2.}
 
@@ -32,6 +33,8 @@ permutation_test(
 \item{distance}{a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".}
 
 \item{sigma}{the positive bandwith for the Fisher information metric, default NULL.}
+
+\item{num_workers}{the number of cores used for parallel computation, default is one less the number of cores on the machine.}
 
 \item{verbose}{a boolean flag for if the time duration of the function call should be printed, default False.}
 }
@@ -69,50 +72,18 @@ between diagrams at the same location across groups, as this affects which permu
 when generating the null distribution. The `distance` parameter determines which distance metric
 should be used between persistence diagrams. The `sigma` parameter is the positive bandwith for the
 Fisher information metric `verbose` determines if the time duration of the function call should be printed.
+`num_workers` is the number of cores used for parallel computation.
 }
 \examples{
 
-# create three groups of persistence diagrams on 2D Gaussians using TDA
-g1 <- lapply(X = 1:3,FUN = function(X){
+# create three groups of diagrams which are noisy copies of D1, D2, D3
+g1 <- generate_TDAML_test_data(3,0,0)
+g2 <- generate_TDAML_test_data(0,3,0)
+g3 <- generate_TDAML_test_data(0,0,3)
 
-diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-y = rnorm(100,mean = 0,sd = 1)),
-maxscale = 1,
-maxdimension = 1)
-df <- diagram_to_df(d = diag)
-return(df)
-
-})
-
-g2 <- lapply(X = 1:3,FUN = function(X){
-
-diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-y = rnorm(100,mean = 0,sd = 1)),
-maxscale = 1,
-maxdimension = 1)
-df <- diagram_to_df(d = diag)
-return(df)
-
-})
-
-g3 <- lapply(X = 1:3,FUN = function(X){
-
-diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-y = rnorm(100,mean = 0,sd = 1)),
-maxscale = 1,
-maxdimension = 1)
-df <- diagram_to_df(d = diag)
-return(df)
-
-})
-
-# do permutation test with 20 iterations, p,q = 2, in dimensions 0 and 1, with
-# no pairing using persistence Fisher distance, sigma = 1, and printing the time duration
-perm_test = permutation_test(g1,g2,g3,
-iterations = 20,
-distance = "fisher",
-sigma = 1, 
-verbose = TRUE)
+perm_test <- permutation_test(g1,g2,g3,
+                              num_workers = 2,
+                              dims = c(0))
 }
 \references{
 Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.
