@@ -1,7 +1,7 @@
 #### DIAGRAM DISTANCE METRICS ####
 #' Calculate distances between pairs of persistence diagrams
 #'
-#' Calculates the distance between a pair of persistce diagrams in a particular homological dimension,
+#' Calculates the distance between a pair of persistence diagrams in a particular homological dimension,
 #' either the output from a \code{\link{diagram_to_df}} function call or from a TDA homology calculation like ripsDiag.
 #' Different TDA sources define distances
 #' differently, and this function has functionality to compute distances like
@@ -35,29 +35,22 @@
 #' Le T, Yamada M (2018). "Persistence fisher kernel: a riemannian manifold kernel for persistence diagrams." \url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}.
 #' @examples
 #'
-#' # create two diagrams with package TDA based on 2D Gaussians
-#' diag1 <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-#' y = rnorm(100,mean = 0,sd = 1)),
-#' maxscale = 1,
-#' maxdimension = 1)
-#' diag2 <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-#' y = rnorm(100,mean = 0,sd = 1)),
-#' maxscale = 1,
-#' maxdimension = 1)
+#' # load three diagrams
+#' D1 <- generate_TDAML_test_data(1,0,0)
+#' D2 <- generate_TDAML_test_data(0,1,0)
+#' D3 <- generate_TDAML_test_data(0,0,1)
 #'
-#' # calculate their wasserstein distance
-#' wass <- diagram_distance(D1 = diag1,D2 = diag2,dim = 1,p = 2,distance = "wasserstein")
-#'
-#' # calculate their bottleneck distance
-#' bottleneck <- diagram_distance(D1 = diag2,D2 = diag2,dim = 1,p = Inf,distance = "wasserstein")
-#'
-#' # repeat wasserstein calculation but with diagrams converted to data frames
-#' diag1_df <- diagram_to_df(d = diag1)
-#' diag2_df <- diagram_to_df(d = diag2)
-#' wass_df <- diagram_distance(D1 = diag1_df,D2 = diag2_df,dim = 1,p = 2,distance = "wasserstein")
+#' # calculate 2-wasserstein distance between D1 and D2
+#' diagram_distance(D1,D2,dim = 0,p = 2,distance = "wasserstein")
 #' 
-#' # now do Fisher information metric calculation
-#' fisher_df <- diagram_distance(D1 = diag1_df,D2 = diag2_df,dim = 1,distance = "fisher",sigma = 1)
+#' # calculate bottleneck distance between D1 and D3
+#' diagram_distance(D1,D3,dim = 0,p = Inf,distance = "wasserstein")
+#' 
+#' # Fisher information metric calculation between D1 and D2 for sigma = 1
+#' diagram_distance(D1,D2,dim = 0,distance = "fisher",sigma = 1)
+#'
+#' # Fisher information metric calculation between D1 and D3 for sigma = 2
+#' diagram_distance(D1,D3,dim = 0,distance = "fisher",sigma = 2)
 
 diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = NULL){
 
@@ -232,23 +225,17 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = NU
 #' @importFrom iterators iter
 #' @examples
 #'
-#' # create ten diagrams with package TDA based on 2D Gaussians
-#' g <- lapply(X = 1:10,FUN = function(X){
+#' # load three diagrams
+#' D1 <- generate_TDAML_test_data(1,0,0)
+#' D2 <- generate_TDAML_test_data(0,1,0)
+#' D3 <- generate_TDAML_test_data(0,0,1)
+#' g <- list(D1,D2,D3)
 #'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-#' y = rnorm(100,mean = 0,sd = 1)),
-#' maxscale = 1,
-#' maxdimension = 1)
-#' df <- diagram_to_df(d = diag)
-#' return(df)
-#'
-#' })
-#'
-#' # calculate their distance matrix in dimension 1 with the 2-wasserstein metric
-#' D <- distance_matrix(diagrams = g,dim = 1,distance = "wasserstein",p = 2)
+#' # calculate their distance matrix in dimension 1 with the 2-wasserstein metric using 2 cores
+#' D <- distance_matrix(diagrams = g,dim = 1,distance = "wasserstein",p = 2,num_workers = 2)
 #' 
 #' # now do the cross distance matrix, should be the same as the original
-#' D_cross <- distance_matrix(diagrams = g,other_diagrams = g,dim = 1,distance = "wasserstein",p = 2)
+#' D_cross <- distance_matrix(diagrams = g,other_diagrams = g,dim = 1,distance = "wasserstein",p = 2,num_workers = 2)
 
 distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "wasserstein",p = 2,sigma = NULL,num_workers = parallelly::availableCores(omit = 1)){
   
@@ -275,11 +262,11 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
   }
   
   # error check num_workers argument
-  check_param("num_workers",whole_numbers = T,at_least_one = T)
-  if(num_workers > parallely::availableCores())
+  check_param("num_workers",num_workers,whole_numbers = T,at_least_one = T)
+  if(num_workers > parallelly::availableCores())
   {
     warning("num_workers is greater than the number of available cores - setting to maximum value.")
-    num_workers <- parallely::availableCores()
+    num_workers <- parallelly::availableCores()
   }
 
   # compute distance matrix in parallel

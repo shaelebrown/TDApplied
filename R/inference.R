@@ -45,7 +45,7 @@
 #' 
 #' }
 #' 
-#' @importFrom parallely availableCores
+#' @importFrom parallelly availableCores
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @references
@@ -54,48 +54,16 @@
 #' Abdallah H et al (2021). "Statistical Inference for Persistent Homology applied to fMRI." \url{https://github.com/hassan-abdallah/Statistical_Inference_PH_fMRI/blob/main/Abdallah_et_al_Statistical_Inference_PH_fMRI.pdf}.
 #' @examples
 #'
-#' # create three groups of persistence diagrams on 2D Gaussians using TDA
-#' g1 <- lapply(X = 1:3,FUN = function(X){
+#' # create three groups of diagrams which are noisy copies of D1, D2, D3
+#' g1 <- generate_TDAML_test_data(3,0,0)
+#' g2 <- generate_TDAML_test_data(0,3,0)
+#' g3 <- generate_TDAML_test_data(0,0,3)
 #'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-#' y = rnorm(100,mean = 0,sd = 1)),
-#' maxscale = 1,
-#' maxdimension = 1)
-#' df <- diagram_to_df(d = diag)
-#' return(df)
-#'
-#' })
-#'
-#' g2 <- lapply(X = 1:3,FUN = function(X){
-#'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-#' y = rnorm(100,mean = 0,sd = 1)),
-#' maxscale = 1,
-#' maxdimension = 1)
-#' df <- diagram_to_df(d = diag)
-#' return(df)
-#'
-#' })
-#'
-#' g3 <- lapply(X = 1:3,FUN = function(X){
-#'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-#' y = rnorm(100,mean = 0,sd = 1)),
-#' maxscale = 1,
-#' maxdimension = 1)
-#' df <- diagram_to_df(d = diag)
-#' return(df)
-#'
-#' })
-#'
-#' # do permutation test with 20 iterations, p,q = 2, in dimensions 0 and 1, with
-#' # no pairing using persistence Fisher distance, sigma = 1, and printing the time duration
-#' perm_test = permutation_test(g1,g2,g3,
-#' distance = "fisher",
-#' sigma = 1, 
-#' verbose = TRUE)
+#' perm_test <- permutation_test(g1,g2,g3,
+#'                               num_workers = 2,
+#'                               dims = c(0))
 
-permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paired = F,distance = "wasserstein",sigma = NULL,num_workers = parallely::availableCores(omit = 1),verbose = FALSE){
+permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paired = F,distance = "wasserstein",sigma = NULL,num_workers = parallelly::availableCores(omit = 1),verbose = FALSE){
 
   # function to test whether or not multiple groups of persistence diagrams come from the same geometric process
   # ... are the groups of diagrams, either stored as lists or vectors
@@ -129,11 +97,11 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
   {
     check_param("sigma",sigma,non_negative = T,positive = F)
   }
-  check_param("num_workers",whole_numbers = T,at_least_one = T)
-  if(num_workers > parallely::availableCores())
+  check_param("num_workers",num_workers,whole_numbers = T,at_least_one = T)
+  if(num_workers > parallelly::availableCores())
   {
     warning("num_workers is greater than the number of available cores - setting to maximum value.")
-    num_workers <- parallely::availableCores()
+    num_workers <- parallelly::availableCores()
   }
 
   # make sure that if paired == T then all groups have the same number of diagrams
@@ -154,7 +122,7 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
   dist_mats <- lapply(X = dims,FUN = function(X){return(matrix(data = -1,nrow = n,ncol = n))})
 
   # compute loss function on observed data and update dist_mats
-  test_loss <- loss(diagram_groups = diagram_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance,sigma = sigma)
+  test_loss <- loss(diagram_groups = diagram_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance,sigma = sigma,num_workers = num_workers)
   dist_mats <- test_loss$dist_mats
   test_statistics <- test_loss$statistics
 
@@ -292,40 +260,21 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
 #' }
 #' 
 #' @importFrom stats pgamma
-#' @importFrom parallely availableCores
+#' @importFrom parallelly availableCores
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @references
 #' Gretton A et al (2007). "A Kernel Statistical Test of Independence." \url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf}.
 #' @examples
 #'
-#' # create two groups of persistence diagrams on 2D Gaussians using TDA
-#' g1 <- lapply(X = 1:6,FUN = function(X){
-#'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-#' y = rnorm(100,mean = 0,sd = 1)),
-#' maxscale = 1,
-#' maxdimension = 1)
-#' df <- diagram_to_df(d = diag)
-#' return(df)
-#'
-#' })
-#'
-#' g2 <- lapply(X = 1:6,FUN = function(X){
-#'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-#' y = rnorm(100,mean = 0,sd = 1)),
-#' maxscale = 1,
-#' maxdimension = 1)
-#' df <- diagram_to_df(d = diag)
-#' return(df)
-#'
-#' })
-#'
-#' # do independence test with sigma = 1, t = 1, in dimensions 0 and 1, printing the time duration
-#' ind_test = independence_test(g1,g2,verbose = TRUE)
+#' # create two groups of diagrams which are noisy copies of D1 and D2
+#' g1 <- generate_TDAML_test_data(10,0,0)
+#' g2 <- generate_TDAML_test_data(0,10,0)
+#' 
+#' # do independence test with sigma = t = 1
+#' indep_test <- independence_test(g1,g2,dims = c(0),num_workers = 2)
 
-independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,num_workers = parallely::availableCores(omit = 1),verbose = FALSE){
+independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,num_workers = parallelly::availableCores(omit = 1),verbose = FALSE){
   
   # function to test whether or not two groups of persistence diagrams are independent
   # g1 and g2 are the groups of diagrams, either stored as lists or vectors

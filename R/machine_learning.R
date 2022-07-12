@@ -52,22 +52,13 @@
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @examples
 #'
-#' # create ten diagrams with package TDA based on 2D Gaussians
-#' g <- lapply(X = 1:10,FUN = function(X){
-#'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-#' y = rnorm(100,mean = 0,sd = 1)),
-#' maxscale = 1,
-#' maxdimension = 1)
-#' df <- diagram_to_df(d = diag)
-#' return(df)
-#'
-#' })
-#'
-#' # calculate their 2D mds embedding in dimension 1 with the bottleneck distance
-#' embedding <- diagram_MDS(diagrams = g,dim = 1,p = Inf,k = 2)
+#' # create nine diagrams from three base diagrams
+#' g <- generate_TDAML_test_data(3,3,3)
+#' 
+#' # calculate their 2D MDS embedding in dimension 1 with the bottleneck distance
+#' mds <- diagram_MDS(diagrams = g,dim = 0,p = Inf,k = 2,num_workers = 2)
 
-diagram_MDS <- function(diagrams,distance = "wasserstein",dim = 0,p = 2,sigma = NULL,k = 2,eig = FALSE,add = FALSE,x.ret = FALSE,list. = eig || add || x.ret,num_workers = parallely::availableCores(omit = 1)){
+diagram_MDS <- function(diagrams,distance = "wasserstein",dim = 0,p = 2,sigma = NULL,k = 2,eig = FALSE,add = FALSE,x.ret = FALSE,list. = eig || add || x.ret,num_workers = parallelly::availableCores(omit = 1)){
   
   # error check diagrams argument
   check_param("diagrams",diagrams,numeric = F,multiple = T)
@@ -125,22 +116,13 @@ diagram_MDS <- function(diagrams,distance = "wasserstein",dim = 0,p = 2,sigma = 
 #' @seealso \code{\link{diagram_nearest_clusters}} for predicting clusters of new diagrams.
 #' @examples
 #'
-#' # create ten diagrams with package TDA based on 2D Gaussians
-#' g <- lapply(X = 1:10,FUN = function(X){
-#'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-#' y = rnorm(100,mean = 0,sd = 1)),
-#' maxscale = 1,
-#' maxdimension = 1)
-#' df <- diagram_to_df(d = diag)
-#' return(df)
-#'
-#' })
-#'
-#' # calculate kmeans clusters with centers = 2 in dimension 1 with sigma = t = 2
-#' clusters <- diagram_kkmeans(diagrams = g,centers = 2,dim = 1,t = 2,sigma = 2)
+#' # create nine diagrams from three base diagrams
+#' g <- generate_TDAML_test_data(3,3,3)
+#' 
+#' # calculate kmeans clusters with centers = 3, and sigma = t = 2
+#' clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
 
-diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers = parallely::availableCores(omit = 1),...){
+diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers = parallelly::availableCores(omit = 1),...){
   
   # error check arguments
   check_param("diagrams",diagrams,numeric = F,multiple = T)
@@ -180,25 +162,19 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers
 #' @seealso \code{\link{diagram_kkmeans}} for clustering persistence diagrams.
 #' @examples
 #'
-#' # create ten diagrams with package TDA based on 2D Gaussians
-#' g <- lapply(X = 1:10,FUN = function(X){
-#'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-#' y = rnorm(100,mean = 0,sd = 1)),
-#' maxscale = 1,
-#' maxdimension = 1)
-#' df <- diagram_to_df(d = diag)
-#' return(df)
-#'
-#' })
-#'
-#' # calculate kmeans clusters with centers = 2 in dimension 1 with sigma = t = 2
-#' clusters <- diagram_kkmeans(diagrams = g,centers = 2,dim = 1,t = 2,sigma = 2)
+#' # create nine diagrams from three base diagrams
+#' g <- generate_TDAML_test_data(3,3,3)
 #' 
-#' # predict the nearest cluster for all diagrams in g
-#' nearest_clusters <- diagram_nearest_clusters(new_diagrams = g,clustering = clusters)
+#' # calculate kmeans clusters with centers = 3, and sigma = t = 2
+#' clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
+#' 
+#' # create nine new diagrams
+#' g_new <- generate_TDAML_test_data(3,3,3)
+#' 
+#' # predict cluster labels
+#' diagram_nearest_clusters(new_diagrams = g_new,clustering = clust,num_workers = 2)
 
-diagram_nearest_clusters <- function(new_diagrams,clustering,num_workers = parallely::availableCores(omit = 1)){
+diagram_nearest_clusters <- function(new_diagrams,clustering,num_workers = parallelly::availableCores(omit = 1)){
   
   # set internal variables to NULL to avoid build issues
   X <- NULL
@@ -275,22 +251,13 @@ diagram_nearest_clusters <- function(new_diagrams,clustering,num_workers = paral
 #' @seealso \code{\link{predict_diagram_kpca}} for predicting embedding coordinates of new diagrams.
 #' @examples
 #'
-#' # create ten diagrams with package TDA based on 2D Gaussians
-#' g <- lapply(X = 1:10,FUN = function(X){
-#'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-#' y = rnorm(100,mean = 0,sd = 1)),
-#' maxscale = 1,
-#' maxdimension = 1)
-#' df <- diagram_to_df(d = diag)
-#' return(df)
-#'
-#' })
-#'
-#' # calculate their 2D PCA embedding in dimension 1 with sigma = t = 2
-#' embedding <- diagram_kpca(diagrams = g,dim = 1,t = 2,sigma = 2,features = 2)
+#' # create nine diagrams from three base diagrams
+#' g <- generate_TDAML_test_data(3,3,3)
+#' 
+#' # calculate their 2D PCA embedding with sigma = t = 2
+#' pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_workers = 2)
 
-diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_workers = parallely::availableCores(omit = 1),...){
+diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_workers = parallelly::availableCores(omit = 1),...){
   
   # error check diagrams argument
   check_param("diagrams",diagrams,numeric = F,multiple = T)
@@ -330,37 +297,19 @@ diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_worke
 #' @seealso \code{\link{diagram_kpca}} for embedding persistence diagrams into a low-dimensional space.
 #' @examples
 #'
-#' # create ten diagrams with package TDA based on 2D Gaussians
-#' g <- lapply(X = 1:10,FUN = function(X){
-#'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-#' y = rnorm(100,mean = 0,sd = 1)),
-#' maxscale = 1,
-#' maxdimension = 1)
-#' df <- diagram_to_df(d = diag)
-#' return(df)
-#'
-#' })
-#'
-#' # calculate their 2D PCA embedding in dimension 1 with sigma = t = 2
-#' embedding <- diagram_kpca(diagrams = g,dim = 1,t = 2,sigma = 2,features = 2)
+#' # create nine diagrams from three base diagrams
+#' g <- generate_TDAML_test_data(3,3,3)
 #' 
-#' # create ten new diagrams with package TDA based on 2D Gaussians
-#' g_new <- lapply(X = 1:10,FUN = function(X){
-#'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-#' y = rnorm(100,mean = 0,sd = 1)),
-#' maxscale = 1,
-#' maxdimension = 1)
-#' df <- diagram_to_df(d = diag)
-#' return(df)
-#'
-#' })
-#'
-#' # calculate their 2D PCA embedding using the embedding object
-#' embedding_new <- predict_diagram_kpca(new_diagrams = g_new,embedding = embedding)
+#' # calculate their 2D PCA embedding with sigma = t = 2
+#' pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_workers = 2)
+#' 
+#' # project new diagrams onto old model
+#' g_new <- generate_TDAML_test_data(3,3,3)
+#' 
+#' # predict cluster labels
+#' new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers = 2)
 
-predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallely::availableCores(omit = 1)){
+predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly::availableCores(omit = 1)){
   
   # set internal variables to NULL to avoid build issues
   r <- NULL
@@ -451,25 +400,18 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallely:
 #' @importFrom iterators iter
 #' @examples
 #'
-#' # create ten diagrams with package TDA based on 2D Gaussians
-#' g <- lapply(X = 1:10,FUN = function(X){
-#'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-#' y = rnorm(100,mean = 0,sd = 1)),
-#' maxscale = 1,
-#' maxdimension = 1)
-#' df <- diagram_to_df(d = diag)
-#' return(df)
-#'
-#' })
+#' # create thirty diagrams based on three base diagrams
+#' g <- generate_TDAML_test_data(10,10,10)
 #' 
-#' # create random response vector
-#' y <- stats::runif(10,min = 0,max = 1)
-#'
-#' # calculate models over a grid with 5-fold CV
-#' model_svm <- diagram_ksvm(diagrams = g,cv = 5,dim = c(1,2),y = y,sigma = c(1,0.1))
-
-diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1,nu = 0.2,epsilon = 0.1,prob.model = F,class.weights = NULL,fit = T,cache = 40,tol = 0.001,shrinking = T,num_workers = parallely::availableCores(omit = 1)){
+#' # create response vector
+#' y <- as.factor(rep(c("D1","D2","D3"),each = 10))
+#' 
+#' # fit model with cross validation
+#' model_svm <- diagram_ksvm(diagrams = g,cv = 2,dim = c(0),
+#'                           y = y,sigma = c(1,0.1),t = c(1,2),
+#'                           num_workers = 2)
+                          
+diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1,nu = 0.2,epsilon = 0.1,prob.model = F,class.weights = NULL,fit = T,cache = 40,tol = 0.001,shrinking = T,num_workers = parallelly::availableCores(omit = 1)){
   
   # set internal variables to NULL to avoid build issues
   r <- NULL
@@ -659,40 +601,24 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
 #' @importFrom kernlab predict as.kernelMatrix
 #' @examples
 #'
-#' # create ten diagrams with package TDA based on 2D Gaussians
-#' g <- lapply(X = 1:10,FUN = function(X){
-#'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-#' y = rnorm(100,mean = 0,sd = 1)),
-#' maxscale = 1,
-#' maxdimension = 1)
-#' df <- diagram_to_df(d = diag)
-#' return(df)
-#'
-#' })
+#' # create thirty diagrams based on three base diagrams
+#' g <- generate_TDAML_test_data(10,10,10)
 #' 
-#' # create random response vector
-#' y <- stats::runif(10,min = 0,max = 1)
-#'
-#' # calculate model in dimension 1
-#' model_svm <- diagram_ksvm(diagrams = g,dim = 1,y = y)
+#' # create response vector
+#' y <- as.factor(rep(c("D1","D2","D3"),each = 10))
 #' 
-#' # create ten new diagrams with package TDA based on 2D Gaussians
-#' g_new <- lapply(X = 1:10,FUN = function(X){
+#' # fit model with cross validation
+#' model_svm <- diagram_ksvm(diagrams = g,cv = 2,dim = c(0),
+#'                           y = y,sigma = c(1,0.1),t = c(1,2),
+#'                           num_workers = 2)
 #'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-#' y = rnorm(100,mean = 0,sd = 1)),
-#' maxscale = 1,
-#' maxdimension = 1)
-#' df <- diagram_to_df(d = diag)
-#' return(df)
-#'
-#' })
+#' # create nine new diagrams
+#' g_new <- generate_TDAML_test_data(3,3,3)
 #' 
-#' # predict responses
-#' y_pred <- predict_diagram_ksvm(new_diagrams = g_new,model = model_svm)
+#' # predict
+#' predict_diagram_ksvm(new_diagrams = g_new,model = model_svm,num_workers = 2)
 
-predict_diagram_ksvm <- function(new_diagrams,model,num_workers = parallely::availableCores(omit = 1)){
+predict_diagram_ksvm <- function(new_diagrams,model,num_workers = parallelly::availableCores(omit = 1)){
   
   # set internal variables to NULL to avoid build issues
   r <- NULL

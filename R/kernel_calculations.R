@@ -22,18 +22,15 @@
 #' Le T, Yamada M (2018). "Persistence fisher kernel: a riemannian manifold kernel for persistence diagrams." \url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}.
 #' @examples
 #'
-#' # create two diagrams with package TDA based on 2D Gaussians
-#' diag1 <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-#' y = rnorm(100,mean = 0,sd = 1)),
-#' maxscale = 1,
-#' maxdimension = 1)
-#' diag2 <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-#' y = rnorm(100,mean = 0,sd = 1)),
-#' maxscale = 1,
-#' maxdimension = 1)
-#'
-#' # calculate their kernel value in dimension 1 with sigma = 2, t = 2
-#' k <- diagram_kernel(D1 = diag1,D2 = diag2,dim = 1,sigma = 2,t = 2)
+#' # load three diagrams
+#' D1 <- generate_TDAML_test_data(1,0,0)
+#' D2 <- generate_TDAML_test_data(0,1,0)
+#' D3 <- generate_TDAML_test_data(0,0,1)
+#' 
+#' # calculate the kernel value between D1 and D2 with sigma = 2, t = 2
+#' diagram_kernel(D1,D2,dim = 0,sigma = 2,t = 2)
+#' # calculate the kernel value between D1 and D3 with sigma = 2, t = 2
+#' diagram_kernel(D1,D3,dim = 0,sigma = 2,t = 2)
 
 diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
   
@@ -74,25 +71,19 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
 #' @importFrom iterators iter
 #' @examples
 #'
-#' # create ten diagrams with package TDA based on 2D Gaussians
-#' g <- lapply(X = 1:10,FUN = function(X){
-#'
-#' diag <- TDA::ripsDiag(data.frame(x = rnorm(100,mean = 0,sd = 1),
-#' y = rnorm(100,mean = 0,sd = 1)),
-#' maxscale = 1,
-#' maxdimension = 1)
-#' df <- diagram_to_df(d = diag)
-#' return(df)
-#'
-#' })
+#' # load three diagrams
+#' D1 <- generate_TDAML_test_data(1,0,0)
+#' D2 <- generate_TDAML_test_data(0,1,0)
+#' D3 <- generate_TDAML_test_data(0,0,1)
+#' g <- list(D1,D2,D3)
 #'
 #' # calculate their Gram matrix in dimension 1 with sigma = 2, t = 2
-#' G <- gram_matrix(diagrams = g,dim = 1,sigma = 2,t = 2)
+#' G <- gram_matrix(diagrams = g,dim = 1,sigma = 2,t = 2,num_workers = 2)
 #' 
 #' # calculate cross-Gram matrix, should be the same as G
-#' G_cross <- gram_matrix(diagrams = g,other_diagrams = g,dim = 1,sigma = 2,t = 2)
+#' G_cross <- gram_matrix(diagrams = g,other_diagrams = g,dim = 1,sigma = 2,t = 2,num_workers = 2)
 
-gram_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,sigma = 1,t = 1,num_workers = parallely::availableCores(omit = 1)){
+gram_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,sigma = 1,t = 1,num_workers = parallelly::availableCores(omit = 1)){
   
   # set internal variables to NULL to avoid build issues
   r <- NULL
@@ -107,11 +98,11 @@ gram_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,sigma = 1,t = 1,n
   }
   
   # error check num_workers argument
-  check_param("num_workers",whole_numbers = T,at_least_one = T)
-  if(num_workers > parallely::availableCores())
+  check_param("num_workers",num_workers,whole_numbers = T,at_least_one = T)
+  if(num_workers > parallelly::availableCores())
   {
     warning("num_workers is greater than the number of available cores - setting to maximum value.")
-    num_workers <- parallely::availableCores()
+    num_workers <- parallelly::availableCores()
   }
   
   # compute Gram matrix in parallel
