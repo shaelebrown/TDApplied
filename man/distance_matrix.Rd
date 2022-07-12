@@ -56,7 +56,9 @@ g <- list(D1,D2,D3)
 D <- distance_matrix(diagrams = g,dim = 1,distance = "wasserstein",p = 2,num_workers = 2)
 
 # now do the cross distance matrix, should be the same as the original
-D_cross <- distance_matrix(diagrams = g,other_diagrams = g,dim = 1,distance = "wasserstein",p = 2,num_workers = 2)
+D_cross <- distance_matrix(diagrams = g,other_diagrams = g,
+                           dim = 1,distance = "wasserstein",
+                           p = 2,num_workers = 2)
 }
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}

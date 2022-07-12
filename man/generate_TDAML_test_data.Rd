@@ -44,9 +44,6 @@ D1 <- generate_TDAML_test_data(1,0,0)
 # create three copies of each of D1, D2 and D3
 l <- generate_TDAML_test_data(3,3,3)
 }
-\references{
-
-}
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}
 }
