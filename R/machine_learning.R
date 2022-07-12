@@ -133,7 +133,35 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers
   K <- gram_matrix(diagrams = diagrams,dim = dim,sigma = sigma,t = t,num_workers = num_workers)
   
   # return kernlab calculation, saving in a list of class diagram_kkmeans for later interface with prediction calculations
-  ret_list <- list(clustering = kernlab::kkmeans(x = K,centers = centers,...),diagrams = diagrams,dim = dim,sigma = sigma,t = t)
+  max_iters <- 20
+  iter <- 1
+  while(T)
+  {
+    # there are some kernlab errors that can't always be avoided and caused by randomness
+    # when certain clusters are empty
+    # so we catch those errors and rerun if necessary, up to max_iters many times
+    # if a different error occurs or we rerun max_iters many times then stop with the error.
+    tryCatch(expr = {clustering <- kernlab::kkmeans(x = K,centers = centers,...)},
+             error = function(e){
+               
+               if(grepl(pattern = "sum(abs(dc))",x = e) == F & grepl(pattern = "\'x\' must be an array of at least two dimensions",x = e) == T)
+               {
+                 stop(e)
+               }
+               
+             })
+    iter <- iter + 1
+    if(exists("clustering"))
+    {
+      break
+    }
+    if(iter > max_iters)
+    {
+      stop("One or more clusters was empty - try decreasing the number of clusters.")
+    }
+    
+  }
+  ret_list <- list(clustering = clustering,diagrams = diagrams,dim = dim,sigma = sigma,t = t)
   
   class(ret_list) <- "diagram_kkmeans"
   
