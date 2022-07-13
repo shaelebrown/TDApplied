@@ -144,7 +144,7 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers
     tryCatch(expr = {clustering <- kernlab::kkmeans(x = K,centers = centers,...)},
              error = function(e){
                
-               if(grepl(pattern = "sum(abs(dc))",x = e) == F & grepl(pattern = "\'x\' must be an array of at least two dimensions",x = e) == T)
+               if(grepl(pattern = "sum\\(abs\\(dc\\)\\)",x = e) == F & grepl(pattern = "\'x\' must be an array of at least two dimensions",x = e) == T)
                {
                  stop(e)
                }
