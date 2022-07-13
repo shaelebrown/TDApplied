@@ -18,14 +18,15 @@ knitr::opts_chunk$set(
 )
 ```
 
-STILL TO DO:
-1. Debug kkmeans function
-2. Fix image formatting in this vignette
-3. Check package build on R devel and multiple platforms
-
 # Introduction
 
-Topological data analysis is a new area of data science which can find unique, non-linear global structure in whole datasets. The main tool of topological data analysis is called persistent homology, which produces a "shape descriptor" of its input dataset called a "persistence diagram". Two main R packages exist for computing persistence diagrams; however, the more flexible of the two, called TDA, stores persistence diagrams in a strange data structure. Methods exist for computing distances and similarities (kernels) between pairs of persistence diagrams, but only distance calculations are available in R packages. Moreover, several papers have used distance and kernel computations in order to perform machine learning or inferences tasks with groups of persistence diagrams. To date no publicly available software in either python or R provides the functionality for these types of analyses. In order to make the power of topological data analysis available to data and machine learning practitioners, a software package must exist which can (1) convert persistence diagrams computed using the R package TDA into a commonly-used data type for data analyses (a data frame), (2) implement fast versions of both distance and kernel calculations for pairs of persistence diagrams, and (3) provide scalable methods for machine learning and inference for persistence diagrams. It is with these goals that the package TDAML was created.
+Topological data analysis is a new area of data science which can find unique, non-linear global structure in whole datasets. The main tool of topological data analysis is called persistent homology, which produces a "shape descriptor" of its input dataset called a "persistence diagram". Two main R packages exist for computing persistence diagrams; however, the more flexible of the two, called TDA, stores persistence diagrams in a strange data structure. Methods exist for computing distances and similarities (kernels) between pairs of persistence diagrams, but only distance calculations are available in R packages. Moreover, several papers have used distance and kernel computations in order to perform machine learning or inferences tasks with groups of persistence diagrams. To date no publicly available software in either python or R provides the functionality for these types of analyses. In order to make the power of topological data analysis available to data and machine learning practitioners, a software package must exist which can 
+
+1. convert persistence diagrams computed using the R package TDA into a commonly-used data type for data analyses (a data frame), 
+2. implement fast versions of both distance and kernel calculations for pairs of persistence diagrams, and 
+3. provide scalable methods for machine learning and inference for persistence diagrams. 
+
+It is with these goals that the package TDAML was created.
 
 # Software Review
 
@@ -50,11 +51,11 @@ The main tool of topological data analysis is called persistent homology (see (@
 
 Persistent homology starts with data points and a distance function. It assumes that these points were sampled from some kind of continuous shape. This shape has certain features that exist at various scales, but sampling induces noise in these features. Persistent homology aims to describe certain mathematical features of this underlying shape, by forming approximations to the shape at various distance scales. The mathematical features which are tracked are clusters (connected components), loops (ellipses), voids (spheres), etc, and the "significance" of each feature is calculated. What's really interesting about these particular mathematical features is that they can tell us where our data is not, which is extremely important information which other data analysis methods can't provide.
 
-```{r,echo = F,out.width="80%",out.height="90%"}
+```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center'}
 circ <- TDA::circleUnif(n = 50,r = 1)
-par(mfrow = c(1,4),mar = c(1,1,1,1))
-plot(x = circ[,1],y = circ[,2],xlab = "Approximation 1: individual data points",ylab = "",las = 1)
-plot(x = circ[,1],y = circ[,2],xlab = "Approximation 2: not a loop",ylab = "",las = 1)
+par(mfrow = c(1,4))
+plot(x = circ[,1],y = circ[,2],main = "Approximation 1:\nindividual data points",xlab = "",ylab = "",las = 1)
+plot(x = circ[,1],y = circ[,2],main = "Approximation 2:\nnot a loop",xlab = "",ylab = "",las = 1)
 for(i in 1:(nrow(circ)-1))
 {
   for(j in (i+1):nrow(circ))
@@ -65,18 +66,18 @@ for(i in 1:(nrow(circ)-1))
     }
   }
 }
-plot(x = circ[,1],y = circ[,2],xlab = "Approximation 3: loop",ylab = "",las = 1)
+plot(x = circ[,1],y = circ[,2],main = "Approximation 3:\nloop",xlab = "",ylab = "",las = 1)
 for(i in 1:(nrow(circ)-1))
 {
   for(j in (i+1):nrow(circ))
   {
-    if(sqrt((circ[i,1]-circ[j,1])^2+(circ[i,2] - circ[j,2])^2) <= 0.6)
+    if(sqrt((circ[i,1]-circ[j,1])^2+(circ[i,2] - circ[j,2])^2) <= 1)
     {
       lines(c(circ[i,1],circ[j,1]),c(circ[i,2],circ[j,2]))
     }
   }
 }
-plot(x = circ[,1],y = circ[,2],xlab = "Approximation 4: not a loop",ylab = "",las = 1)
+plot(x = circ[,1],y = circ[,2],main = "Approximation 4:\nnot a loop",xlab = "",ylab = "",las = 1)
 for(i in 1:(nrow(circ)-1))
 {
   for(j in (i+1):nrow(circ))
@@ -89,8 +90,6 @@ for(i in 1:(nrow(circ)-1))
 }
 par(mfrow = c(1,1))
 ```
-
-Unstretch vertically, possibly rearrange into 2x2 grid.
 
 The persistent homology algorithm proceeds in the following manner: first, if the input is a dataset and distance metric then the distance matrix, storing the distance metric value of each pair of points in the dataset, is computed. Next, a parameter $\epsilon \geq 0$ is grown starting at 0, and at each $\epsilon$ value we compute a skeletal approximation of the dataset structure $C_{\epsilon}$ called a "simplicial complex" (see (@PHoriginal) or (@ComputingPH) for more details) by connecting all pairs of points whose distance is at most $\epsilon$. To encode higher-dimensional structure in these approximations, we also add a triangle between any triple of points which are all connected, a tetrahedron between any quadruple of points which are all connected, etc. Note that this process of forming a sequence of skeletal approximations is called a filtration, and other methods exist for forming the approximations (the one described here is the most commonly used, called the Rips-Vietoris complex).
 
@@ -111,7 +110,7 @@ devtools::load_all()
 
 All examples will analyze simple diagrams which are random deviations of three persistence diagrams called D1, D2 and D3 (each with points in dimension 0 only):
 
-```{r,echo = F}
+```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center'}
 D1 = generate_TDAML_test_data(1,0,0)
 D2 = generate_TDAML_test_data(0,1,0)
 D3 = generate_TDAML_test_data(0,0,1)
@@ -133,7 +132,7 @@ There are several ways to compute distances between persistence diagrams in the 
 
 Allowing points to be paired with their diagonal projections both allows for matchings of persistence diagrams with different numbers of points (which is almost always the case in practice) and also formalizes the idea that some points in a persistence diagram represent noise. The "cost" value associated with a matching is given by either (i) the maximum of infinity-norm distances between paired points, or (ii) the square-root of the sum of squared infinity-norm between matched points. The cost of the optimal matching under loss (i) is called the bottleneck distance of persistence diagrams, and the cost of the optimal matching of cost (ii) is called the 2-wasserstein metric of persistence diagrams. Both distance metrics have been used in a number of applications, but the 2-wasserstein metric is able to find more fine-scale differences in persistence diagrams compared to the bottleneck distance. The problem of finding an optimal matching can be solved with the Hungarian algorithm, which is implemented in the R package clue (@R-clue).
 
-```{r,echo = F,out.width="80%",out.height="90%"}
+```{r,echo = F,fig.height = 3,fig.width = 5,fig.align = 'center'}
 par(mfrow = c(1,2))
 plot(x = c(D1$birth,D2$birth),y = c(D1$death,D2$death),main = "Best matching D1 and D2",xlab = "",ylab = "",xlim = c(0,4),ylim = c(0,4))
 abline(a = 0,b = 1)
@@ -169,7 +168,7 @@ Note that there is a generalization of the 2-wasserstein distance for any $p \ge
 
 Another distance metric between persistence diagrams, which will be useful for kernel calculations, is called the Fisher information metric, $d_{FIM}(D_1,D_2,\sigma)$ (details can be found in (@persistence_fisher)). The idea is to represent the two persistence diagrams as probability density functions, with a 2D-Gaussian point mass centered at each point in both diagrams (including the diagonal projections of the points in the opposite diagram) all of variance $\sigma^2 > 0$, and calculate how much those distributions agree on their pdf value at each point in the plane (called their Fisher information metric). 
 
-```{r,echo = F,out.width="80%",out.height="90%"}
+```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center'}
 par(mfrow = c(1,3))
 x = seq(-4,4,0.01)
 y = seq(-4,4,0.01)
@@ -198,7 +197,7 @@ z3 = z3/sum(z3)
 image(x = x,y = y,z3,main = "Distribution for D3",xlab = "",xlim = c(-4,4),ylim = c(-4,4),ylab = "")
 abline(a = 0,b = 1)
 
-image(x = x,y = y,z1-z3,main = "Difference of distributions D1-D3",xlab = "",xlim = c(-4,4),ylim = c(-4,4),ylab = "")
+image(x = x,y = y,z1-z3,main = "Difference of distributions",xlab = "",xlim = c(-4,4),ylim = c(-4,4),ylab = "")
 abline(a = 0,b = 1)
 
 par(mfrow = c(1,1))
@@ -222,7 +221,7 @@ Again, D1 and D2 are less different than D1 and D3 using the Fisher information 
 
 One common dimension-reduction technique in machine learning is called multidimensional scaling (MDS) (@Cox2008). MDS takes as input an $n$ by $n$ distance (or dissimilarity) matrix $D$, computed from $n$ points in a dataset, and outputs an embedding of those points into a Euclidean space of chosen dimension $k$ which best preserves the inter-point distances. MDS is often used for visualizing data in exploratory analyses, and can be particularly useful when the input data points do not live in a common Euclidean space (as is the case for persistence diagrams). Using the R function `cmdscale` from the package stats (@R-stats) we can compute the optimal embedding of a set of persistence diagrams using any of the three distance metrics using the function `diagram_MDS`. Here is an example of the `diagram_MDS` function on nine persistence diagrams, three noisy copies sampled from each of D1, D2 and D3:
 
-```{r,echo = T,out.width="80%",out.height="90%"}
+```{r,echo = T,fig.height = 3,fig.width = 6,fig.align = 'center'}
 # create 9 diagrams based on D1, D2 and D3
 g <- generate_TDAML_test_data(3,3,3)
 
@@ -293,7 +292,7 @@ clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_wo
 clust$clustering@.Data
 ```
 
-As we can see, the `diagram_kkmeans` function was able to correctly separate the three generating diagrams (D1, D2 and D3).
+As we can see, the `diagram_kkmeans` function was able to correctly separate the three generating diagrams D1, D2 and D3, however note that the cluster labels need not be 1,1,1,2,2,2,3,3,3 as the labels themselves are meaningless.
 
 If we wish to predict the cluster label for new persistence diagrams (computed via the largest kernel value to any cluster center), we can use the `diagram_nearest_clusters` function as follows:
 
@@ -311,7 +310,7 @@ This function correctly predicted the cluster for each new diagram (assigning ea
 
 Kernel PCA (@kpca) is an extension of regular PCA which uses a kernel to project complex data into a high-dimensional Euclidean space and then uses PCA to project that data into a low-dimensional space. The `diagram_kpca` method computes the kPCA embedding of a set of persistence diagrams, and the `predict_diagram_kpca` function can be used to project new diagrams using a pretrained kPCA model. Here is an example using a group of noisy copies of D1, D2 and D3:
 
-```{r,echo = T,out.width="80%",out.height="90%"}
+```{r,echo = T,fig.height = 3,fig.width = 6,fig.align = 'center'}
 # create noisy copies of D1, D2 and D3
 g <- generate_TDAML_test_data(3,3,3)
 
@@ -320,7 +319,8 @@ pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_worker
 
 # plot
 par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-plot(pca$pca@rotated[,1],pca$pca@rotated[,2],xlab = "Embedding coordinate 1",ylab = "Embedding coordinate 2",
+plot(pca$pca@rotated[,1],pca$pca@rotated[,2],xlab = "Embedding coordinate 1",
+     ylab = "Embedding coordinate 2",main = "PCA plot",
      col = as.factor(rep(c("D1","D2","D3"),each = 3)))
 legend("topright",inset = c(-0.2,0), 
        legend=levels(as.factor(c("D1","D2","D3"))), pch=16, 
@@ -329,7 +329,7 @@ legend("topright",inset = c(-0.2,0),
 
 The function was able to recognize the three groups, and the embedding coordinates can be used for further downstream analysis. However, an important advantage of kPCA over MDS is that in kPCA we can project new points onto an old embedding using the `predict_diagram_kpca` function:
 
-```{r,echo = T,out.width="80%",out.height="90%"}
+```{r,echo = T,fig.height = 3,fig.width = 6,fig.align = 'center'}
 # create nine new diagrams
 g_new <- generate_TDAML_test_data(3,3,3)
 
@@ -338,7 +338,8 @@ new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers
 
 # plot
 par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-plot(new_pca[,1],new_pca[,2],xlab = "Embedding coordinate 1",ylab = "Embedding coordinate 2",
+plot(new_pca[,1],new_pca[,2],xlab = "Embedding coordinate 1",
+     ylab = "Embedding coordinate 2",main = "PCA prediction plot",
      col = as.factor(rep(c("D1","D2","D3"),each = 3)))
 legend("topright",inset = c(-0.2,0), 
        legend=levels(as.factor(c("D1","D2","D3"))), pch=16, 
@@ -400,7 +401,7 @@ The p-value of this test would not be significant at any typical significance th
 
 Computing (wasserstein/bottleneck) distances between persistence diagrams is a key feature of some of the main topological data analysis software packages. However, these calculations can be very expensive, rendering practical applications of topological data analysis nearly unfeasible. TDAML strives to provide useful methods for applied topological data analysis, and as such its distance function must be fast, at least compared to distance calculations provided by other packages. We will compare the run time of the TDAML `diagram_distance` function compared to the R package TDA `wasserstein` function to argue that TDAML provides a much more tractable distance calculation function. Note that the python package scikit-TDA also implements distance and kernel calculations, however in order to benchmark against scikit-TDA for the purpose of this package vignette we would have to introduce dependencies on the reticulate package @R-reticulate, and since reticulate is known to slow down python performance it would even be unclear how to interpret positive results.
 
-We will first simulate pairs of random diagrams of various sizes ($100,200,300,\dots,1000$), with 10 iterations at each size to compare run times. Each diagram has birth values of 0.1 multiplied by a random sample of a chi squared distribution with 10 degrees of freedom, and the death was the birth plus 0.1 times a sample from a chi squared distribution with 1 degree of freedom. The distance between each pair of diagrams will be computed using the TDA `wasserstein` function and the TDAML `diagram_distance` function with paramters set for the wasserstein distance and $p = 2$, and the run time for each calculation was recorded on a Windows 10 64-bit machine, an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM. The code for benchmarking was as follows, however the code is not run in this vignette since it takes too long:
+We will first simulate pairs of random diagrams of various sizes ($100,200,300,\dots,1000$), with 10 iterations at each size to compare run times. Each diagram has birth values of 0.1 multiplied by a random sample of a chi squared distribution with 10 degrees of freedom, and the death was the birth plus 0.1 times a sample from a chi squared distribution with 1 degree of freedom. The distance between each pair of diagrams will be computed using the TDA `wasserstein` function and the TDAML `diagram_distance` function with paramters set for the wasserstein distance and $p = 2$, and the run time for each calculation was recorded on a Windows 10 64-bit machine, an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM. The mean execution time for each number of points is plotted with its 95% confidence interval over the 10 repetitions. The code for benchmarking was as follows, however the code is not run in this vignette since it takes too long:
 
 ```{r,echo = T,eval = F}
 # simulate random barcodes with sizes 100,200,...,1000
@@ -459,10 +460,15 @@ for(n_row in seq(100,1000,100))
   for(p in c("TDAML","TDA"))
   {
 
-    summary_table = rbind(summary_table,data.frame(n_row = n_row,
-                                                   mean = mean(runtimes_random[which(runtimes_random$n_row == n_row & runtimes_random$package == p),3]),
-                                                   sd = sd(runtimes_random[which(runtimes_random$n_row == n_row & runtimes_random$package == p),3]),
-                                                   package = p))
+    result = data.frame(n_row = n_row,
+                        mean = mean(runtimes_random[which(runtimes_random$n_row == n_row 
+                                                          & runtimes_random$package == p),
+                                                          3]),
+                        sd = sd(runtimes_random[which(runtimes_random$n_row == n_row 
+                                                      & runtimes_random$package == p),
+                                                      3]),
+                        package = p)
+    summary_table = rbind(summary_table,result)
 
   }
 
@@ -472,12 +478,12 @@ for(n_row in seq(100,1000,100))
 
 The results were as follows:
 
-```{r,echo = F,warning=F,out.width="80%",out.height="90%"}
+```{r,echo = F,warning=F,fig.height = 3,fig.width = 4,fig.align = 'center'}
 summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.087,0.137,0.278,1.880,0.859,8.742,1.782,28.908,3.928,63.544,6.648,141.373,11.158,252.689,18.409,427.515,28.220,725.520,39.675,1024.007),sd = c(0.021,0.010,0.018,0.170,0.100,0.630,0.161,1.849,0.245,3.927,0.455,12.202,0.806,14.315,1.350,37.318,2.675,63.963,2.983,102.328),package = rep(c("TDAML","TDA"),10))
 
 # plot table
 plot(summary_table$n_row[summary_table$package=="TDA"], summary_table$mean[summary_table$package=="TDA"], type="b",
-     xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd),xlab = "Points in diagram",ylab = "Mean execution time (sec)",main = "Benchmarking diagram_distance function")
+     xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd),xlab = "Points in diagram",ylab = "Mean execution time (sec)")
 lines(summary_table$n_row[summary_table$package=="TDAML"], summary_table$mean[summary_table$package=="TDAML"], col=2, type="b")
 legend(x = 200,y = 800,legend = c("TDAML","TDA"),col = c("red","black"),lty = c(1,1),cex = 0.8)
 arrows(summary_table$n_row, summary_table$mean-1.96*summary_table$sd/sqrt(10), summary_table$n_row, summary_table$mean+1.96*summary_table$sd/sqrt(10), length=0.05, angle=90, code=3)
@@ -485,9 +491,9 @@ arrows(summary_table$n_row, summary_table$mean-1.96*summary_table$sd/sqrt(10), s
 
 The TDAML `diagram_distance` function gives a significant speedup compared to the TDA wasserstein function (with similar results expected for the `bottleneck` distance function since the two use the same underlying matching method). As the diagrams get larger the speedup appears to increase, with almost a 26x speedup for diagrams with 1000 points, however this ratio looks like it would plateau around 30x above 1000 points, or at least it would grow slowly. 
 
-Now, we will repeat the same simulation, but computing diagrams from shapes provided in the TDA package (uniformly sampled tori and spheres) with the same number of data points and iterations as in the previous example. The homology calculations had a maximum dimension of two, and the maximum scale for each was 2 (for the Torus) and 1 (for the sphere). The Torus had tube radius 1 and cross-radius 2. Again, to avoid a long build for this vignette the results were computed and recorded, but the code used for benchmarking can be seen below (not run in this vignette):
+Now, we will repeat the same simulation, but computing diagrams from shapes provided in the TDA package (uniformly sampled tori and spheres) with the same number of data points and iterations as in the previous example. The homology calculations had a maximum dimension of two, and the maximum scale for each was 2 (for the Torus) and 1 (for the sphere). The Torus had tube radius 1 and cross-radius 2. The computation being benchmark was computing the distance in dimension 0, then 1 and finally 2 between each pair of diagrams. Once again, the mean execution time for each number of points in the shape is plotted with its 95% confidence interval over the 10 repetitions. To avoid a long build for this vignette the results were computed and recorded, but the code used for benchmarking can be seen below (not run in this vignette):
 
-```{r,echo = F,warning=F,eval = F}
+```{r,echo = T,warning=F,eval = F}
 # generate persistence diagrams from Tori and spheres with  100,200,...,1000 data points.
 runtimes_shape <- data.frame(n_row = numeric(),package = character(),time_in_sec = numeric())
 for(n_row in seq(100,1000,100)){
@@ -495,26 +501,38 @@ for(n_row in seq(100,1000,100)){
   for(iteration in 1:10)
   {
     # simulate pair of diagrams from the desired shapes
-    diagram_torus = ripsDiag(X = TDA::torusUnif(n = n_row,a = 1,c = 2),maxdimension = 2,maxscale = 2)
-    diagram_sphere = ripsDiag(X = TDA::sphereUnif(n = n_row,d = 2,r = 1),maxdimension = 2,maxscale = 1)
+    diagram_torus = ripsDiag(X = TDA::torusUnif(n = n_row,a = 1,c = 2),
+                             maxdimension = 2,maxscale = 2)
+    diagram_sphere = ripsDiag(X = TDA::sphereUnif(n = n_row,d = 2,r = 1),
+                              maxdimension = 2,maxscale = 1)
 
     # compute their wasserstein distances in all dimensions and benchmark
     start_time_TDAML = Sys.time()
-    diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 0,p = 2,distance = "wasserstein")
-    diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 1,p = 2,distance = "wasserstein")
-    diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 2,p = 2,distance = "wasserstein")
+    diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 0,
+                     p = 2,distance = "wasserstein")
+    diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 1,
+                     p = 2,distance = "wasserstein")
+    diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 2,
+                     p = 2,distance = "wasserstein")
     end_time_TDAML = Sys.time()
     time_diff_TDAML = as.numeric(end_time_TDAML - start_time_TDAML,units = "secs")
 
     start_time_TDA = Sys.time()
-    TDA::wasserstein(Diag1 = diagram_torus$diagram,Diag2 = diagram_sphere$diagram,dimension = 0,p = 2)
-    TDA::wasserstein(Diag1 = diagram_torus$diagram,Diag2 = diagram_sphere$diagram,dimension = 1,p = 2)
-    TDA::wasserstein(Diag1 = diagram_torus$diagram,Diag2 = diagram_sphere$diagram,dimension = 2,p = 2)
+    TDA::wasserstein(Diag1 = diagram_torus$diagram,Diag2 = diagram_sphere$diagram,
+                     dimension = 0,p = 2)
+    TDA::wasserstein(Diag1 = diagram_torus$diagram,Diag2 = diagram_sphere$diagram,
+                     dimension = 1,p = 2)
+    TDA::wasserstein(Diag1 = diagram_torus$diagram,Diag2 = diagram_sphere$diagram,
+                     dimension = 2,p = 2)
     end_time_TDA = Sys.time()
     time_diff_TDA = as.numeric(end_time_TDA - start_time_TDA,units = "secs")
 
-    runtimes_shape = rbind(runtimes_shape,data.frame(n_row = n_row,package = "TDAML",time_in_sec = time_diff_TDAML))
-    runtimes_shape = rbind(runtimes_shape,data.frame(n_row = n_row,package = "TDA",time_in_sec = time_diff_TDA))
+    runtimes_shape = rbind(runtimes_shape,data.frame(n_row = n_row,
+                                                     package = "TDAML",
+                                                     time_in_sec = time_diff_TDAML))
+    runtimes_shape = rbind(runtimes_shape,data.frame(n_row = n_row,
+                                                     package = "TDA",
+                                                     time_in_sec = time_diff_TDA))
 
   }
   print(paste0("Done ",n_row," rows"))
@@ -522,12 +540,21 @@ for(n_row in seq(100,1000,100)){
 }
 
 # compute means and sd's at each value of rows for both packages
-summary_table = data.frame(n_row = numeric(),mean = numeric(),sd = numeric(),package = character())
+summary_table = data.frame(n_row = numeric(),mean = numeric(),sd = numeric(),
+                           package = character())
 for(n_row in seq(100,1000,100))
 {
   for(p in c("TDAML","TDA"))
   {
-    summary_table = rbind(summary_table,data.frame(n_row = n_row,mean = mean(runtimes_shape[which(runtimes_shape$n_row == n_row & runtimes_shape$package == p),3]),sd = sd(runtimes_shape[which(runtimes_shape$n_row == n_row & runtimes_shape$package == p),3]),package = p))
+    result = data.frame(n_row = n_row,
+                        mean = mean(runtimes_shape[which(runtimes_shape$n_row == n_row
+                                                         & runtimes_shape$package == p),
+                                                         3]),
+                        sd = sd(runtimes_shape[which(runtimes_shape$n_row == n_row 
+                                                     & runtimes_shape$package == p),
+                                                     3]),
+                        package = p)
+    summary_table = rbind(summary_table,result)
   }
 }
 
@@ -535,12 +562,12 @@ for(n_row in seq(100,1000,100))
 
 The results again showed a significant performance increase in the TDAML package:
 
-```{r,echo = F,warning=F,out.width="80%",out.height="90%"}
+```{r,echo = F,warning=F,fig.height = 3,fig.width = 4,fig.align = 'center'}
 summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.133,0.220,0.398,3.430,0.953,17.054,1.955,53.896,3.760,142.524,6.604,294.552,10.466,601.802,16.169,1130.289,23.458,2091.953,35.098,3518.517),sd = c(0.022,0.016,0.035,0.186,0.094,1.1889,0.130,4.501,0.211,5.924,0.772,11.244,0.623,9.064,0.989,43.385,1.989,88.432,2.747,172.684),package = rep(c("TDAML","TDA"),10))
 
 # plot table
 plot(summary_table$n_row[summary_table$package=="TDA"], summary_table$mean[summary_table$package=="TDA"], type="b",
-     xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd),xlab = "Points in shapes",ylab = "Mean execution time (sec)",main = "Benchmarking diagram_distance function on Torus and Sphere")
+     xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd),xlab = "Points in shape",ylab = "Mean execution time (sec)")
 lines(summary_table$n_row[summary_table$package=="TDAML"], summary_table$mean[summary_table$package=="TDAML"], col=2, type="b")
 legend(x = 200,y = 2000,legend = c("TDAML","TDA"),col = c("red","black"),lty = c(1,1),cex = 0.8)
 arrows(summary_table$n_row, summary_table$mean-1.96*summary_table$sd/sqrt(10), summary_table$n_row, summary_table$mean+1.96*summary_table$sd/sqrt(10), length=0.05, angle=90, code=3)
