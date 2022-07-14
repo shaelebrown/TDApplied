@@ -19,7 +19,7 @@ diagram_mds(
 )
 }
 \arguments{
-\item{diagrams}{a list of n persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.}
+\item{diagrams}{a list of n>=2 persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.}
 
 \item{k}{the dimension of the space which the data are to be represented in; must be in {1,2,...,n-1}.}
 

@@ -15,7 +15,7 @@
 #' A small p-value in a dimension suggests that the groups are different (separated) in that dimension.
 #' If `distance` is "fisher" then `sigma` must not be NULL.
 #'
-#' @param ... lists of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.
+#' @param ... lists of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function. Each list must contain at least 2 diagrams.
 #' @param iterations the number of iterations for permuting group labels, default 20.
 #' @param p a positive number representing the wasserstein power parameter, a number at least 1 (and Inf if using the bottleneck distance) and default 2.
 #' @param q  a finite number at least 1 for exponentiation in the Turner loss function, default 2.
@@ -79,6 +79,16 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
 
   # make sure there are at least two groups
   check_param("diagram_groups",diagram_groups,min_length = 2)
+  
+  # make sure each group has at least two elements
+  lapply(X = diagram_groups,FUN = function(X){
+    
+    if(length(X) < 2)
+    {
+      stop("Each group of diagrams must have at least 2 elements.")
+    }
+    
+  })
 
   # check each diagram, converting each to a data frame and storing their indices in all the diagrams
   diagram_groups <- all_diagrams(diagram_groups,inference = "difference")

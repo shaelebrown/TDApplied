@@ -17,7 +17,7 @@ diagram_kkmeans(
 \arguments{
 \item{diagrams}{a list of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.}
 
-\item{centers}{number of clusters to initialize.}
+\item{centers}{number of clusters to initialize, no more than the number of diagrams although smaller values are recommended.}
 
 \item{dim}{the non-negative integer homological dimension in which the distance is to be computed, default 0.}
 

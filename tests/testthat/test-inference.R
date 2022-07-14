@@ -15,6 +15,7 @@ test_that("permutation_test detects incorrect parameters correctly",{
   expect_error(permutation_test(list(circle,circle,circle),list(sphere,sphere),iterations = 5,p = 2,q = 2,dims = c(0,1),paired = T,distance = "fisher",sigma = 1,verbose = F,num_workers = 2),"paired")
   expect_error(permutation_test(list(circle,circle,circle),list(sphere,sphere),num_workers = NA),"num_workers")
   expect_error(permutation_test(list(circle,circle,circle),list(sphere,sphere),num_workers = NULL),"num_workers")
+  expect_error(permutation_test(list(circle,circle,circle),list(sphere),num_workers = 2),"2")
   
 })
 

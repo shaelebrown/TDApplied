@@ -9,7 +9,7 @@
 #' Returns the output of cmdscale on the desired distance matrix of a group of persistence diagrams
 #' in a particular dimension. If `distance` is "fisher" then `sigma` must not be NULL.
 #'
-#' @param diagrams a list of n persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.
+#' @param diagrams a list of n>=2 persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.
 #' @param k the dimension of the space which the data are to be represented in; must be in {1,2,...,n-1}.
 #' @param distance a string representing the desired distance metric to be used, either 'wasserstein' (default) or 'fisher'.
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
@@ -87,7 +87,7 @@ diagram_mds <- function(diagrams,k = 2,distance = "wasserstein",dim = 0,p = 2,si
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1
-#' @param centers number of clusters to initialize.
+#' @param centers number of clusters to initialize, no more than the number of diagrams although smaller values are recommended.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #' @param ... additional parameters for the \code{\link[kernlab]{kkmeans}} kernlab function.
 #'
@@ -127,6 +127,12 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers
   check_param("diagrams",diagrams,numeric = F,multiple = T)
   diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
   check_param("centers",centers,whole_numbers = T,at_least_one = T)
+  
+  # make sure there aren't more centers than data point - this tends to lead to kernlab errors
+  if(centers > length(diagrams))
+  {
+    stop("centers must be at most the number of diagrams, although we recommend choosing smaller values.")
+  }
   
   # compute Gram matrix
   K <- gram_matrix(diagrams = diagrams,dim = dim,sigma = sigma,t = t,num_workers = num_workers)
@@ -202,7 +208,7 @@ predict_diagram_kkmeans <- function(new_diagrams,clustering,num_workers = parall
   X <- NULL
   
   # error check diagrams argument
-  check_param("new_diagrams",new_diagrams,numeric = F,multiple = T)
+  check_param("new_diagrams",new_diagrams,numeric = F,multiple = T,min_length = 1)
   new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
   
   # error check clustering argument
@@ -334,7 +340,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
   X <- NULL
   
   # error check new_diagrams argument
-  check_param("new_diagrams",new_diagrams,numeric = F,multiple = T)
+  check_param("new_diagrams",new_diagrams,numeric = F,multiple = T,min_length = 1)
   new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
   
   # error check embedding argument
@@ -643,7 +649,7 @@ predict_diagram_ksvm <- function(new_diagrams,model,num_workers = parallelly::av
   X <- NULL
   
   # error check new_diagrams argument
-  check_param("new_diagrams",new_diagrams,numeric = F,multiple = T)
+  check_param("new_diagrams",new_diagrams,numeric = F,multiple = T,min_length = 1)
   new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
   
   # error check model argument

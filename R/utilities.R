@@ -1,7 +1,7 @@
 
 #' @importFrom stats complete.cases
 
-# error checks for permutation_test function parameters
+# error checks for function parameters
 
 check_diagram <- function(d,ret){
 
