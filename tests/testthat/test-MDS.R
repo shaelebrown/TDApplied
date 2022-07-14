@@ -1,16 +1,16 @@
 
-test_that("diagram_MDS detects incorrect parameters correctly",{
+test_that("diagram_mds detects incorrect parameters correctly",{
   
   D <- data.frame(dimension = c(0),birth = c(0),death = c(1))
-  expect_error(diagram_MDS(diagrams = list(D,D,"D"),num_workers = 2),"diagram")
-  expect_error(diagram_MDS(diagrams = list(),num_workers = 2),"1")
-  expect_error(diagram_MDS(diagrams = list(D,D,D),distance = NaN,num_workers = 2),"distance")
-  expect_error(diagram_MDS(diagrams = list(D,D,D),distance = "fisher",sigma = NULL,num_workers = 2),"sigma")
-  expect_error(diagram_MDS(diagrams = list(D,D,D),p = NaN,num_workers = 2),"p")
+  expect_error(diagram_mds(diagrams = list(D,D,"D"),num_workers = 2),"diagram")
+  expect_error(diagram_mds(diagrams = list(),num_workers = 2),"1")
+  expect_error(diagram_mds(diagrams = list(D,D,D),distance = NaN,num_workers = 2),"distance")
+  expect_error(diagram_mds(diagrams = list(D,D,D),distance = "fisher",sigma = NULL,num_workers = 2),"sigma")
+  expect_error(diagram_mds(diagrams = list(D,D,D),p = NaN,num_workers = 2),"p")
   
 })
 
-test_that("diagram_MDS is computing correctly",{
+test_that("diagram_mds is computing correctly",{
   
   D1 <- data.frame(dimension = 0,birth = 2,death = 3)
   D2 <- data.frame(dimension = 0,birth = 2,death = 3.1)
@@ -25,9 +25,6 @@ test_that("diagram_MDS is computing correctly",{
   ev <- eigen(S)
   embedding <- -1*t(diag(sqrt(ev$values[1:2])) %*% t(ev$vectors[,1:2]))
   dimnames(embedding) <- list(NULL,NULL)
-  expect_equal(diagram_MDS(diagrams = list(D1,D2,D3),num_workers = 2),embedding)
+  expect_equal(diagram_mds(diagrams = list(D1,D2,D3),num_workers = 2),embedding)
   
 })
-
-
-

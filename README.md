@@ -45,6 +45,8 @@ This is a basic example which shows you how to solve a common problem:
 devtools::load_all()
 #> ℹ Loading TDAML
 #> Loading required package: TDA
+#> Warning in setup_ns_exports(path, export_all, export_imports): Objects listed as
+#> exports, but not present in namespace: diagram_MDS
 # library(TDAML)
 ## basic example code
 ```
@@ -94,7 +96,7 @@ Computing a MDS projection of persistence diagrams:
 g <- generate_TDAML_test_data(3,3,3)
 
 # calculate their 2D MDS embedding in dimension 1 with the bottleneck distance
-mds <- diagram_MDS(diagrams = g,dim = 0,p = Inf,k = 2,num_workers = 2)
+mds <- diagram_mds(diagrams = g,dim = 0,p = Inf,k = 2,num_workers = 2)
 ```
 
 Looking for group differences in groups of persistence diagrams:
@@ -124,8 +126,8 @@ Predicting new cluster labels:
 g_new <- generate_TDAML_test_data(3,3,3)
 
 # predict cluster labels
-diagram_nearest_clusters(new_diagrams = g_new,clustering = clust,num_workers = 2)
-#> [1] 2 2 2 3 3 3 1 1 1
+predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)
+#> [1] 3 3 3 1 1 1 2 2 2
 ```
 
 Computing a kernel PCA embedding of persistence diagrams:

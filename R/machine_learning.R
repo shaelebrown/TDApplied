@@ -1,29 +1,25 @@
 
 #### Multidimensional scaling ####
-#' Calculate the metric multidimensional scaling of a group of persistence diagrams
+#' Dimension reduction of a group of persistence diagrams via metric multidimensional scaling.
 #'
+#' Projects a group of persistence diagrams into a low-dimensional embedding space via metric multidimensional
+#' scaling. Such a projection can be used for visualization of data, or a static analysis of the embedding
+#' dimensions.
+#' 
 #' Returns the output of cmdscale on the desired distance matrix of a group of persistence diagrams
-#' in a particular dimension.
+#' in a particular dimension. If `distance` is "fisher" then `sigma` must not be NULL.
 #'
-#' The `diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like \code{\link[TDA]{ripsDiag}} or from \code{\link{diagram_to_df}}.
-#' The `distance` parameter is a string representing which determines which distance metric to use.
-#' The `dim` parameter should be a positive finite integer.
-#' The `sigma` parameter is the positive bandwith for the Fisher information metric, and
-#' `p` is the wasserstein power parameter. `k` is the desired dimension of the embedding, and
-#' `eig`, `add`, `x.ret` and `list.` are cmdscale parameters providing optional additional
-#' information to be returned. `num_workers` is the number of cores used for parallel computation.
-#'
-#' @param diagrams a list of persistence diagrams, as the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or a \code{\link{diagram_to_df}} function call.
+#' @param diagrams a list of n persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.
+#' @param k the dimension of the space which the data are to be represented in; must be in {1,2,...,n-1}.
 #' @param distance a string representing the desired distance metric to be used, either 'wasserstein' (default) or 'fisher'.
-#' @param dim the homological dimension in which the distance is to be computed.
-#' @param p the wasserstein power, a number at least 1 (infinity for the bottleneck distance), default 2.
-#' @param sigma a positive number representing the bandwith for the Fisher information metric, default NULL.
-#' @param k the maximum dimension of the space which the data are to be represented in; must be in {1,2,...,n-1}.
-#' @param eig indicates whether eigenvalues should be returned.
-#' @param add logical indicating if an additive constant c* should be computed, and added to the non-diagonal dissimilarities such that the modified dissimilarities are Euclidean.
-#' @param x.ret indicates whether the doubly centered symmetric distance matrix should be returned.
-#' @param list. local indicating if a list should be returned or just the n*k matrix.
-#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
+#' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
+#' @param p a positive number representing the wasserstein power, a number at least 1 (infinity for the bottleneck distance), default 2.
+#' @param sigma a positive number representing the bandwidth for the Fisher information metric, default NULL.
+#' @param eig a boolean indicating whether the eigenvalues should be returned.
+#' @param add a boolean indicating if an additive constant c* should be computed, and added to the non-diagonal dissimilarities such that the modified dissimilarities are Euclidean.
+#' @param x.ret a boolean indicating whether the doubly centered symmetric distance matrix should be returned.
+#' @param list. a boolean indicating if a list should be returned or just the n*k matrix.
+#' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #'
 #' @return the output of \code{\link[stats]{cmdscale}} on the diagram distance matrix. If `list.` is false (as per default),
 #' a matrix with `k` columns whose rows give the coordinates of the points chosen to represent the dissimilarities.
@@ -32,13 +28,13 @@
 #' 
 #' \describe{
 #' 
-#'  \item{points}{a matrix with up to `k` columns whose rows give the coordinates of the points chosen to represent the dissimilarities.}
+#'  \item{points}{a matrix with `k` columns whose rows give the coordinates of the points chosen to represent the dissimilarities.}
 #' 
 #'  \item{eig}{the \eqn{n} eigenvalues computed during the scaling process if `eig` is true.}
 #'  
 #'  \item{x}{the doubly centered distance matrix if `x.ret` is true.}
 #'  
-#'  \item{ac}{the additive constant \eqn{c^*}, 0 if `add` = FALSE.}
+#'  \item{ac}{the additive constant \eqn{c*}, 0 if `add` = FALSE.}
 #'  
 #'  \item{GOF}{the numeric vector of length 2, representing the sum of all the eigenvalues divided by the sum of their absolute values (first vector element) or by the sum of the max of each eigenvalue and 0 (second vector element).}
 #' 
@@ -50,15 +46,18 @@
 #' @importFrom doParallel registerDoParallel
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @references 
+#' Cox M and Cox F (2008). "Multidimensional Scaling." \url{https://doi.org/10.1007/978-3-540-33037-0_14}.
+#' 
 #' @examples
 #'
 #' # create nine diagrams from three base diagrams
 #' g <- generate_TDAML_test_data(3,3,3)
 #' 
-#' # calculate their 2D MDS embedding in dimension 1 with the bottleneck distance
-#' mds <- diagram_MDS(diagrams = g,dim = 0,p = Inf,k = 2,num_workers = 2)
+#' # calculate their 2D MDS embedding in dimension 0 with the bottleneck distance
+#' mds <- diagram_mds(diagrams = g,k = 2,dim = 0,p = Inf,num_workers = 2)
 
-diagram_MDS <- function(diagrams,distance = "wasserstein",dim = 0,p = 2,sigma = NULL,k = 2,eig = FALSE,add = FALSE,x.ret = FALSE,list. = eig || add || x.ret,num_workers = parallelly::availableCores(omit = 1)){
+diagram_mds <- function(diagrams,k = 2,distance = "wasserstein",dim = 0,p = 2,sigma = NULL,eig = FALSE,add = FALSE,x.ret = FALSE,list. = eig || add || x.ret,num_workers = parallelly::availableCores(omit = 1)){
   
   # error check diagrams argument
   check_param("diagrams",diagrams,numeric = F,multiple = T)
@@ -73,28 +72,26 @@ diagram_MDS <- function(diagrams,distance = "wasserstein",dim = 0,p = 2,sigma = 
 }
 
 #### KERNEL KMEANS ####
-#' Cluster a group of persistence diagrams using kernel k-means
+#' Cluster a group of persistence diagrams using kernel k-means.
+#' 
+#' Finds latent cluster labels for a group of persistence diagrams, using a kernalized version
+#' of the popular k-means algorithm. An optimal number of clusters may be determined by analyzing
+#' the withinss field of the clustering object over several values of k.
 #'
 #' Returns the output of kkmeans on the desired Gram matrix of a group of persistence diagrams
-#' in a particular dimension.
+#' in a particular dimension. The additional list elements stored in the output are needed
+#' to estimate cluster labels for new persistence diagrams in the `predict_diagram_kkmeans`
+#' function.
 #'
-#' The `diagrams` parameter should be a list of persistence diagrams computed from TDA.
-#' The `dim` parameter should be a positive finite integer.
-#' The `sigma` and `t` parameters are the positive bandwith for the Fisher information metric and
-#' the positive scale for the persistence Fisher kernel respectively. `num_workers` is the
-#' number of cores used for parallel computation.
-#' `centers` is the number of desired clusters, and
-#' `...` are additional parameters to the kkmeans kernlab function.
-#'
-#' @param diagrams a list of persistence diagrams, as the output of a TDA calculation.
-#' @param dim the homological dimension in which the distance is to be computed.
-#' @param t the positive scale for the persistence Fisher kernel, default 1.
-#' @param sigma a positive number representing the bandwith for the Fisher information metric, default 1
+#' @param diagrams a list of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.
+#' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
+#' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
+#' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1
 #' @param centers number of clusters to initialize.
-#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
-#' @param ... additional parameters.
+#' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
+#' @param ... additional parameters for the \code{\link[kernlab]{kkmeans}} kernlab function.
 #'
-#' @return a 'diagram_kkmeans' object containing the output of \code{\link[kernlab]{kkmeans}} on the diagram distance matrix, i.e. a list containing
+#' @return a 'diagram_kkmeans' S3 object containing the output of \code{\link[kernlab]{kkmeans}} on the Gram matrix, i.e. a list containing the elements
 #' 
 #' \describe{
 #' 
@@ -113,7 +110,9 @@ diagram_MDS <- function(diagrams,distance = "wasserstein",dim = 0,p = 2,sigma = 
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @importFrom kernlab kkmeans
-#' @seealso \code{\link{diagram_nearest_clusters}} for predicting clusters of new diagrams.
+#' @seealso \code{\link{predict_diagram_kkmeans}} for predicting cluster labels of new diagrams.
+#' @references 
+#' Dhillon, I and Guan, Y and Kulis, B (2004). "A Unified View of Kernel k-means , Spectral Clustering and Graph Cuts." \url{https://people.bu.edu/bkulis/pubs/spectral_techreport.pdf}.
 #' @examples
 #'
 #' # create nine diagrams from three base diagrams
@@ -170,19 +169,14 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers
 }
 
 #### PREDICT KERNEL KMEANS ####
-#' Find the nearest kkmeans cluster center to a list of new diagrams to return approximate cluster labels
+#' Predict the cluster labels for new persistence diagrams using a pre-computed clustering.
 #'
-#' Returns the nearest kkmeans cluster center labels on the desired Gram matrix of a group of persistence diagrams
-#' in a particular dimension.
+#' Returns the nearest (highest kernel value) kkmeans cluster center label for new persistence diagrams.
+#' This allows for reusing old cluster models for new tasks, or to perform cross validation.
 #'
-#' The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like \code{\link[TDA]{ripsDiag}} or from a 
-#' \code{\link{diagram_to_df}} function call, and the
-#' `clustering` parameter should be the output of a \code{\link{diagram_kkmeans}} function call.
-#' `num_workers` is the number of cores used for parallel computation.
-#'
-#' @param new_diagrams a list of persistence diagrams, as the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
-#' @param clustering the output of a \code{link{diagram_kkmeans}} function call.
-#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
+#' @param new_diagrams a list of persistence diagrams which are either the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
+#' @param clustering the output of a \code{\link{diagram_kkmeans}} function call.
+#' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #'
 #' @return a vector of the predicted cluster labels for the new diagrams.
 #' @export
@@ -200,9 +194,9 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers
 #' g_new <- generate_TDAML_test_data(3,3,3)
 #' 
 #' # predict cluster labels
-#' diagram_nearest_clusters(new_diagrams = g_new,clustering = clust,num_workers = 2)
+#' predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)
 
-diagram_nearest_clusters <- function(new_diagrams,clustering,num_workers = parallelly::availableCores(omit = 1)){
+predict_diagram_kkmeans <- function(new_diagrams,clustering,num_workers = parallelly::availableCores(omit = 1)){
   
   # set internal variables to NULL to avoid build issues
   X <- NULL
@@ -236,32 +230,30 @@ diagram_nearest_clusters <- function(new_diagrams,clustering,num_workers = paral
 }
 
 #### KERNEL PCA ####
-#' Calculate the kernel PCA embedding of a group of persistence diagrams
+#' Calculate the kernel PCA embedding of a group of persistence diagrams.
 #'
-#' Returns the output of cmdscale on the desired distance matrix of a group of persistence diagrams
-#' in a particular dimension.
+#' Project a group of persistence diagrams into a low-dimensional embedding space using
+#' a kernalized version of the popular PCA algorithm. 
 #'
-#' The `diagrams` parameter should be a list of persistence diagrams computed from TDA.
-#' The `dim` parameter should be a positive finite integer.
-#' The `sigma` and `t` parameters are the positive bandwith for the Fisher information metric and
-#' the positive scale for the persistence Fisher kernel respectively. `num_workers` is the
-#' number of cores used for parallel computation.
-#' `features` is the number of desired features (principal components) in the embedding, and
-#' `...` are additional parameters to the kpca kernlab function.
+#' Returns the output of kernlab's \code{\link[kernlab]{kpca}} function on the desired Gram matrix of a group of persistence diagrams
+#' in a particular dimension. The prediction function \code{\link{predict_diagram_kpca}} can be used to 
+#' project new persistence diagrams using an old embedding, and this could be one practical
+#' advantage of using \code{\link{diagram_kpca}} over \code{\link{diagram_mds}}. The embedding coordinates can also
+#' be used for further analysis, or simply as a data visualization tool for persistence diagrams.
 #'
-#' @param diagrams a list of persistence diagrams, as the output of a TDA calculation.
-#' @param dim the homological dimension in which the distance is to be computed.
-#' @param t the positive scale for the persistence Fisher kernel, default 1.
-#' @param sigma a positive number representing the bandwith for the Fisher information metric, default 1
+#' @param diagrams a list of persistence diagrams which are either the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
+#' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
+#' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
+#' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1
 #' @param features number of features (principal components) to return, default 1.
-#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
+#' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #' @param ... additional parameters.
 #'
-#' @return a list containing 
+#' @return a list containing the elements
 #' 
 #' \describe{
 #' 
-#' \item{pca}{the output of \code{\link[kernlab]{kpca}} on the Gram matrix, an S4 object containing the slots pcv (a matrix containing the principal component vectors (column wise)), eig (the corresponding eigenvalues), rotated (the original data projected (rotated) on the principal components) and xmatrix (the original data matrix).}
+#' \item{pca}{the output of kernlab's \code{\link[kernlab]{kpca}} function on the Gram matrix: an S4 object containing the slots pcv (a matrix containing the principal component vectors (column wise)), eig (the corresponding eigenvalues), rotated (the original data projected (rotated) on the principal components) and xmatrix (the original data matrix).}
 #' 
 #' \item{diagrams}{the input `diagrams` argument.}
 #' 
@@ -277,6 +269,8 @@ diagram_nearest_clusters <- function(new_diagrams,clustering,num_workers = paral
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @importFrom kernlab kpca
 #' @seealso \code{\link{predict_diagram_kpca}} for predicting embedding coordinates of new diagrams.
+#' @references 
+#' Scholkopf, B and Smola, A and Muller, K (1998). "Nonlinear Component Analysis as a Kernel Eigenvalue Problem." \url{https://www.mlpack.org/papers/kpca.pdf}.
 #' @examples
 #'
 #' # create nine diagrams from three base diagrams
@@ -302,18 +296,14 @@ diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_worke
 }
 
 #### PREDICT WITH KERNEL PCA OBJECT ####
-#' Predict the kernel PCA embedding of new persistence diagrams using a precomputed diagram_kpca object
+#' Project persistence diagrams into a low-dimensional space via a pre-computed kernel PCA embedding.
 #'
-#' Returns the embedding matrix for the new points.
+#' Compute the location in low-dimensional space of each element of a list of new persistence diagrams using a
+#' previously-computed kernel PCA embedding (from the \code{\link{diagram_kpca}} function).
 #'
-#' The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag
-#' or \code{\link{diagram_to_df}}.
-#' The `embedding` parameter is the diagram_kpca embedding object to be used for embedding
-#' the new diagrams. `num_workers` is the number of cores used for parallel computation.
-#'
-#' @param new_diagrams a list of persistence diagrams, as the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
-#' @param embedding the output to a diagram_kpca function call.
-#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
+#' @param new_diagrams a list of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
+#' @param embedding the output of a \code{\link{diagram_kpca}} function call.
+#' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #'
 #' @return the data projection (rotation), stored as a numeric matrix. Each row corresponds to the same-index diagram in `new_diagrams`.
 #' @export
@@ -334,7 +324,7 @@ diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_worke
 #' # project new diagrams onto old model
 #' g_new <- generate_TDAML_test_data(3,3,3)
 #' 
-#' # predict cluster labels
+#' # calculate new embedding coordinates
 #' new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers = 2)
 
 predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly::availableCores(omit = 1)){
@@ -368,29 +358,28 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
 }
 
 #### KERNEL SVM ####
-#' Fit a support vector machine model where the training set is a list of persistence diagrams
+#' Fit a support vector machine model where each training set instance is a persistence diagram.
 #'
-#' Returns the output of ksvm on the Gram matrix of a group of persistence diagrams
-#' in a particular dimension. Cross validation is carried out in parallel, using a trick
-#' noted in \url{https://doi.org/10.1007/s41468-017-0008-7}.
+#' Returns the output of kernlab's \code{\link{ksvm}} function on the Gram matrix of the list of persistence diagrams
+#' in a particular dimension.
+#' 
+#' Cross validation is carried out in parallel, using a trick
+#' noted in \url{https://doi.org/10.1007/s41468-017-0008-7} - since the persistence Fisher kernel can be
+#' written as \eqn{d_{PF}(D_1,D_2)=exp(t*d_{FIM}(D_1,D_2))=exp(d_{FIM}(D_1,D_2))^t}, we can
+#' store the Fisher information metric distance matrix for each sigma value in the parameter grid to avoid
+#' recomputing distances. Parallelization occurs either over CV folds or over the parameter combinations,
+#' whichever has more elements. Note that the response parameter `y` must be a factor for classification - 
+#' a character vector for instance will throw an error.
 #'
-#' The `diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
-#' The `dim` parameter should be a positive finite integer.
-#' The `sigma` and `t` parameters are the positive bandwith for the Fisher information metric and
-#' the positive scale for the persistence Fisher kernel respectively.
-#' `type`, `C`, `nu`, `epsilon`, `prob.model`, `class.weights`, `cross`, `fit`, `cache`, `tol`, and `shrinking` 
-#' are additional parameters to the ksvm kernlab function. `num_workers` is the
-#' number of cores used for parallel computation.
-#'
-#' @param diagrams a list of persistence diagrams, as the output of a TDA calculation.
+#' @param diagrams a list of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
 #' @param cv a positive number at most the length of `diagrams` which determines the number of cross validation splits to be performed (default 1, aka no cross-validation).
-#' @param dim the homological dimension in which the distance is to be computed.
-#' @param t the positive scale for the persistence Fisher kernel, default 1.
-#' @param sigma a positive number representing the bandwith for the Fisher information metric, default 1
-#' @param y a response vector with one label for each persistence diagram.
-#' @param type type of task to be performed.
-#' @param C cost of contraints violation (default 1) this is the 'C'-constant of the regularization term in the Lagrange formulation.
-#' @param nu parameter needed for nu-svc, one-svc and nu-svr. The `nu` parameter sets the upper bound on the training error and the lower bound on the fraction of data points to become Support Vector (default 0.2).
+#' @param dim a non-negative integer vector of homological dimensions in which the model is to be fit.
+#' @param t a vector of positive numbers representing the grid of values for the scale of the persistence Fisher kernel, default 1.
+#' @param sigma a vector of positive numbers representing the grid of values for the bandwidth of the Fisher information metric, default 1
+#' @param y a response vector with one label for each persistence diagram. Must be either numeric or factor.
+#' @param type a string representing the type of task to be performed.
+#' @param C a number representing the cost of contraints violation (default 1) this is the 'C'-constant of the regularization term in the Lagrange formulation.
+#' @param nu numeric parameter needed for nu-svc, one-svc and nu-svr. The `nu` parameter sets the upper bound on the training error and the lower bound on the fraction of data points to become Support Vector (default 0.2).
 #' @param epsilon epsilon in the insensitive-loss function used for eps-svr, nu-svr and eps-bsvm (default 0.1).
 #' @param fit indicates whether the fitted values should be computed and included in the model or not (default TRUE).
 #' @param prob.model if set to TRUE builds a model for calculating class probabilities or in case of regression, calculates the scaling parameter of the Laplacian distribution fitted on the residuals. Fitting is done on output data created by performing a 3-fold cross-validation on the training data. For details see references (default FALSE).
@@ -399,15 +388,15 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
 #' @param tol tolerance of termination criteria (default 0.001).
 #' @param shrinking option whether to use the shrinking-heuristics (default TRUE).
 #' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
-#' @return a list containing 
+#' @return a list containing the elements
 #' 
 #' \describe{
 #' 
-#' \item{models}{the cross-validation results - a matrix storing the parameters for each model in the tuning grid and its mean cross-validation error over all split.}
+#' \item{models}{the cross-validation results - a matrix storing the parameters for each model in the tuning grid and its mean cross-validation error over all splits.}
 #' 
 #' \item{best_model}{the output of \code{\link[kernlab]{ksvm}} run on the whole dataset with the optimal model parameters found during cross-validation. See the help page for \code{\link[kernlab]{ksvm}} for more details about this object.}
 #' 
-#' \item{diagrams}{the diagrams which were support vectors in the best_model. These are used for downstream prediction.}
+#' \item{diagrams}{the diagrams which were support vectors in the `best_model`. These are used for downstream prediction.}
 #' 
 #' \item{dim}{the input `dim` argument.}
 #' 
@@ -426,6 +415,8 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
 #' @importFrom parallelly availableCores
 #' @importFrom doParallel registerDoParallel
 #' @importFrom iterators iter
+#' @references 
+#' Murphy, K. "Machine learning: a probabilistic perspective." MIT press (2012).
 #' @examples
 #'
 #' # create thirty diagrams based on three base diagrams
@@ -607,17 +598,16 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
 }
 
 #### PREDICT KERNEL SVM ####
-#' Predict the response to a new group of persistence diagrams from a computed diagram_ksvm model
+#' Predict the outcome labels for a list of persistence diagrams using a pre-trained diagram ksvm model.
 #'
 #' Returns the predicted response vector of the model on the new diagrams.
+#' 
+#' This function is a wrapper of the kernlab \code{\link{predict}} function.
 #'
-#' The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
-#' The `model` parameter should be the output from a diagram_ksvm function call. `num_workers` is the
-#' number of cores used for parallel computation.
 #'
-#' @param new_diagrams a list of new persistence diagrams, as the output of a TDA calculation.
-#' @param model the diagram_ksvm model to be used for prediction.
-#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
+#' @param new_diagrams a list of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
+#' @param model the output of a \code{\link{diagram_ksvm}} function call.
+#' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #' @return a vector containing the output of \code{\link[kernlab]{predict.ksvm}} on the cross Gram matrix of the new diagrams and the support vector diagrams stored in the model.
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
