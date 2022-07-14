@@ -2,7 +2,7 @@
 % Please edit documentation in R/machine_learning.R
 \name{predict_diagram_kpca}
 \alias{predict_diagram_kpca}
-\title{Predict the kernel PCA embedding of new persistence diagrams using a precomputed diagram_kpca object}
+\title{Project persistence diagrams into a low-dimensional space via a pre-computed kernel PCA embedding.}
 \usage{
 predict_diagram_kpca(
   new_diagrams,
@@ -11,23 +11,18 @@ predict_diagram_kpca(
 )
 }
 \arguments{
-\item{new_diagrams}{a list of persistence diagrams, as the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.}
+\item{new_diagrams}{a list of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.}
 
-\item{embedding}{the output to a diagram_kpca function call.}
+\item{embedding}{the output of a \code{\link{diagram_kpca}} function call.}
 
-\item{num_workers}{the number of cores used for parallel computation, default is one less the number of cores on the machine.}
+\item{num_workers}{the number of cores used for parallel computation, default is one less than the number of cores on the machine.}
 }
 \value{
 the data projection (rotation), stored as a numeric matrix. Each row corresponds to the same-index diagram in `new_diagrams`.
 }
 \description{
-Returns the embedding matrix for the new points.
-}
-\details{
-The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like ripsDiag
-or \code{\link{diagram_to_df}}.
-The `embedding` parameter is the diagram_kpca embedding object to be used for embedding
-the new diagrams. `num_workers` is the number of cores used for parallel computation.
+Compute the location in low-dimensional space of each element of a list of new persistence diagrams using a
+previously-computed kernel PCA embedding (from the \code{\link{diagram_kpca}} function).
 }
 \examples{
 
@@ -40,7 +35,7 @@ pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_worker
 # project new diagrams onto old model
 g_new <- generate_TDAML_test_data(3,3,3)
 
-# predict cluster labels
+# calculate new embedding coordinates
 new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers = 2)
 }
 \seealso{

@@ -219,14 +219,14 @@ Again, D1 and D2 are less different than D1 and D3 using the Fisher information 
 
 ## Metric multidimensional scaling of persistence diagrams
 
-One common dimension-reduction technique in machine learning is called multidimensional scaling (MDS) (@Cox2008). MDS takes as input an $n$ by $n$ distance (or dissimilarity) matrix $D$, computed from $n$ points in a dataset, and outputs an embedding of those points into a Euclidean space of chosen dimension $k$ which best preserves the inter-point distances. MDS is often used for visualizing data in exploratory analyses, and can be particularly useful when the input data points do not live in a common Euclidean space (as is the case for persistence diagrams). Using the R function `cmdscale` from the package stats (@R-stats) we can compute the optimal embedding of a set of persistence diagrams using any of the three distance metrics using the function `diagram_MDS`. Here is an example of the `diagram_MDS` function on nine persistence diagrams, three noisy copies sampled from each of D1, D2 and D3:
+One common dimension-reduction technique in machine learning is called multidimensional scaling (MDS) (@Cox2008). MDS takes as input an $n$ by $n$ distance (or dissimilarity) matrix $D$, computed from $n$ points in a dataset, and outputs an embedding of those points into a Euclidean space of chosen dimension $k$ which best preserves the inter-point distances. MDS is often used for visualizing data in exploratory analyses, and can be particularly useful when the input data points do not live in a common Euclidean space (as is the case for persistence diagrams). Using the R function `cmdscale` from the package stats (@R-stats) we can compute the optimal embedding of a set of persistence diagrams using any of the three distance metrics using the function `diagram_mds`. Here is an example of the `diagram_mds` function on nine persistence diagrams, three noisy copies sampled from each of D1, D2 and D3:
 
 ```{r,echo = T,fig.height = 3,fig.width = 6,fig.align = 'center'}
 # create 9 diagrams based on D1, D2 and D3
 g <- generate_TDAML_test_data(3,3,3)
 
-# calculate their 2D MDS embedding in dimension 1 with the bottleneck distance
-mds <- diagram_MDS(diagrams = g,dim = 0,p = Inf,k = 2,num_workers = 2)
+# calculate their 2D MDS embedding in dimension 0 with the bottleneck distance
+mds <- diagram_mds(diagrams = g,dim = 0,p = Inf,k = 2,num_workers = 2)
 
 # plot
 par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
@@ -279,7 +279,7 @@ Like before, D1 nd D2 are more similar than D1 and D3.
 
 ## Kernel k-means of persistence diagrams
 
-Kernel k-means (@kkmeans) is a method which extends regular k-means clustering via a kernel on complex data. The "distance" from a persistence diagram to a cluster center is calculated using kernels, and the algorithm converges like regular k-means. This algorithm is implemented in the function `diagram_kkmeans` as a wrapper of the kernlab function `kkmeans`. Moreover, a prediction function `diagram_nearest_clusters` can be used to find the nearest cluster labels for a new set of diagrams. Here is an example clustering three groups of noisy copies from D1, D2 and D3:
+Kernel k-means (@kkmeans) is a method which extends regular k-means clustering via a kernel on complex data. The "distance" from a persistence diagram to a cluster center is calculated using kernels, and the algorithm converges like regular k-means. This algorithm is implemented in the function `diagram_kkmeans` as a wrapper of the kernlab function `kkmeans`. Moreover, a prediction function `predict_diagram_kkmeans` can be used to find the nearest cluster labels for a new set of diagrams. Here is an example clustering three groups of noisy copies from D1, D2 and D3:
 
 ```{r,echo = T}
 # create noisy copies of D1, D2 and D3
@@ -294,14 +294,14 @@ clust$clustering@.Data
 
 As we can see, the `diagram_kkmeans` function was able to correctly separate the three generating diagrams D1, D2 and D3, however note that the cluster labels need not be 1,1,1,2,2,2,3,3,3 as the labels themselves are meaningless.
 
-If we wish to predict the cluster label for new persistence diagrams (computed via the largest kernel value to any cluster center), we can use the `diagram_nearest_clusters` function as follows:
+If we wish to predict the cluster label for new persistence diagrams (computed via the largest kernel value to any cluster center), we can use the `predict_diagram_kkmeans` function as follows:
 
 ```{r,echo = T}
 # create nine new diagrams
 g_new <- generate_TDAML_test_data(3,3,3)
 
 # predict cluster labels
-diagram_nearest_clusters(new_diagrams = g_new,clustering = clust,num_workers = 2)
+predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)
 ```
 
 This function correctly predicted the cluster for each new diagram (assigning each diagram to the cluster label by D1, D2 or D3, depending on which diagram it was generated from).
@@ -392,7 +392,7 @@ g2 <- generate_TDAML_test_data(0,10,0)
 
 # do independence test with sigma = t = 1
 indep_test <- independence_test(g1,g2,dims = c(0),num_workers = 2)
-indep_test$p_value
+indep_test$p_values
 ```
 
 The p-value of this test would not be significant at any typical significance threshold, reflecting the fact that there is no real (i.e. non-spurious) dependence between the two groups, as expected.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/machine_learning.R
 \name{diagram_ksvm}
 \alias{diagram_ksvm}
-\title{Fit a support vector machine model where the training set is a list of persistence diagrams}
+\title{Fit a support vector machine model where each training set instance is a persistence diagram.}
 \usage{
 diagram_ksvm(
   diagrams,
@@ -25,23 +25,23 @@ diagram_ksvm(
 )
 }
 \arguments{
-\item{diagrams}{a list of persistence diagrams, as the output of a TDA calculation.}
+\item{diagrams}{a list of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.}
 
 \item{cv}{a positive number at most the length of `diagrams` which determines the number of cross validation splits to be performed (default 1, aka no cross-validation).}
 
-\item{dim}{the homological dimension in which the distance is to be computed.}
+\item{dim}{a non-negative integer vector of homological dimensions in which the model is to be fit.}
 
-\item{t}{the positive scale for the persistence Fisher kernel, default 1.}
+\item{t}{a vector of positive numbers representing the grid of values for the scale of the persistence Fisher kernel, default 1.}
 
-\item{sigma}{a positive number representing the bandwith for the Fisher information metric, default 1}
+\item{sigma}{a vector of positive numbers representing the grid of values for the bandwidth of the Fisher information metric, default 1}
 
-\item{y}{a response vector with one label for each persistence diagram.}
+\item{y}{a response vector with one label for each persistence diagram. Must be either numeric or factor.}
 
-\item{type}{type of task to be performed.}
+\item{type}{a string representing the type of task to be performed.}
 
-\item{C}{cost of contraints violation (default 1) this is the 'C'-constant of the regularization term in the Lagrange formulation.}
+\item{C}{a number representing the cost of contraints violation (default 1) this is the 'C'-constant of the regularization term in the Lagrange formulation.}
 
-\item{nu}{parameter needed for nu-svc, one-svc and nu-svr. The `nu` parameter sets the upper bound on the training error and the lower bound on the fraction of data points to become Support Vector (default 0.2).}
+\item{nu}{numeric parameter needed for nu-svc, one-svc and nu-svr. The `nu` parameter sets the upper bound on the training error and the lower bound on the fraction of data points to become Support Vector (default 0.2).}
 
 \item{epsilon}{epsilon in the insensitive-loss function used for eps-svr, nu-svr and eps-bsvm (default 0.1).}
 
@@ -60,15 +60,15 @@ diagram_ksvm(
 \item{num_workers}{the number of cores used for parallel computation, default is one less the number of cores on the machine.}
 }
 \value{
-a list containing 
+a list containing the elements
 
 \describe{
 
-\item{models}{the cross-validation results - a matrix storing the parameters for each model in the tuning grid and its mean cross-validation error over all split.}
+\item{models}{the cross-validation results - a matrix storing the parameters for each model in the tuning grid and its mean cross-validation error over all splits.}
 
 \item{best_model}{the output of \code{\link[kernlab]{ksvm}} run on the whole dataset with the optimal model parameters found during cross-validation. See the help page for \code{\link[kernlab]{ksvm}} for more details about this object.}
 
-\item{diagrams}{the diagrams which were support vectors in the best_model. These are used for downstream prediction.}
+\item{diagrams}{the diagrams which were support vectors in the `best_model`. These are used for downstream prediction.}
 
 \item{dim}{the input `dim` argument.}
 
@@ -79,18 +79,17 @@ a list containing
 }
 }
 \description{
-Returns the output of ksvm on the Gram matrix of a group of persistence diagrams
-in a particular dimension. Cross validation is carried out in parallel, using a trick
-noted in \url{https://doi.org/10.1007/s41468-017-0008-7}.
+Returns the output of kernlab's \code{\link{ksvm}} function on the Gram matrix of the list of persistence diagrams
+in a particular dimension.
 }
 \details{
-The `diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
-The `dim` parameter should be a positive finite integer.
-The `sigma` and `t` parameters are the positive bandwith for the Fisher information metric and
-the positive scale for the persistence Fisher kernel respectively.
-`type`, `C`, `nu`, `epsilon`, `prob.model`, `class.weights`, `cross`, `fit`, `cache`, `tol`, and `shrinking` 
-are additional parameters to the ksvm kernlab function. `num_workers` is the
-number of cores used for parallel computation.
+Cross validation is carried out in parallel, using a trick
+noted in \url{https://doi.org/10.1007/s41468-017-0008-7} - since the persistence Fisher kernel can be
+written as \eqn{d_{PF}(D_1,D_2)=exp(t*d_{FIM}(D_1,D_2))=exp(d_{FIM}(D_1,D_2))^t}, we can
+store the Fisher information metric distance matrix for each sigma value in the parameter grid to avoid
+recomputing distances. Parallelization occurs either over CV folds or over the parameter combinations,
+whichever has more elements. Note that the response parameter `y` must be a factor for classification - 
+a character vector for instance will throw an error.
 }
 \examples{
 
@@ -104,6 +103,9 @@ y <- as.factor(rep(c("D1","D2","D3"),each = 10))
 model_svm <- diagram_ksvm(diagrams = g,cv = 2,dim = c(0),
                           y = y,sigma = c(1,0.1),t = c(1,2),
                           num_workers = 2)
+}
+\references{
+Murphy, K. "Machine learning: a probabilistic perspective." MIT press (2012).
 }
 \seealso{
 \code{\link{predict_diagram_ksvm}} for predicting labels of new diagrams.

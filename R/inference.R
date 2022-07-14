@@ -1,41 +1,37 @@
 #### PERMUTATION TEST FOR DIFFERENCES ####
-#' Permutation test for persistence diagrams
+#' Permutation test for finding group differences between persistence diagrams.
 #' 
-#' Permutation test for finding differences between groups of persistence diagrams,
-#' based on the paper \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}. The test is
-#' carried out in parallel and optimized in order to not recompute already-calculated distances.
-#' Like in \url{https://github.com/hassan-abdallah/Statistical_Inference_PH_fMRI/blob/main/Abdallah_et_al_Statistical_Inference_PH_fMRI.pdf}
-#' an option is provided for pairing diagrams between groups to reduce variance (boost statistical power), and
+#' A non-parametric ANOVA-like test for persistence diagrams 
+#' (see \url{https://link.springer.com/article/10.1007/s41468-017-0008-7} for details). In each
+#' desired dimension a test statistic (loss) is calculated, then the group labels are shuffled
+#' for some number of iterations and the loss is recomputed each time thereby generating a null
+#' distribution for the test statistic. This test generates a p-value in each desired dimension.
+#' 
+#' The test is carried out in parallel and optimized in order to not recompute already-calculated distances. As such, memory issues
+#' may occur when the number of persistence diagrams is very large. 
+#' Like in (\url{https://github.com/hassan-abdallah/Statistical_Inference_PH_fMRI/blob/main/Abdallah_et_al_Statistical_Inference_PH_fMRI.pdf})
+#' an option is provided for pairing diagrams between groups to reduce variance (in order to boost statistical power), and
 #' like it was suggested in the original paper functionality is provided for an arbitrary number of groups (not just 2).
+#' A small p-value in a dimension suggests that the groups are different (separated) in that dimension.
+#' If `distance` is "fisher" then `sigma` must not be NULL.
 #'
-#' The `...` parameter should be a number of lists of persistence diagrams, outputted from a
-#' TDA calculation like \code{\link[TDA]{ripsDiag}} or a \code{\link{diagram_to_df}} function call. The `iterations` parameter should be the number of permutations
-#' desired for generating the null distribution. The `p` parameter is the wasserstein power, and `q`
-#' is the exponent for distances. `dims` is a numeric vector of the homological dimensions in which
-#' to carry out the test. The `paired` parameter is a boolean flag for whether there are correspondences
-#' between diagrams at the same location across groups, as this affects which permutations are permissible
-#' when generating the null distribution. The `distance` parameter determines which distance metric
-#' should be used between persistence diagrams. The `sigma` parameter is the positive bandwith for the
-#' Fisher information metric `verbose` determines if the time duration of the function call should be printed.
-#' `num_workers` is the number of cores used for parallel computation.
-#'
-#' @param ... groups of persistence diagrams, outputted from a homology calculation in TDA.
+#' @param ... lists of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.
 #' @param iterations the number of iterations for permuting group labels, default 20.
-#' @param p the wasserstein parameter, number at least 1 (and Inf if using the bottleneck distance), default 2.
+#' @param p a positive number representing the wasserstein power parameter, a number at least 1 (and Inf if using the bottleneck distance) and default 2.
 #' @param q  a finite number at least 1 for exponentiation in the Turner loss function, default 2.
-#' @param dims a numeric vector of the homological dimensions in which the test is to be carried out, default c(0,1).
-#' @param paired a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups. Default value is False.
+#' @param dims a non-negative integer vector of the homological dimensions in which the test is to be carried out, default c(0,1).
+#' @param paired a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups, default FALSE
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".
 #' @param sigma the positive bandwith for the Fisher information metric, default NULL.
-#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
-#' @param verbose a boolean flag for if the time duration of the function call should be printed, default False.
+#' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
+#' @param verbose a boolean flag for if the time duration of the function call should be printed, default FALSE
 #'
 #' @return a list with the following elements:
 #' \describe{
 #' 
 #'  \item{dimensions}{the input `dims` argument.}
 #' 
-#'  \item{permvals}{a numeric vector of length `iterations` with the permuted loss function value for each permutation.}
+#'  \item{permvals}{a numeric vector of length `iterations` with the permuted loss value for each iteration (permutation)}
 #'  
 #'  \item{test_statisics}{a numeric vector of the test statistic value in each dimension.}
 #'  
@@ -54,11 +50,12 @@
 #' Abdallah H et al (2021). "Statistical Inference for Persistent Homology applied to fMRI." \url{https://github.com/hassan-abdallah/Statistical_Inference_PH_fMRI/blob/main/Abdallah_et_al_Statistical_Inference_PH_fMRI.pdf}.
 #' @examples
 #'
-#' # create three groups of diagrams which are noisy copies of D1, D2, D3
+#' # create three different groups of diagrams
 #' g1 <- generate_TDAML_test_data(3,0,0)
 #' g2 <- generate_TDAML_test_data(0,3,0)
 #' g3 <- generate_TDAML_test_data(0,0,3)
 #'
+#' # run test in dimension 0
 #' perm_test <- permutation_test(g1,g2,g3,
 #'                               num_workers = 2,
 #'                               dims = c(0))
@@ -81,7 +78,7 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
   diagram_groups <- list(...)
 
   # make sure there are at least two groups
-  check_param("diagram_groups",diagram_groups)
+  check_param("diagram_groups",diagram_groups,min_length = 2)
 
   # check each diagram, converting each to a data frame and storing their indices in all the diagrams
   diagram_groups <- all_diagrams(diagram_groups,inference = "difference")
@@ -222,38 +219,32 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
 }
 
 #### INDEPENDENCE TEST FOR PERSISTENCE DIAGRAMS ####
-#' Independence test for persistence diagrams
+#' Independence test for two groups of persistence diagrams.
 #'
-#' Calculates (an estimate of) the Hilbert-Schmidt independence criteria for 
-#' two groups of paired persistence diagrams, the approximate null distribution
-#' and a p-value for each desired homological dimension. See 
-#' \url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf} for details.
-#'
-#' The `g1` and `g2` parameters should be lists of persistence diagrams, outputted from a
-#' TDA calculation like \code{\link[TDA]{ripsDiag}} or a \code{\link{diagram_to_df}} function call. `dims` is a numeric vector of the homological dimensions in which
-#' to carry out the test. The `sigma` parameter is the positive bandwith for the
-#' Fisher information metric, `t` is the scale parameter for the persistence Fisher kernel. 
-#' `verbose` determines if the time duration of the function call should be printed.
-#' `num_workers` is the number of cores used for parallel computation.
+#' Carries out inference to determine if two groups of persistence diagrams are independent or not
+#' based on kernel calculations (see 
+#' (\url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf}) for details).
+#' A small p-value in a certain dimension suggests that the groups are not independent in that dimension.
+#' 
+#' The test is carried out with a parametric null distribution, making it much faster than non-parametric
+#' approaches. If all of the diagrams in either g1 or g2 are the same in some dimension, then some p-values may be NaN.
 #'
 #' @param g1 the first group of persistence diagrams, outputted from a TDA calculation or \code{\link{diagram_to_df}}.
 #' @param g2 the second group of persistence diagrams, outputted from a TDA calculation or \code{\link{diagram_to_df}}.
-#' @param dims a numeric vector of the homological dimensions in which the test is to be carried out, default c(0,1).
-#' @param sigma the positive bandwith for the Fisher information metric, default 1.
-#' @param t the positive scale for the persistence Fisher kernel, default 1.
-#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
-#' @param verbose a boolean flag for if the time duration of the function call should be printed, default False.
+#' @param dims a non-negative integer vector of the homological dimensions in which the test is to be carried out, default c(0,1).
+#' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1.
+#' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
+#' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
+#' @param verbose a boolean flag for if the time duration of the function call should be printed, default FALSE
 #'
 #' @return a list with the following elements:
 #' \describe{
 #' 
 #'  \item{dimensions}{the input `dims` argument.}
-#' 
-#'  \item{permvals}{a numeric vector of length `iterations` with the permuted loss function value for each permutation.}
 #'  
 #'  \item{test_statisics}{a numeric vector of the test statistic value in each dimension.}
 #'  
-#'  \item{p_values}{a numeric vector of the p-values in each dimension. Note that if all of the diagrams in either g1 or g2 are the same in some dimension, then some p-values may be NaN.}
+#'  \item{p_values}{a numeric vector of the p-values in each dimension.}
 #'  
 #'  \item{run_time}{the run time of the function call, containing time units.}
 #' 
@@ -267,7 +258,7 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
 #' Gretton A et al (2007). "A Kernel Statistical Test of Independence." \url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf}.
 #' @examples
 #'
-#' # create two groups of diagrams which are noisy copies of D1 and D2
+#' # create two independent groups of diagrams
 #' g1 <- generate_TDAML_test_data(10,0,0)
 #' g2 <- generate_TDAML_test_data(0,10,0)
 #' 
@@ -359,8 +350,8 @@ independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,num_workers = 
   runtime = Sys.time() - start_time
   
   results <- list(dimensions = dims,
-                  test_statistic = test_statistics,
-                  p_value = p_value,
+                  test_statistics = test_statistics,
+                  p_values = p_value,
                   run_time = runtime)
   
   if(verbose == T)

@@ -2,7 +2,7 @@
 % Please edit documentation in R/inference.R
 \name{independence_test}
 \alias{independence_test}
-\title{Independence test for persistence diagrams}
+\title{Independence test for two groups of persistence diagrams.}
 \usage{
 independence_test(
   g1,
@@ -19,49 +19,43 @@ independence_test(
 
 \item{g2}{the second group of persistence diagrams, outputted from a TDA calculation or \code{\link{diagram_to_df}}.}
 
-\item{dims}{a numeric vector of the homological dimensions in which the test is to be carried out, default c(0,1).}
+\item{dims}{a non-negative integer vector of the homological dimensions in which the test is to be carried out, default c(0,1).}
 
-\item{sigma}{the positive bandwith for the Fisher information metric, default 1.}
+\item{sigma}{a positive number representing the bandwidth for the Fisher information metric, default 1.}
 
-\item{t}{the positive scale for the persistence Fisher kernel, default 1.}
+\item{t}{a positive number representing the scale for the persistence Fisher kernel, default 1.}
 
-\item{num_workers}{the number of cores used for parallel computation, default is one less the number of cores on the machine.}
+\item{num_workers}{the number of cores used for parallel computation, default is one less than the number of cores on the machine.}
 
-\item{verbose}{a boolean flag for if the time duration of the function call should be printed, default False.}
+\item{verbose}{a boolean flag for if the time duration of the function call should be printed, default FALSE}
 }
 \value{
 a list with the following elements:
 \describe{
 
  \item{dimensions}{the input `dims` argument.}
-
- \item{permvals}{a numeric vector of length `iterations` with the permuted loss function value for each permutation.}
  
  \item{test_statisics}{a numeric vector of the test statistic value in each dimension.}
  
- \item{p_values}{a numeric vector of the p-values in each dimension. Note that if all of the diagrams in either g1 or g2 are the same in some dimension, then some p-values may be NaN.}
+ \item{p_values}{a numeric vector of the p-values in each dimension.}
  
  \item{run_time}{the run time of the function call, containing time units.}
 
 }
 }
 \description{
-Calculates (an estimate of) the Hilbert-Schmidt independence criteria for 
-two groups of paired persistence diagrams, the approximate null distribution
-and a p-value for each desired homological dimension. See 
-\url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf} for details.
+Carries out inference to determine if two groups of persistence diagrams are independent or not
+based on kernel calculations (see 
+(\url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf}) for details).
+A small p-value in a certain dimension suggests that the groups are not independent in that dimension.
 }
 \details{
-The `g1` and `g2` parameters should be lists of persistence diagrams, outputted from a
-TDA calculation like \code{\link[TDA]{ripsDiag}} or a \code{\link{diagram_to_df}} function call. `dims` is a numeric vector of the homological dimensions in which
-to carry out the test. The `sigma` parameter is the positive bandwith for the
-Fisher information metric, `t` is the scale parameter for the persistence Fisher kernel. 
-`verbose` determines if the time duration of the function call should be printed.
-`num_workers` is the number of cores used for parallel computation.
+The test is carried out with a parametric null distribution, making it much faster than non-parametric
+approaches. If all of the diagrams in either g1 or g2 are the same in some dimension, then some p-values may be NaN.
 }
 \examples{
 
-# create two groups of diagrams which are noisy copies of D1 and D2
+# create two independent groups of diagrams
 g1 <- generate_TDAML_test_data(10,0,0)
 g2 <- generate_TDAML_test_data(0,10,0)
 

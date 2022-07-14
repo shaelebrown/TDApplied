@@ -20,7 +20,7 @@ with independent Gaussian noise added to the birth and death values,
 each with variance 0.05^2.
 }
 \description{
-An internal function which uses the three example persistence diagrams,
+An internal function which uses three example persistence diagrams,
 each with points only in dimension 0, to create a list of diagrams for 
 further analysis. The first diagram (D1) has one point with birth value
 2 and death value 3. The second diagram (D2) has two points, the first

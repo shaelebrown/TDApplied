@@ -2,7 +2,7 @@
 % Please edit documentation in R/machine_learning.R
 \name{diagram_kpca}
 \alias{diagram_kpca}
-\title{Calculate the kernel PCA embedding of a group of persistence diagrams}
+\title{Calculate the kernel PCA embedding of a group of persistence diagrams.}
 \usage{
 diagram_kpca(
   diagrams,
@@ -15,26 +15,26 @@ diagram_kpca(
 )
 }
 \arguments{
-\item{diagrams}{a list of persistence diagrams, as the output of a TDA calculation.}
+\item{diagrams}{a list of persistence diagrams which are either the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.}
 
-\item{dim}{the homological dimension in which the distance is to be computed.}
+\item{dim}{the non-negative integer homological dimension in which the distance is to be computed, default 0.}
 
-\item{t}{the positive scale for the persistence Fisher kernel, default 1.}
+\item{t}{a positive number representing the scale for the persistence Fisher kernel, default 1.}
 
-\item{sigma}{a positive number representing the bandwith for the Fisher information metric, default 1}
+\item{sigma}{a positive number representing the bandwidth for the Fisher information metric, default 1}
 
 \item{features}{number of features (principal components) to return, default 1.}
 
-\item{num_workers}{the number of cores used for parallel computation, default is one less the number of cores on the machine.}
+\item{num_workers}{the number of cores used for parallel computation, default is one less than the number of cores on the machine.}
 
 \item{...}{additional parameters.}
 }
 \value{
-a list containing 
+a list containing the elements
 
 \describe{
 
-\item{pca}{the output of \code{\link[kernlab]{kpca}} on the Gram matrix, an S4 object containing the slots pcv (a matrix containing the principal component vectors (column wise)), eig (the corresponding eigenvalues), rotated (the original data projected (rotated) on the principal components) and xmatrix (the original data matrix).}
+\item{pca}{the output of kernlab's \code{\link[kernlab]{kpca}} function on the Gram matrix: an S4 object containing the slots pcv (a matrix containing the principal component vectors (column wise)), eig (the corresponding eigenvalues), rotated (the original data projected (rotated) on the principal components) and xmatrix (the original data matrix).}
 
 \item{diagrams}{the input `diagrams` argument.}
 
@@ -47,17 +47,15 @@ a list containing
 }
 }
 \description{
-Returns the output of cmdscale on the desired distance matrix of a group of persistence diagrams
-in a particular dimension.
+Project a group of persistence diagrams into a low-dimensional embedding space using
+a kernalized version of the popular PCA algorithm.
 }
 \details{
-The `diagrams` parameter should be a list of persistence diagrams computed from TDA.
-The `dim` parameter should be a positive finite integer.
-The `sigma` and `t` parameters are the positive bandwith for the Fisher information metric and
-the positive scale for the persistence Fisher kernel respectively. `num_workers` is the
-number of cores used for parallel computation.
-`features` is the number of desired features (principal components) in the embedding, and
-`...` are additional parameters to the kpca kernlab function.
+Returns the output of kernlab's \code{\link[kernlab]{kpca}} function on the desired Gram matrix of a group of persistence diagrams
+in a particular dimension. The prediction function \code{\link{predict_diagram_kpca}} can be used to 
+project new persistence diagrams using an old embedding, and this could be one practical
+advantage of using \code{\link{diagram_kpca}} over \code{\link{diagram_mds}}. The embedding coordinates can also
+be used for further analysis, or simply as a data visualization tool for persistence diagrams.
 }
 \examples{
 
@@ -66,6 +64,9 @@ g <- generate_TDAML_test_data(3,3,3)
 
 # calculate their 2D PCA embedding with sigma = t = 2
 pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_workers = 2)
+}
+\references{
+Scholkopf, B and Smola, A and Muller, K (1998). "Nonlinear Component Analysis as a Kernel Eigenvalue Problem." \url{https://www.mlpack.org/papers/kpca.pdf}.
 }
 \seealso{
 \code{\link{predict_diagram_kpca}} for predicting embedding coordinates of new diagrams.

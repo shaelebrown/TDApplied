@@ -1,18 +1,18 @@
 #### PERSISTENCE FISHER KERNEL ####
-#' Calculate persistence Fisher kernel between a pair of persistence diagrams
+#' Calculate persistence Fisher kernel value between a pair of persistence diagrams.
 #'
-#' Returns the persistence Fisher kenel between a pair of persistence diagrams
-#' in a particular homological dimension.
+#' Returns the persistence Fisher kernel value between a pair of persistence diagrams
+#' in a particular homological dimension, each of which is either the output from a \code{\link{diagram_to_df}} 
+#' function call or from a TDA homology calculation like \code{\link[TDA]{ripsDiag}}.
 #'
-#' The `D1` and `D2` parameters are the two persistence diagrams.
-#' The `dim` parameter should be a positive finite integer.
-#' The `sigma` parameter is the positive bandwith for the Fisher information metric, and
-#' `t` is the scale parameter for the persistence Fisher kernel.
+#' The persistence Fisher kernel is calculated from the Fisher information metric according to the formula
+#' \eqn{k_{PF}(D_1,D_2) = exp(-t*d_{FIM}(D_1,D_2))}, resembling a radial basis kernel for standard
+#' Euclidean spaces.
 #'
 #' @param D1 the first persistence diagram, either outputted from a TDA calculation like \code{\link[TDA]{ripsDiag}} or from a \code{\link{diagram_to_df}} function call.
 #' @param D2 the second persistence diagram, either outputted from a TDA calculation like \code{\link[TDA]{ripsDiag}} or from a \code{\link{diagram_to_df}} function call.
-#' @param dim the homological dimension in which the distance is to be computed.
-#' @param sigma a positive number representing the bandwith for the Fisher information metric, default 1.
+#' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
+#' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1.
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
 #'
 #' @return the numeric kernel value.
@@ -20,6 +20,8 @@
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @references
 #' Le T, Yamada M (2018). "Persistence fisher kernel: a riemannian manifold kernel for persistence diagrams." \url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}.
+#' 
+#' Murphy, K. "Machine learning: a probabilistic perspective", MIT press (2012).
 #' @examples
 #'
 #' # load three diagrams
@@ -43,23 +45,20 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
 }
 
 #### GRAM MATRIX ####
-#' Compute Gram matrix for a group of persistence diagrams
+#' Compute the gram matrix for a group of persistence diagrams.
 #' 
-#' Calculate the Gram matrix K for either a single list of persistence diagrams \eqn{(D_1,D_2,\dots,D_n)}, i.e. \eqn{K[i,j] = k(D_i,D_j)}, 
-#' or between two lists of persistence diagrams, \eqn{(D_1,D_2,\dots,D_n)} and \eqn{(D'_1,D'_2,\dots,D'_n)}, \eqn{K[i,j] = k(D_i,D'_j)}, in parallel.
+#' Calculate the Gram matrix \eqn{K} for either a single list of persistence diagrams \eqn{(D_1,D_2,\dots,D_n)}, i.e. \eqn{K[i,j] = k_{PF}(D_i,D_j)}, 
+#' or between two lists of persistence diagrams, \eqn{(D_1,D_2,\dots,D_n)} and \eqn{(D'_1,D'_2,\dots,D'_n)}, \eqn{K[i,j] = k_{PF}(D_i,D'_j)}, in parallel.
+#' 
+#' Gram matrices are used in downstream analyses, like in the `diagram_kkmeans`, `diagram_nearest_cluster`,`diagram_kpca`, 
+#' `predict_diagram_kpca`, `predict_diagram_ksvm` and `independence_test` functions.
 #'
-#' `diagrams` is the a of persistence diagrams, and `other_diagrams` is an optional second list of persistence diagrams.
-#' The `dim` parameter should be a positive finite integer.
-#' The `sigma` parameter is the positive bandwith for the Fisher information metric, and
-#' `t` is the positive scale parameter for the persistence Fisher kernel. `num_workers` is the
-#' number of cores used for parallel computation.
-#'
-#' @param diagrams the list of persistence diagrams, either the output from TDA calculations like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.
+#' @param diagrams a list of persistence diagrams, either the output from TDA calculations like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.
 #' @param other_diagrams either NULL (default) or another list of persistence diagrams to compute a cross-Gram matrix.
-#' @param dim the homological dimension in which the distance is to be computed.
-#' @param sigma a positive number representing the bandwith for the Fisher information metric, default 1.
+#' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
+#' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1.
 #' @param t a positive number representing the scale for the kernel, default 1.
-#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
+#' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #'
 #' @return the numeric (cross) Gram matrix of class 'kernelMatrix'.
 #' @export
@@ -77,11 +76,12 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
 #' D3 <- generate_TDAML_test_data(0,0,1)
 #' g <- list(D1,D2,D3)
 #'
-#' # calculate their Gram matrix in dimension 1 with sigma = 2, t = 2
+#' # calculate the Gram matrix in dimension 1 with sigma = 2, t = 2
 #' G <- gram_matrix(diagrams = g,dim = 1,sigma = 2,t = 2,num_workers = 2)
 #' 
-#' # calculate cross-Gram matrix, should be the same as G
-#' G_cross <- gram_matrix(diagrams = g,other_diagrams = g,dim = 1,sigma = 2,t = 2,num_workers = 2)
+#' # calculate cross-Gram matrix, which is the same as G
+#' G_cross <- gram_matrix(diagrams = g,other_diagrams = g,dim = 1,sigma = 2,
+#'                        t = 2,num_workers = 2)
 
 gram_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,sigma = 1,t = 1,num_workers = parallelly::availableCores(omit = 1)){
   

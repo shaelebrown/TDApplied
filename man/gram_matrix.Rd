@@ -2,7 +2,7 @@
 % Please edit documentation in R/kernel_calculations.R
 \name{gram_matrix}
 \alias{gram_matrix}
-\title{Compute Gram matrix for a group of persistence diagrams}
+\title{Compute the gram matrix for a group of persistence diagrams.}
 \usage{
 gram_matrix(
   diagrams,
@@ -14,31 +14,28 @@ gram_matrix(
 )
 }
 \arguments{
-\item{diagrams}{the list of persistence diagrams, either the output from TDA calculations like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.}
+\item{diagrams}{a list of persistence diagrams, either the output from TDA calculations like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.}
 
 \item{other_diagrams}{either NULL (default) or another list of persistence diagrams to compute a cross-Gram matrix.}
 
-\item{dim}{the homological dimension in which the distance is to be computed.}
+\item{dim}{the non-negative integer homological dimension in which the distance is to be computed, default 0.}
 
-\item{sigma}{a positive number representing the bandwith for the Fisher information metric, default 1.}
+\item{sigma}{a positive number representing the bandwidth for the Fisher information metric, default 1.}
 
 \item{t}{a positive number representing the scale for the kernel, default 1.}
 
-\item{num_workers}{the number of cores used for parallel computation, default is one less the number of cores on the machine.}
+\item{num_workers}{the number of cores used for parallel computation, default is one less than the number of cores on the machine.}
 }
 \value{
 the numeric (cross) Gram matrix of class 'kernelMatrix'.
 }
 \description{
-Calculate the Gram matrix K for either a single list of persistence diagrams \eqn{(D_1,D_2,\dots,D_n)}, i.e. \eqn{K[i,j] = k(D_i,D_j)}, 
-or between two lists of persistence diagrams, \eqn{(D_1,D_2,\dots,D_n)} and \eqn{(D'_1,D'_2,\dots,D'_n)}, \eqn{K[i,j] = k(D_i,D'_j)}, in parallel.
+Calculate the Gram matrix \eqn{K} for either a single list of persistence diagrams \eqn{(D_1,D_2,\dots,D_n)}, i.e. \eqn{K[i,j] = k_{PF}(D_i,D_j)}, 
+or between two lists of persistence diagrams, \eqn{(D_1,D_2,\dots,D_n)} and \eqn{(D'_1,D'_2,\dots,D'_n)}, \eqn{K[i,j] = k_{PF}(D_i,D'_j)}, in parallel.
 }
 \details{
-`diagrams` is the a of persistence diagrams, and `other_diagrams` is an optional second list of persistence diagrams.
-The `dim` parameter should be a positive finite integer.
-The `sigma` parameter is the positive bandwith for the Fisher information metric, and
-`t` is the positive scale parameter for the persistence Fisher kernel. `num_workers` is the
-number of cores used for parallel computation.
+Gram matrices are used in downstream analyses, like in the `diagram_kkmeans`, `diagram_nearest_cluster`,`diagram_kpca`, 
+`predict_diagram_kpca`, `predict_diagram_ksvm` and `independence_test` functions.
 }
 \examples{
 
@@ -48,11 +45,12 @@ D2 <- generate_TDAML_test_data(0,1,0)
 D3 <- generate_TDAML_test_data(0,0,1)
 g <- list(D1,D2,D3)
 
-# calculate their Gram matrix in dimension 1 with sigma = 2, t = 2
+# calculate the Gram matrix in dimension 1 with sigma = 2, t = 2
 G <- gram_matrix(diagrams = g,dim = 1,sigma = 2,t = 2,num_workers = 2)
 
-# calculate cross-Gram matrix, should be the same as G
-G_cross <- gram_matrix(diagrams = g,other_diagrams = g,dim = 1,sigma = 2,t = 2,num_workers = 2)
+# calculate cross-Gram matrix, which is the same as G
+G_cross <- gram_matrix(diagrams = g,other_diagrams = g,dim = 1,sigma = 2,
+                       t = 2,num_workers = 2)
 }
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}

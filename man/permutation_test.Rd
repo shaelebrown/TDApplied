@@ -2,7 +2,7 @@
 % Please edit documentation in R/inference.R
 \name{permutation_test}
 \alias{permutation_test}
-\title{Permutation test for persistence diagrams}
+\title{Permutation test for finding group differences between persistence diagrams.}
 \usage{
 permutation_test(
   ...,
@@ -18,25 +18,25 @@ permutation_test(
 )
 }
 \arguments{
-\item{...}{groups of persistence diagrams, outputted from a homology calculation in TDA.}
+\item{...}{lists of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.}
 
 \item{iterations}{the number of iterations for permuting group labels, default 20.}
 
-\item{p}{the wasserstein parameter, number at least 1 (and Inf if using the bottleneck distance), default 2.}
+\item{p}{a positive number representing the wasserstein power parameter, a number at least 1 (and Inf if using the bottleneck distance) and default 2.}
 
 \item{q}{a finite number at least 1 for exponentiation in the Turner loss function, default 2.}
 
-\item{dims}{a numeric vector of the homological dimensions in which the test is to be carried out, default c(0,1).}
+\item{dims}{a non-negative integer vector of the homological dimensions in which the test is to be carried out, default c(0,1).}
 
-\item{paired}{a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups. Default value is False.}
+\item{paired}{a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups, default FALSE}
 
 \item{distance}{a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".}
 
 \item{sigma}{the positive bandwith for the Fisher information metric, default NULL.}
 
-\item{num_workers}{the number of cores used for parallel computation, default is one less the number of cores on the machine.}
+\item{num_workers}{the number of cores used for parallel computation, default is one less than the number of cores on the machine.}
 
-\item{verbose}{a boolean flag for if the time duration of the function call should be printed, default False.}
+\item{verbose}{a boolean flag for if the time duration of the function call should be printed, default FALSE}
 }
 \value{
 a list with the following elements:
@@ -44,7 +44,7 @@ a list with the following elements:
 
  \item{dimensions}{the input `dims` argument.}
 
- \item{permvals}{a numeric vector of length `iterations` with the permuted loss function value for each permutation.}
+ \item{permvals}{a numeric vector of length `iterations` with the permuted loss value for each iteration (permutation)}
  
  \item{test_statisics}{a numeric vector of the test statistic value in each dimension.}
  
@@ -55,32 +55,29 @@ a list with the following elements:
 }
 }
 \description{
-Permutation test for finding differences between groups of persistence diagrams,
-based on the paper \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}. The test is
-carried out in parallel and optimized in order to not recompute already-calculated distances.
-Like in \url{https://github.com/hassan-abdallah/Statistical_Inference_PH_fMRI/blob/main/Abdallah_et_al_Statistical_Inference_PH_fMRI.pdf}
-an option is provided for pairing diagrams between groups to reduce variance (boost statistical power), and
-like it was suggested in the original paper functionality is provided for an arbitrary number of groups (not just 2).
+A non-parametric ANOVA-like test for persistence diagrams 
+(see \url{https://link.springer.com/article/10.1007/s41468-017-0008-7} for details). In each
+desired dimension a test statistic (loss) is calculated, then the group labels are shuffled
+for some number of iterations and the loss is recomputed each time thereby generating a null
+distribution for the test statistic. This test generates a p-value in each desired dimension.
 }
 \details{
-The `...` parameter should be a number of lists of persistence diagrams, outputted from a
-TDA calculation like \code{\link[TDA]{ripsDiag}} or a \code{\link{diagram_to_df}} function call. The `iterations` parameter should be the number of permutations
-desired for generating the null distribution. The `p` parameter is the wasserstein power, and `q`
-is the exponent for distances. `dims` is a numeric vector of the homological dimensions in which
-to carry out the test. The `paired` parameter is a boolean flag for whether there are correspondences
-between diagrams at the same location across groups, as this affects which permutations are permissible
-when generating the null distribution. The `distance` parameter determines which distance metric
-should be used between persistence diagrams. The `sigma` parameter is the positive bandwith for the
-Fisher information metric `verbose` determines if the time duration of the function call should be printed.
-`num_workers` is the number of cores used for parallel computation.
+The test is carried out in parallel and optimized in order to not recompute already-calculated distances. As such, memory issues
+may occur when the number of persistence diagrams is very large. 
+Like in (\url{https://github.com/hassan-abdallah/Statistical_Inference_PH_fMRI/blob/main/Abdallah_et_al_Statistical_Inference_PH_fMRI.pdf})
+an option is provided for pairing diagrams between groups to reduce variance (in order to boost statistical power), and
+like it was suggested in the original paper functionality is provided for an arbitrary number of groups (not just 2).
+A small p-value in a dimension suggests that the groups are different (separated) in that dimension.
+If `distance` is "fisher" then `sigma` must not be NULL.
 }
 \examples{
 
-# create three groups of diagrams which are noisy copies of D1, D2, D3
+# create three different groups of diagrams
 g1 <- generate_TDAML_test_data(3,0,0)
 g2 <- generate_TDAML_test_data(0,3,0)
 g3 <- generate_TDAML_test_data(0,0,3)
 
+# run test in dimension 0
 perm_test <- permutation_test(g1,g2,g3,
                               num_workers = 2,
                               dims = c(0))

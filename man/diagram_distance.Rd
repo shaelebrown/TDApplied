@@ -2,43 +2,47 @@
 % Please edit documentation in R/distance_calculations.R
 \name{diagram_distance}
 \alias{diagram_distance}
-\title{Calculate distances between pairs of persistence diagrams}
+\title{Calculate distance between a pair of persistence diagrams.}
 \usage{
-diagram_distance(D1, D2, dim, p = 2, distance = "wasserstein", sigma = NULL)
+diagram_distance(
+  D1,
+  D2,
+  dim = 0,
+  p = 2,
+  distance = "wasserstein",
+  sigma = NULL
+)
 }
 \arguments{
-\item{D1}{the first persistence diagram, either computed from TDA or converted to a data frame with diagram_to_df.}
+\item{D1}{the first persistence diagram, either computed from TDA or converted to a data frame with \code{\link{diagram_to_df}}.}
 
-\item{D2}{the second persistence diagram, either computed from TDA or converted to a data frame with diagram_to_df.}
+\item{D2}{the second persistence diagram, either computed from TDA or converted to a data frame with \code{\link{diagram_to_df}}.}
 
-\item{dim}{the homological dimension in which the distance is to be computed.}
+\item{dim}{the non-negative integer homological dimension in which the distance is to be computed, default 0.}
 
-\item{p}{the wasserstein power parameter. Default value is 2.}
+\item{p}{a number representing the wasserstein power parameter, at least 1 and default 2.}
 
 \item{distance}{a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".}
 
-\item{sigma}{either NULL (default) or a positive number representing the bandwith for the Fisher information metric}
+\item{sigma}{either NULL (default) or a positive number representing the bandwidth for the Fisher information metric}
 }
 \value{
 the numeric value of the distance calculation.
 }
 \description{
 Calculates the distance between a pair of persistence diagrams in a particular homological dimension,
-either the output from a \code{\link{diagram_to_df}} function call or from a TDA homology calculation like ripsDiag.
-Different TDA sources define distances
-differently, and this function has functionality to compute distances like
-in the R package TDA (based on the C++ library Dionysus, see
-\url{https://mrzv.org/software/dionysus2/}) or like in the
-paper for kernel calculations of persistence diagrams (
-\url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}).
+either the output from a \code{\link{diagram_to_df}} function call or from a TDA homology calculation like \code{\link[TDA]{ripsDiag}}.
 }
 \details{
-The `D1` and `D2` parameters should be persistence diagrams, outputted
-from a homology calculation in the package TDA, or such a
-persistence diagram converted to a data frame via the function \code{\link{diagram_to_df}}.
-The `dim` parameter should be a positive finite integer.
-The `p` parameter should be a positive integer or Inf. The `distance` parameter
-should be a string, either "wasserstein" or "fisher". The `sigma` parameter is a single positive number representing the bandwith for the Fisher information metric.
+The most common distance calculations between persistence diagrams
+are the wasserstein and bottleneck distances, both of which "match" points between
+their two input diagrams and compute the "loss" of the optimal matching 
+(see \url{http://www.geometrie.tugraz.at/kerber/kerber_papers/kmn-ghtcpd_journal.pdf} for details). Another 
+method for computing distances, the Fisher information metric, 
+converts the two diagrams into distributions
+defined on the plane, and calculates a distance between the resulting two distributions
+(\url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}).
+If the `distance` parameter is "fisher" then `sigma` must not be NULL.
 }
 \examples{
 
@@ -60,7 +64,7 @@ diagram_distance(D1,D2,dim = 0,distance = "fisher",sigma = 1)
 diagram_distance(D1,D3,dim = 0,distance = "fisher",sigma = 2)
 }
 \references{
-Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.
+Kerber M, Morozov D and Nigmetov A (2017). "Geometry Helps to Compare Persistence Diagrams." \url{http://www.geometrie.tugraz.at/kerber/kerber_papers/kmn-ghtcpd_journal.pdf}.
 
 Le T, Yamada M (2018). "Persistence fisher kernel: a riemannian manifold kernel for persistence diagrams." \url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}.
 }

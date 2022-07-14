@@ -2,7 +2,7 @@
 % Please edit documentation in R/distance_calculations.R
 \name{loss}
 \alias{loss}
-\title{Turner loss function for a set of groups of persistence diagrams}
+\title{Turner loss function for a list of groups (lists) of persistence diagrams.}
 \usage{
 loss(diagram_groups, dist_mats, dims, p, q, distance, sigma, num_workers)
 }
@@ -15,13 +15,13 @@ storing the current distances which have been precomputed.}
 
 \item{dims}{a numeric vector of which homological dimensions in which the loss function is to be computed.}
 
-\item{p}{a positive wasserstein parameter, if Inf then the bottleneck distance.}
+\item{p}{a number representing the wasserstein parameter, at least 1, and if Inf then the bottleneck distance is calculated.}
 
-\item{q}{a finite exponent at least 1.}
+\item{q}{a finite number at least 1.}
 
 \item{distance}{a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".}
 
-\item{sigma}{the positive bandwith for the persistence Fisher distance.}
+\item{sigma}{the positive bandwidth for the persistence Fisher distance.}
 
 \item{num_workers}{the number of cores used for parallel computation.}
 }
@@ -29,21 +29,16 @@ storing the current distances which have been precomputed.}
 the numeric value of the Turner loss function.
 }
 \description{
-Calculate the normalized sum of within-group exponentiated distances between pairs of persistence diagrams (stored as data frames)
-for an arbitrary number of groups in parallel. The loss function is described in Robinson and Turner 2017
-\url{https://link.springer.com/article/10.1007/s41468-017-0008-7}, but mathematically we
-compute the distances of each within-group pair of persistence diagrams and exponentiate
-each distance by \eqn{q} and take the \eqn{q}-th root of the sum.
+An internal function to calculate the normalized sum of within-group exponentiated distances 
+between pairs of persistence diagrams (stored as data frames)
+for an arbitrary number of groups in parallel.
 }
 \details{
-The `diagram_groups` parameter should be a list or vector of persistence diagrams stored as data frames.
-The `dims` parameter is a vector of non-negative whole numbers, representing the homological dimensions
-to calculate the loss function in. The `dist_mats` parameter should be a list, with one element for each element in the parameter `dims`,
-which stores a matrix of distance calculations (with -1 entries for distance calculations yet to be completed).
-The `p` parameter should be a number at least 1 and possibly Inf.
-The `q` parameter should be a finite number at least 1. The `distance` parameter should be a string
-either "wasserstein" or "fisher". The `sigma` parameter is the positive bandwith for the persistence
-Fisher distance. `num_workers` is the number of cores used for parallel computation.
+The Turner loss function is described in Robinson and Turner 2017
+(\url{https://link.springer.com/article/10.1007/s41468-017-0008-7}), and is used
+in the `permutation_test` function to describe how well-separated a particular
+grouping of persistence diagrams is. When the `distance` parameter is "fisher",
+`sigma` must not be NULL.
 }
 \references{
 Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.
@@ -51,3 +46,4 @@ Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis."
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}
 }
+\keyword{internal}

@@ -1,28 +1,25 @@
 #### DIAGRAM DISTANCE METRICS ####
-#' Calculate distances between pairs of persistence diagrams
+#' Calculate distance between a pair of persistence diagrams.
 #'
 #' Calculates the distance between a pair of persistence diagrams in a particular homological dimension,
-#' either the output from a \code{\link{diagram_to_df}} function call or from a TDA homology calculation like ripsDiag.
-#' Different TDA sources define distances
-#' differently, and this function has functionality to compute distances like
-#' in the R package TDA (based on the C++ library Dionysus, see
-#' \url{https://mrzv.org/software/dionysus2/}) or like in the
-#' paper for kernel calculations of persistence diagrams (
-#' \url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}).
+#' either the output from a \code{\link{diagram_to_df}} function call or from a TDA homology calculation like \code{\link[TDA]{ripsDiag}}.
 #'
-#' The `D1` and `D2` parameters should be persistence diagrams, outputted
-#' from a homology calculation in the package TDA, or such a
-#' persistence diagram converted to a data frame via the function \code{\link{diagram_to_df}}.
-#' The `dim` parameter should be a positive finite integer.
-#' The `p` parameter should be a positive integer or Inf. The `distance` parameter
-#' should be a string, either "wasserstein" or "fisher". The `sigma` parameter is a single positive number representing the bandwith for the Fisher information metric.
+#' The most common distance calculations between persistence diagrams
+#' are the wasserstein and bottleneck distances, both of which "match" points between
+#' their two input diagrams and compute the "loss" of the optimal matching 
+#' (see \url{http://www.geometrie.tugraz.at/kerber/kerber_papers/kmn-ghtcpd_journal.pdf} for details). Another 
+#' method for computing distances, the Fisher information metric, 
+#' converts the two diagrams into distributions
+#' defined on the plane, and calculates a distance between the resulting two distributions
+#' (\url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}).
+#' If the `distance` parameter is "fisher" then `sigma` must not be NULL.
 #'
-#' @param D1 the first persistence diagram, either computed from TDA or converted to a data frame with diagram_to_df.
-#' @param D2 the second persistence diagram, either computed from TDA or converted to a data frame with diagram_to_df.
-#' @param dim the homological dimension in which the distance is to be computed.
-#' @param p  the wasserstein power parameter. Default value is 2.
+#' @param D1 the first persistence diagram, either computed from TDA or converted to a data frame with \code{\link{diagram_to_df}}.
+#' @param D2 the second persistence diagram, either computed from TDA or converted to a data frame with \code{\link{diagram_to_df}}.
+#' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
+#' @param p  a number representing the wasserstein power parameter, at least 1 and default 2.
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".
-#' @param sigma either NULL (default) or a positive number representing the bandwith for the Fisher information metric
+#' @param sigma either NULL (default) or a positive number representing the bandwidth for the Fisher information metric
 #'
 #' @return the numeric value of the distance calculation.
 #' @importFrom rdist cdist
@@ -30,7 +27,7 @@
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @references
-#' Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.
+#' Kerber M, Morozov D and Nigmetov A (2017). "Geometry Helps to Compare Persistence Diagrams." \url{http://www.geometrie.tugraz.at/kerber/kerber_papers/kmn-ghtcpd_journal.pdf}.
 #' 
 #' Le T, Yamada M (2018). "Persistence fisher kernel: a riemannian manifold kernel for persistence diagrams." \url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}.
 #' @examples
@@ -52,7 +49,7 @@
 #' # Fisher information metric calculation between D1 and D3 for sigma = 2
 #' diagram_distance(D1,D3,dim = 0,distance = "fisher",sigma = 2)
 
-diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = NULL){
+diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma = NULL){
 
   # function to compute the wasserstein/bottleneck/Fisher information metric between two diagrams
   # D1 and D2 are diagrams, possibly stored as data frames
@@ -195,25 +192,22 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = NU
 }
 
 #### DISTANCE MATRIX ####
-#' Compute a distance matrix between persistence diagrams
+#' Compute a distance matrix from a list of persistence diagrams.
 #'
-#' Calculate the distance matrix d for either a single list of persistence diagrams \eqn{D = (D_1,D_2,\dots,D_n)}, i.e. \eqn{d[i,j] = d(D_i,D_j)}, 
-#' or between two lists, \eqn{D = (D_1,D_2,\dots,D_n)} and \eqn{D' = (D'_1,D'_2,\dots,D'_n)}, \eqn{d[i,j] = d(D_i,D'_j)}, in parallel.
+#' Calculate the distance matrix \eqn{d} for either a single list of persistence diagrams \eqn{(D_1,D_2,\dots,D_n)}, i.e. \eqn{d[i,j] = d(D_i,D_j)}, 
+#' or between two lists, \eqn{(D_1,D_2,\dots,D_n)} and \eqn{(D'_1,D'_2,\dots,D'_n)}, \eqn{d[i,j] = d(D_i,D'_j)}, in parallel.
 #'
-#' `diagrams` is a list of persistence diagrams and `other_diagrams` is the optional second list of persistence diagrams.
-#' The `dim` parameter should be a positive finite integer, being the homological dimension in which to compute distances.
-#' The `distance` parameter is the string determining which distance metric to use, `p` is the 
-#' wasserstein power parameter, and
-#' `t` is the positive scale parameter for the persistence Fisher kernel. `num_workers` is the
-#' number of cores used for parallel computation.
+#' Distance matrices of persistence diagrams are used in downstream analyses, like in the 
+#' \code{\link{diagram_mds}}, \code{\link{permutation_test}} and \code{\link{diagram_ksvm}} functions. 
+#' If `distance` is "fisher" then `sigma` must not be NULL.
 #'
-#' @param diagrams the list of persistence diagrams, either the output from TDA calculations or the \code{\link{diagram_to_df}} function.
+#' @param diagrams a list of persistence diagrams, either the output from TDA calculations or the \code{\link{diagram_to_df}} function.
 #' @param other_diagrams either NULL (default) or another list of persistence diagrams to compute a cross-distance matrix.
-#' @param dim the homological dimension in which the distance is to be computed.
+#' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param distance a character determining which metric to use, either "wasserstein" (default) or "fisher".
-#' @param p the positive wasserstein power, default 2.
-#' @param sigma a positive number representing the bandwith of the Fisher information metric, default NULL.
-#' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
+#' @param p a number representing the wasserstein power parameter, at least 1 and default 2.
+#' @param sigma a positive number representing the bandwidth of the Fisher information metric, default NULL.
+#' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #'
 #' @return the numeric distance matrix.
 #' @export
@@ -234,7 +228,7 @@ diagram_distance <- function(D1,D2,dim,p = 2,distance = "wasserstein",sigma = NU
 #' # calculate their distance matrix in dimension 1 with the 2-wasserstein metric using 2 cores
 #' D <- distance_matrix(diagrams = g,dim = 1,distance = "wasserstein",p = 2,num_workers = 2)
 #' 
-#' # now do the cross distance matrix, should be the same as the original
+#' # now do the cross distance matrix, which is the same as the original
 #' D_cross <- distance_matrix(diagrams = g,other_diagrams = g,
 #'                            dim = 1,distance = "wasserstein",
 #'                            p = 2,num_workers = 2)
@@ -321,32 +315,27 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
 }
 
 #### LOSS FUNCTION FOR GROUPS OF PERSISTENCE DIAGRAMS ####
-#' Turner loss function for a set of groups of persistence diagrams
+#' Turner loss function for a list of groups (lists) of persistence diagrams.
 #'
-#' Calculate the normalized sum of within-group exponentiated distances between pairs of persistence diagrams (stored as data frames)
-#' for an arbitrary number of groups in parallel. The loss function is described in Robinson and Turner 2017
-#' \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}, but mathematically we
-#' compute the distances of each within-group pair of persistence diagrams and exponentiate
-#' each distance by \eqn{q} and take the \eqn{q}-th root of the sum.
-#'
-#' The `diagram_groups` parameter should be a list or vector of persistence diagrams stored as data frames.
-#' The `dims` parameter is a vector of non-negative whole numbers, representing the homological dimensions
-#' to calculate the loss function in. The `dist_mats` parameter should be a list, with one element for each element in the parameter `dims`,
-#' which stores a matrix of distance calculations (with -1 entries for distance calculations yet to be completed).
-#' The `p` parameter should be a number at least 1 and possibly Inf.
-#' The `q` parameter should be a finite number at least 1. The `distance` parameter should be a string
-#' either "wasserstein" or "fisher". The `sigma` parameter is the positive bandwith for the persistence
-#' Fisher distance. `num_workers` is the number of cores used for parallel computation.
+#' An internal function to calculate the normalized sum of within-group exponentiated distances 
+#' between pairs of persistence diagrams (stored as data frames)
+#' for an arbitrary number of groups in parallel. 
+#' 
+#' The Turner loss function is described in Robinson and Turner 2017
+#' (\url{https://link.springer.com/article/10.1007/s41468-017-0008-7}), and is used
+#' in the `permutation_test` function to describe how well-separated a particular
+#' grouping of persistence diagrams is. When the `distance` parameter is "fisher",
+#' `sigma` must not be NULL.
 #'
 #' @param diagram_groups groups (lists/vectors) of persistence diagrams, stored as lists of a data frame and
 #'                          an index of the diagram in all the diagrams across all groups.
 #' @param dist_mats distance matrices between all possible pairs of persistence diagrams across and within groups
 #'                      storing the current distances which have been precomputed.
 #' @param dims a numeric vector of which homological dimensions in which the loss function is to be computed.
-#' @param p a positive wasserstein parameter, if Inf then the bottleneck distance.
-#' @param q a finite exponent at least 1.
+#' @param p a number representing the wasserstein parameter, at least 1, and if Inf then the bottleneck distance is calculated.
+#' @param q a finite number at least 1.
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".
-#' @param sigma the positive bandwith for the persistence Fisher distance.
+#' @param sigma the positive bandwidth for the persistence Fisher distance.
 #' @param num_workers the number of cores used for parallel computation.
 #'
 #' @importFrom parallel makeCluster clusterEvalQ clusterExport stopCluster
@@ -354,6 +343,7 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
 #' @importFrom foreach foreach %dopar%
 #' @importFrom utils combn
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @keywords internal
 #' @references
 #' Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.
 #' @return the numeric value of the Turner loss function.

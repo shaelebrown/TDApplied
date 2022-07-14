@@ -2,7 +2,7 @@
 % Please edit documentation in R/kernel_calculations.R
 \name{diagram_kernel}
 \alias{diagram_kernel}
-\title{Calculate persistence Fisher kernel between a pair of persistence diagrams}
+\title{Calculate persistence Fisher kernel value between a pair of persistence diagrams.}
 \usage{
 diagram_kernel(D1, D2, dim = 0, sigma = 1, t = 1)
 }
@@ -11,9 +11,9 @@ diagram_kernel(D1, D2, dim = 0, sigma = 1, t = 1)
 
 \item{D2}{the second persistence diagram, either outputted from a TDA calculation like \code{\link[TDA]{ripsDiag}} or from a \code{\link{diagram_to_df}} function call.}
 
-\item{dim}{the homological dimension in which the distance is to be computed.}
+\item{dim}{the non-negative integer homological dimension in which the distance is to be computed, default 0.}
 
-\item{sigma}{a positive number representing the bandwith for the Fisher information metric, default 1.}
+\item{sigma}{a positive number representing the bandwidth for the Fisher information metric, default 1.}
 
 \item{t}{a positive number representing the scale for the persistence Fisher kernel, default 1.}
 }
@@ -21,14 +21,14 @@ diagram_kernel(D1, D2, dim = 0, sigma = 1, t = 1)
 the numeric kernel value.
 }
 \description{
-Returns the persistence Fisher kenel between a pair of persistence diagrams
-in a particular homological dimension.
+Returns the persistence Fisher kernel value between a pair of persistence diagrams
+in a particular homological dimension, each of which is either the output from a \code{\link{diagram_to_df}} 
+function call or from a TDA homology calculation like \code{\link[TDA]{ripsDiag}}.
 }
 \details{
-The `D1` and `D2` parameters are the two persistence diagrams.
-The `dim` parameter should be a positive finite integer.
-The `sigma` parameter is the positive bandwith for the Fisher information metric, and
-`t` is the scale parameter for the persistence Fisher kernel.
+The persistence Fisher kernel is calculated from the Fisher information metric according to the formula
+\eqn{k_{PF}(D_1,D_2) = exp(-t*d_{FIM}(D_1,D_2))}, resembling a radial basis kernel for standard
+Euclidean spaces.
 }
 \examples{
 
@@ -44,6 +44,8 @@ diagram_kernel(D1,D3,dim = 0,sigma = 2,t = 2)
 }
 \references{
 Le T, Yamada M (2018). "Persistence fisher kernel: a riemannian manifold kernel for persistence diagrams." \url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}.
+
+Murphy, K. "Machine learning: a probabilistic perspective", MIT press (2012).
 }
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}

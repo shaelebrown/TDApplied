@@ -97,7 +97,7 @@ test_that("diagram_kkmeans is computing correctly",{
   
 })
 
-test_that("diagram_nearest_clusters detects incorrect parameters correctly",{
+test_that("predict_diagram_kkmeans detects incorrect parameters correctly",{
   
   circle <- data.frame(dimension = c(0,1,2),birth = c(0,0,0),death = c(2,2,0))
   torus <- data.frame(dimension = c(0,1,1,2),birth = c(0,0,0,0),death = c(2,0.5,1.5,0.5))
@@ -131,14 +131,14 @@ test_that("diagram_nearest_clusters detects incorrect parameters correctly",{
                    tori[[1]],tori[[2]],tori[[3]],tori[[4]],tori[[5]],
                    spheres[[1]],spheres[[2]],spheres[[3]],spheres[[4]],spheres[[5]])
   dkk <- diagram_kkmeans(diagrams = diagrams,centers = 2,dim = 1,num_workers = 2)
-  expect_error(diagram_nearest_clusters(new_diagrams = list(),dkk,num_workers = 2),"1")
-  expect_error(diagram_nearest_clusters(new_diagrams = "D",dkk,num_workers = 2),"list")
-  expect_error(diagram_nearest_clusters(new_diagrams = list(diagrams[[1]],diagrams[[2]][0,]),dkk,num_workers = 2),"empty")
-  expect_error(diagram_nearest_clusters(new_diagrams = diagrams,diagrams,num_workers = 2),"kkmeans")
+  expect_error(predict_diagram_kkmeans(new_diagrams = list(),dkk,num_workers = 2),"1")
+  expect_error(predict_diagram_kkmeans(new_diagrams = "D",dkk,num_workers = 2),"list")
+  expect_error(predict_diagram_kkmeans(new_diagrams = list(diagrams[[1]],diagrams[[2]][0,]),dkk,num_workers = 2),"empty")
+  expect_error(predict_diagram_kkmeans(new_diagrams = diagrams,diagrams,num_workers = 2),"kkmeans")
   
 })
 
-test_that("diagram_nearest_clusters is computing correctly",{
+test_that("predict_diagram_kkmeans is computing correctly",{
   
   circle <- data.frame(dimension = c(0,1,2),birth = c(0,0,0),death = c(2,2,0))
   torus <- data.frame(dimension = c(0,1,1,2),birth = c(0,0,0,0),death = c(2,0.5,1.5,0.5))
@@ -172,7 +172,7 @@ test_that("diagram_nearest_clusters is computing correctly",{
                    tori[[1]],tori[[2]],tori[[3]],tori[[4]],tori[[5]],
                    spheres[[1]],spheres[[2]],spheres[[3]],spheres[[4]],spheres[[5]])
   dkk <- diagram_kkmeans(diagrams = diagrams,centers = 2,dim = 1,num_workers = 2)
-  expect_equal(diagram_nearest_clusters(new_diagrams = diagrams,dkk,num_workers = 2),dkk$clustering@.Data)
+  expect_equal(predict_diagram_kkmeans(new_diagrams = diagrams,dkk,num_workers = 2),dkk$clustering@.Data)
   
 })
 

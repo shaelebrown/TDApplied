@@ -2,7 +2,7 @@
 % Please edit documentation in R/machine_learning.R
 \name{diagram_kkmeans}
 \alias{diagram_kkmeans}
-\title{Cluster a group of persistence diagrams using kernel k-means}
+\title{Cluster a group of persistence diagrams using kernel k-means.}
 \usage{
 diagram_kkmeans(
   diagrams,
@@ -15,22 +15,22 @@ diagram_kkmeans(
 )
 }
 \arguments{
-\item{diagrams}{a list of persistence diagrams, as the output of a TDA calculation.}
+\item{diagrams}{a list of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.}
 
 \item{centers}{number of clusters to initialize.}
 
-\item{dim}{the homological dimension in which the distance is to be computed.}
+\item{dim}{the non-negative integer homological dimension in which the distance is to be computed, default 0.}
 
-\item{t}{the positive scale for the persistence Fisher kernel, default 1.}
+\item{t}{a positive number representing the scale for the persistence Fisher kernel, default 1.}
 
-\item{sigma}{a positive number representing the bandwith for the Fisher information metric, default 1}
+\item{sigma}{a positive number representing the bandwidth for the Fisher information metric, default 1}
 
-\item{num_workers}{the number of cores used for parallel computation, default is one less the number of cores on the machine.}
+\item{num_workers}{the number of cores used for parallel computation, default is one less than the number of cores on the machine.}
 
-\item{...}{additional parameters.}
+\item{...}{additional parameters for the \code{\link[kernlab]{kkmeans}} kernlab function.}
 }
 \value{
-a 'diagram_kkmeans' object containing the output of \code{\link[kernlab]{kkmeans}} on the diagram distance matrix, i.e. a list containing
+a 'diagram_kkmeans' S3 object containing the output of \code{\link[kernlab]{kkmeans}} on the Gram matrix, i.e. a list containing the elements
 
 \describe{
 
@@ -47,17 +47,15 @@ a 'diagram_kkmeans' object containing the output of \code{\link[kernlab]{kkmeans
 }
 }
 \description{
-Returns the output of kkmeans on the desired Gram matrix of a group of persistence diagrams
-in a particular dimension.
+Finds latent cluster labels for a group of persistence diagrams, using a kernalized version
+of the popular k-means algorithm. An optimal number of clusters may be determined by analyzing
+the withinss field of the clustering object over several values of k.
 }
 \details{
-The `diagrams` parameter should be a list of persistence diagrams computed from TDA.
-The `dim` parameter should be a positive finite integer.
-The `sigma` and `t` parameters are the positive bandwith for the Fisher information metric and
-the positive scale for the persistence Fisher kernel respectively. `num_workers` is the
-number of cores used for parallel computation.
-`centers` is the number of desired clusters, and
-`...` are additional parameters to the kkmeans kernlab function.
+Returns the output of kkmeans on the desired Gram matrix of a group of persistence diagrams
+in a particular dimension. The additional list elements stored in the output are needed
+to estimate cluster labels for new persistence diagrams in the `predict_diagram_kkmeans`
+function.
 }
 \examples{
 
@@ -67,8 +65,11 @@ g <- generate_TDAML_test_data(3,3,3)
 # calculate kmeans clusters with centers = 3, and sigma = t = 2
 clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
 }
+\references{
+Dhillon, I and Guan, Y and Kulis, B (2004). "A Unified View of Kernel k-means , Spectral Clustering and Graph Cuts." \url{https://people.bu.edu/bkulis/pubs/spectral_techreport.pdf}.
+}
 \seealso{
-\code{\link{diagram_nearest_clusters}} for predicting clusters of new diagrams.
+\code{\link{predict_diagram_kkmeans}} for predicting cluster labels of new diagrams.
 }
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}

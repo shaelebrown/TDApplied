@@ -64,7 +64,7 @@ test_that("independence_test is working",{
   mu_y_sq <- (10 + 5*k23)/15
   mu <- (1 + mu_x_sq*mu_y_sq - mu_x_sq - mu_y_sq)/6
   v <- 209*((k13 - 1)^2)*((k23 - 1)^2)/314928
-  expect_equal(independence_test(g1 = list(D1,D1,D1,D1,D1,D3),g2 = list(D2,D2,D2,D2,D2,D3),dims = c(0),num_workers = 2)$test_statistic[[1]],HSIC)
-  expect_equal(independence_test(g1 = list(D1,D1,D1,D1,D1,D3),g2 = list(D2,D2,D2,D2,D2,D3),dims = c(0),num_workers = 2)$p_value[[1]],stats::pgamma(q = HSIC,rate = mu/v,shape = mu^2/v,lower.tail = F))
+  expect_equal(independence_test(g1 = list(D1,D1,D1,D1,D1,D3),g2 = list(D2,D2,D2,D2,D2,D3),dims = c(0),num_workers = 2)$test_statistics[[1]],HSIC)
+  expect_equal(independence_test(g1 = list(D1,D1,D1,D1,D1,D3),g2 = list(D2,D2,D2,D2,D2,D3),dims = c(0),num_workers = 2)$p_values[[1]],stats::pgamma(q = HSIC,rate = mu/v,shape = mu^2/v,lower.tail = F))
   
 })

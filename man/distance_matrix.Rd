@@ -2,7 +2,7 @@
 % Please edit documentation in R/distance_calculations.R
 \name{distance_matrix}
 \alias{distance_matrix}
-\title{Compute a distance matrix between persistence diagrams}
+\title{Compute a distance matrix from a list of persistence diagrams.}
 \usage{
 distance_matrix(
   diagrams,
@@ -15,34 +15,31 @@ distance_matrix(
 )
 }
 \arguments{
-\item{diagrams}{the list of persistence diagrams, either the output from TDA calculations or the \code{\link{diagram_to_df}} function.}
+\item{diagrams}{a list of persistence diagrams, either the output from TDA calculations or the \code{\link{diagram_to_df}} function.}
 
 \item{other_diagrams}{either NULL (default) or another list of persistence diagrams to compute a cross-distance matrix.}
 
-\item{dim}{the homological dimension in which the distance is to be computed.}
+\item{dim}{the non-negative integer homological dimension in which the distance is to be computed, default 0.}
 
 \item{distance}{a character determining which metric to use, either "wasserstein" (default) or "fisher".}
 
-\item{p}{the positive wasserstein power, default 2.}
+\item{p}{a number representing the wasserstein power parameter, at least 1 and default 2.}
 
-\item{sigma}{a positive number representing the bandwith of the Fisher information metric, default NULL.}
+\item{sigma}{a positive number representing the bandwidth of the Fisher information metric, default NULL.}
 
-\item{num_workers}{the number of cores used for parallel computation, default is one less the number of cores on the machine.}
+\item{num_workers}{the number of cores used for parallel computation, default is one less than the number of cores on the machine.}
 }
 \value{
 the numeric distance matrix.
 }
 \description{
-Calculate the distance matrix d for either a single list of persistence diagrams \eqn{D = (D_1,D_2,\dots,D_n)}, i.e. \eqn{d[i,j] = d(D_i,D_j)}, 
-or between two lists, \eqn{D = (D_1,D_2,\dots,D_n)} and \eqn{D' = (D'_1,D'_2,\dots,D'_n)}, \eqn{d[i,j] = d(D_i,D'_j)}, in parallel.
+Calculate the distance matrix \eqn{d} for either a single list of persistence diagrams \eqn{(D_1,D_2,\dots,D_n)}, i.e. \eqn{d[i,j] = d(D_i,D_j)}, 
+or between two lists, \eqn{(D_1,D_2,\dots,D_n)} and \eqn{(D'_1,D'_2,\dots,D'_n)}, \eqn{d[i,j] = d(D_i,D'_j)}, in parallel.
 }
 \details{
-`diagrams` is a list of persistence diagrams and `other_diagrams` is the optional second list of persistence diagrams.
-The `dim` parameter should be a positive finite integer, being the homological dimension in which to compute distances.
-The `distance` parameter is the string determining which distance metric to use, `p` is the 
-wasserstein power parameter, and
-`t` is the positive scale parameter for the persistence Fisher kernel. `num_workers` is the
-number of cores used for parallel computation.
+Distance matrices of persistence diagrams are used in downstream analyses, like in the 
+\code{\link{diagram_mds}}, \code{\link{permutation_test}} and \code{\link{diagram_ksvm}} functions. 
+If `distance` is "fisher" then `sigma` must not be NULL.
 }
 \examples{
 
@@ -55,7 +52,7 @@ g <- list(D1,D2,D3)
 # calculate their distance matrix in dimension 1 with the 2-wasserstein metric using 2 cores
 D <- distance_matrix(diagrams = g,dim = 1,distance = "wasserstein",p = 2,num_workers = 2)
 
-# now do the cross distance matrix, should be the same as the original
+# now do the cross distance matrix, which is the same as the original
 D_cross <- distance_matrix(diagrams = g,other_diagrams = g,
                            dim = 1,distance = "wasserstein",
                            p = 2,num_workers = 2)

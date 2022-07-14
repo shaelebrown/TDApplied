@@ -2,7 +2,7 @@
 % Please edit documentation in R/machine_learning.R
 \name{predict_diagram_ksvm}
 \alias{predict_diagram_ksvm}
-\title{Predict the response to a new group of persistence diagrams from a computed diagram_ksvm model}
+\title{Predict the outcome labels for a list of persistence diagrams using a pre-trained diagram ksvm model.}
 \usage{
 predict_diagram_ksvm(
   new_diagrams,
@@ -11,11 +11,11 @@ predict_diagram_ksvm(
 )
 }
 \arguments{
-\item{new_diagrams}{a list of new persistence diagrams, as the output of a TDA calculation.}
+\item{new_diagrams}{a list of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.}
 
-\item{model}{the diagram_ksvm model to be used for prediction.}
+\item{model}{the output of a \code{\link{diagram_ksvm}} function call.}
 
-\item{num_workers}{the number of cores used for parallel computation, default is one less the number of cores on the machine.}
+\item{num_workers}{the number of cores used for parallel computation, default is one less than the number of cores on the machine.}
 }
 \value{
 a vector containing the output of \code{\link[kernlab]{predict.ksvm}} on the cross Gram matrix of the new diagrams and the support vector diagrams stored in the model.
@@ -24,9 +24,7 @@ a vector containing the output of \code{\link[kernlab]{predict.ksvm}} on the cro
 Returns the predicted response vector of the model on the new diagrams.
 }
 \details{
-The `new_diagrams` parameter should be a list of persistence diagrams computed from a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
-The `model` parameter should be the output from a diagram_ksvm function call. `num_workers` is the
-number of cores used for parallel computation.
+This function is a wrapper of the kernlab \code{\link{predict}} function.
 }
 \examples{
 

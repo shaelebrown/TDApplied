@@ -2,7 +2,7 @@
 % Please edit documentation in R/convert.R
 \name{diagram_to_df}
 \alias{diagram_to_df}
-\title{Convert TDA persistence diagrams to data frames}
+\title{Convert a TDA persistence diagram to a data frame.}
 \usage{
 diagram_to_df(d)
 }
@@ -13,21 +13,18 @@ diagram_to_df(d)
 a 3-column data frame, with each row representing a topological feature. The first column is the feature dimension (a non-negative integer), the second column is the birth radius of the feature and the third column is the death radius.
 }
 \description{
-The output of homology calculations in package TDA
+The output of homology calculations from the R package TDA
 are not immediately able to be used for distance calculations.
 This function converts the output of homology calculations in TDA
 into a data frame either for further usage in this package or
 for personalized analyses.
 }
-\details{
-The `d` parameter should be the output of a TDA homology calculation.
-}
 \examples{
 
-# create a persistence diagram from a 2D Gaussian using TDA
+# create a persistence diagram from a 2D Gaussian
 df = data.frame(x = rnorm(n = 100,mean = 0,sd = 1),y = rnorm(n = 100,mean = 0,sd = 1))
 
-# compute persistence diagram with ripsDiag
+# compute persistence diagram with ripsDiag from package TDA
 phom = TDA::ripsDiag(X = df,maxdimension = 1,maxscale = 1)
 
 # convert to data frame

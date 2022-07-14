@@ -205,7 +205,7 @@ check_param <- function(param_name,param,numeric = T,multiple = F,whole_numbers 
 #### GENERATE TEST DATA FOR TDAML EXAMPLES ####
 #' Creates persistence diagrams to test TDAML functions.
 #'
-#' An internal function which uses the three example persistence diagrams,
+#' An internal function which uses three example persistence diagrams,
 #' each with points only in dimension 0, to create a list of diagrams for 
 #' further analysis. The first diagram (D1) has one point with birth value
 #' 2 and death value 3. The second diagram (D2) has two points, the first
