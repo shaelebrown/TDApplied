@@ -39,16 +39,10 @@ To install the stable version of this R package from CRAN:
 
 ## Examples
 
-This is a basic example which shows you how to solve a common problem:
+These are basic examples which show you how to use the package:
 
 ``` r
-devtools::load_all()
-#> ℹ Loading TDAML
-#> Loading required package: TDA
-#> Warning in setup_ns_exports(path, export_all, export_imports): Objects listed as
-#> exports, but not present in namespace: diagram_MDS
-# library(TDAML)
-## basic example code
+library(TDAML)
 ```
 
 For these examples we will use three base persistence diagrams:
