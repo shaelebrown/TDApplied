@@ -628,15 +628,15 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
 #' @importFrom methods is
 #' @examples
 #'
-#' # create ten diagrams based on two base diagrams
-#' g <- generate_TDAML_test_data(5,5,0)
+#' # create eight diagrams based on two base diagrams
+#' g <- generate_TDAML_test_data(4,4,0)
 #' 
 #' # create response vector
-#' y <- as.factor(rep(c("D1","D2"),each = 5))
+#' y <- as.factor(rep(c("D1","D2"),each = 4))
 #' 
-#' # fit model with cross validation
-#' model_svm <- diagram_ksvm(diagrams = g,cv = 2,dim = c(0),
-#'                           y = y,sigma = c(1,0.1),t = c(1,2),
+#' # fit model without cross validation
+#' model_svm <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0),
+#'                           y = y,sigma = c(1),t = c(1),
 #'                           num_workers = 2)
 #'
 #' # create one new diagram
