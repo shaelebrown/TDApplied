@@ -639,8 +639,8 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
 #'                           y = y,sigma = c(1,0.1),t = c(1,2),
 #'                           num_workers = 2)
 #'
-#' # create three new diagrams
-#' g_new <- generate_TDAML_test_data(1,1,1)
+#' # create one new diagram
+#' g_new <- list(generate_TDAML_test_data(1,0,0))
 #' 
 #' # predict
 #' predict_diagram_ksvm(new_diagrams = g_new,model = model_svm,num_workers = 2)
