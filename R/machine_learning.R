@@ -185,6 +185,7 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #'
 #' @return a vector of the predicted cluster labels for the new diagrams.
+#' @importFrom methods is
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @seealso \code{\link{diagram_kkmeans}} for clustering persistence diagrams.
@@ -216,7 +217,7 @@ predict_diagram_kkmeans <- function(new_diagrams,clustering,num_workers = parall
   {
     stop("clustering must not be NULL.")
   }
-  if(!is(clustering,"diagram_kkmeans"))
+  if(!methods::is(clustering,"diagram_kkmeans"))
   {
     stop("clustering object must be the output of a diagram_kkmeans function call.")
   }
@@ -318,6 +319,7 @@ diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_worke
 #' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
 #' @importFrom parallelly availableCores
 #' @importFrom doParallel registerDoParallel
+#' @importFrom methods is
 #' @seealso \code{\link{diagram_kpca}} for embedding persistence diagrams into a low-dimensional space.
 #' @examples
 #'
@@ -348,7 +350,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
   {
     stop("embedding must be supplied.")
   }
-  if(!is(embedding,"diagram_kpca"))
+  if(!methods::is(embedding,"diagram_kpca"))
   {
     stop("embedding must be the output of a diagram_kpca function call.")
   }
@@ -426,10 +428,10 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
 #' @examples
 #'
 #' # create thirty diagrams based on three base diagrams
-#' g <- generate_TDAML_test_data(10,10,10)
+#' g <- generate_TDAML_test_data(5,5,5)
 #' 
 #' # create response vector
-#' y <- as.factor(rep(c("D1","D2","D3"),each = 10))
+#' y <- as.factor(rep(c("D1","D2","D3"),each = 5))
 #' 
 #' # fit model with cross validation
 #' model_svm <- diagram_ksvm(diagrams = g,cv = 2,dim = c(0),
@@ -623,21 +625,22 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
 #' @importFrom parallelly availableCores
 #' @importFrom doParallel registerDoParallel
 #' @importFrom kernlab predict as.kernelMatrix
+#' @importFrom methods is
 #' @examples
 #'
-#' # create thirty diagrams based on three base diagrams
-#' g <- generate_TDAML_test_data(10,10,10)
+#' # create fifteen diagrams based on three base diagrams
+#' g <- generate_TDAML_test_data(5,5,5)
 #' 
 #' # create response vector
-#' y <- as.factor(rep(c("D1","D2","D3"),each = 10))
+#' y <- as.factor(rep(c("D1","D2","D3"),each = 5))
 #' 
 #' # fit model with cross validation
 #' model_svm <- diagram_ksvm(diagrams = g,cv = 2,dim = c(0),
 #'                           y = y,sigma = c(1,0.1),t = c(1,2),
 #'                           num_workers = 2)
 #'
-#' # create nine new diagrams
-#' g_new <- generate_TDAML_test_data(3,3,3)
+#' # create three new diagrams
+#' g_new <- generate_TDAML_test_data(1,1,1)
 #' 
 #' # predict
 #' predict_diagram_ksvm(new_diagrams = g_new,model = model_svm,num_workers = 2)
@@ -657,7 +660,7 @@ predict_diagram_ksvm <- function(new_diagrams,model,num_workers = parallelly::av
   {
     stop("model must be supplied.")
   }
-  if(!is(model,"diagram_ksvm"))
+  if(!methods::is(model,"diagram_ksvm"))
   {
     stop("model must be the output of a diagram_ksvm function call.")
   }

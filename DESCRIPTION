@@ -16,12 +16,11 @@ Description: Topological data analysis is a powerful tool for finding non-linear
     for pairs of persistence diagrams, and (3) provide scalable methods for machine learning
     and inference for persistence diagrams.
 Depends: R (>= 3.2.2), TDA
-Imports: parallel, doParallel, foreach, clue, rdist, parallelly, kernlab, iterators
+Imports: parallel, doParallel, foreach, clue, rdist, parallelly, kernlab, iterators, methods, stats, utils
 License: GPL-3
 URL: https://github.com/shaelebrown/TDAML
 BugReports: https://github.com/shaelebrown/TDAML/issues
 Encoding: UTF-8
-LazyData: true
 NeedsCompilation: yes
 RoxygenNote: 7.1.2
 Suggests: 
