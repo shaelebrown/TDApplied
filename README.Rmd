@@ -35,7 +35,7 @@ To install the latest version of this R package directly from github:
 
 To install from Github you might need: 
 
-- **Windows:** Rtools (http://cran.r-project.org/bin/windows/Rtools/)
+- **Windows:** Rtools (https://cran.r-project.org/bin/windows/Rtools/)
 - **OS X:** xcode (from the app store)
 - **Linux:** apt-get install r-base-dev (or similar).
 

@@ -1,11 +1,12 @@
 Package: TDAML
 Type: Package
-Title: Machine learning and inference for topological data analysis
+Title: Machine Learning and Inference for Topological Data Analysis
 Version: 0.1.0
 Authors@R: c(person("Shael", "Brown", email = "shaelebrown@gmail.com", role = c("aut","cre")))
 Author: Shael Brown [aut, cre]
 Maintainer: Shael Brown <shaelebrown@gmail.com>
-Description: This package aims to bridge topological data analysis with data, statistical 
+Description: Topological data analysis is a powerful tool for finding non-linear global structure 
+    in whole datasets. TDAML aims to bridge topological data analysis with data, statistical 
     and machine learning practitioners so that more analyses may benefit from the
     power of topological data analysis. The main tool of topological data analysis is 
     persistent homology, which computes a shape descriptor of a dataset, called 

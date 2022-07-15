@@ -47,7 +47,7 @@
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @references 
-#' Cox M and Cox F (2008). "Multidimensional Scaling." \url{https://doi.org/10.1007/978-3-540-33037-0_14}.
+#' Cox M and Cox F (2008). "Multidimensional Scaling." \doi{10.1007/978-3-540-33037-0_14}.
 #' 
 #' @examples
 #'
@@ -149,7 +149,7 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers
     tryCatch(expr = {clustering <- kernlab::kkmeans(x = K,centers = centers,...)},
              error = function(e){
                
-               if(grepl(pattern = "sum\\(abs\\(dc\\)\\)",x = e) == F & grepl(pattern = "\'x\' must be an array of at least two dimensions",x = e) == T)
+               if(grepl(pattern = "sum\\(abs\\(dc\\)\\)",x = e) == F & grepl(pattern = "\'x\' must be an array of at least two dimensions",x = e) == F)
                {
                  stop(e)
                }
@@ -216,7 +216,7 @@ predict_diagram_kkmeans <- function(new_diagrams,clustering,num_workers = parall
   {
     stop("clustering must not be NULL.")
   }
-  if(class(clustering) != "diagram_kkmeans")
+  if(!is(clustering,"diagram_kkmeans"))
   {
     stop("clustering object must be the output of a diagram_kkmeans function call.")
   }
@@ -348,7 +348,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
   {
     stop("embedding must be supplied.")
   }
-  if(class(embedding) != "diagram_kpca")
+  if(!is(embedding,"diagram_kpca"))
   {
     stop("embedding must be the output of a diagram_kpca function call.")
   }
@@ -370,7 +370,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
 #' in a particular dimension.
 #' 
 #' Cross validation is carried out in parallel, using a trick
-#' noted in \url{https://doi.org/10.1007/s41468-017-0008-7} - since the persistence Fisher kernel can be
+#' noted in \doi{10.1007/s41468-017-0008-7} - since the persistence Fisher kernel can be
 #' written as \eqn{d_{PF}(D_1,D_2)=exp(t*d_{FIM}(D_1,D_2))=exp(d_{FIM}(D_1,D_2))^t}, we can
 #' store the Fisher information metric distance matrix for each sigma value in the parameter grid to avoid
 #' recomputing distances. Parallelization occurs either over CV folds or over the parameter combinations,
@@ -657,7 +657,7 @@ predict_diagram_ksvm <- function(new_diagrams,model,num_workers = parallelly::av
   {
     stop("model must be supplied.")
   }
-  if(class(model) != "diagram_ksvm")
+  if(!is(model,"diagram_ksvm"))
   {
     stop("model must be the output of a diagram_ksvm function call.")
   }

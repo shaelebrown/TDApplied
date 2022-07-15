@@ -77,8 +77,8 @@ g1 <- generate_TDAML_test_data(3,0,0)
 g2 <- generate_TDAML_test_data(0,3,0)
 g3 <- generate_TDAML_test_data(0,0,3)
 
-# run test in dimension 0
-perm_test <- permutation_test(g1,g2,g3,
+# run test in dimension 0 with 5 iterations
+perm_test <- permutation_test(g1,g2,g3,iterations = 5,
                               num_workers = 2,
                               dims = c(0))
 }

@@ -79,7 +79,7 @@ g <- generate_TDAML_test_data(3,3,3)
 mds <- diagram_mds(diagrams = g,k = 2,dim = 0,p = Inf,num_workers = 2)
 }
 \references{
-Cox M and Cox F (2008). "Multidimensional Scaling." \url{https://doi.org/10.1007/978-3-540-33037-0_14}.
+Cox M and Cox F (2008). "Multidimensional Scaling." \doi{10.1007/978-3-540-33037-0_14}.
 }
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}

@@ -6,13 +6,13 @@
 check_diagram <- function(d,ret){
 
   # error checks for a diagram d stored as a data frame, and conversion
-  if(is.list(d) && length(d) == 1 && names(d) == "diagram" && class(d$diagram) == "diagram")
+  if(is.list(d) && length(d) == 1 && names(d) == "diagram" && is(d$diagram,"diagram"))
   {
     # d is the output from a TDA calculation
     d <- diagram_to_df(d)
   }else
   {
-    if(class(d) != "data.frame")
+    if(!is(d,"data.frame"))
     {
       stop("Diagrams must either be the output of a TDA computation or data frame.")
     }
@@ -28,7 +28,7 @@ check_diagram <- function(d,ret){
     stop("Every diagram must have three columns.")
   }
 
-  if(class(d[,1]) != "numeric" | class(d[,2]) != "numeric" | class(d[,3]) != "numeric")
+  if(!is(d[,1],"numeric") | !is(d[,2],"numeric") | !is(d[,3],"numeric"))
   {
     stop("Diagrams must have numeric columns.")
   }
@@ -82,13 +82,13 @@ all_diagrams <- function(diagram_groups,inference){
     for(diag in 1:length(diagram_groups[[g]]))
     {
       # check to make sure each diagram is actually the output of some TDA computation or a data frame
-      if(class(diagram_groups[[g]][[diag]]) != "data.frame" && !(is.list(diagram_groups[[g]][[diag]]) && length(diagram_groups[[g]][[diag]]) == 1 && names(diagram_groups[[g]][[diag]]) == "diagram" && class(diagram_groups[[g]][[diag]]$diagram) == "diagram"))
+      if(!is(diagram_groups[[g]][[diag]],"data.frame") && !(is.list(diagram_groups[[g]][[diag]]) && length(diagram_groups[[g]][[diag]]) == 1 && names(diagram_groups[[g]][[diag]]) == "diagram" && is(diagram_groups[[g]][[diag]]$diagram,"diagram")))
       {
         stop(paste0("Every diagram must be the output from a homology calculation from TDA or diagram_to_df."))
       }else
       {
         # if of the right form, format into a data frame and store diagram index
-        if(class(diagram_groups[[g]][[diag]]) == "data.frame")
+        if(is(diagram_groups[[g]][[diag]],"data.frame"))
         {
           if(inference == "difference")
           {
