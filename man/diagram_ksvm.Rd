@@ -94,10 +94,10 @@ a character vector for instance will throw an error.
 \examples{
 
 # create thirty diagrams based on three base diagrams
-g <- generate_TDAML_test_data(10,10,10)
+g <- generate_TDAML_test_data(5,5,5)
 
 # create response vector
-y <- as.factor(rep(c("D1","D2","D3"),each = 10))
+y <- as.factor(rep(c("D1","D2","D3"),each = 5))
 
 # fit model with cross validation
 model_svm <- diagram_ksvm(diagrams = g,cv = 2,dim = c(0),
