@@ -143,7 +143,7 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers
   while(T)
   {
     # there are some kernlab errors that can't always be avoided and caused by randomness
-    # when certain clusters are empty
+    # when certain clusters are empty or unclosed connections
     # so we catch those errors and rerun if necessary, up to max_iters many times
     # if a different error occurs or we rerun max_iters many times then stop with the error.
     tryCatch(expr = {clustering <- kernlab::kkmeans(x = K,centers = centers,...)},
@@ -152,6 +152,14 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers
                if(grepl(pattern = "sum\\(abs\\(dc\\)\\)",x = e) == F & grepl(pattern = "\'x\' must be an array of at least two dimensions",x = e) == F)
                {
                  stop(e)
+               }
+               
+             },
+             warning = function(w){
+               
+               if(grepl(pattern = "closing unused connection",w) == F)
+               {
+                 message(w)
                }
                
              })
@@ -295,8 +303,18 @@ diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_worke
   # compute Gram matrix
   K <- gram_matrix(diagrams = diagrams,t = t,sigma = sigma,dim = dim,num_workers = num_workers)
   
-  # return kernlab computation
-  ret_list <- list(pca = kernlab::kpca(x = K,features = features,...),diagrams = diagrams,t = t,sigma = sigma,dim = dim)
+  # return kernlab computation, ignore unhelpful kernlab warnings
+  tryCatch(expr = {ret_list <- list(pca = kernlab::kpca(x = K,features = features,...),diagrams = diagrams,t = t,sigma = sigma,dim = dim)},
+           error = function(e){stop(e)},
+           warning = function(w){
+             
+             if(grepl(pattern = "closing unused connection",w) == F)
+             {
+               message(w)
+             }
+             
+           })
+  
   class(ret_list) <- "diagram_kpca"
   return(ret_list)
   
@@ -525,25 +543,50 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
   # prediction error on the hold out set
   if(cv < nrow(params))
   {
+    # parallelize over parameter combinations
     model_errors <- foreach::`%dopar%`(obj = foreach::foreach(r = iterators::iter(params,by = "row"),.combine = c),ex = 
       {
+        # use precomputed distance matrices to calculate Gram matrix from parameters
         K <- exp(-1*r[[2]]*distance_matrices[[paste0(r[[1]],"_",r[[3]])]])
         return(mean(foreach::`%do%`(obj = foreach::foreach(s = 1:cv,.combine = c),ex =
                       {
+                        # foreach but not in parallel for cv folds
                         if(cv > 1)
                         {
+                          # split into training and test set based on cv parameter
                           training_indices <- unlist(diagrams_split[setdiff(1:cv,s)])
                           training_indices <- training_indices[order(training_indices)]
                           test_indices <- setdiff(1:length(diagrams),training_indices)
                           m <- length(test_indices)
                           K_subset <- K[training_indices,training_indices]
                           class(K_subset) <- "kernelMatrix"
-                          model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)
+                          # suppress unhelpful kernlab warnings when fitting model
+                          tryCatch(expr = {model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)},
+                                   error = function(e){stop(e)},
+                                   warning = function(w){
+                                     
+                                     if(grepl(pattern = "closing unused connection",w) == F)
+                                     {
+                                       message(w)
+                                     }
+                                     
+                                   })
+                          
                           return(model@error)
                         }else
                         {
                           class(K) <- "kernelMatrix"
-                          model <- kernlab::ksvm(x = K,y = y,type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)
+                          # suppress unhelpful kernlab warnings when fitting model
+                          tryCatch(expr = {model <- kernlab::ksvm(x = K,y = y,type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)},
+                                   error = function(e){stop(e)},
+                                   warning = function(w){
+                                     
+                                     if(grepl(pattern = "closing unused connection",w) == F)
+                                     {
+                                       message(w)
+                                     }
+                                     
+                                   })
                           return(model@error)
                           
                         }
@@ -552,25 +595,49 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
       })
   }else
   {
+    # parallelize over cv folds
     model_errors <- foreach::`%do%`(obj = foreach::foreach(r = iterators::iter(params,by = "row"),.combine = c),ex =
       {
+        # use precomputed distance matrices to calculate Gram matrix from parameters
         K <- exp(-1*r[[2]]*distance_matrices[[paste0(r[[1]],"_",r[[3]])]])
         return(mean(foreach::`%dopar%`(obj = foreach::foreach(s = 1:cv,.combine = c),ex = 
                       {
                         if(cv > 1)
                         {
+                          # split into training and test set based on cv parameter
                           training_indices <- unlist(diagrams_split[setdiff(1:cv,s)])
                           training_indices <- training_indices[order(training_indices)]
                           test_indices <- setdiff(1:length(diagrams),training_indices)
                           m <- length(test_indices)
                           K_subset <- K[training_indices,training_indices]
                           class(K_subset) <- "kernelMatrix"
-                          model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)
+                          # suppress unhelpful kernlab warnings when fitting model
+                          tryCatch(expr = {model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)},
+                                   error = function(e){stop(e)},
+                                   warning = function(w){
+                                     
+                                     if(grepl(pattern = "closing unused connection",w) == F)
+                                     {
+                                       message(w)
+                                     }
+                                     
+                                   })
+                          
                           return(model@error)
                         }else
                         {
                           class(K) <- "kernelMatrix"
-                          model <- kernlab::ksvm(x = K,y = y,type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)
+                          # suppress unhelpful kernlab warnings when fitting model
+                          tryCatch(expr = {model <- kernlab::ksvm(x = K,y = y,type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)},
+                                   error = function(e){stop(e)},
+                                   warning = function(w){
+                                     
+                                     if(grepl(pattern = "closing unused connection",w) == F)
+                                     {
+                                       message(w)
+                                     }
+                                     
+                                   })
                           return(model@error)
                           
                         }
@@ -589,13 +656,22 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
   K <- exp(-1*best_params[[2]]*distance_matrices[[paste0(best_params[[1]],"_",best_params[[3]])]])
   class(K) <- "kernelMatrix"
   
-  # return kernlab calculation
-  best_model <- list(model = kernlab::ksvm(x = K,y = y,type = type,C = best_params[[4]],nu = best_params[[5]],epsilon = best_params[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking),
-                   dim = best_params[[1]],
-                   sigma = best_params[[3]],
-                   t = best_params[[2]],
-                   CV = params)
-
+  # return kernlab calculation, suppressing unhelpful warnings
+  tryCatch(expr = {best_model <- list(model = kernlab::ksvm(x = K,y = y,type = type,C = best_params[[4]],nu = best_params[[5]],epsilon = best_params[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking),
+                                      dim = best_params[[1]],
+                                      sigma = best_params[[3]],
+                                      t = best_params[[2]],
+                                      CV = params)},
+           error = function(e){stop(e)},
+           warning = function(w){
+             
+             if(grepl(pattern = "closing unused connection",w) == F)
+             {
+               message(w)
+             }
+             
+           })
+  
   best_model$diagrams <- diagrams[best_model$model@SVindex]
 
   ret_list <- list(cv_results = params,best_model = best_model)
@@ -668,7 +744,19 @@ predict_diagram_ksvm <- function(new_diagrams,model,num_workers = parallelly::av
   # compute kernel matrix, storing the value of each kernel computation between the new diagrams and the old ones
   K <- gram_matrix(diagrams = new_diagrams,other_diagrams = model$best_model$diagrams,dim = model$best_model$dim,sigma = model$best_model$sigma,t = model$best_model$t,num_workers = num_workers)
 
-  return(kernlab::predict(object = model$best_model$model,kernlab::as.kernelMatrix(K)))
+  # suppress unhelpful kernlab warnings when predicting
+  tryCatch(expr = {predictions <- kernlab::predict(object = model$best_model$model,kernlab::as.kernelMatrix(K))},
+           error = function(e){stop(e)},
+           warning = function(w){
+             
+             if(grepl(pattern = "closing unused connection",w) == F)
+             {
+               message(w)
+             }
+             
+           })
+  
+  return(predictions)
   
 }
 
