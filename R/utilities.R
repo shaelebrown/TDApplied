@@ -83,24 +83,19 @@ all_diagrams <- function(diagram_groups,inference){
     for(diag in 1:length(diagram_groups[[g]]))
     {
       # check to make sure each diagram is actually the output of some TDA computation or a data frame
-      if(!methods::is(diagram_groups[[g]][[diag]],"data.frame") && !(is.list(diagram_groups[[g]][[diag]]) && length(diagram_groups[[g]][[diag]]) == 1 && names(diagram_groups[[g]][[diag]]) == "diagram" && methods::is(diagram_groups[[g]][[diag]]$diagram,"diagram")))
+      check_diagram(diagram_groups[[g]][[diag]],ret = F)
+      # if of the right form, format into a data frame and store diagram index
+      if(methods::is(diagram_groups[[g]][[diag]],"data.frame"))
       {
-        stop(paste0("Every diagram must be the output from a homology calculation from TDA or diagram_to_df."))
+        if(inference == "difference")
+        {
+          diagram_groups[[g]][[diag]] <- list(diag = diagram_groups[[g]][[diag]],ind = csum_group_sizes[g] + diag)
+        }
       }else
       {
-        # if of the right form, format into a data frame and store diagram index
-        if(methods::is(diagram_groups[[g]][[diag]],"data.frame"))
+        if(inference == "difference")
         {
-          if(inference == "difference")
-          {
-            diagram_groups[[g]][[diag]] <- list(diag = diagram_groups[[g]][[diag]],ind = csum_group_sizes[g] + diag)
-          }
-        }else
-        {
-          if(inference == "difference")
-          {
-            diagram_groups[[g]][[diag]] <- list(diag = diagram_to_df(diagram_groups[[g]][[diag]]),ind = csum_group_sizes[g] + diag)
-          }
+          diagram_groups[[g]][[diag]] <- list(diag = diagram_to_df(diagram_groups[[g]][[diag]]),ind = csum_group_sizes[g] + diag)
         }
       }
       

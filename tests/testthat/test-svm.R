@@ -4,7 +4,7 @@ test_that("diagram_ksvm detects incorrect parameters correctly",{
   D1 <- data.frame(dimension = 0,birth = 2,death = 3)
   D2 <- data.frame(dimension = 0,birth = 2,death = 3.1)
   D3 <- data.frame(dimension = 0,birth = c(2,5),death = c(3.1,6))
-  expect_error(diagram_ksvm(diagrams = list(D1,D2,NULL),y = c(0,1,2),num_workers = 2),"diagram")
+  expect_error(diagram_ksvm(diagrams = list(D1,D2,NULL),y = c(0,1,2),num_workers = 2),"Diagrams")
   expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),cv = NA,y = c(0,1,2),num_workers = 2),"cv")
   expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),cv = 0,y = c(0,1,2),num_workers = 2),"cv")
   expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),cv = 1.1,y = c(0,1,2),num_workers = 2),"cv")
@@ -25,7 +25,7 @@ test_that("predict_diagram_ksvm detects incorrect parameters correctly",{
   ksvm <- diagram_ksvm(diagrams = list(D1,D2,D3),dim = 0,y = c(1,2,3),num_workers = 2)
   expect_error(predict_diagram_ksvm(new_diagrams = list(),ksvm,num_workers = 2),"1")
   expect_error(predict_diagram_ksvm(new_diagrams = NULL,ksvm,num_workers = 2),"NULL")
-  expect_error(predict_diagram_ksvm(new_diagrams = list(diagrams[[1]],"1"),ksvm,num_workers = 2),"diagram")
+  expect_error(predict_diagram_ksvm(new_diagrams = list(D1,"1"),ksvm,num_workers = 2),"Diagrams")
   expect_error(predict_diagram_ksvm(new_diagrams = list(D1,D2,D3),model = list(1,2,3),num_workers = 2),"ksvm")
   
 })

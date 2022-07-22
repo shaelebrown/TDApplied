@@ -3,8 +3,8 @@ test_that("permutation_test detects incorrect parameters correctly",{
   
   circle = TDA::ripsDiag(X = TDA::circleUnif(n = 100,r = 1),maxdimension = 2,maxscale = 2)
   sphere = TDA::ripsDiag(X = TDA::sphereUnif(n = 100,d = 2,r = 1),maxdimension = 2,maxscale = 2)
-  expect_error(permutation_test(list(circle,2,circle),list(sphere,sphere,sphere),iterations = 5,p = 2,q = 2,dims = c(0,1),paired = F,distance = "wasserstein",sigma = NULL,verbose = F,num_workers = 2),"Every diagram must")
-  expect_error(permutation_test(list(circle,circle,circle),list(sphere,"2",sphere),iterations = 5,p = 2,q = 2,dims = c(0,1),paired = F,distance = "wasserstein",sigma = NULL,verbose = F,num_workers = 2),"Every diagram must")
+  expect_error(permutation_test(list(circle,2,circle),list(sphere,sphere,sphere),iterations = 5,p = 2,q = 2,dims = c(0,1),paired = F,distance = "wasserstein",sigma = NULL,verbose = F,num_workers = 2),"Diagrams must")
+  expect_error(permutation_test(list(circle,circle,circle),list(sphere,"2",sphere),iterations = 5,p = 2,q = 2,dims = c(0,1),paired = F,distance = "wasserstein",sigma = NULL,verbose = F,num_workers = 2),"Diagrams must")
   expect_error(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = NA,p = 2,q = 2,dims = c(0,1),paired = F,distance = "wasserstein",sigma = NULL,verbose = F,num_workers = 2),"NA")
   expect_error(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = 5,p = NULL,q = 2,dims = c(0,1),paired = F,distance = "wasserstein",sigma = NULL,verbose = F,num_workers = 2),"NULL")
   expect_error(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = 5,p = 2,q = NA,dims = c(0,1),paired = F,distance = "wasserstein",sigma = NULL,verbose = F,num_workers = 2),"NA")
@@ -21,9 +21,13 @@ test_that("permutation_test detects incorrect parameters correctly",{
 
 test_that("permutation_test is working",{
   
-  circle <- TDA::ripsDiag(X = TDA::circleUnif(n = 100,r = 1),maxdimension = 2,maxscale = 2)
-  sphere <- TDA::ripsDiag(X = TDA::sphereUnif(n = 100,d = 2,r = 1),maxdimension = 2,maxscale = 2)
+  circle <- TDA::ripsDiag(X = TDA::circleUnif(n = 50,r = 1),maxdimension = 2,maxscale = 2)
+  sphere <- TDA::ripsDiag(X = TDA::sphereUnif(n = 50,d = 2,r = 1),maxdimension = 2,maxscale = 2)
+  circle2 <- TDA::ripsDiag(X = TDA::circleUnif(n = 50,r = 1),maxdimension = 2,maxscale = 2,library = "dionysus",location = T)
+  sphere2 <- TDA::ripsDiag(X = TDA::sphereUnif(n = 50,d = 2,r = 1),maxdimension = 2,maxscale = 2,library = "dionysus",location = T)
   d <- diagram_distance(circle,sphere,dim = 1) # wasserstein distance in dimension 1
+  # one check to make sure when cycle locations are calculated there are no errors
+  expect_length(permutation_test(list(circle2,circle2,circle2),list(sphere2,sphere2,sphere2),iterations = 10,dims = c(1),num_workers = 2)$permvals[[1]],10)
   expect_length(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = 10,dims = c(1),num_workers = 2)$permvals[[1]],10)
   expect_length(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = 15,dims = c(1),num_workers = 2)$permvals[[1]],15)
   expect_equal(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = 10,dims = c(1),num_workers = 2)$test_statistics[[1]],0)

@@ -11,13 +11,16 @@ test_that("diagram_distance detects incorrect parameters correctly",{
   
 })
 
-test_that("diagram_distance can accept inputs from either TDA homology output or diagram_to_df function",{
+test_that("diagram_distance can accept inputs from either TDA homology output or diagram_to_df function, with or without cycle location",{
   
   D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
   D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)
+  D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
   expect_gte(diagram_distance(D1 = D1,D2 = D2,dim = 1),0)
   expect_gte(diagram_distance(D1 = diagram_to_df(D1),D2 = D2,dim = 1),0)
   expect_gte(diagram_distance(D1 = D1,D2 = diagram_to_df(D2),dim = 1),0)
+  expect_gte(diagram_distance(D1 = D3,D2 = diagram_to_df(D2),dim = 1),0)
+  expect_gte(diagram_distance(D1 = D1,D2 = diagram_to_df(D3),dim = 1),0)
   
 })
 
