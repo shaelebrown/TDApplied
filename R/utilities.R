@@ -7,7 +7,7 @@
 check_diagram <- function(d,ret){
 
   # error checks for a diagram d stored as a data frame, and conversion
-  if(is.list(d) && ((length(d) == 1 && names(d) == "diagram" && methods::is(d$diagram,"diagram")) || ((length(d) == 4 && names(d) == c("diagram","birthLocation","deathLocation","cycleLocation") && methods::is(d$diagram,"diagram")))))
+  if(is.list(d) && ((length(d) == 1 && all(names(d) %in% "diagram") && methods::is(d$diagram,"diagram")) || ((length(d) == 4 && all(names(d) %in% c("diagram","birthLocation","deathLocation","cycleLocation")) && methods::is(d$diagram,"diagram")))))
   {
     # d is the output from a TDA calculation
     d <- diagram_to_df(d)
