@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-Topological data analysis is a new area of data science which can find unique, non-linear global structure in whole datasets. The main tool of topological data analysis is called persistent homology, which produces a "shape descriptor" of its input dataset called a "persistence diagram". Two main R packages exist for computing persistence diagrams; however, the more flexible of the two, called TDA, stores persistence diagrams in a strange data structure. Methods exist for computing distances and similarities (kernels) between pairs of persistence diagrams, but only distance calculations are available in R packages. Moreover, several papers have used distance and kernel computations in order to perform machine learning or inferences tasks with groups of persistence diagrams. To date no publicly available software in either python or R provides the functionality for these types of analyses. In order to make the power of topological data analysis available to data and machine learning practitioners, a software package must exist which can 
+Topological data analysis is a relatively new area of data science which can find unique, non-linear global structure in whole datasets. The main tool of topological data analysis is called *persistent homology*, which produces a "shape descriptor" (called a *persistence diagram*) of its input dataset. Two main R packages exist for computing persistence diagrams; however, the more flexible of the two, called TDA, stores persistence diagrams in a non-standard data structure. Methods exist for computing distances and kernels (which are a special type of similarity functions) between pairs of persistence diagrams, but only distance calculations are currently available in the R packages. Several papers have used distance and kernel computations in order to perform machine learning or inferences tasks with groups of persistence diagrams, but to date no publicly available software in either python or R provides the functionality for these types of analyses. In order to make the power of topological data analysis more readily available to data and machine learning practitioners, it would be very helpful to have a software package that can
 
 1. convert persistence diagrams computed using the R package TDA into a commonly-used data type for data analyses (a data frame), 
 2. implement fast versions of both distance and kernel calculations for pairs of persistence diagrams, and 
@@ -30,26 +30,31 @@ It is with these goals that the package TDAML was created.
 
 # Software Review
 
-Topological data analysis has gained popularity over the past two decades since the original paper on persistent homology was published (@PHoriginal), and three main R packages have been created for topological data analysis calculations. The R package TDA (@R-TDA) is a wrapper for a number of C++ persistent homology packages, including Dionysus (@Dionysus), GUDHI (@GUDHI) and PHAT (@PHAT), and provides distance calculation functionality. The R package TDAstats (@R-TDAstats) is a wrapper of the C++ persistent homology engine Ripser (@Ripser), and provides a method for inference of two groups of persistence diagrams (as in @Robinson_Turner). However, the distance calculation currently implemented, as of the date of writing, is not a standard distance metric for persistence diagrams. It is worthwhile to note that there are several python packages dedicated to topological data analysis calculations, including scikit-TDA (@scikittda2019) (computing persistence diagrams, and distances/kernels between them), and giotto-tda (@tauzin2020giottotda) (computing persistence diagrams and using persistence diagrams to analyze time series data).
+Topological data analysis has gained popularity over the past two decades since the original paper on persistent homology was published [@PHoriginal], and two main R packages have been created for persistent homology calculations:
 
-There are a number of current shortcomings of available topological data analysis software. Firstly, in both python and R there is no package which allows for machine learning and inference of persistence diagrams, a limitation which greatly constrains the types of analyses that can be carried out. In R this is partially because there is no package for kernel calculations of persistence diagrams, but the very slow computation of distances also inhibits the practicality of distance-based inference procedures. Additionally, in R, the output of persistent homology calculations from the package TDA is a list with an element called "diagram" of class "diagram". The package TDA provides some nice additional functionality compared to TDAstats, including the ability to return the location, in the dataset, of each topological feature found in the persistence diagram. Therefore, the unnatural data type returned by persistent homology calculations in the package TDA may also be limiting the development of TDA applications. 
+1. The R package TDA [@R-TDA] is a wrapper for a number of C++ persistent homology packages, including Dionysus [@Dionysus], GUDHI [@GUDHI] and PHAT [@PHAT], and provides distance calculation capabilities between persistence diagrams. 
+2. The R package TDAstats [@R-TDAstats] is a wrapper of the C++ persistent homology engine Ripser [@Ripser], and provides an inference method for detecting group differences of two groups of persistence diagrams (as in [@Robinson_Turner]. However, the distance calculation currently implemented in that package, is not based on an accepted distance metric for persistence diagrams. 
+
+It is worthwhile to note that there are several python packages dedicated to topological data analysis calculations, including scikit-TDA [@scikittda2019] (which computes persistence diagrams, and distances/kernels between them), and giotto-tda [@tauzin2020giottotda] (which computes persistence diagrams and uses persistence diagrams to analyze time series data).
+
+There are a number of shortcomings of available topological data analysis software. Firstly, in both python and R there is currently no package which allows for machine learning and inference of persistence diagrams, a limitation which greatly constrains the types of analyses that can be carried out. In R this is partially because there is no package for kernel calculations of persistence diagrams, but the very slow computation of distances between persistence diagrams also inhibits the practicality of distance-based inference procedures. Additionally, in R, the output of persistent homology calculations from the package TDA is a list with an element called "diagram" of class "diagram", which is not compatible with data frame methods that form the basis for data analysis in R. The package TDA provides some nice additional functionality compared to TDAstats, including the ability to return the location, in the dataset, of each topological feature found in the persistence diagram. Therefore, the non-standard data type returned by persistent homology calculations in the package TDA may also be limiting the development of TDA applications. 
 
 # Package TDAML
 
-The package TDAML aims to solve the three goals outlined in the introductory paragraph. TDAML is built to use as input the output of persistent homology calculations from the package TDA. Firstly, the function `diagram_to_df` allows the conversion of the output of TDA persistent homology calculations to a data frame. Secondly, the functions `diagram_distance` and `diagram_kernel` allow for fast distance and kernel calculations respectively, and their counterparts `distance_matrix` and `gram_matrix` compute in parallel, for scalability, the (cross) distance and (cross) Gram matrices respectively. Thirdly, these distance and kernel calculations are used to perform machine learning and inference on persistence diagrams - methods include 
+The package TDAML aims to solve the three goals outlined in the introductory paragraph. TDAML is built to use as input the output of persistent homology calculations from the package TDA. Firstly, the function `diagram_to_df` allows the conversion of the output of TDA persistent homology calculations to a data frame. Secondly, the functions `diagram_distance` and `diagram_kernel` allow for fast distance and kernel calculations respectively, and their counterparts `distance_matrix` and `gram_matrix` compute in parallel, for scalability, the (cross) distance and (cross) Gram matrices respectively. Thirdly, these distance and kernel calculations are used to perform machine learning and inference on persistence diagrams. Methods include 
 
 1. dimension reduction with metric multidimensional scaling (MDS) and kernel prinicpal components analysis (kpca),
 2. clustering with kernel k-means,
 3. regression and classification with kernel support-vector machines (ksvm), and
-4. inference with distance and kernel calculations looking for group differences and group independence respectively
+4. inference with distance and kernel calculations looking for group differences and group independence, respectively.
 
-The kernel machine learning methods implemented are wrappers of the flexible R package for kernel calculations kernlab (@R-kernlab), with some additional processing steps specific to persistence diagrams. In the subsequent sections we will describe these applications in more detail.
+The kernel machine learning methods implemented are wrappers of the flexible R package for kernel calculations kernlab [@R-kernlab], with some additional processing steps specific to persistence diagrams. In the subsequent sections we will describe these applications in more detail.
 
-# Background: persistent homology
+# Background: Persistent Homology
 
-The main tool of topological data analysis is called persistent homology (see (@PHoriginal) for the introductory paper, and (@ComputingPH) for further computational details). Persistent homology has been applied in a variety of areas, including (but not limited to) economics (largely for the application of time series, for example see (@PHeconomics)), neuroscience (see (@review_of_PH_for_fMRI) for a number of functional MRI applications), etc. 
+The main tool of topological data analysis is called persistent homology (see [@PHoriginal] for the introductory paper, and [@ComputingPH] for further computational details). Persistent homology has been applied in a variety of areas, including (but not limited to) economics (largely for the application of time series, for example see [@PHeconomics]), neuroscience (see [@review_of_PH_for_fMRI] for a number of functional MRI applications), etc. 
 
-Persistent homology starts with data points and a distance function. It assumes that these points were sampled from some kind of continuous shape. This shape has certain features that exist at various scales, but sampling induces noise in these features. Persistent homology aims to describe certain mathematical features of this underlying shape, by forming approximations to the shape at various distance scales. The mathematical features which are tracked are clusters (connected components), loops (ellipses), voids (spheres), etc, and the "significance" of each feature is calculated. What's really interesting about these particular mathematical features is that they can tell us where our data is not, which is extremely important information which other data analysis methods can't provide.
+Persistent homology starts with data points and a distance function. It assumes that these points were sampled from some kind of shape. This shape has certain features that exist at various scales, but sampling induces noise in these features. Persistent homology aims to describe certain mathematical features of this underlying shape, by forming approximations to the shape at various distance scales. The mathematical features which are tracked are clusters (connected components), loops (ellipses), voids (spheres), etc, and the "significance" of each feature is calculated (i.e. are the feature "real" or not). The *homological dimension* of these features are 0, 1 and 2 respectively (higher dimensional features can also be calculated). What's really interesting about these particular mathematical features is that they can tell us where our data is not, which is extremely important information which other data analysis methods can't provide.
 
 ```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center'}
 circ <- TDA::circleUnif(n = 50,r = 1)
@@ -91,15 +96,15 @@ for(i in 1:(nrow(circ)-1))
 par(mfrow = c(1,1))
 ```
 
-The persistent homology algorithm proceeds in the following manner: first, if the input is a dataset and distance metric then the distance matrix, storing the distance metric value of each pair of points in the dataset, is computed. Next, a parameter $\epsilon \geq 0$ is grown starting at 0, and at each $\epsilon$ value we compute a skeletal approximation of the dataset structure $C_{\epsilon}$ called a "simplicial complex" (see (@PHoriginal) or (@ComputingPH) for more details) by connecting all pairs of points whose distance is at most $\epsilon$. To encode higher-dimensional structure in these approximations, we also add a triangle between any triple of points which are all connected, a tetrahedron between any quadruple of points which are all connected, etc. Note that this process of forming a sequence of skeletal approximations is called a filtration, and other methods exist for forming the approximations (the one described here is the most commonly used, called the Rips-Vietoris complex).
+The persistent homology algorithm proceeds in the following manner: first, if the input is a dataset and distance metric, then the distance matrix, storing the distance metric value of each pair of points in the dataset, is computed. Next, a parameter $\epsilon \geq 0$ is grown starting at 0, and at each $\epsilon$ value we compute a shape approximation of the dataset $C_{\epsilon}$, called a *simplicial complex* (see [@PHoriginal] or [@ComputingPH] for more details). We construct $C_{\epsilon}$ by connecting all pairs of points whose distance is at most $\epsilon$. To encode higher-dimensional structure in these approximations, we also add a triangle between any triple of points which are all connected, a tetrahedron between any quadruple of points which are all connected, etc. Note that this process of forming a sequence of skeletal approximations is called a filtration, and other methods exist for forming the approximations (the one described here is the most commonly used, called the *Rips-Vietoris* complex).
 
-At any given $\epsilon$ value, some topological features will exist in $C_{\epsilon}$. As $\epsilon$ grows, the $C_{\epsilon}$'s will contain eachother, i.e. if $\epsilon_{1} < \epsilon_{2}$ then every edge (triangle, tetrahedron etc.) in $C_{\epsilon_1}$ will also be present in $C_{\epsilon_2}$. Therefore, each topological feature will be "born" at some $\epsilon_{birth}$ value, and "die" at some some $\epsilon_{death}$ value. Consider the example of a loop - a loop will be "born" when the last connection around the circumference of the loop is connected (at the $\epsilon$ value which is the largest distance between consecutive points around the loop), and the loop will "die" when the last connection across the loop's diameter is connected.
+At any given $\epsilon$ value, some topological features will exist in $C_{\epsilon}$. As $\epsilon$ grows, the $C_{\epsilon}$'s will contain each other, i.e. if $\epsilon_{1} < \epsilon_{2}$ then every edge (triangle, tetrahedron etc.) in $C_{\epsilon_1}$ will also be present in $C_{\epsilon_2}$. Therefore, each topological feature will be "born" at some $\epsilon_{birth}$ value, and "die" at some some $\epsilon_{death}$ value. Consider the example of a loop -- a loop will be "born" when the last connection around the circumference of the loop is connected (at the $\epsilon$ value which is the largest distance between consecutive points around the loop), and the loop will "die" when the last connection across the loop's diameter is connected thereby filling in its hole.
 
-Therefore, the output of persistent homology, a persistence diagram, in each dimension has one 2D point for each topological feature found in the filtration process, where the $x$-value of the point is the birth $\epsilon$ value and the $y$-value is the death $\epsilon$ value. This is why every point lies above the diagonal - features die after they are born! The difference of a points $y$ and $x$ value, $y-x$, is called the "persistence" of the corresponding topological feature. Points which have high (large) persistence likely represent real topological features of the dataset, whereas points with low persistence likely represent topological noise.
+Therefore, the output of persistent homology, a persistence diagram, in each dimension has one 2D point for each topological feature found in the filtration process, where the $x$-value of the point is the birth $\epsilon$ value and the $y$-value is the death $\epsilon$ value. This is why every point lies above the diagonal -- features die after they are born! The difference of a points $y$ and $x$ value, $y-x$, is called the "persistence" of the corresponding topological feature. Points which have high (large) persistence likely represent real topological features of the dataset, whereas points with low persistence likely represent topological noise.
 
-Since persistence diagrams can contain different numbers of points, and the ordering of points does not matter, there is no shared Euclidean space for all persistence diagrams. Therefore, most machine learning and statistical techniques are not directly applicable to persistence diagrams. Nevertheless, we can apply a number of these techniques to persistence diagrams provided we can quantify how near (similar) or far (distant) they are from each other, and describing suitable distance and similarity measures with their accompanying analysis methods will be the content of the following section.
+A persistence diagram containing $n$ topological features can be represented in a vector of length $2n$. However, persistence diagrams can contain different numbers of features, and the ordering of the features is arbitrary. There, there is no obvious vector representation of all persistence diagrams that can be used as the input of machine learning or statistical inference. Nevertheless, we can apply a number of these techniques to persistence diagrams provided we can quantify how near (similar) or far (distant) they are from each other, and describing suitable distance and similarity measures with their accompanying analysis methods will be the content of the following section.
 
-# TDAML methods and underlying theory
+# TDAML Methods and Underlying Theory
 
 In this section we will describe the various computational tools implemented in the package TDAML to analyze persistence diagrams, both explaining the mathematics and providing functional examples. To run our examples we must start by loading the TDAML package:
 
@@ -123,22 +128,35 @@ abline(a = 0,b = 1)
 par(mfrow = c(1,1))
 ```
 
-When desired, random Gaussian noise with a small variance will be added to the birth and death values of the points in these three diagrams (being careful make sure the points always have appropriate birth and death values), which will be achieved with the TDAML internal (but documented) function `generate_TDAML_test_data`.
+When desired, random Gaussian noise with a small variance will be added to the birth and death values of the points in these three diagrams (being careful make sure the points always have appropriate birth and death values), which will be achieved with the TDAML internal (but documented) function `generate_TDAML_test_data`. Here is an example of making noisy copies of D1:
 
-## Distance between persistence diagrams
+```{r,echo = F,fig.height = 5,fig.width = 5,fig.align = 'center'}
+par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+noisy_copies_D1 = generate_TDAML_test_data(2,0,0)
+cols = factor(c("D1","Copy 1","Copy 2"),levels = c("D1","Copy 1","Copy 2"))
+plot(x = c(D1$birth,noisy_copies_D1[[1]]$birth,noisy_copies_D1[[2]]$birth),y = c(D1$death,noisy_copies_D1[[1]]$death,noisy_copies_D1[[2]]$death),main = "D1 and noisy copies",xlab = "",ylab = "",xlim = c(0,4),ylim = c(0,4),col = c("black","red","blue"),bty = "L")
+lines(x = c(-0.15,4.15),y = c(-0.15,4.15))
+legend("topright", inset=c(-0.2,0), 
+       legend=levels(cols), 
+       pch=16, col=c("black","red","blue"))
+```
 
-There are several ways to compute distances between persistence diagrams in the same dimension (where we subset only the points in the desired dimension) - the most common two are called the 2-wasserstein and bottleneck distances (@distance_calc). These techniques find an optimal matching of the 2D points in their input two diagrams, and compute a cost of that optimal matching. A point from one diagram is allowed either to be paired (matched) with a point in the other diagram or its diagonal projection, i.e. the nearest point on the diagonal line $y=x$, using either the Euclidean distance or max absolute difference in either coordinate (called the infinity-norm distance).
+The parameters to the function are the numbers of copies desired from each of D1, D2 and D3. So, for example, the code `generate_TDAML_test_data(3,3,3)` would generate a list of three noisy copies of D1 follows by three noisy copies of D2 followed by three noisy copies of D3.
 
-Allowing points to be paired with their diagonal projections both allows for matchings of persistence diagrams with different numbers of points (which is almost always the case in practice) and also formalizes the idea that some points in a persistence diagram represent noise. The "cost" value associated with a matching is given by either (i) the maximum of infinity-norm distances between paired points, or (ii) the square-root of the sum of squared infinity-norm between matched points. The cost of the optimal matching under loss (i) is called the bottleneck distance of persistence diagrams, and the cost of the optimal matching of cost (ii) is called the 2-wasserstein metric of persistence diagrams. Both distance metrics have been used in a number of applications, but the 2-wasserstein metric is able to find more fine-scale differences in persistence diagrams compared to the bottleneck distance. The problem of finding an optimal matching can be solved with the Hungarian algorithm, which is implemented in the R package clue (@R-clue).
+## Distance Between Persistence Diagrams
+
+As the persistence diagram is a descriptor of the underlying shape structure of a dataset, it can be useful to quantify the differences between pairs of persistence diagrams. There are several ways to compute distances between persistence diagrams in the same homological dimension (like dimension 0 for clusters, dimension 1 for loops, etc.). The most common two are called the *2-wasserstein* and *bottleneck distances* [@distance_calc]. These techniques find an optimal matching of the 2D points in their input two diagrams, and compute a cost of that optimal matching. A point from one diagram is allowed either to be paired (matched) with a point in the other diagram or its diagonal projection, i.e. the nearest point on the diagonal line $y=x$ (matching a point to its diagonal projection is essentially saying that feature is likely topological noise because it died very soon after it was born).
+
+Allowing points to be paired with their diagonal projections both allows for matchings of persistence diagrams with different numbers of points (which is almost always the case in practice) and also formalizes the idea that some points in a persistence diagram represent noise. The "cost" value associated with a matching is given by either (i) the maximum of infinity-norm distances between paired points, or (ii) the square-root of the sum of squared infinity-norm between matched points. The cost of the optimal matching under loss (i) is called the bottleneck distance of persistence diagrams, and the cost of the optimal matching of cost (ii) is called the 2-wasserstein metric of persistence diagrams. Both distance metrics have been used in a number of applications, but the 2-wasserstein metric is able to find more fine-scale differences in persistence diagrams compared to the bottleneck distance. The problem of finding an optimal matching can be solved with the Hungarian algorithm, which is implemented in the R package clue [@R-clue].
 
 ```{r,echo = F,fig.height = 3,fig.width = 5,fig.align = 'center'}
 par(mfrow = c(1,2))
-plot(x = c(D1$birth,D2$birth),y = c(D1$death,D2$death),main = "Best matching D1 and D2",xlab = "",ylab = "",xlim = c(0,4),ylim = c(0,4))
+plot(x = c(D1$birth,D2$birth),y = c(D1$death,D2$death),main = "Best matching D1,D2",xlab = "",ylab = "",xlim = c(0,4),ylim = c(0,4))
 abline(a = 0,b = 1)
 lines(c(2,2),c(3,3.3))
 lines(c(0,0.25),c(0.5,0.25))
 
-plot(x = c(D1$birth,D3$birth),y = c(D1$death,D3$death),main = "Best matching D1 and D3",xlab = "",ylab = "",xlim = c(0,4),ylim = c(0,4))
+plot(x = c(D1$birth,D3$birth),y = c(D1$death,D3$death),main = "Best matching D1,D3",xlab = "",ylab = "",xlim = c(0,4),ylim = c(0,4))
 abline(a = 0,b = 1)
 lines(c(2,2.5),c(3,2.5))
 lines(c(0,0.25),c(0.5,0.25))
@@ -147,7 +165,7 @@ par(mfrow = c(1,1))
 
 In the picture we can see that there is a "better" matching between D1 and D2 compared to D1 and D3, so the (wasserstein/bottleneck) distance value between D1 and D2 would be smaller than that of D1 and D3.
 
-The wasserstein and bottleneck distances have been implemented in the TDAML function `diagram_distance`. The parameter `p` determines which distance to calculate when the `distance` parameter is "wasserstein" (infinity leads to the bottleneck distance, and the wasserstein is computed otherwise). We can confirm that the distance between D1 and D2 is smaller than D1 and D3 for both distances:
+The wasserstein and bottleneck distances have been implemented in the TDAML function `diagram_distance`. We can confirm that the distance between D1 and D2 is smaller than D1 and D3 for both distances:
 
 ```{r,echo = T}
 # calculate 2-wasserstein distance between D1 and D2
@@ -163,9 +181,9 @@ diagram_distance(D1,D2,dim = 0,p = Inf,distance = "wasserstein")
 diagram_distance(D1,D3,dim = 0,p = Inf,distance = "wasserstein")
 ```
 
-Note that there is a generalization of the 2-wasserstein distance for any $p \geq 1$, the $p$-wasserstein distance, which can also be computed using the `diagram_distance` function by varying the parameter `p`.
+There is a generalization of the 2-wasserstein distance for any $p \geq 1$, the $p$-wasserstein distance, which can also be computed using the `diagram_distance` function by varying the parameter `p`.
 
-Another distance metric between persistence diagrams, which will be useful for kernel calculations, is called the Fisher information metric, $d_{FIM}(D_1,D_2,\sigma)$ (details can be found in (@persistence_fisher)). The idea is to represent the two persistence diagrams as probability density functions, with a 2D-Gaussian point mass centered at each point in both diagrams (including the diagonal projections of the points in the opposite diagram) all of variance $\sigma^2 > 0$, and calculate how much those distributions agree on their pdf value at each point in the plane (called their Fisher information metric). 
+Another distance metric between persistence diagrams, which will be useful for kernel calculations, is called the *Fisher information metric*, $d_{FIM}(D_1,D_2,\sigma)$ (details can be found in [@persistence_fisher]). The idea is to represent the two persistence diagrams as probability density functions, with a 2D-Gaussian point mass centered at each point in both diagrams (including the diagonal projections of the points in the opposite diagram), all of variance $\sigma^2 > 0$, and calculate how much those distributions agree on their pdf value at each point in the plane (called their *Fisher information metric*). 
 
 ```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center'}
 par(mfrow = c(1,3))
@@ -216,9 +234,9 @@ diagram_distance(D1,D3,dim = 0,distance = "fisher",sigma = 1)
 
 Again, D1 and D2 are less different than D1 and D3 using the Fisher information metric.
 
-## Metric multidimensional scaling of persistence diagrams
+## Multidimensional Scaling of Persistence Diagrams
 
-One common dimension-reduction technique in machine learning is called multidimensional scaling (MDS) (@Cox2008). MDS takes as input an $n$ by $n$ distance (or dissimilarity) matrix $D$, computed from $n$ points in a dataset, and outputs an embedding of those points into a Euclidean space of chosen dimension $k$ which best preserves the inter-point distances. MDS is often used for visualizing data in exploratory analyses, and can be particularly useful when the input data points do not live in a common Euclidean space (as is the case for persistence diagrams). Using the R function `cmdscale` from the package stats (@R-stats) we can compute the optimal embedding of a set of persistence diagrams using any of the three distance metrics using the function `diagram_mds`. Here is an example of the `diagram_mds` function on nine persistence diagrams, three noisy copies sampled from each of D1, D2 and D3:
+Dimension reduction is a task in machine learning which is commonly used for data visualization, removing noise in data, and decreasing the number of covariates in a model (which can be helpful in reducing overfitting). One common dimension reduction technique in machine learning is called *multidimensional scaling* (MDS) [@Cox2008]. MDS takes as input an $n$ by $n$ distance (or dissimilarity) matrix $D$, computed from $n$ points in a dataset, and outputs an embedding of those points into a Euclidean space of chosen dimension $k$ which best preserves the inter-point distances. MDS is often used for visualizing data in exploratory analyses, and can be particularly useful when the input data points do not live in a common Euclidean space (as is the case for persistence diagrams). Using the R function `cmdscale` from the package stats (@R-stats) we can compute the optimal embedding of a set of persistence diagrams using any of the three distance metrics using the function `diagram_mds`. Here is an example of the `diagram_mds` function projecting nine persistence diagrams, three noisy copies sampled from each of D1, D2 and D3, into 2D space:
 
 ```{r,echo = T,fig.height = 3,fig.width = 6,fig.align = 'center'}
 # create 9 diagrams based on D1, D2 and D3
@@ -238,9 +256,9 @@ legend("topright", inset=c(-0.2,0),
 
 The MDS plot shows the clear separation between the three generating diagrams (D1, D2 and D3), and the embedded coordinates could be used for further downstream analyses.
 
-## Testing for group differences of persistence diagrams
+## Testing for Group Differences of Persistence Diagrams
 
-Distributions of persistence diagrams can be complicated (see (@PD_means) and (@PD_distributions)). Therefore, a non-parametric permutation test has been proposed which can find differences in groups of persistence diagrams. Such a test was first proposed in (@Robinson_Turner), and some variations have been suggested in later publications. In (@Robinson_Turner), two groups of persistence diagrams would be compared. The null hypothesis, $H_0$, is that the diagrams from the two groups are generated from shapes with the same type and scale of topological features. The alternative hypothesis, $H_A$, is that the underlying type or scale of the features are different between the two groups. In each dimension a p-value is computed, finding evidence against $H_0$ in that dimension. A measure of within-group distances (a "loss function") is calculated for the two groups, and that measure is compared to a null distribution for when the group labels are permuted.
+One of the most important inference procedures in classical statistics is the analysis of variance (ANOVA), which can find differences in the means of groups of normally-distributed measurements [@CasellaBerger]. Distributions of persistence diagrams and their means can be complicated (see [@PD_means] and [@PD_distributions]). Therefore, a non-parametric permutation test has been proposed which can find differences in groups of persistence diagrams. Such a test was first proposed in [@Robinson_Turner], and some variations have been suggested in later publications. In [@Robinson_Turner], two groups of persistence diagrams would be compared. The null hypothesis, $H_0$, is that the diagrams from the two groups are generated from shapes with the same type and scale of topological features, i.e. they "come" from the same "shape". The alternative hypothesis, $H_A$, is that the underlying type or scale of the features are different between the two groups. In each dimension a p-value is computed, finding evidence against $H_0$ in that dimension. A measure of within-group distances (a "loss function") is calculated for the two groups, and that measure is compared to a null distribution for when the group labels are permuted.
 
 This inference procedure is implemented in the `permutation_test` function, with several speedups and additional functionalities. Firstly, the loss function is computed in parallel for scalability since distance computations can be expensive. Secondly, we store distance calculations as we compute them because these calculations are often repeated. Additional functionality includes allowing for any number groups (not just two) and allowing for a pairing between groups of the same size as described in (@dependencies). When a natural pairing exists between the groups (like if the groups represent persistence diagrams from the same subject of a study in different conditions) we can simulate a more realistic null distribution by restricting the way in which we permute group labels, achieving higher statistical power. 
 
@@ -259,11 +277,11 @@ perm_test$p_values
 
 As expected, a difference was found (at the $\alpha = 0.05$ significance level) between the three groups.
 
-## Kernels between persistence diagrams
+## Kernels Between Persistence Diagrams
 
-A kernel function is a special (positive semi-definite) symmetric similarity measure between objects in some complicated space (see (@murphyML) for a good discussion of kernel methods). Kernels can be used to map complex objects into a high-dimensional space amenable to machine learning and other tasks - some examples of machine learning techniques which can be "kernelized" when dealing with complicated data are k-means (kernel k-means), principal components analysis (kernel PCA), and support vector machines (which are inherently based on kernel calculations).
+A kernel function is a special (positive semi-definite) symmetric similarity measure between objects in some complicated space which can be used to project data into a space suitable for machine learning [@murphyML]. Some examples of machine learning techniques which can be "kernelized" when dealing with complicated data are *k-means* (kernel k-means), *principal components analysis* (kernel PCA), and *support vector machines* (SVM) which are inherently based on kernel calculations.
 
-There have been, to date, four main kernels proposed for persistence diagrams. In TDAML the persistence Fisher kernel (@persistence_fisher) has been implemented because of its practical advantages over the other kernels - smaller cross-validation SVM error on a number of test data sets and a faster method for cross validation. However, for information on the other three kernels see (@kernel_TDA), (@sliced_wasserstein), and (@kernel_TDA_original).
+There have been, to date, four main kernels proposed for persistence diagrams. In TDAML the persistence Fisher kernel [@persistence_fisher] has been implemented because of its practical advantages over the other kernels -- smaller cross-validation SVM error on a number of test data sets and a faster method for cross validation. For information on the other three kernels see [@kernel_TDA], [@sliced_wasserstein], and [@kernel_TDA_original].
 
 The persistence Fisher kernel is computed directly from the Fisher information metric between two persistence diagrams: let $\sigma > 0$ be the parameter for $d_{FIM}$, and let $t > 0$. Then the persistence Fisher kernel is defined as $k_{PF}(D_1,D_2) = \mbox{exp}(-t*d_{FIM}(D_1,D_2,\sigma))$. Computing the persistence Fisher kernel can be achieved with the `diagram_kernel` function in TDAML:
 
@@ -274,11 +292,11 @@ diagram_kernel(D1,D2,dim = 0,sigma = 2,t = 2)
 diagram_kernel(D1,D3,dim = 0,sigma = 2,t = 2)
 ```
 
-Like before, D1 nd D2 are more similar than D1 and D3.
+As before, D1 and D2 are more similar than D1 and D3.
 
-## Kernel k-means of persistence diagrams
+## Kernel k-means of Persistence Diagrams
 
-Kernel k-means (@kkmeans) is a method which extends regular k-means clustering via a kernel on complex data. The "distance" from a persistence diagram to a cluster center is calculated using kernels, and the algorithm converges like regular k-means. This algorithm is implemented in the function `diagram_kkmeans` as a wrapper of the kernlab function `kkmeans`. Moreover, a prediction function `predict_diagram_kkmeans` can be used to find the nearest cluster labels for a new set of diagrams. Here is an example clustering three groups of noisy copies from D1, D2 and D3:
+Kernel k-means [@kkmeans] is a method which can find hidden groups in complex data, extending regular k-means clustering [@murphyML] via a kernel. A "kernel distance" is calculated between a persistence diagram and a cluster center using only the kernel function, and the algorithm converges like regular k-means. This algorithm is implemented in the function `diagram_kkmeans` as a wrapper of the kernlab function `kkmeans`. Moreover, a prediction function `predict_diagram_kkmeans` can be used to find the nearest cluster labels for a new set of diagrams. Here is an example clustering three groups of noisy copies from D1, D2 and D3:
 
 ```{r,echo = T}
 # create noisy copies of D1, D2 and D3
@@ -291,7 +309,7 @@ clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_wo
 clust$clustering@.Data
 ```
 
-As we can see, the `diagram_kkmeans` function was able to correctly separate the three generating diagrams D1, D2 and D3, however note that the cluster labels need not be 1,1,1,2,2,2,3,3,3 as the labels themselves are meaningless.
+As we can see, the `diagram_kkmeans` function was able to correctly separate the three generating diagrams D1, D2 and D3 (the cluster labels are arbitrary and therefore may not be 1,1,1,2,2,2,3,3,3, however the induce they correct partition).
 
 If we wish to predict the cluster label for new persistence diagrams (computed via the largest kernel value to any cluster center), we can use the `predict_diagram_kkmeans` function as follows:
 
@@ -305,9 +323,9 @@ predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)
 
 This function correctly predicted the cluster for each new diagram (assigning each diagram to the cluster label by D1, D2 or D3, depending on which diagram it was generated from).
 
-## Kernel principal components analysis of persistence diagrams
+## Kernel Principal Components Analysis of Persistence Diagrams
 
-Kernel PCA (@kpca) is an extension of regular PCA which uses a kernel to project complex data into a high-dimensional Euclidean space and then uses PCA to project that data into a low-dimensional space. The `diagram_kpca` method computes the kPCA embedding of a set of persistence diagrams, and the `predict_diagram_kpca` function can be used to project new diagrams using a pretrained kPCA model. Here is an example using a group of noisy copies of D1, D2 and D3:
+PCA is another dimension reduction technique in machine learning, but can be preferable compared to MDS in certain situations because it allows for the projection of new data points onto an old embedding model [@murphyML]. For example, this can be important if PCA is used as a pre-processing step in model fitting. Kernel PCA [@kpca] is an extension of regular PCA which uses a kernel to project complex data into a high-dimensional Euclidean space and then uses PCA to project that data into a low-dimensional space. The `diagram_kpca` method computes the kPCA embedding of a set of persistence diagrams, and the `predict_diagram_kpca` function can be used to project new diagrams using a pre-trained kPCA model. Here is an example using a group of noisy copies of D1, D2 and D3:
 
 ```{r,echo = T,fig.height = 3,fig.width = 6,fig.align = 'center'}
 # create noisy copies of D1, D2 and D3
@@ -347,11 +365,11 @@ legend("topright",inset = c(-0.2,0),
 
 As we can see, the original three groups, and their approximate location in 2D space, is preserved during prediction.
 
-## Kernel support-vector machines of persistence diagrams
+## Kernel Support Vector Machines of Persistence Diagrams
 
-Support vector machines (SVM) (@murphyML) are one of the most popular machine learning techniques for regression and classification tasks. SVMs use a kernel function to project complex data into a high-dimensional space and then find a sparse set of training examples, called "support vectors", which maximally linearly separate the outcome variable classes (or yield the highest explained variance in the case of regression).
+SVMs [@murphyML] are one of the most popular machine learning techniques for regression and classification tasks. SVMs use a kernel function to project complex data into a high-dimensional space and then find a sparse set of training examples, called "support vectors", which maximally linearly separate the outcome variable classes (or yield the highest explained variance in the case of regression).
 
-SVMs have been implemented in the function `diagram_ksvm` for when the input data set consists of a single feature which is a persistence diagram and an outcome-variable vector. A prediction method is supplied called `predict_diagram_ksvm` which can be used to predict the label value of a set of new persistence diagrams given a pretrained model. A parallelized implementation of cross-validation model-fitting is used based on the remarks in (@persistence_fisher) for scalability (which avoids needlessly recomputing persistence Fisher information metric values). Here is an example of fitting an SVM model on a list of persistence diagrams for a classification task (guessing whether the diagram comes from D1, D2 or D3):
+SVMs have been implemented in the function `diagram_ksvm`, tailored for input datasets which contain pairs of persistence diagrams and their outcome variable labels. A prediction method is supplied called `predict_diagram_ksvm` which can be used to predict the label value of a set of new persistence diagrams given a pre-trained model. A parallelized implementation of cross-validation model-fitting is used based on the remarks in [@persistence_fisher] for scalability (which avoids needlessly recomputing persistence Fisher information metric values). Here is an example of fitting an SVM model on a list of persistence diagrams for a classification task (guessing whether the diagram comes from D1, D2 or D3):
 
 ```{r,echo = T}
 # create thirty noisy copies of D1, D2 and D3
@@ -378,9 +396,9 @@ predict_diagram_ksvm(new_diagrams = g_new,model = model_svm,num_workers = 2)
 
 As we can see the best SVM model was able to separate the three diagrams We can gain more information about the best model found during model fitting and the CV results by accessing different list elements of `model_svm`.
 
-## Testing for independence between two groups of paired persistence diagrams
+## Testing for Independence Between Two Groups of Paired Persistence Diagrams
 
-An important question when presented with two groups of paired persistence diagrams is determining if the pairings are independent or not. A procedure was described in @kernel_test which can be used to answer this question using kernel computations, and importantly uses a parametric null distribution. The null hypothesis for this test is that the groups are independent, and the alternative hypothesis is that the groups are not independent. A test statistic called the Hilbert-Schmidt independence criteria is calculated, and its value is compared to a gamma distribution with certain parameters which can be estimated from the data.
+An important question when presented with two groups of paired persistence diagrams is determining if the pairings are independent or not. A procedure was described in [@kernel_test] which can be used to answer this question using kernel computations, and importantly uses a parametric null distribution. The null hypothesis for this test is that the groups are independent, and the alternative hypothesis is that the groups are not independent. A test statistic called the *Hilbert-Schmidt independence criteria* is calculated, and its value is compared to a gamma distribution with certain parameters which can be estimated from the data.
 
 This inference procedure has been implemented in the `independence_test` function, and returns the p-value of the test in each desired dimension of the diagrams (among other additional information). We would expect to find no dependence between noisy copies of D1, D2 and D3, since each copy is generated randomly:
 
@@ -396,101 +414,11 @@ indep_test$p_values
 
 The p-value of this test would not be significant at any typical significance threshold, reflecting the fact that there is no real (i.e. non-spurious) dependence between the two groups, as expected.
 
-# Benchmarking the diagram_distance function
+# Benchmarking the `diagram_distance` Function
 
-Computing (wasserstein/bottleneck) distances between persistence diagrams is a key feature of some of the main topological data analysis software packages. However, these calculations can be very expensive, rendering practical applications of topological data analysis nearly unfeasible. TDAML strives to provide useful methods for applied topological data analysis, and as such its distance function must be fast, at least compared to distance calculations provided by other packages. We will compare the run time of the TDAML `diagram_distance` function compared to the R package TDA `wasserstein` function to argue that TDAML provides a much more tractable distance calculation function. Note that the python package scikit-TDA also implements distance and kernel calculations, however in order to benchmark against scikit-TDA for the purpose of this package vignette we would have to introduce dependencies on the reticulate package @R-reticulate, and since reticulate is known to slow down python performance it would even be unclear how to interpret positive results.
+Computing distances (wasserstein/bottleneck) between persistence diagrams is a key feature of some of the main topological data analysis software packages. However, these calculations can be very expensive, rendering practical applications of topological data analysis nearly unfeasible. TDAML strives to provide useful methods for applied topological data analysis, and as such its distance function must be fast, at least compared to distance calculations provided by other packages. We will compare the run time of the TDAML `diagram_distance` function compared to the R package TDA `wasserstein` function to argue that TDAML provides a much more tractable distance calculation. (Note that the python package scikit-TDA also implements distance and kernel calculations; however, in order to benchmark against scikit-TDA for the purpose of this package vignette we would have to introduce dependencies on the reticulate package [@R-reticulate], and since reticulate is known to slow down python performance it would even be unclear how to interpret positive results.)
 
-We will first simulate pairs of random diagrams of various sizes ($100,200,300,\dots,1000$), with 10 iterations at each size to compare run times. Each diagram has birth values of 0.1 multiplied by a random sample of a chi squared distribution with 10 degrees of freedom, and the death was the birth plus 0.1 times a sample from a chi squared distribution with 1 degree of freedom. The distance between each pair of diagrams will be computed using the TDA `wasserstein` function and the TDAML `diagram_distance` function with paramters set for the wasserstein distance and $p = 2$, and the run time for each calculation was recorded on a Windows 10 64-bit machine, an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM. The mean execution time for each number of points is plotted with its 95% confidence interval over the 10 repetitions. The code for benchmarking was as follows, however the code is not run in this vignette since it takes too long:
-
-```{r,echo = T,eval = F}
-# simulate random barcodes with sizes 100,200,...,1000
-runtimes_random <- data.frame(n_row = numeric(),
-                              package = character(),
-                              time_in_sec = numeric())
-for(n_row in seq(100,1000,100)){
-
-  for(iteration in 1:10)
-  {
-
-    # simulate pair of diagrams, points mainly close to the diagonal
-    diagram1 = data.frame(dimension = rep(0,n_row),birth = 0.1*rchisq(n = n_row,df = 10))
-    diagram1$death = diagram1$birth + 0.1*rchisq(n = n_row,df = 1)
-    diagram2 = data.frame(dimension = rep(0,n_row),birth = 0.1*rchisq(n = n_row,df = 10))
-    diagram2$death = diagram2$birth + 0.1*rchisq(n = n_row,df = 1)
-
-    # benchmark time, in seconds, for both package's distance calculations 
-    # (2-wasserstein distance in TDAML)
-    start_time_TDAML = Sys.time()
-    d_TDAML = diagram_distance(D1 = diagram1,D2 = diagram2,dim = 0,p = 2,
-                               distance = "wasserstein")
-    end_time_TDAML = Sys.time()
-    time_diff_TDAML = as.numeric(end_time_TDAML - start_time_TDAML,units = "secs")
-    diagram1 = list(diagram = diagram1)
-    diagram2 = list(diagram = diagram2)
-    diagram1$diagram = as.matrix(diagram1$diagram)
-    diagram2$diagram = as.matrix(diagram2$diagram)
-    class(diagram1$diagram) = "diagram"
-    class(diagram2$diagram) = "diagram"
-    start_time_TDA = Sys.time()
-    d_TDA = TDA::wasserstein(Diag1 = diagram1$diagram,Diag2 = diagram2$diagram,
-                             dimension = 0,p = 2)
-    end_time_TDA = Sys.time()
-    time_diff_TDA = as.numeric(end_time_TDA - start_time_TDA,units = "secs")
-
-    runtimes_random = rbind(runtimes_random,data.frame(n_row = n_row,
-                                                       package = "TDAML",
-                                                       time_in_sec = time_diff_TDAML))
-    runtimes_random = rbind(runtimes_random,data.frame(n_row = n_row,
-                                                       package = "TDA",
-                                                       time_in_sec = time_diff_TDA))
-
-  }
-
-}
-
-# compute means and sd's at each value of rows for both packages
-summary_table = data.frame(n_row = numeric(),
-                           mean = numeric(),
-                           sd = numeric(),
-                           package = character())
-for(n_row in seq(100,1000,100))
-{
-
-  for(p in c("TDAML","TDA"))
-  {
-
-    result = data.frame(n_row = n_row,
-                        mean = mean(runtimes_random[which(runtimes_random$n_row == n_row 
-                                                          & runtimes_random$package == p),
-                                                          3]),
-                        sd = sd(runtimes_random[which(runtimes_random$n_row == n_row 
-                                                      & runtimes_random$package == p),
-                                                      3]),
-                        package = p)
-    summary_table = rbind(summary_table,result)
-
-  }
-
-}
-
-```
-
-The results were as follows:
-
-```{r,echo = F,warning=F,fig.height = 3,fig.width = 4,fig.align = 'center'}
-summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.087,0.137,0.278,1.880,0.859,8.742,1.782,28.908,3.928,63.544,6.648,141.373,11.158,252.689,18.409,427.515,28.220,725.520,39.675,1024.007),sd = c(0.021,0.010,0.018,0.170,0.100,0.630,0.161,1.849,0.245,3.927,0.455,12.202,0.806,14.315,1.350,37.318,2.675,63.963,2.983,102.328),package = rep(c("TDAML","TDA"),10))
-
-# plot table
-plot(summary_table$n_row[summary_table$package=="TDA"], summary_table$mean[summary_table$package=="TDA"], type="b",
-     xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd),xlab = "Points in diagram",ylab = "Mean execution time (sec)")
-lines(summary_table$n_row[summary_table$package=="TDAML"], summary_table$mean[summary_table$package=="TDAML"], col=2, type="b")
-legend(x = 200,y = 800,legend = c("TDAML","TDA"),col = c("red","black"),lty = c(1,1),cex = 0.8)
-arrows(summary_table$n_row, summary_table$mean-1.96*summary_table$sd/sqrt(10), summary_table$n_row, summary_table$mean+1.96*summary_table$sd/sqrt(10), length=0.05, angle=90, code=3)
-```
-
-The TDAML `diagram_distance` function gives a significant speedup compared to the TDA wasserstein function (with similar results expected for the `bottleneck` distance function since the two use the same underlying matching method). As the diagrams get larger the speedup appears to increase, with almost a 26x speedup for diagrams with 1000 points, however this ratio looks like it would plateau around 30x above 1000 points, or at least it would grow slowly. 
-
-Now, we will repeat the same simulation, but computing diagrams from shapes provided in the TDA package (uniformly sampled tori and spheres) with the same number of data points and iterations as in the previous example. The homology calculations had a maximum dimension of two, and the maximum scale for each was 2 (for the Torus) and 1 (for the sphere). The Torus had tube radius 1 and cross-radius 2. The computation being benchmark was computing the distance in dimension 0, then 1 and finally 2 between each pair of diagrams. Once again, the mean execution time for each number of points in the shape is plotted with its 95% confidence interval over the 10 repetitions. To avoid a long build for this vignette the results were computed and recorded, but the code used for benchmarking can be seen below (not run in this vignette):
+We simulated persistence diagrams computed from uniform sampling of two shapes provided in the TDA package -- a torus (i.e. a hollow doughnut) with major radius 2 and minor radius 1, and a sphere (i.e. surface of a ball) of radius 1. We sampled $n$ points from each shape where $n \in \{100,200,300,\dots,1000\}$, with 10 iterations at each value of $n$. At each iteration the distance between the calculated persistence diagrams of the sampled torus and of the sampled sphere with $n$ points was computed in homological dimensions 0, 1 and 2 using the TDAML function `diagram_distance` with `p = 2` and the TDA function `wasserstein`. The runtime in seconds for these operations was recorded on a Windows 10 64-bit machine, an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM. We plot the mean runtime for each package at each value of $n$ with 95\% confidence interval error bars. To avoid a long build for this vignette the results were computed and recorded, but the code used for benchmarking can be seen below (not run in this vignette):
 
 ```{r,echo = T,warning=F,eval = F}
 # generate persistence diagrams from Tori and spheres with  100,200,...,1000 data points.
@@ -557,22 +485,36 @@ for(n_row in seq(100,1000,100))
   }
 }
 
+# plot table
+plot(summary_table$n_row[summary_table$package=="TDA"], 
+     summary_table$mean[summary_table$package=="TDA"], 
+     type="b",
+     xlim=range(summary_table$n_row),
+     ylim=range(0,summary_table$mean+1.96*summary_table$sd/sqrt(10)),
+     xlab = "Points in shape",ylab = "Mean execution time (sec)")
+lines(summary_table$n_row[summary_table$package=="TDAML"],
+      summary_table$mean[summary_table$package=="TDAML"], 
+      col=2, type="b")
+legend(x = 200,y = 2000,legend = c("TDAML","TDA"),
+       col = c("red","black"),lty = c(1,1),cex = 0.8)
+arrows(summary_table$n_row, 
+       summary_table$mean-1.96*summary_table$sd/sqrt(10), 
+       summary_table$n_row, summary_table$mean+1.96*summary_table$sd/sqrt(10),
+       length=0.05, angle=90, code=3)
 ```
 
-The results again showed a significant performance increase in the TDAML package:
-
-```{r,echo = F,warning=F,fig.height = 3,fig.width = 4,fig.align = 'center'}
+```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
 summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.133,0.220,0.398,3.430,0.953,17.054,1.955,53.896,3.760,142.524,6.604,294.552,10.466,601.802,16.169,1130.289,23.458,2091.953,35.098,3518.517),sd = c(0.022,0.016,0.035,0.186,0.094,1.1889,0.130,4.501,0.211,5.924,0.772,11.244,0.623,9.064,0.989,43.385,1.989,88.432,2.747,172.684),package = rep(c("TDAML","TDA"),10))
 
 # plot table
 plot(summary_table$n_row[summary_table$package=="TDA"], summary_table$mean[summary_table$package=="TDA"], type="b",
-     xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd),xlab = "Points in shape",ylab = "Mean execution time (sec)")
+     xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd/sqrt(10)),xlab = "Points in shape",ylab = "Mean execution time (sec)")
 lines(summary_table$n_row[summary_table$package=="TDAML"], summary_table$mean[summary_table$package=="TDAML"], col=2, type="b")
 legend(x = 200,y = 2000,legend = c("TDAML","TDA"),col = c("red","black"),lty = c(1,1),cex = 0.8)
 arrows(summary_table$n_row, summary_table$mean-1.96*summary_table$sd/sqrt(10), summary_table$n_row, summary_table$mean+1.96*summary_table$sd/sqrt(10), length=0.05, angle=90, code=3)
 ```
 
-The ratio of TDA to TDAML run time grew at each subsequent number of tested data points in the shapes, with a 100x speed up for 1000 data points. The fast distance calculation in TDAML makes the applications of statistics and machine learning with persistence diagrams more feasible, hence why the TDA distance calculation was not used in the TDAML package.
+The ratio of TDA to TDAML run time grew at each subsequent number of tested data points in the shapes, with a 100x speed up for 1000 data points. The fast distance calculation in TDAML makes the applications of statistics and machine learning with persistence diagrams more feasible. This is why the TDA distance calculation was not used in the TDAML package.
 
 # Conclusions
 
