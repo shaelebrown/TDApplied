@@ -32,7 +32,7 @@ permutation_test(
 
 \item{distance}{a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".}
 
-\item{sigma}{the positive bandwith for the Fisher information metric, default NULL.}
+\item{sigma}{the positive bandwidth for the Fisher information metric, default NULL.}
 
 \item{num_workers}{the number of cores used for parallel computation, default is one less than the number of cores on the machine.}
 
@@ -85,7 +85,7 @@ perm_test <- permutation_test(g1,g2,g3,iterations = 3,
 \references{
 Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.
 
-Abdallah H et al (2021). "Statistical Inference for Persistent Homology applied to fMRI." \url{https://github.com/hassan-abdallah/Statistical_Inference_PH_fMRI/blob/main/Abdallah_et_al_Statistical_Inference_PH_fMRI.pdf}.
+Abdallah H et al. (2021). "Statistical Inference for Persistent Homology applied to fMRI." \url{https://github.com/hassan-abdallah/Statistical_Inference_PH_fMRI/blob/main/Abdallah_et_al_Statistical_Inference_PH_fMRI.pdf}.
 }
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}

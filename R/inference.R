@@ -22,7 +22,7 @@
 #' @param dims a non-negative integer vector of the homological dimensions in which the test is to be carried out, default c(0,1).
 #' @param paired a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups, default FALSE
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".
-#' @param sigma the positive bandwith for the Fisher information metric, default NULL.
+#' @param sigma the positive bandwidth for the Fisher information metric, default NULL.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #' @param verbose a boolean flag for if the time duration of the function call should be printed, default FALSE
 #'
@@ -47,7 +47,7 @@
 #' @references
 #' Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.
 #' 
-#' Abdallah H et al (2021). "Statistical Inference for Persistent Homology applied to fMRI." \url{https://github.com/hassan-abdallah/Statistical_Inference_PH_fMRI/blob/main/Abdallah_et_al_Statistical_Inference_PH_fMRI.pdf}.
+#' Abdallah H et al. (2021). "Statistical Inference for Persistent Homology applied to fMRI." \url{https://github.com/hassan-abdallah/Statistical_Inference_PH_fMRI/blob/main/Abdallah_et_al_Statistical_Inference_PH_fMRI.pdf}.
 #' @examples
 #'
 #' # create three different groups of diagrams
@@ -70,7 +70,7 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
   # dims is a vector of desired homological dimensions
   # paired is a boolean which determines if dependencies exist between diagrams of the same indices in different groups
   # distance is either "wasserstein" or "fisher" and determines how distances will be computed between diagrams
-  # sigma is the positive bandwith for the Fisher information metric, NULL by default
+  # sigma is the positive bandwidth for the Fisher information metric, NULL by default
   # num_workers is the number of cores used for parallelization, default available number of cores minus 1.
   # verbose is either TRUE or FALSE (default), printing runtime of function call
 
@@ -265,7 +265,7 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @references
-#' Gretton A et al (2007). "A Kernel Statistical Test of Independence." \url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf}.
+#' Gretton A et al. (2007). "A Kernel Statistical Test of Independence." \url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf}.
 #' @examples
 #'
 #' # create two independent groups of diagrams
@@ -280,7 +280,7 @@ independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,num_workers = 
   # function to test whether or not two groups of persistence diagrams are independent
   # g1 and g2 are the groups of diagrams, either stored as lists or vectors
   # dims is a vector of desired homological dimensions
-  # sigma is the positive bandwith for the Fisher information metric, 1 by default
+  # sigma is the positive bandwidth for the Fisher information metric, 1 by default
   # t is the positive scale for the persistence Fisher kernel, 1 by default
   # num_workers is the number of cores used in parallelization, maximum minus 1 by default.
   # verbose is either TRUE or FALSE (default), printing runtime of function call

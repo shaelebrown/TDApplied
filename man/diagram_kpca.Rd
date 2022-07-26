@@ -34,7 +34,7 @@ a list containing the elements
 
 \describe{
 
-\item{pca}{the output of kernlab's \code{\link[kernlab]{kpca}} function on the Gram matrix: an S4 object containing the slots pcv (a matrix containing the principal component vectors (column wise)), eig (the corresponding eigenvalues), rotated (the original data projected (rotated) on the principal components) and xmatrix (the original data matrix).}
+\item{pca}{the output of kernlab's \code{\link[kernlab]{kpca}} function on the Gram matrix: an S4 object containing the slots `pcv` (a matrix containing the principal component vectors (column wise)), `eig` (the corresponding eigenvalues), `rotated` (the original data projected (rotated) on the principal components) and `xmatrix` (the original data matrix).}
 
 \item{diagrams}{the input `diagrams` argument.}
 
@@ -48,7 +48,7 @@ a list containing the elements
 }
 \description{
 Project a group of persistence diagrams into a low-dimensional embedding space using
-a kernalized version of the popular PCA algorithm.
+a kernelized version of the popular PCA algorithm.
 }
 \details{
 Returns the output of kernlab's \code{\link[kernlab]{kpca}} function on the desired Gram matrix of a group of persistence diagrams

@@ -21,7 +21,7 @@ predict_diagram_kkmeans(
 a vector of the predicted cluster labels for the new diagrams.
 }
 \description{
-Returns the nearest (highest kernel value) kkmeans cluster center label for new persistence diagrams.
+Returns the nearest (highest kernel value) \code{\link[kernlab]{kkmeans}} cluster center label for new persistence diagrams.
 This allows for reusing old cluster models for new tasks, or to perform cross validation.
 }
 \examples{

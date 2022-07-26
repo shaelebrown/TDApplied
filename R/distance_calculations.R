@@ -330,7 +330,7 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
 #' @param diagram_groups groups (lists/vectors) of persistence diagrams, stored as lists of a data frame and
 #'                          an index of the diagram in all the diagrams across all groups.
 #' @param dist_mats distance matrices between all possible pairs of persistence diagrams across and within groups
-#'                      storing the current distances which have been precomputed.
+#'                      storing the current distances which have been pre-computed.
 #' @param dims a numeric vector of which homological dimensions in which the loss function is to be computed.
 #' @param p a number representing the wasserstein parameter, at least 1, and if Inf then the bottleneck distance is calculated.
 #' @param q a finite number at least 1.

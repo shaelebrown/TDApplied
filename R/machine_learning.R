@@ -6,7 +6,7 @@
 #' scaling. Such a projection can be used for visualization of data, or a static analysis of the embedding
 #' dimensions.
 #' 
-#' Returns the output of cmdscale on the desired distance matrix of a group of persistence diagrams
+#' Returns the output of \code{\link[stats]{cmdscale}} on the desired distance matrix of a group of persistence diagrams
 #' in a particular dimension. If `distance` is "fisher" then `sigma` must not be NULL.
 #'
 #' @param diagrams a list of n>=2 persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.
@@ -74,11 +74,11 @@ diagram_mds <- function(diagrams,k = 2,distance = "wasserstein",dim = 0,p = 2,si
 #### KERNEL KMEANS ####
 #' Cluster a group of persistence diagrams using kernel k-means.
 #' 
-#' Finds latent cluster labels for a group of persistence diagrams, using a kernalized version
+#' Finds latent cluster labels for a group of persistence diagrams, using a kernelized version
 #' of the popular k-means algorithm. An optimal number of clusters may be determined by analyzing
 #' the withinss field of the clustering object over several values of k.
 #'
-#' Returns the output of kkmeans on the desired Gram matrix of a group of persistence diagrams
+#' Returns the output of \code{\link[kernlab]{kkmeans}} on the desired Gram matrix of a group of persistence diagrams
 #' in a particular dimension. The additional list elements stored in the output are needed
 #' to estimate cluster labels for new persistence diagrams in the `predict_diagram_kkmeans`
 #' function.
@@ -95,7 +95,7 @@ diagram_mds <- function(diagrams,k = 2,distance = "wasserstein",dim = 0,p = 2,si
 #' 
 #' \describe{
 #' 
-#' \item{clustering}{an S4 object of class specc, the output of a \code{\link[kernlab]{kkmeans}} function call. The .Data slot of this object contains cluster memberships, withinss contains the within-cluster sum of squares for each cluster, etc.}
+#' \item{clustering}{an S4 object of class specc, the output of a \code{\link[kernlab]{kkmeans}} function call. The `.Data` slot of this object contains cluster memberships, `withinss` contains the within-cluster sum of squares for each cluster, etc.}
 #' 
 #' \item{diagrams}{the input `diagrams` argument.}
 #' 
@@ -185,7 +185,7 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers
 #### PREDICT KERNEL KMEANS ####
 #' Predict the cluster labels for new persistence diagrams using a pre-computed clustering.
 #'
-#' Returns the nearest (highest kernel value) kkmeans cluster center label for new persistence diagrams.
+#' Returns the nearest (highest kernel value) \code{\link[kernlab]{kkmeans}} cluster center label for new persistence diagrams.
 #' This allows for reusing old cluster models for new tasks, or to perform cross validation.
 #'
 #' @param new_diagrams a list of persistence diagrams which are either the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
@@ -248,7 +248,7 @@ predict_diagram_kkmeans <- function(new_diagrams,clustering,num_workers = parall
 #' Calculate the kernel PCA embedding of a group of persistence diagrams.
 #'
 #' Project a group of persistence diagrams into a low-dimensional embedding space using
-#' a kernalized version of the popular PCA algorithm. 
+#' a kernelized version of the popular PCA algorithm. 
 #'
 #' Returns the output of kernlab's \code{\link[kernlab]{kpca}} function on the desired Gram matrix of a group of persistence diagrams
 #' in a particular dimension. The prediction function \code{\link{predict_diagram_kpca}} can be used to 
@@ -268,7 +268,7 @@ predict_diagram_kkmeans <- function(new_diagrams,clustering,num_workers = parall
 #' 
 #' \describe{
 #' 
-#' \item{pca}{the output of kernlab's \code{\link[kernlab]{kpca}} function on the Gram matrix: an S4 object containing the slots pcv (a matrix containing the principal component vectors (column wise)), eig (the corresponding eigenvalues), rotated (the original data projected (rotated) on the principal components) and xmatrix (the original data matrix).}
+#' \item{pca}{the output of kernlab's \code{\link[kernlab]{kpca}} function on the Gram matrix: an S4 object containing the slots `pcv` (a matrix containing the principal component vectors (column wise)), `eig` (the corresponding eigenvalues), `rotated` (the original data projected (rotated) on the principal components) and `xmatrix` (the original data matrix).}
 #' 
 #' \item{diagrams}{the input `diagrams` argument.}
 #' 
@@ -404,7 +404,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
 #' @param sigma a vector of positive numbers representing the grid of values for the bandwidth of the Fisher information metric, default 1
 #' @param y a response vector with one label for each persistence diagram. Must be either numeric or factor.
 #' @param type a string representing the type of task to be performed.
-#' @param C a number representing the cost of contraints violation (default 1) this is the 'C'-constant of the regularization term in the Lagrange formulation.
+#' @param C a number representing the cost of constraints violation (default 1) this is the 'C'-constant of the regularization term in the Lagrange formulation.
 #' @param nu numeric parameter needed for nu-svc, one-svc and nu-svr. The `nu` parameter sets the upper bound on the training error and the lower bound on the fraction of data points to become Support Vector (default 0.2).
 #' @param epsilon epsilon in the insensitive-loss function used for eps-svr, nu-svr and eps-bsvm (default 0.1).
 #' @param fit indicates whether the fitted values should be computed and included in the model or not (default TRUE).

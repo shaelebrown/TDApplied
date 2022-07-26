@@ -43,7 +43,7 @@ There are a number of shortcomings of available topological data analysis softwa
 
 The package TDAML aims to solve the three goals outlined in the introductory paragraph. TDAML is built to use as input the output of persistent homology calculations from the package TDA. Firstly, the function `diagram_to_df` allows the conversion of the output of TDA persistent homology calculations to a data frame. Secondly, the functions `diagram_distance` and `diagram_kernel` allow for fast distance and kernel calculations respectively, and their counterparts `distance_matrix` and `gram_matrix` compute in parallel, for scalability, the (cross) distance and (cross) Gram matrices respectively. Thirdly, these distance and kernel calculations are used to perform machine learning and inference on persistence diagrams. Methods include 
 
-1. dimension reduction with metric multidimensional scaling (MDS) and kernel prinicpal components analysis (kpca),
+1. dimension reduction with metric multidimensional scaling (MDS) and kernel principal components analysis (kpca),
 2. clustering with kernel k-means,
 3. regression and classification with kernel support-vector machines (ksvm), and
 4. inference with distance and kernel calculations looking for group differences and group independence, respectively.
@@ -325,7 +325,7 @@ This function correctly predicted the cluster for each new diagram (assigning ea
 
 ## Kernel Principal Components Analysis of Persistence Diagrams
 
-PCA is another dimension reduction technique in machine learning, but can be preferable compared to MDS in certain situations because it allows for the projection of new data points onto an old embedding model [@murphyML]. For example, this can be important if PCA is used as a pre-processing step in model fitting. Kernel PCA [@kpca] is an extension of regular PCA which uses a kernel to project complex data into a high-dimensional Euclidean space and then uses PCA to project that data into a low-dimensional space. The `diagram_kpca` method computes the kPCA embedding of a set of persistence diagrams, and the `predict_diagram_kpca` function can be used to project new diagrams using a pre-trained kPCA model. Here is an example using a group of noisy copies of D1, D2 and D3:
+PCA is another dimension reduction technique in machine learning, but can be preferable compared to MDS in certain situations because it allows for the projection of new data points onto an old embedding model [@murphyML]. For example, this can be important if PCA is used as a pre-processing step in model fitting. Kernel PCA (kPCA) [@kpca] is an extension of regular PCA which uses a kernel to project complex data into a high-dimensional Euclidean space and then uses PCA to project that data into a low-dimensional space. The `diagram_kpca` method computes the kPCA embedding of a set of persistence diagrams, and the `predict_diagram_kpca` function can be used to project new diagrams using a pre-trained kPCA model. Here is an example using a group of noisy copies of D1, D2 and D3:
 
 ```{r,echo = T,fig.height = 3,fig.width = 6,fig.align = 'center'}
 # create noisy copies of D1, D2 and D3
@@ -518,7 +518,7 @@ The ratio of TDA to TDAML run time grew at each subsequent number of tested data
 
 # Conclusions
 
-The TDAML package aims to bridge topological data analysis with researchers and data practioners in the R community. Current topological data analysis packages in R and python do not provide the ability to carry out standard types of data analysis, being statistics and machine learning, with persistence diagrams - greatly limiting research and industry interest in topological data analysis. TDAML was built with performance in mind, with fast native-R implementations of distance calculations between persistence diagrams and parallelization at every possible point. Topological data analysis is an exciting and powerful new field of data analysis, and with TDAML anyone can access its power for meaningful and creative analyses of data.
+The TDAML package aims to bridge topological data analysis with researchers and data practitioners in the R community. Current topological data analysis packages in R and python do not provide the ability to carry out standard types of data analysis, being statistics and machine learning, with persistence diagrams - greatly limiting research and industry interest in topological data analysis. TDAML was built with performance in mind, with fast native-R implementations of distance calculations between persistence diagrams and parallelization at every possible point. Topological data analysis is an exciting and powerful new field of data analysis, and with TDAML anyone can access its power for meaningful and creative analyses of data.
 
 ## References
 

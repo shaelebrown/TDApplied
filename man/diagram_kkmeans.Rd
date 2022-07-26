@@ -34,7 +34,7 @@ a 'diagram_kkmeans' S3 object containing the output of \code{\link[kernlab]{kkme
 
 \describe{
 
-\item{clustering}{an S4 object of class specc, the output of a \code{\link[kernlab]{kkmeans}} function call. The .Data slot of this object contains cluster memberships, withinss contains the within-cluster sum of squares for each cluster, etc.}
+\item{clustering}{an S4 object of class specc, the output of a \code{\link[kernlab]{kkmeans}} function call. The `.Data` slot of this object contains cluster memberships, `withinss` contains the within-cluster sum of squares for each cluster, etc.}
 
 \item{diagrams}{the input `diagrams` argument.}
 
@@ -47,12 +47,12 @@ a 'diagram_kkmeans' S3 object containing the output of \code{\link[kernlab]{kkme
 }
 }
 \description{
-Finds latent cluster labels for a group of persistence diagrams, using a kernalized version
+Finds latent cluster labels for a group of persistence diagrams, using a kernelized version
 of the popular k-means algorithm. An optimal number of clusters may be determined by analyzing
 the withinss field of the clustering object over several values of k.
 }
 \details{
-Returns the output of kkmeans on the desired Gram matrix of a group of persistence diagrams
+Returns the output of \code{\link[kernlab]{kkmeans}} on the desired Gram matrix of a group of persistence diagrams
 in a particular dimension. The additional list elements stored in the output are needed
 to estimate cluster labels for new persistence diagrams in the `predict_diagram_kkmeans`
 function.

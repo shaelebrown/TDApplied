@@ -11,7 +11,7 @@ loss(diagram_groups, dist_mats, dims, p, q, distance, sigma, num_workers)
 an index of the diagram in all the diagrams across all groups.}
 
 \item{dist_mats}{distance matrices between all possible pairs of persistence diagrams across and within groups
-storing the current distances which have been precomputed.}
+storing the current distances which have been pre-computed.}
 
 \item{dims}{a numeric vector of which homological dimensions in which the loss function is to be computed.}
 

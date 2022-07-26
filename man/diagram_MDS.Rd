@@ -67,7 +67,7 @@ scaling. Such a projection can be used for visualization of data, or a static an
 dimensions.
 }
 \details{
-Returns the output of cmdscale on the desired distance matrix of a group of persistence diagrams
+Returns the output of \code{\link[stats]{cmdscale}} on the desired distance matrix of a group of persistence diagrams
 in a particular dimension. If `distance` is "fisher" then `sigma` must not be NULL.
 }
 \examples{

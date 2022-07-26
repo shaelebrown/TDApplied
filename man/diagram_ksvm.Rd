@@ -39,7 +39,7 @@ diagram_ksvm(
 
 \item{type}{a string representing the type of task to be performed.}
 
-\item{C}{a number representing the cost of contraints violation (default 1) this is the 'C'-constant of the regularization term in the Lagrange formulation.}
+\item{C}{a number representing the cost of constraints violation (default 1) this is the 'C'-constant of the regularization term in the Lagrange formulation.}
 
 \item{nu}{numeric parameter needed for nu-svc, one-svc and nu-svr. The `nu` parameter sets the upper bound on the training error and the lower bound on the fraction of data points to become Support Vector (default 0.2).}
 

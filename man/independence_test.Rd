@@ -63,7 +63,7 @@ g2 <- generate_TDAML_test_data(0,10,0)
 indep_test <- independence_test(g1,g2,dims = c(0),num_workers = 2)
 }
 \references{
-Gretton A et al (2007). "A Kernel Statistical Test of Independence." \url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf}.
+Gretton A et al. (2007). "A Kernel Statistical Test of Independence." \url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf}.
 }
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}
