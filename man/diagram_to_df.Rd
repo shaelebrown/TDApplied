@@ -19,6 +19,10 @@ This function converts the output of homology calculations in TDA
 into a data frame either for further usage in this package or
 for personalized analyses.
 }
+\details{
+If a diagram is constructed using a TDA function like \code{\link[TDA]{ripsDiag}}
+with the `location` parameter set to true then the return value will ignore the location information.
+}
 \examples{
 
 # create a persistence diagram from a 2D Gaussian

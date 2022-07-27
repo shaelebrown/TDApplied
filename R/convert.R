@@ -6,6 +6,9 @@
 #' This function converts the output of homology calculations in TDA
 #' into a data frame either for further usage in this package or
 #' for personalized analyses.
+#' 
+#' If a diagram is constructed using a TDA function like \code{\link[TDA]{ripsDiag}}
+#' with the `location` parameter set to true then the return value will ignore the location information.
 #'
 #' @param d the output of a TDA homology calculation, like \code{\link[TDA]{ripsDiag}}.
 #' @return a 3-column data frame, with each row representing a topological feature. The first column is the feature dimension (a non-negative integer), the second column is the birth radius of the feature and the third column is the death radius.
