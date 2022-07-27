@@ -72,13 +72,12 @@ If `distance` is "fisher" then `sigma` must not be NULL.
 }
 \examples{
 
-# create three different groups of diagrams
-g1 <- generate_TDAML_test_data(3,0,0)
-g2 <- generate_TDAML_test_data(0,3,0)
-g3 <- generate_TDAML_test_data(0,0,3)
+# create two groups of diagrams
+g1 <- generate_TDAML_test_data(2,0,0)
+g2 <- generate_TDAML_test_data(0,2,0)
 
 # run test in dimension 0 with 3 iterations
-perm_test <- permutation_test(g1,g2,g3,iterations = 3,
+perm_test <- permutation_test(g1,g2,iterations = 1,
                               num_workers = 2,
                               dims = c(0))
 }

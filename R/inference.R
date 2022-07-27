@@ -50,13 +50,12 @@
 #' Abdallah H et al. (2021). "Statistical Inference for Persistent Homology applied to fMRI." \url{https://github.com/hassan-abdallah/Statistical_Inference_PH_fMRI/blob/main/Abdallah_et_al_Statistical_Inference_PH_fMRI.pdf}.
 #' @examples
 #'
-#' # create three different groups of diagrams
-#' g1 <- generate_TDAML_test_data(3,0,0)
-#' g2 <- generate_TDAML_test_data(0,3,0)
-#' g3 <- generate_TDAML_test_data(0,0,3)
+#' # create two groups of diagrams
+#' g1 <- generate_TDAML_test_data(2,0,0)
+#' g2 <- generate_TDAML_test_data(0,2,0)
 #'
 #' # run test in dimension 0 with 3 iterations
-#' perm_test <- permutation_test(g1,g2,g3,iterations = 3,
+#' perm_test <- permutation_test(g1,g2,iterations = 1,
 #'                               num_workers = 2,
 #'                               dims = c(0))
 
@@ -94,7 +93,7 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
   diagram_groups <- all_diagrams(diagram_groups,inference = "difference")
 
   # error check function parameters
-  check_param("iterations",iterations,whole_numbers = T)
+  check_param("iterations",iterations,whole_numbers = T,at_least_one = T)
   check_param("p",p,finite = F,at_least_one = T)
   check_param("q",q,at_least_one = T)
   check_param("dims",dims,multiple = T,whole_numbers = T,non_negative = T,positive = F)
@@ -269,8 +268,8 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
 #' @examples
 #'
 #' # create two independent groups of diagrams
-#' g1 <- generate_TDAML_test_data(10,0,0)
-#' g2 <- generate_TDAML_test_data(0,10,0)
+#' g1 <- generate_TDAML_test_data(6,0,0)
+#' g2 <- generate_TDAML_test_data(0,6,0)
 #' 
 #' # do independence test with sigma = t = 1
 #' indep_test <- independence_test(g1,g2,dims = c(0),num_workers = 2)
@@ -308,7 +307,7 @@ independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,num_workers = 
     stop("g1 and g2 must be the same length.")
   }
   
-  # make sure that the two groups each have at least 5 elements
+  # make sure that the two groups each have at least 6 elements
   m <- length(g1)
   if(m < 6)
   {

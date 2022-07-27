@@ -26,14 +26,14 @@ previously-computed kernel PCA embedding (from the \code{\link{diagram_kpca}} fu
 }
 \examples{
 
-# create nine diagrams from three base diagrams
-g <- generate_TDAML_test_data(3,3,3)
+# create six diagrams from three base diagrams
+g <- generate_TDAML_test_data(2,2,2)
 
 # calculate their 2D PCA embedding with sigma = t = 2
 pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_workers = 2)
 
-# project new diagrams onto old model
-g_new <- generate_TDAML_test_data(3,3,3)
+# project two new diagrams onto old model
+g_new <- generate_TDAML_test_data(1,1,0)
 
 # calculate new embedding coordinates
 new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers = 2)

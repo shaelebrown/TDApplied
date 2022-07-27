@@ -26,14 +26,14 @@ This allows for reusing old cluster models for new tasks, or to perform cross va
 }
 \examples{
 
-# create nine diagrams from three base diagrams
-g <- generate_TDAML_test_data(3,3,3)
+# create six diagrams from three base diagrams
+g <- generate_TDAML_test_data(2,2,2)
 
 # calculate kmeans clusters with centers = 3, and sigma = t = 2
 clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
 
-# create nine new diagrams
-g_new <- generate_TDAML_test_data(3,3,3)
+# create three new diagrams
+g_new <- generate_TDAML_test_data(1,1,1)
 
 # predict cluster labels
 predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)

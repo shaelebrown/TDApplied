@@ -28,11 +28,11 @@ This function is a wrapper of the kernlab \code{\link{predict}} function.
 }
 \examples{
 
-# create eight diagrams based on two base diagrams
-g <- generate_TDAML_test_data(4,4,0)
+# create eight diagrams based on four base diagrams
+g <- generate_TDAML_test_data(2,2,0)
 
 # create response vector
-y <- as.factor(rep(c("D1","D2"),each = 4))
+y <- as.factor(rep(c("D1","D2"),each = 2))
 
 # fit model without cross validation
 model_svm <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0),

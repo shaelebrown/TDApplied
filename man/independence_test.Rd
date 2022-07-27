@@ -56,8 +56,8 @@ approaches. If all of the diagrams in either g1 or g2 are the same in some dimen
 \examples{
 
 # create two independent groups of diagrams
-g1 <- generate_TDAML_test_data(10,0,0)
-g2 <- generate_TDAML_test_data(0,10,0)
+g1 <- generate_TDAML_test_data(6,0,0)
+g2 <- generate_TDAML_test_data(0,6,0)
 
 # do independence test with sigma = t = 1
 indep_test <- independence_test(g1,g2,dims = c(0),num_workers = 2)
