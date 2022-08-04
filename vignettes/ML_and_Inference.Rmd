@@ -32,23 +32,25 @@ It is with these goals that the package TDAML was created.
 
 Topological data analysis has gained popularity over the past two decades since the original paper on persistent homology was published [@PHoriginal], and two main R packages have been created for persistent homology calculations:
 
-1. The R package TDA [@R-TDA] is a wrapper for a number of C++ persistent homology packages, including Dionysus [@Dionysus], GUDHI [@GUDHI] and PHAT [@PHAT], and provides distance calculation capabilities between persistence diagrams. 
+1. The R package TDA [@R-TDA] is a wrapper for a number of C++ persistent homology packages, including Dionysus [@Dionysus], GUDHI [@GUDHI] and PHAT [@PHAT], and provides both distance calculation capabilities between persistence diagrams and the ability to find representative data points of each topological feature in a persistence diagram (the points for each feature are called a "representative cycle").
 2. The R package TDAstats [@R-TDAstats] is a wrapper of the C++ persistent homology engine Ripser [@Ripser], and provides an inference method for detecting group differences of two groups of persistence diagrams (as in [@Robinson_Turner]. However, the distance calculation currently implemented in that package, is not based on an accepted distance metric for persistence diagrams. 
 
-It is worthwhile to note that there are several python packages dedicated to topological data analysis calculations, including scikit-TDA [@scikittda2019] (which computes persistence diagrams, and distances/kernels between them), and giotto-tda [@tauzin2020giottotda] (which computes persistence diagrams and uses persistence diagrams to analyze time series data).
+The paper [@PH_benchmarking] compared the runtimes of the homology calculations in the R packages TDA and TDAstats, and concluded that certain persistent homology calculations are faster with TDAstats. The choice of which package to use therefore may vary by application, depending on whether speed is desired or whether knowledge of which data points represent which topological feature. Therefore, a remark is included in the following section regarding using the TDAML package with the output of TDAstats homology calculations.
+
+It is worthwhile to note that there are several python packages dedicated to topological data analysis calculations, including scikit-TDA [@scikittda2019] (which computes persistence diagrams, and distances/kernels between them, using several python libraries), and giotto-tda [@tauzin2020giottotda] (which computes persistence diagrams and uses persistence diagrams to analyze time series data).
 
 There are a number of shortcomings of available topological data analysis software. Firstly, in both python and R there is currently no package which allows for machine learning and inference of persistence diagrams, a limitation which greatly constrains the types of analyses that can be carried out. In R this is partially because there is no package for kernel calculations of persistence diagrams, but the very slow computation of distances between persistence diagrams also inhibits the practicality of distance-based inference procedures. Additionally, in R, the output of persistent homology calculations from the package TDA is a list with an element called "diagram" of class "diagram", which is not compatible with data frame methods that form the basis for data analysis in R. The package TDA provides some nice additional functionality compared to TDAstats, including the ability to return the location, in the dataset, of each topological feature found in the persistence diagram. Therefore, the non-standard data type returned by persistent homology calculations in the package TDA may also be limiting the development of TDA applications. 
 
 # Package TDAML
 
-The package TDAML aims to solve the three goals outlined in the introductory paragraph. TDAML is built to use as input the output of persistent homology calculations from the package TDA. Firstly, the function `diagram_to_df` allows the conversion of the output of TDA persistent homology calculations to a data frame. Secondly, the functions `diagram_distance` and `diagram_kernel` allow for fast distance and kernel calculations respectively, and their counterparts `distance_matrix` and `gram_matrix` compute in parallel, for scalability, the (cross) distance and (cross) Gram matrices respectively. Thirdly, these distance and kernel calculations are used to perform machine learning and inference on persistence diagrams. Methods include 
+The package TDAML aims to solve the three goals outlined in the introductory paragraph. Firstly, the function `diagram_to_df` allows the conversion of the output of TDA persistent homology calculations to a data frame. Secondly, the functions `diagram_distance` and `diagram_kernel` allow for fast distance and kernel calculations respectively, and their counterparts `distance_matrix` and `gram_matrix` compute in parallel, for scalability, the (cross) distance and (cross) Gram matrices respectively. Thirdly, these distance and kernel calculations are used to perform machine learning and inference on persistence diagrams. Methods include 
 
 1. dimension reduction with metric multidimensional scaling (MDS) and kernel principal components analysis (kpca),
 2. clustering with kernel k-means,
 3. regression and classification with kernel support-vector machines (ksvm), and
 4. inference with distance and kernel calculations looking for group differences and group independence, respectively.
 
-The kernel machine learning methods implemented are wrappers of the flexible R package for kernel calculations kernlab [@R-kernlab], with some additional processing steps specific to persistence diagrams. In the subsequent sections we will describe these applications in more detail.
+While TDAML is designed to use as input the output of TDA persistent homology calculations, **TDAML is also able to use as input the output of the TDAstats function `calculate_homology`, provided that its output is first converted to a data frame using the `as.data.frame` function**. The kernel machine learning methods implemented in TDAML are wrappers of the flexible R package for kernel calculations kernlab [@R-kernlab], with some additional processing steps specific to persistence diagrams. In the subsequent sections we will describe these applications in more detail.
 
 # Background: Persistent Homology
 
@@ -109,7 +111,8 @@ A persistence diagram containing $n$ topological features can be represented in 
 In this section we will describe the various computational tools implemented in the package TDAML to analyze persistence diagrams, both explaining the mathematics and providing functional examples. To run our examples we must start by loading the TDAML package:
 
 ```{r setup}
-library("TDAML")
+devtools::load_all()
+#library("TDAML")
 ``` 
 
 All examples will analyze simple diagrams which are random deviations of three persistence diagrams called D1, D2 and D3 (each with points in dimension 0 only):
@@ -275,7 +278,9 @@ perm_test <- permutation_test(g1,g2,g3,
 perm_test$p_values
 ```
 
-As expected, a difference was found (at the $\alpha = 0.05$ significance level) between the three groups.
+As expected, a difference was found (at the $\alpha = 0.05$ significance level) between the three groups. 
+
+The package TDAstats also has a function called `permutation_test` which is based on the same test procedure, however it uses an unpublished distance metric between persistence diagrams and does not use parallelization for scalability. As such, care must be taken if both TDAML and TDAstats are attached in an R script to use the desired `permutation_test` function.
 
 ## Kernels Between Persistence Diagrams
 
@@ -414,11 +419,11 @@ indep_test$p_values
 
 The p-value of this test would not be significant at any typical significance threshold, reflecting the fact that there is no real (i.e. non-spurious) dependence between the two groups, as expected.
 
-# Benchmarking the `diagram_distance` Function
+# Benchmarking the TDAML `diagram_distance` and TDA `wasserstein` Functions 
 
-Computing distances (wasserstein/bottleneck) between persistence diagrams is a key feature of some of the main topological data analysis software packages. However, these calculations can be very expensive, rendering practical applications of topological data analysis nearly unfeasible. TDAML strives to provide useful methods for applied topological data analysis, and as such its distance function must be fast, at least compared to distance calculations provided by other packages. We will compare the run time of the TDAML `diagram_distance` function compared to the R package TDA `wasserstein` function to argue that TDAML provides a much more tractable distance calculation. (Note that the python package scikit-TDA also implements distance and kernel calculations; however, in order to benchmark against scikit-TDA for the purpose of this package vignette we would have to introduce dependencies on the reticulate package [@R-reticulate], and since reticulate is known to slow down python performance it would even be unclear how to interpret positive results.)
+Computing distances (wasserstein/bottleneck) between persistence diagrams is a key feature of some of the main topological data analysis software packages. However, these calculations can be very expensive, rendering practical applications of topological data analysis nearly unfeasible. TDAML strives to provide useful methods for applied topological data analysis, and as such its distance function must be fast, at least compared to distance calculations provided by other packages. We will compare the run time of the TDAML `diagram_distance` function compared to the R package TDA `wasserstein` function to argue that TDAML provides a much more tractable distance calculation. We will also compare the runtime of the TDAML `diagram_distance` function against a python counterpart from scikit-TDA to evaluate the feasibility for a TDAML counterpart module in python.
 
-We simulated persistence diagrams computed from uniform sampling of two shapes provided in the TDA package -- a torus (i.e. a hollow doughnut) with major radius 2 and minor radius 1, and a sphere (i.e. surface of a ball) of radius 1. We sampled $n$ points from each shape where $n \in \{100,200,300,\dots,1000\}$, with 10 iterations at each value of $n$. At each iteration the distance between the calculated persistence diagrams of the sampled torus and of the sampled sphere with $n$ points was computed in homological dimensions 0, 1 and 2 using the TDAML function `diagram_distance` with `p = 2` and the TDA function `wasserstein`. The runtime in seconds for these operations was recorded on a Windows 10 64-bit machine, an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM. We plot the mean runtime for each package at each value of $n$ with 95\% confidence interval error bars. To avoid a long build for this vignette the results were computed and recorded, but the code used for benchmarking can be seen below (not run in this vignette):
+We simulated persistence diagrams computed from uniform sampling of two shapes provided in the TDA package -- a torus (i.e. a hollow doughnut) with major radius 2 and minor radius 1, and a sphere (i.e. surface of a ball) of radius 1. We sampled $n$ points from each shape where $n \in \{100,200,300,\dots,1000\}$, with 10 iterations at each value of $n$. At each iteration the distance between the calculated persistence diagrams of the sampled torus and of the sampled sphere with $n$ points was computed in homological dimensions 0, 1 and 2 using the TDAML function `diagram_distance` with `p = 2` and the TDA function `wasserstein`. The runtime in seconds for these operations was recorded on a Windows 10 64-bit machine, with an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM. We plot the mean runtime for each package at each value of $n$ with 95\% confidence interval error bars. To avoid a long build for this vignette the results were computed and recorded, but the code used for benchmarking can be seen below (not run in this vignette):
 
 ```{r,echo = T,warning=F,eval = F}
 # generate persistence diagrams from Tori and spheres with  100,200,...,1000 data points.
@@ -515,6 +520,124 @@ arrows(summary_table$n_row, summary_table$mean-1.96*summary_table$sd/sqrt(10), s
 ```
 
 The ratio of TDA to TDAML run time grew at each subsequent number of tested data points in the shapes, with a 100x speed up for 1000 data points. The fast distance calculation in TDAML makes the applications of statistics and machine learning with persistence diagrams more feasible. This is why the TDA distance calculation was not used in the TDAML package.
+
+# Benchmarking the TDAML `diagram_distance` Function against Python
+
+While the functionality of python packages for topological data analysis packages are out of the scope for an R package, in order to fully situate TDAML in the landscape of topological data analysis software we will benchmark the `diagram_distance` function against its counterpart from the sci-kit TDA collection of libraries, namely the `wasserstein` function from the persim python module. Note that there is currently no publicly available implementation of the persistence Fisher kernel in python, and as such we will not benchmark kernel calculations. The code for this R vs. python benchmarking is very similar to the code from the previous section, with a few modifications. The general set up is the same, with tori and spheres generated with various numbers of rows with ten iterations at each number of rows. The benchmarking was also carried out on a Windows 10 64-bit machine, with an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM. However, the package reticulate [@R-reticulate] is attached before the benchmarking and two python modules from scikit-TDA are loaded - persim and ripser. Persim will be used to calculate the wasserstein distances via its `wasserstein` function, and ripser will be used to create persistence diagrams which can be used as input to the `wasserstein` function. Before running this code miniconda was installed through the reticulate package, using the `install_miniconda` function, and the modules persim and ripser were installed using the code `py_install("persim")` and `py_install("ripser")` respectively. The code for benchmarking is included below, but not run in this vignette:
+
+```{r,echo = T,warning=F,eval = F}
+
+# load reticulate package
+library(reticulate)
+persim <- reticulate::import("persim")
+ripser <- reticulate::import("ripser")
+
+# generate persistence diagrams from Tori and spheres with  100,200,...,1000 data points.
+runtimes_language <- data.frame(n_row = numeric(),package = character(),
+                                time_in_sec = numeric())
+for(n_row in seq(100,1000,100)){
+  
+  for(iteration in 1:10)
+  {
+    # simulate pair of diagrams from the desired shapes
+    torus = TDA::torusUnif(n = n_row,a = 1,c = 2)
+    sphere = TDA::sphereUnif(n = n_row,d = 2,r = 1)
+    diagram_torus = ripsDiag(X = torus,
+                             maxdimension = 2,maxscale = 2)
+    diagram_sphere = ripsDiag(X = sphere,
+                              maxdimension = 2,maxscale = 1)
+    diagram_torus_py = ripser$ripser(torus,maxdim = 2,thresh = 2)$dgms
+    diagram_torus_py[[1]][which(diagram_torus_py[[1]][,2] == Inf),2] = 2
+    diagram_torus_py[[2]][which(diagram_torus_py[[2]][,2] == Inf),2] = 2
+    diagram_torus_py[[3]][which(diagram_torus_py[[3]][,2] == Inf),2] = 2
+    diagram_sphere_py = ripser$ripser(sphere,maxdim = 2,thresh = 1)$dgms
+    diagram_sphere_py[[1]][which(diagram_sphere_py[[1]][,2] == Inf),2] = 2
+    diagram_sphere_py[[2]][which(diagram_sphere_py[[2]][,2] == Inf),2] = 2
+    diagram_sphere_py[[3]][which(diagram_sphere_py[[3]][,2] == Inf),2] = 2
+    
+    # compute their wasserstein distances in all dimensions and benchmark
+    start_time_TDAML = Sys.time()
+    diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 0,
+                     p = 2,distance = "wasserstein")
+    diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 1,
+                     p = 2,distance = "wasserstein")
+    diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 2,
+                     p = 2,distance = "wasserstein")
+    end_time_TDAML = Sys.time()
+    time_diff_TDAML = as.numeric(end_time_TDAML - start_time_TDAML,units = "secs")
+    
+    start_time_persim = Sys.time()
+    persim$wasserstein(diagram_torus_py[[1]],diagram_sphere_py[[1]])
+    persim$wasserstein(diagram_torus_py[[2]],diagram_sphere_py[[2]])
+    persim$wasserstein(diagram_torus_py[[3]],diagram_sphere_py[[3]])
+    end_time_persim = Sys.time()
+    time_diff_persim = as.numeric(end_time_persim - start_time_persim,units = "secs")
+    
+    runtimes_language = rbind(runtimes_language,data.frame(n_row = n_row,
+                                                     package = "TDAML",
+                                                     time_in_sec = time_diff_TDAML))
+    runtimes_language = rbind(runtimes_language,data.frame(n_row = n_row,
+                                                     package = "persim",
+                                                     time_in_sec = time_diff_persim))
+    
+  }
+  print(paste0("Done ",n_row," rows"))
+  
+}
+
+# compute means and sd's at each value of rows for both packages
+summary_table = data.frame(n_row = numeric(),mean = numeric(),sd = numeric(),
+                           package = character())
+for(n_row in seq(100,1000,100))
+{
+  for(p in c("TDAML","persim"))
+  {
+    result = data.frame(n_row = n_row,
+                        mean = mean(runtimes_language[which(runtimes_language$n_row == n_row
+                                                         & runtimes_language$package == p),
+                                                   3]),
+                        sd = sd(runtimes_language[which(runtimes_language$n_row == n_row 
+                                                     & runtimes_language$package == p),
+                                               3]),
+                        package = p)
+    summary_table = rbind(summary_table,result)
+  }
+}
+
+# plot table
+plot(summary_table$n_row[summary_table$package=="persim"], 
+     summary_table$mean[summary_table$package=="persim"], 
+     type="b",
+     xlim=range(summary_table$n_row),
+     ylim=range(0,summary_table$mean+1.96*summary_table$sd/sqrt(10)),
+     xlab = "Points in shape",ylab = "Mean execution time (sec)")
+lines(summary_table$n_row[summary_table$package=="TDAML"],
+      summary_table$mean[summary_table$package=="TDAML"], 
+      col=2, type="b")
+legend(x = 200,y = 2000,legend = c("TDAML","persim"),
+       col = c("red","black"),lty = c(1,1),cex = 0.8)
+arrows(summary_table$n_row, 
+       summary_table$mean-1.96*summary_table$sd/sqrt(10), 
+       summary_table$n_row, summary_table$mean+1.96*summary_table$sd/sqrt(10),
+       length=0.05, angle=90, code=3)
+```
+
+```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
+summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.133,0.220,0.398,3.430,0.953,17.054,1.955,53.896,3.760,142.524,6.604,294.552,10.466,601.802,16.169,1130.289,23.458,2091.953,35.098,3518.517),sd = c(0.022,0.016,0.035,0.186,0.094,1.1889,0.130,4.501,0.211,5.924,0.772,11.244,0.623,9.064,0.989,43.385,1.989,88.432,2.747,172.684),package = rep(c("TDAML","TDA"),10))
+
+# plot table
+plot(summary_table$n_row[summary_table$package=="TDA"], summary_table$mean[summary_table$package=="TDA"], type="b",
+     xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd/sqrt(10)),xlab = "Points in shape",ylab = "Mean execution time (sec)")
+lines(summary_table$n_row[summary_table$package=="TDAML"], summary_table$mean[summary_table$package=="TDAML"], col=2, type="b")
+legend(x = 200,y = 2000,legend = c("TDAML","TDA"),col = c("red","black"),lty = c(1,1),cex = 0.8)
+arrows(summary_table$n_row, summary_table$mean-1.96*summary_table$sd/sqrt(10), summary_table$n_row, summary_table$mean+1.96*summary_table$sd/sqrt(10), length=0.05, angle=90, code=3)
+```
+
+INTERPRET
+
+# Limitations of TDAML
+
+There are two main limitations of TDAML which should be discussed for its own future improvements. The first limitation is in the function `diagram_ksvm` - the only acceptable input is a dataset where the single training feature is a persistence diagram (one diagram for each training example). This may be too inflexible for some applications, where the training features may include several persistence diagrams, or a mix of persistence diagrams, numeric and categorical features. A future update to TDAML should provide the functionality for allowing any number of training features, of various types, to the `diagram_ksvm` function via a weighted sum of kernels. The second limitation of TDAML is the long runtime of its `diagram_distance` function compared to python's persim `wasserstein` function. Even with a potential runtime increase caused by the reticulate package, the persim `wasserstein` function was significantly faster than the TDAML `diagram_distance` function. As such, a future version of TDAML could use the wasserstein (and bottleneck) distance calculations from the persim module as its distance engine, however this would introduce a couple of complications. Firstly, a dependency on reticulate, and therefore on python, would be introduced which is not ideal. Secondly, since the Fisher information metric is not implemented in the persim module, calculating this metric would still require its own R code. While TDAML has been created with flexibility and scalability at its core, there will always be room for adding more functionality and speedups.
 
 # Conclusions
 
