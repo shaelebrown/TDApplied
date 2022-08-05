@@ -13,7 +13,9 @@ Description: Topological data analysis is a powerful tool for finding non-linear
     a persistence diagram. There are three goals of this package: (1) convert persistence diagrams
     computed using the R package TDA into a data frame, (2) implement fast versions of both distance and kernel calculations
     for pairs of persistence diagrams, and (3) provide scalable methods for machine learning
-    and inference for persistence diagrams.
+    and inference for persistence diagrams. While TDA persistence diagrams are the focus of the TDAML
+    package, persistence diagrams computed with the other main topological data analysis R package, TDAstats,
+    can also be used as input to TDAML functions with minimal preprocessing.
 Depends: R (>= 3.2.2), TDA
 Imports: parallel, doParallel, foreach, clue, rdist, parallelly, kernlab, iterators, methods, stats, utils
 License: GPL-3

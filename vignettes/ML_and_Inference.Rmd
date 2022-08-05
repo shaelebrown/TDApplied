@@ -20,13 +20,13 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-Topological data analysis is a relatively new area of data science which can find unique, non-linear global structure in whole datasets. The main tool of topological data analysis is called *persistent homology*, which produces a "shape descriptor" (called a *persistence diagram*) of its input dataset. Two main R packages exist for computing persistence diagrams; however, the more flexible of the two, called TDA, stores persistence diagrams in a non-standard data structure. Methods exist for computing distances and kernels (which are a special type of similarity functions) between pairs of persistence diagrams, but only distance calculations are currently available in the R packages. Several papers have used distance and kernel computations in order to perform machine learning or inferences tasks with groups of persistence diagrams, but to date no publicly available software in either python or R provides the functionality for these types of analyses. In order to make the power of topological data analysis more readily available to data and machine learning practitioners, it would be very helpful to have a software package that can
+Topological data analysis is a relatively new area of data science which can find unique, non-linear global structure in whole datasets. The main tool of topological data analysis is called *persistent homology*, which produces a "shape descriptor" (called a *persistence diagram*) of its input dataset. Two main R packages exist for computing persistence diagrams; the more flexible of the two, called TDA, stores persistence diagrams in a non-standard data structure, and the faster of the two, called TDAstats, does not provide functionality for analyzing diagrams with published techniques. Methods exist for computing distances and kernels (which are a special type of similarity functions) between pairs of persistence diagrams, but only distance calculations are currently available in the R package TDA. Several papers have used distance and kernel computations in order to perform machine learning or inferences tasks with groups of persistence diagrams, but to date no publicly available software in either python or R provides the functionality for these types of analyses. In order to make the power of topological data analysis more readily available to data and machine learning practitioners, it would be very helpful to have a software package that can
 
 1. convert persistence diagrams computed using the R package TDA into a commonly-used data type for data analyses (a data frame), 
 2. implement fast versions of both distance and kernel calculations for pairs of persistence diagrams, and 
 3. provide scalable methods for machine learning and inference for persistence diagrams. 
 
-It is with these goals that the package TDAML was created.
+It is with these goals that the package TDAML was created to build upon the TDA package, however persistence diagrams computed with the TDAstats package can also be used by TDAML with only minimal preprocessing (see the section "Package TDAML" for details).
 
 # Software Review
 
@@ -50,7 +50,7 @@ The package TDAML aims to solve the three goals outlined in the introductory par
 3. regression and classification with kernel support-vector machines (ksvm), and
 4. inference with distance and kernel calculations looking for group differences and group independence, respectively.
 
-While TDAML is designed to use as input the output of TDA persistent homology calculations, **TDAML is also able to use as input the output of the TDAstats function `calculate_homology`, provided that its output is first converted to a data frame using the `as.data.frame` function**. The kernel machine learning methods implemented in TDAML are wrappers of the flexible R package for kernel calculations kernlab [@R-kernlab], with some additional processing steps specific to persistence diagrams. In the subsequent sections we will describe these applications in more detail.
+While TDAML is designed to use as input the output of TDA persistent homology calculations, **TDAML is also able to use as input the output of the TDAstats function `calculate_homology`, provided that its output is first converted to a data frame using the `as.data.frame` function** (for example, `as.data.frame(calculate_homology(X))`). The kernel machine learning methods implemented in TDAML are wrappers of the flexible R package for kernel calculations kernlab [@R-kernlab], with some additional processing steps specific to persistence diagrams. In the subsequent sections we will describe these applications in more detail.
 
 # Background: Persistent Homology
 
@@ -502,10 +502,20 @@ lines(summary_table$n_row[summary_table$package=="TDAML"],
       col=2, type="b")
 legend(x = 200,y = 2000,legend = c("TDAML","TDA"),
        col = c("red","black"),lty = c(1,1),cex = 0.8)
-arrows(summary_table$n_row, 
-       summary_table$mean-1.96*summary_table$sd/sqrt(10), 
-       summary_table$n_row, summary_table$mean+1.96*summary_table$sd/sqrt(10),
-       length=0.05, angle=90, code=3)
+arrows(summary_table$n_row[summary_table$package == "TDAML"], 
+       summary_table$mean[summary_table$package == "TDAML"]
+       -1.96*summary_table$sd[summary_table$package == "TDAML"]/sqrt(10),
+       summary_table$n_row[summary_table$package == "TDAML"], 
+       summary_table$mean[summary_table$package == "TDAML"]
+       +1.96*summary_table$sd[summary_table$package == "TDAML"]/sqrt(10), 
+       length=0.05, angle=90, code=3,col = "red")
+arrows(summary_table$n_row[summary_table$package == "TDA"], 
+       summary_table$mean[summary_table$package == "TDA"]
+       -1.96*summary_table$sd[summary_table$package == "TDA"]/sqrt(10), 
+       summary_table$n_row[summary_table$package == "TDA"], 
+       summary_table$mean[summary_table$package == "TDA"]
+       +1.96*summary_table$sd[summary_table$package == "TDA"]/sqrt(10), 
+       length=0.05, angle=90, code=3,col = "black")
 ```
 
 ```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
@@ -516,12 +526,25 @@ plot(summary_table$n_row[summary_table$package=="TDA"], summary_table$mean[summa
      xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd/sqrt(10)),xlab = "Points in shape",ylab = "Mean execution time (sec)")
 lines(summary_table$n_row[summary_table$package=="TDAML"], summary_table$mean[summary_table$package=="TDAML"], col=2, type="b")
 legend(x = 200,y = 2000,legend = c("TDAML","TDA"),col = c("red","black"),lty = c(1,1),cex = 0.8)
-arrows(summary_table$n_row, summary_table$mean-1.96*summary_table$sd/sqrt(10), summary_table$n_row, summary_table$mean+1.96*summary_table$sd/sqrt(10), length=0.05, angle=90, code=3)
+arrows(summary_table$n_row[summary_table$package == "TDAML"], summary_table$mean[summary_table$package == "TDAML"]-1.96*summary_table$sd[summary_table$package == "TDAML"]/sqrt(10), summary_table$n_row[summary_table$package == "TDAML"], summary_table$mean[summary_table$package == "TDAML"]+1.96*summary_table$sd[summary_table$package == "TDAML"]/sqrt(10), length=0.05, angle=90, code=3,col = "red")
+arrows(summary_table$n_row[summary_table$package == "TDA"], summary_table$mean[summary_table$package == "TDA"]-1.96*summary_table$sd[summary_table$package == "TDA"]/sqrt(10), summary_table$n_row[summary_table$package == "TDA"], summary_table$mean[summary_table$package == "TDA"]+1.96*summary_table$sd[summary_table$package == "TDA"]/sqrt(10), length=0.05, angle=90, code=3,col = "black")
 ```
 
-The ratio of TDA to TDAML run time grew at each subsequent number of tested data points in the shapes, with a 100x speed up for 1000 data points. The fast distance calculation in TDAML makes the applications of statistics and machine learning with persistence diagrams more feasible. This is why the TDA distance calculation was not used in the TDAML package.
+A linear model can be used to verify that the runtime ratio of the TDA vs. TDAML grew at each subsequent number of tested data points in the shapes (with about a 100x speed up for 1000 data points), suggesting that distance calculations with TDAML are faster and more scalable: 
 
-# Benchmarking the TDAML `diagram_distance` Function against Python
+```{r,echo = T}
+model <- stats::lm(data = data.frame(y = 
+                                     summary_table$mean[summary_table$package == "TDA"]
+                                     /summary_table$mean[summary_table$package == "TDAML"],
+                                     x = seq(100,1000,100)),
+                   formula = y ~ x,)
+summary(model)$coefficients
+predict(model,newdata = data.frame(x = 1000))[[1]]
+```
+
+The fast and scalable distance calculation in TDAML makes the applications of statistics and machine learning with persistence diagrams more feasible. This is why the TDA distance calculation was not used in the TDAML package.
+
+# Benchmarking the TDAML `diagram_distance` Function against persim's `wasserstein` Function
 
 While the functionality of python packages for topological data analysis packages are out of the scope for an R package, in order to fully situate TDAML in the landscape of topological data analysis software we will benchmark the `diagram_distance` function against its counterpart from the sci-kit TDA collection of libraries, namely the `wasserstein` function from the persim python module. Note that there is currently no publicly available implementation of the persistence Fisher kernel in python, and as such we will not benchmark kernel calculations. The code for this R vs. python benchmarking is very similar to the code from the previous section, with a few modifications. The general set up is the same, with tori and spheres generated with various numbers of rows with ten iterations at each number of rows. The benchmarking was also carried out on a Windows 10 64-bit machine, with an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM. However, the package reticulate [@R-reticulate] is attached before the benchmarking and two python modules from scikit-TDA are loaded - persim and ripser. Persim will be used to calculate the wasserstein distances via its `wasserstein` function, and ripser will be used to create persistence diagrams which can be used as input to the `wasserstein` function. Before running this code miniconda was installed through the reticulate package, using the `install_miniconda` function, and the modules persim and ripser were installed using the code `py_install("persim")` and `py_install("ripser")` respectively. The code for benchmarking is included below, but not run in this vignette:
 
@@ -605,35 +628,60 @@ for(n_row in seq(100,1000,100))
 }
 
 # plot table
-plot(summary_table$n_row[summary_table$package=="persim"], 
-     summary_table$mean[summary_table$package=="persim"], 
-     type="b",
+plot(summary_table$n_row[summary_table$package=="TDAML"],
+     summary_table$mean[summary_table$package=="persim"], type="b",
      xlim=range(summary_table$n_row),
      ylim=range(0,summary_table$mean+1.96*summary_table$sd/sqrt(10)),
      xlab = "Points in shape",ylab = "Mean execution time (sec)")
 lines(summary_table$n_row[summary_table$package=="TDAML"],
       summary_table$mean[summary_table$package=="TDAML"], 
-      col=2, type="b")
-legend(x = 200,y = 2000,legend = c("TDAML","persim"),
+      col="red", type="b")
+lines(summary_table$n_row[summary_table$package=="persim"],
+      summary_table$mean[summary_table$package=="persim"], 
+      col="black", type="b")
+legend(x = 200,y = 20,legend = c("TDAML","persim"),
        col = c("red","black"),lty = c(1,1),cex = 0.8)
-arrows(summary_table$n_row, 
-       summary_table$mean-1.96*summary_table$sd/sqrt(10), 
-       summary_table$n_row, summary_table$mean+1.96*summary_table$sd/sqrt(10),
-       length=0.05, angle=90, code=3)
+arrows(summary_table$n_row[summary_table$package == "TDAML"], 
+       summary_table$mean[summary_table$package == "TDAML"]
+       -1.96*summary_table$sd[summary_table$package == "TDAML"]/sqrt(10),
+       summary_table$n_row[summary_table$package == "TDAML"], 
+       summary_table$mean[summary_table$package == "TDAML"]
+       +1.96*summary_table$sd[summary_table$package == "TDAML"]/sqrt(10), 
+       length=0.05, angle=90, code=3,col = "red")
+arrows(summary_table$n_row[summary_table$package == "persim"], 
+       summary_table$mean[summary_table$package == "persim"]
+       -1.96*summary_table$sd[summary_table$package == "persim"]/sqrt(10),
+       summary_table$n_row[summary_table$package == "persim"], 
+       summary_table$mean[summary_table$package == "persim"]
+       +1.96*summary_table$sd[summary_table$package == "persim"]/sqrt(10), 
+       length=0.05, angle=90, code=3,col = "black")
 ```
 
 ```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
-summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.133,0.220,0.398,3.430,0.953,17.054,1.955,53.896,3.760,142.524,6.604,294.552,10.466,601.802,16.169,1130.289,23.458,2091.953,35.098,3518.517),sd = c(0.022,0.016,0.035,0.186,0.094,1.1889,0.130,4.501,0.211,5.924,0.772,11.244,0.623,9.064,0.989,43.385,1.989,88.432,2.747,172.684),package = rep(c("TDAML","TDA"),10))
+summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.1387,0.0068,0.3624,0.0271,0.8414,0.061,1.7132,0.148,3.6323,0.26,6.2132,0.4322,10.9508,0.6787,16.1213,1.027,23.2014,1.4571,31.6256,1.922),sd = c(0.043,0.0015,0.0166,0.0082,0.0553,0.0087,0.0549,0.019,0.1713,0.019,0.4691,0.0209,0.9173,0.0235,0.9388,0.0404,1.7964,0.0903,2.5457,0.0618),package = rep(c("TDAML","persim"),10))
 
 # plot table
-plot(summary_table$n_row[summary_table$package=="TDA"], summary_table$mean[summary_table$package=="TDA"], type="b",
+plot(summary_table$n_row[summary_table$package=="TDAML"], summary_table$mean[summary_table$package=="persim"], type="b",
      xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd/sqrt(10)),xlab = "Points in shape",ylab = "Mean execution time (sec)")
-lines(summary_table$n_row[summary_table$package=="TDAML"], summary_table$mean[summary_table$package=="TDAML"], col=2, type="b")
-legend(x = 200,y = 2000,legend = c("TDAML","TDA"),col = c("red","black"),lty = c(1,1),cex = 0.8)
-arrows(summary_table$n_row, summary_table$mean-1.96*summary_table$sd/sqrt(10), summary_table$n_row, summary_table$mean+1.96*summary_table$sd/sqrt(10), length=0.05, angle=90, code=3)
+lines(summary_table$n_row[summary_table$package=="TDAML"], summary_table$mean[summary_table$package=="TDAML"], col="red", type="b")
+lines(summary_table$n_row[summary_table$package=="persim"], summary_table$mean[summary_table$package=="persim"], col="black", type="b")
+legend(x = 200,y = 20,legend = c("TDAML","persim"),col = c("red","black"),lty = c(1,1),cex = 0.8)
+arrows(summary_table$n_row[summary_table$package == "TDAML"], summary_table$mean[summary_table$package == "TDAML"]-1.96*summary_table$sd[summary_table$package == "TDAML"]/sqrt(10), summary_table$n_row[summary_table$package == "TDAML"], summary_table$mean[summary_table$package == "TDAML"]+1.96*summary_table$sd[summary_table$package == "TDAML"]/sqrt(10), length=0.05, angle=90, code=3,col = "red")
+arrows(summary_table$n_row[summary_table$package == "persim"], summary_table$mean[summary_table$package == "persim"]-1.96*summary_table$sd[summary_table$package == "persim"]/sqrt(10), summary_table$n_row[summary_table$package == "persim"], summary_table$mean[summary_table$package == "persim"]+1.96*summary_table$sd[summary_table$package == "persim"]/sqrt(10), length=0.05, angle=90, code=3,col = "black")
 ```
 
-INTERPRET
+The runtime of the persim `wasserstein` function was significantly faster than TDAML's `diagram_distance` function. However, a linear model of the runtime ratio of TDAML vs. persim against the number of points in the shape finds evidence that the two functions scale similarly (via a constant runtime ratio of mean 15):
+
+```{r,echo = T}
+model <- stats::lm(data = data.frame(y = 
+                                     summary_table$mean[summary_table$package == "TDAML"]
+                                     /summary_table$mean[summary_table$package == "persim"],
+                                     x = seq(100,1000,100)),
+                   formula = y ~ x,)
+summary(model)$coefficients
+```
+
+Nevertheless, the raw speed increase in python could be the basis for a very fast python counterpart to the TDAML package in the future.
 
 # Limitations of TDAML
 
