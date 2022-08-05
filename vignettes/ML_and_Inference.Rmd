@@ -111,8 +111,7 @@ A persistence diagram containing $n$ topological features can be represented in 
 In this section we will describe the various computational tools implemented in the package TDAML to analyze persistence diagrams, both explaining the mathematics and providing functional examples. To run our examples we must start by loading the TDAML package:
 
 ```{r setup}
-devtools::load_all()
-#library("TDAML")
+library("TDAML")
 ``` 
 
 All examples will analyze simple diagrams which are random deviations of three persistence diagrams called D1, D2 and D3 (each with points in dimension 0 only):
