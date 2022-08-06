@@ -1,6 +1,6 @@
 ---
 title: "Machine learning and statistical inference of persistence diagrams with TDAML"
-author: "Shael Brown"
+author: "Shael Brown and Dr. Reza Farivar"
 output: 
   rmarkdown::html_vignette:
     fig_caption: yes
