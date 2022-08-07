@@ -1,5 +1,5 @@
 ---
-title: "Machine learning and statistical inference of persistence diagrams with TDAML"
+title: "Machine learning and statistical inference of persistence diagrams with TDApplied"
 author: "Shael Brown and Dr. Reza Farivar"
 output: 
   rmarkdown::html_vignette:
@@ -22,11 +22,11 @@ knitr::opts_chunk$set(
 
 Topological data analysis is a relatively new area of data science which can find unique, non-linear global structure in whole datasets. The main tool of topological data analysis is called *persistent homology*, which produces a "shape descriptor" (called a *persistence diagram*) of its input dataset. Two main R packages exist for computing persistence diagrams; the more flexible of the two, called TDA, stores persistence diagrams in a non-standard data structure, and the faster of the two, called TDAstats, does not provide functionality for analyzing diagrams with published techniques. Methods exist for computing distances and kernels (which are a special type of similarity functions) between pairs of persistence diagrams, but only distance calculations are currently available in the R package TDA. Several papers have used distance and kernel computations in order to perform machine learning or inferences tasks with groups of persistence diagrams, but to date no publicly available software in either python or R provides the functionality for these types of analyses. In order to make the power of topological data analysis more readily available to data and machine learning practitioners, it would be very helpful to have a software package that can
 
-1. convert persistence diagrams computed using the R package TDA into a commonly-used data type for data analyses (a data frame), 
+1. convert persistence diagrams computed using the R packages TDA and TDAstats into a commonly-used data type for data analyses (a data frame), 
 2. implement fast versions of both distance and kernel calculations for pairs of persistence diagrams, and 
 3. provide scalable methods for machine learning and inference for persistence diagrams. 
 
-It is with these goals that the package TDAML was created to build upon the TDA package, however persistence diagrams computed with the TDAstats package can also be used by TDAML with only minimal preprocessing (see the section "Package TDAML" for details).
+It is with these goals that the package TDApplied was created.
 
 # Software Review
 
@@ -35,22 +35,22 @@ Topological data analysis has gained popularity over the past two decades since 
 1. The R package TDA [@R-TDA] is a wrapper for a number of C++ persistent homology packages, including Dionysus [@Dionysus], GUDHI [@GUDHI] and PHAT [@PHAT], and provides both distance calculation capabilities between persistence diagrams and the ability to find representative data points of each topological feature in a persistence diagram (the points for each feature are called a "representative cycle").
 2. The R package TDAstats [@R-TDAstats] is a wrapper of the C++ persistent homology engine Ripser [@Ripser], and provides an inference method for detecting group differences of two groups of persistence diagrams (as in [@Robinson_Turner]. However, the distance calculation currently implemented in that package, is not based on an accepted distance metric for persistence diagrams. 
 
-The paper [@PH_benchmarking] compared the runtimes of the homology calculations in the R packages TDA and TDAstats, and concluded that certain persistent homology calculations are faster with TDAstats. The choice of which package to use therefore may vary by application, depending on whether speed is desired or whether knowledge of which data points represent which topological feature. Therefore, a remark is included in the following section regarding using the TDAML package with the output of TDAstats homology calculations.
+The paper [@PH_benchmarking] compared the runtimes of the homology calculations in the R packages TDA and TDAstats, and concluded that certain persistent homology calculations are faster with TDAstats. The choice of which package to use therefore may vary by application, depending on whether speed is desired or whether knowledge of which data points represent which topological feature. Therefore, TDApplied can accept as input persistence diagrams computed from either package in order to cover a wide variety of potential use-cases.
 
 It is worthwhile to note that there are several python packages dedicated to topological data analysis calculations, including scikit-TDA [@scikittda2019] (which computes persistence diagrams, and distances/kernels between them, using several python libraries), and giotto-tda [@tauzin2020giottotda] (which computes persistence diagrams and uses persistence diagrams to analyze time series data).
 
-There are a number of shortcomings of available topological data analysis software. Firstly, in both python and R there is currently no package which allows for machine learning and inference of persistence diagrams, a limitation which greatly constrains the types of analyses that can be carried out. In R this is partially because there is no package for kernel calculations of persistence diagrams, but the very slow computation of distances between persistence diagrams also inhibits the practicality of distance-based inference procedures. Additionally, in R, the output of persistent homology calculations from the package TDA is a list with an element called "diagram" of class "diagram", which is not compatible with data frame methods that form the basis for data analysis in R. The package TDA provides some nice additional functionality compared to TDAstats, including the ability to return the location, in the dataset, of each topological feature found in the persistence diagram. Therefore, the non-standard data type returned by persistent homology calculations in the package TDA may also be limiting the development of TDA applications. 
+There are a number of shortcomings of available topological data analysis software. Firstly, in both python and R there is currently no package which allows for machine learning and inference of persistence diagrams, a limitation which greatly constrains the types of analyses that can be carried out. In R this is partially because there is no package for kernel calculations of persistence diagrams, but the very slow computation of distances between persistence diagrams in the TDA package also inhibits the practicality of distance-based inference procedures. Additionally, in R, the output of persistent homology calculations from the package TDA is a list with an element called "diagram" of class "diagram", which is not compatible with data frame methods that form the basis for data analysis in R. On the other hand, TDAstats does not compute a published distance metric for persistence diagrams, making inferences drawn from its `permutation_test` function unclear. Overall, the non-standard data type returned by persistent homology calculations in TDA, the slow distance calculations in TDA and the non-published distance metric in TDAstats may be limiting the development of TDA applications in R.
 
-# Package TDAML
+# Package TDApplied
 
-The package TDAML aims to solve the three goals outlined in the introductory paragraph. Firstly, the function `diagram_to_df` allows the conversion of the output of TDA persistent homology calculations to a data frame. Secondly, the functions `diagram_distance` and `diagram_kernel` allow for fast distance and kernel calculations respectively, and their counterparts `distance_matrix` and `gram_matrix` compute in parallel, for scalability, the (cross) distance and (cross) Gram matrices respectively. Thirdly, these distance and kernel calculations are used to perform machine learning and inference on persistence diagrams. Methods include 
+The package TDApplied aims to solve the three goals outlined in the introductory paragraph. Firstly, the function `diagram_to_df` allows the conversion of the output of TDA persistent homology calculations to a data frame. Secondly, the functions `diagram_distance` and `diagram_kernel` allow for fast distance and kernel calculations respectively, and their counterparts `distance_matrix` and `gram_matrix` compute in parallel, for scalability, the (cross) distance and (cross) Gram matrices respectively. Thirdly, these distance and kernel calculations are used to perform machine learning and inference on persistence diagrams. Methods include 
 
 1. dimension reduction with metric multidimensional scaling (MDS) and kernel principal components analysis (kpca),
 2. clustering with kernel k-means,
 3. regression and classification with kernel support-vector machines (ksvm), and
 4. inference with distance and kernel calculations looking for group differences and group independence, respectively.
 
-While TDAML is designed to use as input the output of TDA persistent homology calculations, **TDAML is also able to use as input the output of the TDAstats function `calculate_homology`, provided that its output is first converted to a data frame using the `as.data.frame` function** (for example, `as.data.frame(calculate_homology(X))`). The kernel machine learning methods implemented in TDAML are wrappers of the flexible R package for kernel calculations kernlab [@R-kernlab], with some additional processing steps specific to persistence diagrams. In the subsequent sections we will describe these applications in more detail.
+The kernel machine learning methods implemented in TDApplied are wrappers of the flexible R package for kernel calculations kernlab [@R-kernlab], with some additional processing steps specific to persistence diagrams. In the subsequent sections we will describe these applications in more detail.
 
 # Background: Persistent Homology
 
@@ -106,20 +106,20 @@ Therefore, the output of persistent homology, a persistence diagram, in each dim
 
 A persistence diagram containing $n$ topological features can be represented in a vector of length $2n$. However, persistence diagrams can contain different numbers of features, and the ordering of the features is arbitrary. There, there is no obvious vector representation of all persistence diagrams that can be used as the input of machine learning or statistical inference. Nevertheless, we can apply a number of these techniques to persistence diagrams provided we can quantify how near (similar) or far (distant) they are from each other, and describing suitable distance and similarity measures with their accompanying analysis methods will be the content of the following section.
 
-# TDAML Methods and Underlying Theory
+# TDApplied Methods and Underlying Theory
 
-In this section we will describe the various computational tools implemented in the package TDAML to analyze persistence diagrams, both explaining the mathematics and providing functional examples. To run our examples we must start by loading the TDAML package:
+In this section we will describe the various computational tools implemented in the package TDApplied to analyze persistence diagrams, both explaining the mathematics and providing functional examples. To run our examples we must start by loading the TDApplied package:
 
 ```{r setup}
-library("TDAML")
+library("TDApplied")
 ``` 
 
 All examples will analyze simple diagrams which are random deviations of three persistence diagrams called D1, D2 and D3 (each with points in dimension 0 only):
 
 ```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center'}
-D1 = generate_TDAML_test_data(1,0,0)
-D2 = generate_TDAML_test_data(0,1,0)
-D3 = generate_TDAML_test_data(0,0,1)
+D1 = generate_TDApplied_test_data(1,0,0)
+D2 = generate_TDApplied_test_data(0,1,0)
+D3 = generate_TDApplied_test_data(0,0,1)
 par(mfrow = c(1,3))
 plot(x = D1$birth,y = D1$death,main = "D1",xlab = "",ylab = "",xlim = c(0,4),ylim = c(0,4))
 abline(a = 0,b = 1)
@@ -130,11 +130,11 @@ abline(a = 0,b = 1)
 par(mfrow = c(1,1))
 ```
 
-When desired, random Gaussian noise with a small variance will be added to the birth and death values of the points in these three diagrams (being careful make sure the points always have appropriate birth and death values), which will be achieved with the TDAML internal (but documented) function `generate_TDAML_test_data`. Here is an example of making noisy copies of D1:
+When desired, random Gaussian noise with a small variance will be added to the birth and death values of the points in these three diagrams (being careful make sure the points always have appropriate birth and death values), which will be achieved with the TDApplied internal (but documented) function `generate_TDApplied_test_data`. Here is an example of making noisy copies of D1:
 
 ```{r,echo = F,fig.height = 5,fig.width = 5,fig.align = 'center'}
 par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-noisy_copies_D1 = generate_TDAML_test_data(2,0,0)
+noisy_copies_D1 = generate_TDApplied_test_data(2,0,0)
 cols = factor(c("D1","Copy 1","Copy 2"),levels = c("D1","Copy 1","Copy 2"))
 plot(x = c(D1$birth,noisy_copies_D1[[1]]$birth,noisy_copies_D1[[2]]$birth),y = c(D1$death,noisy_copies_D1[[1]]$death,noisy_copies_D1[[2]]$death),main = "D1 and noisy copies",xlab = "",ylab = "",xlim = c(0,4),ylim = c(0,4),col = c("black","red","blue"),bty = "L")
 lines(x = c(-0.15,4.15),y = c(-0.15,4.15))
@@ -143,7 +143,7 @@ legend("topright", inset=c(-0.2,0),
        pch=16, col=c("black","red","blue"))
 ```
 
-The parameters to the function are the numbers of copies desired from each of D1, D2 and D3. So, for example, the code `generate_TDAML_test_data(3,3,3)` would generate a list of three noisy copies of D1 follows by three noisy copies of D2 followed by three noisy copies of D3.
+The parameters to the function are the numbers of copies desired from each of D1, D2 and D3. So, for example, the code `generate_TDApplied_test_data(3,3,3)` would generate a list of three noisy copies of D1 follows by three noisy copies of D2 followed by three noisy copies of D3.
 
 ## Distance Between Persistence Diagrams
 
@@ -167,7 +167,7 @@ par(mfrow = c(1,1))
 
 In the picture we can see that there is a "better" matching between D1 and D2 compared to D1 and D3, so the (wasserstein/bottleneck) distance value between D1 and D2 would be smaller than that of D1 and D3.
 
-The wasserstein and bottleneck distances have been implemented in the TDAML function `diagram_distance`. We can confirm that the distance between D1 and D2 is smaller than D1 and D3 for both distances:
+The wasserstein and bottleneck distances have been implemented in the TDApplied function `diagram_distance`. We can confirm that the distance between D1 and D2 is smaller than D1 and D3 for both distances:
 
 ```{r,echo = T}
 # calculate 2-wasserstein distance between D1 and D2
@@ -242,7 +242,7 @@ Dimension reduction is a task in machine learning which is commonly used for dat
 
 ```{r,echo = T,fig.height = 3,fig.width = 6,fig.align = 'center'}
 # create 9 diagrams based on D1, D2 and D3
-g <- generate_TDAML_test_data(3,3,3)
+g <- generate_TDApplied_test_data(3,3,3)
 
 # calculate their 2D MDS embedding in dimension 0 with the bottleneck distance
 mds <- diagram_mds(diagrams = g,dim = 0,p = Inf,k = 2,num_workers = 2)
@@ -268,9 +268,9 @@ In order to demonstrate the utility of the permutation test we will detect diffe
 
 ```{r,echo = T}
 # permutation test between three diagrams
-g1 <- generate_TDAML_test_data(3,0,0)
-g2 <- generate_TDAML_test_data(0,3,0)
-g3 <- generate_TDAML_test_data(0,0,3)
+g1 <- generate_TDApplied_test_data(3,0,0)
+g2 <- generate_TDApplied_test_data(0,3,0)
+g3 <- generate_TDApplied_test_data(0,0,3)
 perm_test <- permutation_test(g1,g2,g3,
                               num_workers = 2,
                               dims = c(0))
@@ -279,15 +279,15 @@ perm_test$p_values
 
 As expected, a difference was found (at the $\alpha = 0.05$ significance level) between the three groups. 
 
-The package TDAstats also has a function called `permutation_test` which is based on the same test procedure, however it uses an unpublished distance metric between persistence diagrams and does not use parallelization for scalability. As such, care must be taken if both TDAML and TDAstats are attached in an R script to use the desired `permutation_test` function.
+The package TDAstats also has a function called `permutation_test` which is based on the same test procedure, however it uses an unpublished distance metric between persistence diagrams and does not use parallelization for scalability. As such, care must be taken if both TDApplied and TDAstats are attached in an R script to use the desired `permutation_test` function.
 
 ## Kernels Between Persistence Diagrams
 
 A kernel function is a special (positive semi-definite) symmetric similarity measure between objects in some complicated space which can be used to project data into a space suitable for machine learning [@murphyML]. Some examples of machine learning techniques which can be "kernelized" when dealing with complicated data are *k-means* (kernel k-means), *principal components analysis* (kernel PCA), and *support vector machines* (SVM) which are inherently based on kernel calculations.
 
-There have been, to date, four main kernels proposed for persistence diagrams. In TDAML the persistence Fisher kernel [@persistence_fisher] has been implemented because of its practical advantages over the other kernels -- smaller cross-validation SVM error on a number of test data sets and a faster method for cross validation. For information on the other three kernels see [@kernel_TDA], [@sliced_wasserstein], and [@kernel_TDA_original].
+There have been, to date, four main kernels proposed for persistence diagrams. In TDApplied the persistence Fisher kernel [@persistence_fisher] has been implemented because of its practical advantages over the other kernels -- smaller cross-validation SVM error on a number of test data sets and a faster method for cross validation. For information on the other three kernels see [@kernel_TDA], [@sliced_wasserstein], and [@kernel_TDA_original].
 
-The persistence Fisher kernel is computed directly from the Fisher information metric between two persistence diagrams: let $\sigma > 0$ be the parameter for $d_{FIM}$, and let $t > 0$. Then the persistence Fisher kernel is defined as $k_{PF}(D_1,D_2) = \mbox{exp}(-t*d_{FIM}(D_1,D_2,\sigma))$. Computing the persistence Fisher kernel can be achieved with the `diagram_kernel` function in TDAML:
+The persistence Fisher kernel is computed directly from the Fisher information metric between two persistence diagrams: let $\sigma > 0$ be the parameter for $d_{FIM}$, and let $t > 0$. Then the persistence Fisher kernel is defined as $k_{PF}(D_1,D_2) = \mbox{exp}(-t*d_{FIM}(D_1,D_2,\sigma))$. Computing the persistence Fisher kernel can be achieved with the `diagram_kernel` function in TDApplied:
 
 ```{r,echo = T}
 # calculate the kernel value between D1 and D2 with sigma = 2, t = 2
@@ -304,7 +304,7 @@ Kernel k-means [@kkmeans] is a method which can find hidden groups in complex da
 
 ```{r,echo = T}
 # create noisy copies of D1, D2 and D3
-g <- generate_TDAML_test_data(3,3,3)
+g <- generate_TDApplied_test_data(3,3,3)
                               
 # calculate kmeans clusters with centers = 3, and sigma = t = 2
 clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
@@ -319,7 +319,7 @@ If we wish to predict the cluster label for new persistence diagrams (computed v
 
 ```{r,echo = T}
 # create nine new diagrams
-g_new <- generate_TDAML_test_data(3,3,3)
+g_new <- generate_TDApplied_test_data(3,3,3)
 
 # predict cluster labels
 predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)
@@ -333,7 +333,7 @@ PCA is another dimension reduction technique in machine learning, but can be pre
 
 ```{r,echo = T,fig.height = 3,fig.width = 6,fig.align = 'center'}
 # create noisy copies of D1, D2 and D3
-g <- generate_TDAML_test_data(3,3,3)
+g <- generate_TDApplied_test_data(3,3,3)
 
 # calculate their 2D PCA embedding with sigma = t = 2
 pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_workers = 2)
@@ -352,7 +352,7 @@ The function was able to recognize the three groups, and the embedding coordinat
 
 ```{r,echo = T,fig.height = 3,fig.width = 6,fig.align = 'center'}
 # create nine new diagrams
-g_new <- generate_TDAML_test_data(3,3,3)
+g_new <- generate_TDApplied_test_data(3,3,3)
 
 # project new diagrams onto old model
 new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers = 2)
@@ -377,7 +377,7 @@ SVMs have been implemented in the function `diagram_ksvm`, tailored for input da
 
 ```{r,echo = T}
 # create thirty noisy copies of D1, D2 and D3
-g <- generate_TDAML_test_data(10,10,10)
+g <- generate_TDApplied_test_data(10,10,10)
 
 # create response vector
 y <- as.factor(rep(c("D1","D2","D3"),each = 10))
@@ -392,7 +392,7 @@ We can use the function `predict_diagram_ksvm` to predict new diagrams like so:
 
 ```{r,echo = T}
 # create nine new diagrams
-g_new <- generate_TDAML_test_data(3,3,3)
+g_new <- generate_TDApplied_test_data(3,3,3)
 
 # predict
 predict_diagram_ksvm(new_diagrams = g_new,model = model_svm,num_workers = 2)
@@ -408,8 +408,8 @@ This inference procedure has been implemented in the `independence_test` functio
 
 ```{r,echo = T}
 # create 10 noisy copies of D1 and D2
-g1 <- generate_TDAML_test_data(10,0,0)
-g2 <- generate_TDAML_test_data(0,10,0)
+g1 <- generate_TDApplied_test_data(10,0,0)
+g2 <- generate_TDApplied_test_data(0,10,0)
 
 # do independence test with sigma = t = 1
 indep_test <- independence_test(g1,g2,dims = c(0),num_workers = 2)
@@ -418,11 +418,11 @@ indep_test$p_values
 
 The p-value of this test would not be significant at any typical significance threshold, reflecting the fact that there is no real (i.e. non-spurious) dependence between the two groups, as expected.
 
-# Benchmarking the TDAML `diagram_distance` and TDA `wasserstein` Functions 
+# Benchmarking the TDApplied `diagram_distance` and TDA `wasserstein` Functions 
 
-Computing distances (wasserstein/bottleneck) between persistence diagrams is a key feature of some of the main topological data analysis software packages. However, these calculations can be very expensive, rendering practical applications of topological data analysis nearly unfeasible. TDAML strives to provide useful methods for applied topological data analysis, and as such its distance function must be fast, at least compared to distance calculations provided by other packages. We will compare the run time of the TDAML `diagram_distance` function compared to the R package TDA `wasserstein` function to argue that TDAML provides a much more tractable distance calculation. We will also compare the runtime of the TDAML `diagram_distance` function against a python counterpart from scikit-TDA to evaluate the feasibility for a TDAML counterpart module in python.
+Computing distances (wasserstein/bottleneck) between persistence diagrams is a key feature of some of the main topological data analysis software packages. However, these calculations can be very expensive, rendering practical applications of topological data analysis nearly unfeasible. TDApplied strives to provide useful methods for applied topological data analysis, and as such its distance function must be fast, at least compared to distance calculations provided by other packages. We will compare the run time of the TDApplied `diagram_distance` function compared to the R package TDA `wasserstein` function to argue that TDApplied provides a much more tractable distance calculation. We will also compare the runtime of the TDApplied `diagram_distance` function against a python counterpart from scikit-TDA to evaluate the feasibility for a TDApplied counterpart module in python.
 
-We simulated persistence diagrams computed from uniform sampling of two shapes provided in the TDA package -- a torus (i.e. a hollow doughnut) with major radius 2 and minor radius 1, and a sphere (i.e. surface of a ball) of radius 1. We sampled $n$ points from each shape where $n \in \{100,200,300,\dots,1000\}$, with 10 iterations at each value of $n$. At each iteration the distance between the calculated persistence diagrams of the sampled torus and of the sampled sphere with $n$ points was computed in homological dimensions 0, 1 and 2 using the TDAML function `diagram_distance` with `p = 2` and the TDA function `wasserstein`. The runtime in seconds for these operations was recorded on a Windows 10 64-bit machine, with an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM. We plot the mean runtime for each package at each value of $n$ with 95\% confidence interval error bars. To avoid a long build for this vignette the results were computed and recorded, but the code used for benchmarking can be seen below (not run in this vignette):
+We simulated persistence diagrams computed from uniform sampling of two shapes provided in the TDA package -- a torus (i.e. a hollow doughnut) with major radius 2 and minor radius 1, and a sphere (i.e. surface of a ball) of radius 1. We sampled $n$ points from each shape where $n \in \{100,200,300,\dots,1000\}$, with 10 iterations at each value of $n$. At each iteration the distance between the calculated persistence diagrams of the sampled torus and of the sampled sphere with $n$ points was computed in homological dimensions 0, 1 and 2 using the TDApplied function `diagram_distance` with `p = 2` and the TDA function `wasserstein`. The runtime in seconds for these operations was recorded on a Windows 10 64-bit machine, with an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM. We plot the mean runtime for each package at each value of $n$ with 95\% confidence interval error bars. To avoid a long build for this vignette the results were computed and recorded, but the code used for benchmarking can be seen below (not run in this vignette):
 
 ```{r,echo = T,warning=F,eval = F}
 # generate persistence diagrams from Tori and spheres with  100,200,...,1000 data points.
@@ -438,15 +438,15 @@ for(n_row in seq(100,1000,100)){
                               maxdimension = 2,maxscale = 1)
 
     # compute their wasserstein distances in all dimensions and benchmark
-    start_time_TDAML = Sys.time()
+    start_time_TDApplied = Sys.time()
     diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 0,
                      p = 2,distance = "wasserstein")
     diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 1,
                      p = 2,distance = "wasserstein")
     diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 2,
                      p = 2,distance = "wasserstein")
-    end_time_TDAML = Sys.time()
-    time_diff_TDAML = as.numeric(end_time_TDAML - start_time_TDAML,units = "secs")
+    end_time_TDApplied = Sys.time()
+    time_diff_TDApplied = as.numeric(end_time_TDApplied - start_time_TDApplied,units = "secs")
 
     start_time_TDA = Sys.time()
     TDA::wasserstein(Diag1 = diagram_torus$diagram,Diag2 = diagram_sphere$diagram,
@@ -459,8 +459,8 @@ for(n_row in seq(100,1000,100)){
     time_diff_TDA = as.numeric(end_time_TDA - start_time_TDA,units = "secs")
 
     runtimes_shape = rbind(runtimes_shape,data.frame(n_row = n_row,
-                                                     package = "TDAML",
-                                                     time_in_sec = time_diff_TDAML))
+                                                     package = "TDApplied",
+                                                     time_in_sec = time_diff_TDApplied))
     runtimes_shape = rbind(runtimes_shape,data.frame(n_row = n_row,
                                                      package = "TDA",
                                                      time_in_sec = time_diff_TDA))
@@ -475,7 +475,7 @@ summary_table = data.frame(n_row = numeric(),mean = numeric(),sd = numeric(),
                            package = character())
 for(n_row in seq(100,1000,100))
 {
-  for(p in c("TDAML","TDA"))
+  for(p in c("TDApplied","TDA"))
   {
     result = data.frame(n_row = n_row,
                         mean = mean(runtimes_shape[which(runtimes_shape$n_row == n_row
@@ -496,17 +496,17 @@ plot(summary_table$n_row[summary_table$package=="TDA"],
      xlim=range(summary_table$n_row),
      ylim=range(0,summary_table$mean+1.96*summary_table$sd/sqrt(10)),
      xlab = "Points in shape",ylab = "Mean execution time (sec)")
-lines(summary_table$n_row[summary_table$package=="TDAML"],
-      summary_table$mean[summary_table$package=="TDAML"], 
+lines(summary_table$n_row[summary_table$package=="TDApplied"],
+      summary_table$mean[summary_table$package=="TDApplied"], 
       col=2, type="b")
-legend(x = 200,y = 2000,legend = c("TDAML","TDA"),
+legend(x = 200,y = 2000,legend = c("TDApplied","TDA"),
        col = c("red","black"),lty = c(1,1),cex = 0.8)
-arrows(summary_table$n_row[summary_table$package == "TDAML"], 
-       summary_table$mean[summary_table$package == "TDAML"]
-       -1.96*summary_table$sd[summary_table$package == "TDAML"]/sqrt(10),
-       summary_table$n_row[summary_table$package == "TDAML"], 
-       summary_table$mean[summary_table$package == "TDAML"]
-       +1.96*summary_table$sd[summary_table$package == "TDAML"]/sqrt(10), 
+arrows(summary_table$n_row[summary_table$package == "TDApplied"], 
+       summary_table$mean[summary_table$package == "TDApplied"]
+       -1.96*summary_table$sd[summary_table$package == "TDApplied"]/sqrt(10),
+       summary_table$n_row[summary_table$package == "TDApplied"], 
+       summary_table$mean[summary_table$package == "TDApplied"]
+       +1.96*summary_table$sd[summary_table$package == "TDApplied"]/sqrt(10), 
        length=0.05, angle=90, code=3,col = "red")
 arrows(summary_table$n_row[summary_table$package == "TDA"], 
        summary_table$mean[summary_table$package == "TDA"]
@@ -518,34 +518,34 @@ arrows(summary_table$n_row[summary_table$package == "TDA"],
 ```
 
 ```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
-summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.133,0.220,0.398,3.430,0.953,17.054,1.955,53.896,3.760,142.524,6.604,294.552,10.466,601.802,16.169,1130.289,23.458,2091.953,35.098,3518.517),sd = c(0.022,0.016,0.035,0.186,0.094,1.1889,0.130,4.501,0.211,5.924,0.772,11.244,0.623,9.064,0.989,43.385,1.989,88.432,2.747,172.684),package = rep(c("TDAML","TDA"),10))
+summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.133,0.220,0.398,3.430,0.953,17.054,1.955,53.896,3.760,142.524,6.604,294.552,10.466,601.802,16.169,1130.289,23.458,2091.953,35.098,3518.517),sd = c(0.022,0.016,0.035,0.186,0.094,1.1889,0.130,4.501,0.211,5.924,0.772,11.244,0.623,9.064,0.989,43.385,1.989,88.432,2.747,172.684),package = rep(c("TDApplied","TDA"),10))
 
 # plot table
 plot(summary_table$n_row[summary_table$package=="TDA"], summary_table$mean[summary_table$package=="TDA"], type="b",
      xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd/sqrt(10)),xlab = "Points in shape",ylab = "Mean execution time (sec)")
-lines(summary_table$n_row[summary_table$package=="TDAML"], summary_table$mean[summary_table$package=="TDAML"], col=2, type="b")
-legend(x = 200,y = 2000,legend = c("TDAML","TDA"),col = c("red","black"),lty = c(1,1),cex = 0.8)
-arrows(summary_table$n_row[summary_table$package == "TDAML"], summary_table$mean[summary_table$package == "TDAML"]-1.96*summary_table$sd[summary_table$package == "TDAML"]/sqrt(10), summary_table$n_row[summary_table$package == "TDAML"], summary_table$mean[summary_table$package == "TDAML"]+1.96*summary_table$sd[summary_table$package == "TDAML"]/sqrt(10), length=0.05, angle=90, code=3,col = "red")
+lines(summary_table$n_row[summary_table$package=="TDApplied"], summary_table$mean[summary_table$package=="TDApplied"], col=2, type="b")
+legend(x = 200,y = 2000,legend = c("TDApplied","TDA"),col = c("red","black"),lty = c(1,1),cex = 0.8)
+arrows(summary_table$n_row[summary_table$package == "TDApplied"], summary_table$mean[summary_table$package == "TDApplied"]-1.96*summary_table$sd[summary_table$package == "TDApplied"]/sqrt(10), summary_table$n_row[summary_table$package == "TDApplied"], summary_table$mean[summary_table$package == "TDApplied"]+1.96*summary_table$sd[summary_table$package == "TDApplied"]/sqrt(10), length=0.05, angle=90, code=3,col = "red")
 arrows(summary_table$n_row[summary_table$package == "TDA"], summary_table$mean[summary_table$package == "TDA"]-1.96*summary_table$sd[summary_table$package == "TDA"]/sqrt(10), summary_table$n_row[summary_table$package == "TDA"], summary_table$mean[summary_table$package == "TDA"]+1.96*summary_table$sd[summary_table$package == "TDA"]/sqrt(10), length=0.05, angle=90, code=3,col = "black")
 ```
 
-A linear model can be used to verify that the runtime ratio of the TDA vs. TDAML grew at each subsequent number of tested data points in the shapes (with about a 100x speed up for 1000 data points), suggesting that distance calculations with TDAML are faster and more scalable: 
+A linear model can be used to verify that the runtime ratio of the TDA vs. TDApplied grew at each subsequent number of tested data points in the shapes (with about a 100x speed up for 1000 data points), suggesting that distance calculations with TDApplied are faster and more scalable: 
 
 ```{r,echo = T}
 model <- stats::lm(data = data.frame(y = 
                                      summary_table$mean[summary_table$package == "TDA"]
-                                     /summary_table$mean[summary_table$package == "TDAML"],
+                                     /summary_table$mean[summary_table$package == "TDApplied"],
                                      x = seq(100,1000,100)),
                    formula = y ~ x,)
 summary(model)$coefficients
 predict(model,newdata = data.frame(x = 1000))[[1]]
 ```
 
-The fast and scalable distance calculation in TDAML makes the applications of statistics and machine learning with persistence diagrams more feasible. This is why the TDA distance calculation was not used in the TDAML package.
+The fast and scalable distance calculation in TDApplied makes the applications of statistics and machine learning with persistence diagrams more feasible. This is why the TDA distance calculation was not used in the TDApplied package.
 
-# Benchmarking the TDAML `diagram_distance` Function against persim's `wasserstein` Function
+# Benchmarking the TDApplied `diagram_distance` Function against persim's `wasserstein` Function
 
-While the functionality of python packages for topological data analysis packages are out of the scope for an R package, in order to fully situate TDAML in the landscape of topological data analysis software we will benchmark the `diagram_distance` function against its counterpart from the sci-kit TDA collection of libraries, namely the `wasserstein` function from the persim python module. Note that there is currently no publicly available implementation of the persistence Fisher kernel in python, and as such we will not benchmark kernel calculations. The code for this R vs. python benchmarking is very similar to the code from the previous section, with a few modifications. The general set up is the same, with tori and spheres generated with various numbers of rows with ten iterations at each number of rows. The benchmarking was also carried out on a Windows 10 64-bit machine, with an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM. However, the package reticulate [@R-reticulate] is attached before the benchmarking and two python modules from scikit-TDA are loaded - persim and ripser. Persim will be used to calculate the wasserstein distances via its `wasserstein` function, and ripser will be used to create persistence diagrams which can be used as input to the `wasserstein` function. Before running this code miniconda was installed through the reticulate package, using the `install_miniconda` function, and the modules persim and ripser were installed using the code `py_install("persim")` and `py_install("ripser")` respectively. The code for benchmarking is included below, but not run in this vignette:
+While the functionality of python packages for topological data analysis packages are out of the scope for an R package, in order to fully situate TDApplied in the landscape of topological data analysis software we will benchmark the `diagram_distance` function against its counterpart from the sci-kit TDA collection of libraries, namely the `wasserstein` function from the persim python module. Note that there is currently no publicly available implementation of the persistence Fisher kernel in python, and as such we will not benchmark kernel calculations. The code for this R vs. python benchmarking is very similar to the code from the previous section, with a few modifications. The general set up is the same, with tori and spheres generated with various numbers of rows with ten iterations at each number of rows. The benchmarking was also carried out on a Windows 10 64-bit machine, with an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM. However, the package reticulate [@R-reticulate] is attached before the benchmarking and two python modules from scikit-TDA are loaded - persim and ripser. Persim will be used to calculate the wasserstein distances via its `wasserstein` function, and ripser will be used to create persistence diagrams which can be used as input to the `wasserstein` function. Before running this code miniconda was installed through the reticulate package, using the `install_miniconda` function, and the modules persim and ripser were installed using the code `py_install("persim")` and `py_install("ripser")` respectively. The code for benchmarking is included below, but not run in this vignette:
 
 ```{r,echo = T,warning=F,eval = F}
 
@@ -578,15 +578,15 @@ for(n_row in seq(100,1000,100)){
     diagram_sphere_py[[3]][which(diagram_sphere_py[[3]][,2] == Inf),2] = 2
     
     # compute their wasserstein distances in all dimensions and benchmark
-    start_time_TDAML = Sys.time()
+    start_time_TDApplied = Sys.time()
     diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 0,
                      p = 2,distance = "wasserstein")
     diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 1,
                      p = 2,distance = "wasserstein")
     diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 2,
                      p = 2,distance = "wasserstein")
-    end_time_TDAML = Sys.time()
-    time_diff_TDAML = as.numeric(end_time_TDAML - start_time_TDAML,units = "secs")
+    end_time_TDApplied = Sys.time()
+    time_diff_TDApplied = as.numeric(end_time_TDApplied - start_time_TDApplied,units = "secs")
     
     start_time_persim = Sys.time()
     persim$wasserstein(diagram_torus_py[[1]],diagram_sphere_py[[1]])
@@ -596,8 +596,8 @@ for(n_row in seq(100,1000,100)){
     time_diff_persim = as.numeric(end_time_persim - start_time_persim,units = "secs")
     
     runtimes_language = rbind(runtimes_language,data.frame(n_row = n_row,
-                                                     package = "TDAML",
-                                                     time_in_sec = time_diff_TDAML))
+                                                     package = "TDApplied",
+                                                     time_in_sec = time_diff_TDApplied))
     runtimes_language = rbind(runtimes_language,data.frame(n_row = n_row,
                                                      package = "persim",
                                                      time_in_sec = time_diff_persim))
@@ -612,7 +612,7 @@ summary_table = data.frame(n_row = numeric(),mean = numeric(),sd = numeric(),
                            package = character())
 for(n_row in seq(100,1000,100))
 {
-  for(p in c("TDAML","persim"))
+  for(p in c("TDApplied","persim"))
   {
     result = data.frame(n_row = n_row,
                         mean = mean(runtimes_language[which(runtimes_language$n_row == n_row
@@ -627,25 +627,25 @@ for(n_row in seq(100,1000,100))
 }
 
 # plot table
-plot(summary_table$n_row[summary_table$package=="TDAML"],
+plot(summary_table$n_row[summary_table$package=="TDApplied"],
      summary_table$mean[summary_table$package=="persim"], type="b",
      xlim=range(summary_table$n_row),
      ylim=range(0,summary_table$mean+1.96*summary_table$sd/sqrt(10)),
      xlab = "Points in shape",ylab = "Mean execution time (sec)")
-lines(summary_table$n_row[summary_table$package=="TDAML"],
-      summary_table$mean[summary_table$package=="TDAML"], 
+lines(summary_table$n_row[summary_table$package=="TDApplied"],
+      summary_table$mean[summary_table$package=="TDApplied"], 
       col="red", type="b")
 lines(summary_table$n_row[summary_table$package=="persim"],
       summary_table$mean[summary_table$package=="persim"], 
       col="black", type="b")
-legend(x = 200,y = 20,legend = c("TDAML","persim"),
+legend(x = 200,y = 20,legend = c("TDApplied","persim"),
        col = c("red","black"),lty = c(1,1),cex = 0.8)
-arrows(summary_table$n_row[summary_table$package == "TDAML"], 
-       summary_table$mean[summary_table$package == "TDAML"]
-       -1.96*summary_table$sd[summary_table$package == "TDAML"]/sqrt(10),
-       summary_table$n_row[summary_table$package == "TDAML"], 
-       summary_table$mean[summary_table$package == "TDAML"]
-       +1.96*summary_table$sd[summary_table$package == "TDAML"]/sqrt(10), 
+arrows(summary_table$n_row[summary_table$package == "TDApplied"], 
+       summary_table$mean[summary_table$package == "TDApplied"]
+       -1.96*summary_table$sd[summary_table$package == "TDApplied"]/sqrt(10),
+       summary_table$n_row[summary_table$package == "TDApplied"], 
+       summary_table$mean[summary_table$package == "TDApplied"]
+       +1.96*summary_table$sd[summary_table$package == "TDApplied"]/sqrt(10), 
        length=0.05, angle=90, code=3,col = "red")
 arrows(summary_table$n_row[summary_table$package == "persim"], 
        summary_table$mean[summary_table$package == "persim"]
@@ -657,38 +657,38 @@ arrows(summary_table$n_row[summary_table$package == "persim"],
 ```
 
 ```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
-summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.1387,0.0068,0.3624,0.0271,0.8414,0.061,1.7132,0.148,3.6323,0.26,6.2132,0.4322,10.9508,0.6787,16.1213,1.027,23.2014,1.4571,31.6256,1.922),sd = c(0.043,0.0015,0.0166,0.0082,0.0553,0.0087,0.0549,0.019,0.1713,0.019,0.4691,0.0209,0.9173,0.0235,0.9388,0.0404,1.7964,0.0903,2.5457,0.0618),package = rep(c("TDAML","persim"),10))
+summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.1387,0.0068,0.3624,0.0271,0.8414,0.061,1.7132,0.148,3.6323,0.26,6.2132,0.4322,10.9508,0.6787,16.1213,1.027,23.2014,1.4571,31.6256,1.922),sd = c(0.043,0.0015,0.0166,0.0082,0.0553,0.0087,0.0549,0.019,0.1713,0.019,0.4691,0.0209,0.9173,0.0235,0.9388,0.0404,1.7964,0.0903,2.5457,0.0618),package = rep(c("TDApplied","persim"),10))
 
 # plot table
-plot(summary_table$n_row[summary_table$package=="TDAML"], summary_table$mean[summary_table$package=="persim"], type="b",
+plot(summary_table$n_row[summary_table$package=="TDApplied"], summary_table$mean[summary_table$package=="persim"], type="b",
      xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd/sqrt(10)),xlab = "Points in shape",ylab = "Mean execution time (sec)")
-lines(summary_table$n_row[summary_table$package=="TDAML"], summary_table$mean[summary_table$package=="TDAML"], col="red", type="b")
+lines(summary_table$n_row[summary_table$package=="TDApplied"], summary_table$mean[summary_table$package=="TDApplied"], col="red", type="b")
 lines(summary_table$n_row[summary_table$package=="persim"], summary_table$mean[summary_table$package=="persim"], col="black", type="b")
-legend(x = 200,y = 20,legend = c("TDAML","persim"),col = c("red","black"),lty = c(1,1),cex = 0.8)
-arrows(summary_table$n_row[summary_table$package == "TDAML"], summary_table$mean[summary_table$package == "TDAML"]-1.96*summary_table$sd[summary_table$package == "TDAML"]/sqrt(10), summary_table$n_row[summary_table$package == "TDAML"], summary_table$mean[summary_table$package == "TDAML"]+1.96*summary_table$sd[summary_table$package == "TDAML"]/sqrt(10), length=0.05, angle=90, code=3,col = "red")
+legend(x = 200,y = 20,legend = c("TDApplied","persim"),col = c("red","black"),lty = c(1,1),cex = 0.8)
+arrows(summary_table$n_row[summary_table$package == "TDApplied"], summary_table$mean[summary_table$package == "TDApplied"]-1.96*summary_table$sd[summary_table$package == "TDApplied"]/sqrt(10), summary_table$n_row[summary_table$package == "TDApplied"], summary_table$mean[summary_table$package == "TDApplied"]+1.96*summary_table$sd[summary_table$package == "TDApplied"]/sqrt(10), length=0.05, angle=90, code=3,col = "red")
 arrows(summary_table$n_row[summary_table$package == "persim"], summary_table$mean[summary_table$package == "persim"]-1.96*summary_table$sd[summary_table$package == "persim"]/sqrt(10), summary_table$n_row[summary_table$package == "persim"], summary_table$mean[summary_table$package == "persim"]+1.96*summary_table$sd[summary_table$package == "persim"]/sqrt(10), length=0.05, angle=90, code=3,col = "black")
 ```
 
-The runtime of the persim `wasserstein` function was significantly faster than TDAML's `diagram_distance` function. However, a linear model of the runtime ratio of TDAML vs. persim against the number of points in the shape finds evidence that the two functions scale similarly (via a constant runtime ratio of mean 15):
+The runtime of the persim `wasserstein` function was significantly faster than TDApplied's `diagram_distance` function. However, a linear model of the runtime ratio of TDApplied vs. persim against the number of points in the shape finds evidence that the two functions scale similarly (via a constant runtime ratio of mean 15):
 
 ```{r,echo = T}
 model <- stats::lm(data = data.frame(y = 
-                                     summary_table$mean[summary_table$package == "TDAML"]
+                                     summary_table$mean[summary_table$package == "TDApplied"]
                                      /summary_table$mean[summary_table$package == "persim"],
                                      x = seq(100,1000,100)),
                    formula = y ~ x,)
 summary(model)$coefficients
 ```
 
-Nevertheless, the raw speed increase in python could be the basis for a very fast python counterpart to the TDAML package in the future.
+Nevertheless, the raw speed increase in python could be the basis for a very fast python counterpart to the TDApplied package in the future.
 
-# Limitations of TDAML
+# Limitations of TDApplied
 
-There are two main limitations of TDAML which should be discussed for its own future improvements. The first limitation is in the function `diagram_ksvm` - the only acceptable input is a dataset where the single training feature is a persistence diagram (one diagram for each training example). This may be too inflexible for some applications, where the training features may include several persistence diagrams, or a mix of persistence diagrams, numeric and categorical features. A future update to TDAML should provide the functionality for allowing any number of training features, of various types, to the `diagram_ksvm` function via a weighted sum of kernels. The second limitation of TDAML is the long runtime of its `diagram_distance` function compared to python's persim `wasserstein` function. Even with a potential runtime increase caused by the reticulate package, the persim `wasserstein` function was significantly faster than the TDAML `diagram_distance` function. As such, a future version of TDAML could use the wasserstein (and bottleneck) distance calculations from the persim module as its distance engine, however this would introduce a couple of complications. Firstly, a dependency on reticulate, and therefore on python, would be introduced which is not ideal. Secondly, since the Fisher information metric is not implemented in the persim module, calculating this metric would still require its own R code. While TDAML has been created with flexibility and scalability at its core, there will always be room for adding more functionality and speedups.
+There are two main limitations of TDApplied which should be discussed for its own future improvements. The first limitation is in the function `diagram_ksvm` - the only acceptable input is a dataset where the single training feature is a persistence diagram (one diagram for each training example). This may be too inflexible for some applications, where the training features may include several persistence diagrams, or a mix of persistence diagrams, numeric and categorical features. A future update to TDApplied should provide the functionality for allowing any number of training features, of various types, to the `diagram_ksvm` function via a weighted sum of kernels. The second limitation of TDApplied is the long runtime of its `diagram_distance` function compared to python's persim `wasserstein` function. Even with a potential runtime increase caused by the reticulate package, the persim `wasserstein` function was significantly faster than the TDApplied `diagram_distance` function. As such, a future version of TDApplied could use the wasserstein (and bottleneck) distance calculations from the persim module as its distance engine, however this would introduce a couple of complications. Firstly, a dependency on reticulate, and therefore on python, would be introduced which is not ideal. Secondly, since the Fisher information metric is not implemented in the persim module, calculating this metric would still require its own R code. While TDApplied has been created with flexibility and scalability at its core, there will always be room for adding more functionality and speedups.
 
 # Conclusions
 
-The TDAML package aims to bridge topological data analysis with researchers and data practitioners in the R community. Current topological data analysis packages in R and python do not provide the ability to carry out standard types of data analysis, being statistics and machine learning, with persistence diagrams - greatly limiting research and industry interest in topological data analysis. TDAML was built with performance in mind, with fast native-R implementations of distance calculations between persistence diagrams and parallelization at every possible point. Topological data analysis is an exciting and powerful new field of data analysis, and with TDAML anyone can access its power for meaningful and creative analyses of data.
+The TDApplied package aims to bridge topological data analysis with researchers and data practitioners in the R community. Current topological data analysis packages in R and python do not provide the ability to carry out standard types of data analysis, being statistics and machine learning, with persistence diagrams - greatly limiting research and industry interest in topological data analysis. TDApplied was built with performance in mind, with fast native-R implementations of distance calculations between persistence diagrams and parallelization at every possible point. Topological data analysis is an exciting and powerful new field of data analysis, and with TDApplied anyone can access its power for meaningful and creative analyses of data.
 
 ## References
 
