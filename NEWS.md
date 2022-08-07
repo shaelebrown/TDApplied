@@ -1,7 +1,7 @@
-> All changes to TDAML are documented here.
+> All changes to TDApplied are documented here.
 
-> Additions referenced with relevant [GitHub Issue](https://github.com/shaelebrown/TDAML/issues) or
-[Pull Request](https://github.com/shaelebrown/TDAML/pulls) number.
+> Additions referenced with relevant [GitHub Issue](https://github.com/shaelebrown/TDApplied/issues) or
+[Pull Request](https://github.com/shaelebrown/TDApplied/pulls) number.
 Please see those for more details.
 
 # 0.1.0

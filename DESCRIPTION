@@ -3,7 +3,7 @@ Type: Package
 Title: Machine Learning and Inference for Topological Data Analysis
 Version: 0.1.0
 Authors@R: c(person("Shael", "Brown", email = "shaelebrown@gmail.com", role = c("aut","cre")),
-             person("Reza", "Farivar", email = "reza.farivar@mcgill.ca", role = c("aut","fnd")))
+             person("Dr. Reza", "Farivar", email = "reza.farivar@mcgill.ca", role = c("aut","fnd")))
 Author: Shael Brown [aut, cre],
         Dr. Reza Farivar [aut, fnd]
 Maintainer: Shael Brown <shaelebrown@gmail.com>
