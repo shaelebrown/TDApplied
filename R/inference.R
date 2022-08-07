@@ -293,7 +293,7 @@ independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,num_workers = 
   # make sure there are at least two groups
   check_param("diagram_groups",diagram_groups,min_length = 2)
   
-  # check each diagram, converting each to a data frame and storing their indices in all the diagrams
+  # check each diagram, converting each to a data frame
   diagram_groups <- all_diagrams(diagram_groups,inference = "independence")
   
   # error check function parameters

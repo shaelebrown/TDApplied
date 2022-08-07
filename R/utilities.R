@@ -7,15 +7,15 @@
 check_diagram <- function(d,ret){
 
   # error checks for a diagram d stored as a data frame, and conversion
-  if(is.list(d) && ((length(d) == 1 && all(names(d) %in% "diagram") && methods::is(d$diagram,"diagram")) || ((length(d) == 4 && all(names(d) %in% c("diagram","birthLocation","deathLocation","cycleLocation")) && methods::is(d$diagram,"diagram")))))
+  if((is.list(d) && ((length(d) == 1 && all(names(d) %in% "diagram") && methods::is(d$diagram,"diagram")) || ((length(d) == 4 && all(names(d) %in% c("diagram","birthLocation","deathLocation","cycleLocation")) && methods::is(d$diagram,"diagram"))))) || (methods::is(d,"matrix") && methods::is(d,"array") & all(colnames(d) %in% c("dimension","birth","death"))))
   {
-    # d is the output from a TDA calculation
+    # d is the output from a TDA/TDAstats calculation
     d <- diagram_to_df(d)
   }else
   {
     if(!methods::is(d,"data.frame"))
     {
-      stop("Diagrams must either be the output of a TDA computation or data frame.")
+      stop("Diagrams must either be the output of a TDA/TDAstats computation or data frame.")
     }
   }
 
@@ -82,21 +82,20 @@ all_diagrams <- function(diagram_groups,inference){
     # loop through each diagram in each group
     for(diag in 1:length(diagram_groups[[g]]))
     {
-      # check to make sure each diagram is actually the output of some TDA computation or a data frame
+      # check to make sure each diagram is actually the output of some TDA/TDAstats computation or a data frame
       check_diagram(diagram_groups[[g]][[diag]],ret = F)
       # if of the right form, format into a data frame and store diagram index
-      if(methods::is(diagram_groups[[g]][[diag]],"data.frame"))
+      if(inference == "difference")
       {
-        if(inference == "difference")
-        {
-          diagram_groups[[g]][[diag]] <- list(diag = diagram_groups[[g]][[diag]],ind = csum_group_sizes[g] + diag)
-        }
+        diagram_groups[[g]][[diag]] <- list(diag = ifelse(test = methods::is(diagram_groups[[g]][[diag]],"data.frame"),
+                                                          yes = diagram_groups[[g]][[diag]],
+                                                          no = diagram_to_df(diagram_groups[[g]][[diag]])),
+                                            ind = csum_group_sizes[g] + diag)
       }else
       {
-        if(inference == "difference")
-        {
-          diagram_groups[[g]][[diag]] <- list(diag = diagram_to_df(diagram_groups[[g]][[diag]]),ind = csum_group_sizes[g] + diag)
-        }
+        diagram_groups[[g]][[diag]] <- diag = ifelse(test = methods::is(diagram_groups[[g]][[diag]],"data.frame"),
+                                                     yes = diagram_groups[[g]][[diag]],
+                                                     no = diagram_to_df(diagram_groups[[g]][[diag]]))
       }
       
       # make sure the converted diagram has appropriate attributes for further use
@@ -114,7 +113,6 @@ all_diagrams <- function(diagram_groups,inference){
   # return diagram groups with reformatted diagrams
   return(diagram_groups)
   
-
 }
 
 check_param <- function(param_name,param,numeric = T,multiple = F,whole_numbers = F,finite = T,at_least_one = F,positive = F,non_negative = T,min_length = 1){
@@ -198,8 +196,8 @@ check_param <- function(param_name,param,numeric = T,multiple = F,whole_numbers 
   
 }
 
-#### GENERATE TEST DATA FOR TDAML EXAMPLES ####
-#' Creates persistence diagrams to test TDAML functions.
+#### GENERATE TEST DATA FOR TDApplied EXAMPLES ####
+#' Creates persistence diagrams to test TDApplied functions.
 #'
 #' An internal function which uses three example persistence diagrams,
 #' each with points only in dimension 0, to create a list of diagrams for 
@@ -230,12 +228,12 @@ check_param <- function(param_name,param,numeric = T,multiple = F,whole_numbers 
 #' @examples
 #' 
 #' # generate just D1
-#' D1 <- generate_TDAML_test_data(1,0,0)
+#' D1 <- generate_TDApplied_test_data(1,0,0)
 #'
 #' # create three copies of each of D1, D2 and D3
-#' l <- generate_TDAML_test_data(3,3,3)
+#' l <- generate_TDApplied_test_data(3,3,3)
 
-generate_TDAML_test_data <- function(num_D1,num_D2,num_D3){
+generate_TDApplied_test_data <- function(num_D1,num_D2,num_D3){
   
   # error check parameters
   check_param("num_D1",num_D1,whole_numbers = T)
