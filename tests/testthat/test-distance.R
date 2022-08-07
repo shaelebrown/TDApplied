@@ -2,8 +2,8 @@
 test_that("diagram_distance detects incorrect parameters correctly",{
   
   D = data.frame(dimension = c(0),birth = c(0),death = c(1))
-  expect_error(diagram_distance(D1 = NULL,D2 = D,dim = 1),"TDA computation or data frame")
-  expect_error(diagram_distance(D1 = D,D2 = NULL,dim = 1),"TDA computation or data frame")
+  expect_error(diagram_distance(D1 = NULL,D2 = D,dim = 1),"TDA/TDAstats")
+  expect_error(diagram_distance(D1 = D,D2 = NULL,dim = 1),"TDA/TDAstats")
   expect_error(diagram_distance(D1 = D,D2 = D,dim = "2"),"numeric")
   expect_error(diagram_distance(D1 = D,D2 = D,dim = 1,p = "2"),"numeric")
   expect_error(diagram_distance(D1 = D,D2 = D,dim = 1,distance = "Wasserstein"),"distance must")

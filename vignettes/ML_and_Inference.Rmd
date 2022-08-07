@@ -111,10 +111,11 @@ A persistence diagram containing $n$ topological features can be represented in 
 In this section we will describe the various computational tools implemented in the package TDApplied to analyze persistence diagrams, both explaining the mathematics and providing functional examples. To run our examples we must start by loading the TDApplied package:
 
 ```{r setup}
-library("TDApplied")
+devtools::load_all()
+#library("TDApplied")
 ``` 
 
-All examples will analyze simple diagrams which are random deviations of three persistence diagrams called D1, D2 and D3 (each with points in dimension 0 only):
+Since TDApplied uses the output of TDA/TDAstats calculations as inputs to its functions, either TDA or TDAstats should be at least installed (if not attached) when using TDApplied. All examples will analyze simple diagrams which are random deviations of three persistence diagrams called D1, D2 and D3 (each with points in dimension 0 only):
 
 ```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center'}
 D1 = generate_TDApplied_test_data(1,0,0)

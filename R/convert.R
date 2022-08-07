@@ -36,6 +36,12 @@ diagram_to_df <- function(d){
   # function to convert d to a data frame with standardized column names
   # d is a diagram from library TDA or TDAstats
   
+  # preliminary check, mostly for internal methods
+  if(methods::is(d,"data.frame"))
+  {
+    return(d)
+  }
+  
   if((is.list(d) && ((length(d) == 1 && all(names(d) %in% "diagram") && methods::is(d$diagram,"diagram")) || ((length(d) == 4 && all(names(d) %in% c("diagram","birthLocation","deathLocation","cycleLocation")) && methods::is(d$diagram,"diagram"))))) == F && (methods::is(d,"matrix") && methods::is(d,"array") & all(colnames(d) %in% c("dimension","birth","death"))) == F)
   {
     stop("Diagrams must either be the output of a TDA/TDAstats computation.")

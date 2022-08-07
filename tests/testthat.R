@@ -1,4 +1,4 @@
 library(testthat)
-library(TDAML)
+library(TDApplied)
 
-test_check("TDAML")
+test_check("TDApplied")

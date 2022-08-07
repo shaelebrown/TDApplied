@@ -83,30 +83,13 @@ all_diagrams <- function(diagram_groups,inference){
     for(diag in 1:length(diagram_groups[[g]]))
     {
       # check to make sure each diagram is actually the output of some TDA/TDAstats computation or a data frame
-      check_diagram(diagram_groups[[g]][[diag]],ret = F)
-      # if of the right form, format into a data frame and store diagram index
+      diagram_groups[[g]][[diag]] <- check_diagram(diagram_groups[[g]][[diag]],ret = T)
+      # if of the right form, format into a data frame and store diagram index for difference inference
       if(inference == "difference")
       {
-        diagram_groups[[g]][[diag]] <- list(diag = ifelse(test = methods::is(diagram_groups[[g]][[diag]],"data.frame"),
-                                                          yes = diagram_groups[[g]][[diag]],
-                                                          no = diagram_to_df(diagram_groups[[g]][[diag]])),
+        diagram_groups[[g]][[diag]] <- list(diag = diagram_groups[[g]][[diag]],
                                             ind = csum_group_sizes[g] + diag)
-      }else
-      {
-        diagram_groups[[g]][[diag]] <- diag = ifelse(test = methods::is(diagram_groups[[g]][[diag]],"data.frame"),
-                                                     yes = diagram_groups[[g]][[diag]],
-                                                     no = diagram_to_df(diagram_groups[[g]][[diag]]))
       }
-      
-      # make sure the converted diagram has appropriate attributes for further use
-      if(inference == "difference")
-      {
-        check_diagram(diagram_groups[[g]][[diag]]$diag,ret = F)
-      }else
-      {
-        check_diagram(diagram_groups[[g]][[diag]],ret = F) 
-      }
-      
     }
   }
   
