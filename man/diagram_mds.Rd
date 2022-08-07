@@ -19,7 +19,7 @@ diagram_mds(
 )
 }
 \arguments{
-\item{diagrams}{a list of n>=2 persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.}
+\item{diagrams}{a list of n>=2 persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.}
 
 \item{k}{the dimension of the space which the data are to be represented in; must be in {1,2,...,n-1}.}
 
@@ -73,7 +73,7 @@ in a particular dimension. If `distance` is "fisher" then `sigma` must not be NU
 \examples{
 
 # create nine diagrams from three base diagrams
-g <- generate_TDAML_test_data(3,3,3)
+g <- generate_TDApplied_test_data(3,3,3)
 
 # calculate their 2D MDS embedding in dimension 0 with the bottleneck distance
 mds <- diagram_mds(diagrams = g,k = 2,dim = 0,p = Inf,num_workers = 2)

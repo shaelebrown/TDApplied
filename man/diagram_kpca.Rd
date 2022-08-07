@@ -15,7 +15,7 @@ diagram_kpca(
 )
 }
 \arguments{
-\item{diagrams}{a list of persistence diagrams which are either the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.}
+\item{diagrams}{a list of persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.}
 
 \item{dim}{the non-negative integer homological dimension in which the distance is to be computed, default 0.}
 
@@ -60,7 +60,7 @@ be used for further analysis, or simply as a data visualization tool for persist
 \examples{
 
 # create nine diagrams from three base diagrams
-g <- generate_TDAML_test_data(3,3,3)
+g <- generate_TDApplied_test_data(3,3,3)
 
 # calculate their 2D PCA embedding with sigma = t = 2
 pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_workers = 2)

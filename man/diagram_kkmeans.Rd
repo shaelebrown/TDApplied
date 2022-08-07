@@ -15,7 +15,7 @@ diagram_kkmeans(
 )
 }
 \arguments{
-\item{diagrams}{a list of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.}
+\item{diagrams}{a list of persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or the \code{\link{diagram_to_df}} function.}
 
 \item{centers}{number of clusters to initialize, no more than the number of diagrams although smaller values are recommended.}
 
@@ -60,7 +60,7 @@ function.
 \examples{
 
 # create nine diagrams from three base diagrams
-g <- generate_TDAML_test_data(3,3,3)
+g <- generate_TDApplied_test_data(3,3,3)
 
 # calculate kmeans clusters with centers = 3, and sigma = t = 2
 clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)

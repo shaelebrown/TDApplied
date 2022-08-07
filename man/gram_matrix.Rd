@@ -14,7 +14,7 @@ gram_matrix(
 )
 }
 \arguments{
-\item{diagrams}{a list of persistence diagrams, either the output from TDA calculations like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.}
+\item{diagrams}{a list of persistence diagrams, where each diagram is either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.}
 
 \item{other_diagrams}{either NULL (default) or another list of persistence diagrams to compute a cross-Gram matrix.}
 
@@ -40,9 +40,9 @@ Gram matrices are used in downstream analyses, like in the `diagram_kkmeans`, `d
 \examples{
 
 # load three diagrams
-D1 <- generate_TDAML_test_data(1,0,0)
-D2 <- generate_TDAML_test_data(0,1,0)
-D3 <- generate_TDAML_test_data(0,0,1)
+D1 <- generate_TDApplied_test_data(1,0,0)
+D2 <- generate_TDApplied_test_data(0,1,0)
+D3 <- generate_TDApplied_test_data(0,0,1)
 g <- list(D1,D2,D3)
 
 # calculate the Gram matrix in dimension 1 with sigma = 2, t = 2

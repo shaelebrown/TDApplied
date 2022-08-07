@@ -18,7 +18,7 @@ permutation_test(
 )
 }
 \arguments{
-\item{...}{lists of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function. Each list must contain at least 2 diagrams.}
+\item{...}{lists of persistence diagrams which are either the output of a TDA/TDAstats calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}. Each list must contain at least 2 diagrams.}
 
 \item{iterations}{the number of iterations for permuting group labels, default 20.}
 
@@ -73,8 +73,8 @@ If `distance` is "fisher" then `sigma` must not be NULL.
 \examples{
 
 # create two groups of diagrams
-g1 <- generate_TDAML_test_data(2,0,0)
-g2 <- generate_TDAML_test_data(0,2,0)
+g1 <- generate_TDApplied_test_data(2,0,0)
+g2 <- generate_TDApplied_test_data(0,2,0)
 
 # run test in dimension 0 with 3 iterations
 perm_test <- permutation_test(g1,g2,iterations = 1,

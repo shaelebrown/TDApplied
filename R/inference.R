@@ -15,7 +15,7 @@
 #' A small p-value in a dimension suggests that the groups are different (separated) in that dimension.
 #' If `distance` is "fisher" then `sigma` must not be NULL.
 #'
-#' @param ... lists of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function. Each list must contain at least 2 diagrams.
+#' @param ... lists of persistence diagrams which are either the output of a TDA/TDAstats calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}. Each list must contain at least 2 diagrams.
 #' @param iterations the number of iterations for permuting group labels, default 20.
 #' @param p a positive number representing the wasserstein power parameter, a number at least 1 (and Inf if using the bottleneck distance) and default 2.
 #' @param q  a finite number at least 1 for exponentiation in the Turner loss function, default 2.
@@ -51,8 +51,8 @@
 #' @examples
 #'
 #' # create two groups of diagrams
-#' g1 <- generate_TDAML_test_data(2,0,0)
-#' g2 <- generate_TDAML_test_data(0,2,0)
+#' g1 <- generate_TDApplied_test_data(2,0,0)
+#' g2 <- generate_TDApplied_test_data(0,2,0)
 #'
 #' # run test in dimension 0 with 3 iterations
 #' perm_test <- permutation_test(g1,g2,iterations = 1,
@@ -238,8 +238,8 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
 #' The test is carried out with a parametric null distribution, making it much faster than non-parametric
 #' approaches. If all of the diagrams in either g1 or g2 are the same in some dimension, then some p-values may be NaN.
 #'
-#' @param g1 the first group of persistence diagrams, outputted from a TDA calculation or \code{\link{diagram_to_df}}.
-#' @param g2 the second group of persistence diagrams, outputted from a TDA calculation or \code{\link{diagram_to_df}}.
+#' @param g1 the first group of persistence diagrams, where each diagram was either the output from a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.
+#' @param g2 the second group of persistence diagrams, where each diagram was either the output from a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.
 #' @param dims a non-negative integer vector of the homological dimensions in which the test is to be carried out, default c(0,1).
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1.
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
@@ -268,8 +268,8 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
 #' @examples
 #'
 #' # create two independent groups of diagrams
-#' g1 <- generate_TDAML_test_data(6,0,0)
-#' g2 <- generate_TDAML_test_data(0,6,0)
+#' g1 <- generate_TDApplied_test_data(6,0,0)
+#' g2 <- generate_TDApplied_test_data(0,6,0)
 #' 
 #' # do independence test with sigma = t = 1
 #' indep_test <- independence_test(g1,g2,dims = c(0),num_workers = 2)

@@ -11,7 +11,7 @@ predict_diagram_kkmeans(
 )
 }
 \arguments{
-\item{new_diagrams}{a list of persistence diagrams which are either the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.}
+\item{new_diagrams}{a list of persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.}
 
 \item{clustering}{the output of a \code{\link{diagram_kkmeans}} function call.}
 
@@ -27,13 +27,13 @@ This allows for reusing old cluster models for new tasks, or to perform cross va
 \examples{
 
 # create six diagrams from three base diagrams
-g <- generate_TDAML_test_data(2,2,2)
+g <- generate_TDApplied_test_data(2,2,2)
 
 # calculate kmeans clusters with centers = 3, and sigma = t = 2
 clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
 
 # create three new diagrams
-g_new <- generate_TDAML_test_data(1,1,1)
+g_new <- generate_TDApplied_test_data(1,1,1)
 
 # predict cluster labels
 predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)

@@ -11,7 +11,7 @@ predict_diagram_ksvm(
 )
 }
 \arguments{
-\item{new_diagrams}{a list of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.}
+\item{new_diagrams}{a list of persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.}
 
 \item{model}{the output of a \code{\link{diagram_ksvm}} function call.}
 
@@ -29,7 +29,7 @@ This function is a wrapper of the kernlab \code{\link{predict}} function.
 \examples{
 
 # create eight diagrams based on four base diagrams
-g <- generate_TDAML_test_data(2,2,0)
+g <- generate_TDApplied_test_data(2,2,0)
 
 # create response vector
 y <- as.factor(rep(c("D1","D2"),each = 2))
@@ -40,7 +40,7 @@ model_svm <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0),
                           num_workers = 2)
 
 # create one new diagram
-g_new <- list(generate_TDAML_test_data(1,0,0))
+g_new <- list(generate_TDApplied_test_data(1,0,0))
 
 # predict
 predict_diagram_ksvm(new_diagrams = g_new,model = model_svm,num_workers = 2)

@@ -11,7 +11,7 @@ predict_diagram_kpca(
 )
 }
 \arguments{
-\item{new_diagrams}{a list of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.}
+\item{new_diagrams}{a list of persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.}
 
 \item{embedding}{the output of a \code{\link{diagram_kpca}} function call.}
 
@@ -27,13 +27,13 @@ previously-computed kernel PCA embedding (from the \code{\link{diagram_kpca}} fu
 \examples{
 
 # create six diagrams from three base diagrams
-g <- generate_TDAML_test_data(2,2,2)
+g <- generate_TDApplied_test_data(2,2,2)
 
 # calculate their 2D PCA embedding with sigma = t = 2
 pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_workers = 2)
 
 # project two new diagrams onto old model
-g_new <- generate_TDAML_test_data(1,1,0)
+g_new <- generate_TDApplied_test_data(1,1,0)
 
 # calculate new embedding coordinates
 new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers = 2)

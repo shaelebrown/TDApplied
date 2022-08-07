@@ -25,7 +25,7 @@ diagram_ksvm(
 )
 }
 \arguments{
-\item{diagrams}{a list of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.}
+\item{diagrams}{a list of persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.}
 
 \item{cv}{a positive number at most the length of `diagrams` which determines the number of cross validation splits to be performed (default 1, aka no cross-validation).}
 
@@ -94,7 +94,7 @@ a character vector for instance will throw an error.
 \examples{
 
 # create 4 diagrams based on two base diagrams
-g <- generate_TDAML_test_data(2,2,0)
+g <- generate_TDApplied_test_data(2,2,0)
 
 # create response vector
 y <- as.factor(rep(c("D1","D2"),each = 2))

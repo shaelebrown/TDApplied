@@ -15,7 +15,7 @@ distance_matrix(
 )
 }
 \arguments{
-\item{diagrams}{a list of persistence diagrams, either the output from TDA calculations or the \code{\link{diagram_to_df}} function.}
+\item{diagrams}{a list of persistence diagrams, either the output of TDA/TDAstats calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.}
 
 \item{other_diagrams}{either NULL (default) or another list of persistence diagrams to compute a cross-distance matrix.}
 
@@ -44,9 +44,9 @@ If `distance` is "fisher" then `sigma` must not be NULL.
 \examples{
 
 # load three diagrams
-D1 <- generate_TDAML_test_data(1,0,0)
-D2 <- generate_TDAML_test_data(0,1,0)
-D3 <- generate_TDAML_test_data(0,0,1)
+D1 <- generate_TDApplied_test_data(1,0,0)
+D2 <- generate_TDApplied_test_data(0,1,0)
+D3 <- generate_TDApplied_test_data(0,0,1)
 g <- list(D1,D2,D3)
 
 # calculate their distance matrix in dimension 1 with the 2-wasserstein metric using 2 cores

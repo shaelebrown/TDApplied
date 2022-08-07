@@ -15,9 +15,9 @@ independence_test(
 )
 }
 \arguments{
-\item{g1}{the first group of persistence diagrams, outputted from a TDA calculation or \code{\link{diagram_to_df}}.}
+\item{g1}{the first group of persistence diagrams, where each diagram was either the output from a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.}
 
-\item{g2}{the second group of persistence diagrams, outputted from a TDA calculation or \code{\link{diagram_to_df}}.}
+\item{g2}{the second group of persistence diagrams, where each diagram was either the output from a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.}
 
 \item{dims}{a non-negative integer vector of the homological dimensions in which the test is to be carried out, default c(0,1).}
 
@@ -56,8 +56,8 @@ approaches. If all of the diagrams in either g1 or g2 are the same in some dimen
 \examples{
 
 # create two independent groups of diagrams
-g1 <- generate_TDAML_test_data(6,0,0)
-g2 <- generate_TDAML_test_data(0,6,0)
+g1 <- generate_TDApplied_test_data(6,0,0)
+g2 <- generate_TDApplied_test_data(0,6,0)
 
 # do independence test with sigma = t = 1
 indep_test <- independence_test(g1,g2,dims = c(0),num_workers = 2)

@@ -14,9 +14,9 @@ diagram_distance(
 )
 }
 \arguments{
-\item{D1}{the first persistence diagram, either computed from TDA or converted to a data frame with \code{\link{diagram_to_df}}.}
+\item{D1}{the first persistence diagram, either computed from a TDA/TDAstats function like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or such an object converted to a data frame with \code{\link{diagram_to_df}}.}
 
-\item{D2}{the second persistence diagram, either computed from TDA or converted to a data frame with \code{\link{diagram_to_df}}.}
+\item{D2}{the second persistence diagram, either computed from TDA/TDAstats function like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or such an object converted to a data frame with \code{\link{diagram_to_df}}.}
 
 \item{dim}{the non-negative integer homological dimension in which the distance is to be computed, default 0.}
 
@@ -31,7 +31,7 @@ the numeric value of the distance calculation.
 }
 \description{
 Calculates the distance between a pair of persistence diagrams in a particular homological dimension,
-either the output from a \code{\link{diagram_to_df}} function call or from a TDA homology calculation like \code{\link[TDA]{ripsDiag}}.
+either the output from a \code{\link{diagram_to_df}} function call or from a TDA/TDAstats homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}.
 }
 \details{
 The most common distance calculations between persistence diagrams
@@ -47,9 +47,9 @@ If the `distance` parameter is "fisher" then `sigma` must not be NULL.
 \examples{
 
 # load three diagrams
-D1 <- generate_TDAML_test_data(1,0,0)
-D2 <- generate_TDAML_test_data(0,1,0)
-D3 <- generate_TDAML_test_data(0,0,1)
+D1 <- generate_TDApplied_test_data(1,0,0)
+D2 <- generate_TDApplied_test_data(0,1,0)
+D3 <- generate_TDApplied_test_data(0,0,1)
 
 # calculate 2-wasserstein distance between D1 and D2
 diagram_distance(D1,D2,dim = 0,p = 2,distance = "wasserstein")

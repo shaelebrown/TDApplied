@@ -9,7 +9,7 @@
 #' Returns the output of \code{\link[stats]{cmdscale}} on the desired distance matrix of a group of persistence diagrams
 #' in a particular dimension. If `distance` is "fisher" then `sigma` must not be NULL.
 #'
-#' @param diagrams a list of n>=2 persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.
+#' @param diagrams a list of n>=2 persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.
 #' @param k the dimension of the space which the data are to be represented in; must be in {1,2,...,n-1}.
 #' @param distance a string representing the desired distance metric to be used, either 'wasserstein' (default) or 'fisher'.
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
@@ -52,7 +52,7 @@
 #' @examples
 #'
 #' # create nine diagrams from three base diagrams
-#' g <- generate_TDAML_test_data(3,3,3)
+#' g <- generate_TDApplied_test_data(3,3,3)
 #' 
 #' # calculate their 2D MDS embedding in dimension 0 with the bottleneck distance
 #' mds <- diagram_mds(diagrams = g,k = 2,dim = 0,p = Inf,num_workers = 2)
@@ -83,7 +83,7 @@ diagram_mds <- function(diagrams,k = 2,distance = "wasserstein",dim = 0,p = 2,si
 #' to estimate cluster labels for new persistence diagrams in the `predict_diagram_kkmeans`
 #' function.
 #'
-#' @param diagrams a list of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or the \code{\link{diagram_to_df}} function.
+#' @param diagrams a list of persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or the \code{\link{diagram_to_df}} function.
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1
@@ -116,7 +116,7 @@ diagram_mds <- function(diagrams,k = 2,distance = "wasserstein",dim = 0,p = 2,si
 #' @examples
 #'
 #' # create nine diagrams from three base diagrams
-#' g <- generate_TDAML_test_data(3,3,3)
+#' g <- generate_TDApplied_test_data(3,3,3)
 #' 
 #' # calculate kmeans clusters with centers = 3, and sigma = t = 2
 #' clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
@@ -188,7 +188,7 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers
 #' Returns the nearest (highest kernel value) \code{\link[kernlab]{kkmeans}} cluster center label for new persistence diagrams.
 #' This allows for reusing old cluster models for new tasks, or to perform cross validation.
 #'
-#' @param new_diagrams a list of persistence diagrams which are either the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
+#' @param new_diagrams a list of persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.
 #' @param clustering the output of a \code{\link{diagram_kkmeans}} function call.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #'
@@ -200,13 +200,13 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers
 #' @examples
 #'
 #' # create six diagrams from three base diagrams
-#' g <- generate_TDAML_test_data(2,2,2)
+#' g <- generate_TDApplied_test_data(2,2,2)
 #' 
 #' # calculate kmeans clusters with centers = 3, and sigma = t = 2
 #' clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
 #' 
 #' # create three new diagrams
-#' g_new <- generate_TDAML_test_data(1,1,1)
+#' g_new <- generate_TDApplied_test_data(1,1,1)
 #' 
 #' # predict cluster labels
 #' predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)
@@ -256,7 +256,7 @@ predict_diagram_kkmeans <- function(new_diagrams,clustering,num_workers = parall
 #' advantage of using \code{\link{diagram_kpca}} over \code{\link{diagram_mds}}. The embedding coordinates can also
 #' be used for further analysis, or simply as a data visualization tool for persistence diagrams.
 #'
-#' @param diagrams a list of persistence diagrams which are either the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
+#' @param diagrams a list of persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1
@@ -289,7 +289,7 @@ predict_diagram_kkmeans <- function(new_diagrams,clustering,num_workers = parall
 #' @examples
 #'
 #' # create nine diagrams from three base diagrams
-#' g <- generate_TDAML_test_data(3,3,3)
+#' g <- generate_TDApplied_test_data(3,3,3)
 #' 
 #' # calculate their 2D PCA embedding with sigma = t = 2
 #' pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_workers = 2)
@@ -326,7 +326,7 @@ diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_worke
 #' Compute the location in low-dimensional space of each element of a list of new persistence diagrams using a
 #' previously-computed kernel PCA embedding (from the \code{\link{diagram_kpca}} function).
 #'
-#' @param new_diagrams a list of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
+#' @param new_diagrams a list of persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.
 #' @param embedding the output of a \code{\link{diagram_kpca}} function call.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #'
@@ -342,13 +342,13 @@ diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_worke
 #' @examples
 #'
 #' # create six diagrams from three base diagrams
-#' g <- generate_TDAML_test_data(2,2,2)
+#' g <- generate_TDApplied_test_data(2,2,2)
 #' 
 #' # calculate their 2D PCA embedding with sigma = t = 2
 #' pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_workers = 2)
 #' 
 #' # project two new diagrams onto old model
-#' g_new <- generate_TDAML_test_data(1,1,0)
+#' g_new <- generate_TDApplied_test_data(1,1,0)
 #' 
 #' # calculate new embedding coordinates
 #' new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers = 2)
@@ -397,7 +397,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
 #' whichever has more elements. Note that the response parameter `y` must be a factor for classification - 
 #' a character vector for instance will throw an error.
 #'
-#' @param diagrams a list of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
+#' @param diagrams a list of persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.
 #' @param cv a positive number at most the length of `diagrams` which determines the number of cross validation splits to be performed (default 1, aka no cross-validation).
 #' @param dim a non-negative integer vector of homological dimensions in which the model is to be fit.
 #' @param t a vector of positive numbers representing the grid of values for the scale of the persistence Fisher kernel, default 1.
@@ -446,7 +446,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
 #' @examples
 #'
 #' # create 4 diagrams based on two base diagrams
-#' g <- generate_TDAML_test_data(2,2,0)
+#' g <- generate_TDApplied_test_data(2,2,0)
 #' 
 #' # create response vector
 #' y <- as.factor(rep(c("D1","D2"),each = 2))
@@ -689,7 +689,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
 #' This function is a wrapper of the kernlab \code{\link{predict}} function.
 #'
 #'
-#' @param new_diagrams a list of persistence diagrams which are the output of a TDA calculation like \code{\link[TDA]{ripsDiag}} or \code{\link{diagram_to_df}}.
+#' @param new_diagrams a list of persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.
 #' @param model the output of a \code{\link{diagram_ksvm}} function call.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #' @return a vector containing the output of \code{\link[kernlab]{predict.ksvm}} on the cross Gram matrix of the new diagrams and the support vector diagrams stored in the model.
@@ -705,7 +705,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
 #' @examples
 #'
 #' # create eight diagrams based on four base diagrams
-#' g <- generate_TDAML_test_data(2,2,0)
+#' g <- generate_TDApplied_test_data(2,2,0)
 #' 
 #' # create response vector
 #' y <- as.factor(rep(c("D1","D2"),each = 2))
@@ -716,7 +716,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
 #'                           num_workers = 2)
 #'
 #' # create one new diagram
-#' g_new <- list(generate_TDAML_test_data(1,0,0))
+#' g_new <- list(generate_TDApplied_test_data(1,0,0))
 #' 
 #' # predict
 #' predict_diagram_ksvm(new_diagrams = g_new,model = model_svm,num_workers = 2)
@@ -759,4 +759,3 @@ predict_diagram_ksvm <- function(new_diagrams,model,num_workers = parallelly::av
   return(predictions)
   
 }
-

@@ -7,9 +7,9 @@
 diagram_kernel(D1, D2, dim = 0, sigma = 1, t = 1)
 }
 \arguments{
-\item{D1}{the first persistence diagram, either outputted from a TDA calculation like \code{\link[TDA]{ripsDiag}} or from a \code{\link{diagram_to_df}} function call.}
+\item{D1}{the first persistence diagram, either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.}
 
-\item{D2}{the second persistence diagram, either outputted from a TDA calculation like \code{\link[TDA]{ripsDiag}} or from a \code{\link{diagram_to_df}} function call.}
+\item{D2}{the second persistence diagram, either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.}
 
 \item{dim}{the non-negative integer homological dimension in which the distance is to be computed, default 0.}
 
@@ -23,7 +23,7 @@ the numeric kernel value.
 \description{
 Returns the persistence Fisher kernel value between a pair of persistence diagrams
 in a particular homological dimension, each of which is either the output from a \code{\link{diagram_to_df}} 
-function call or from a TDA homology calculation like \code{\link[TDA]{ripsDiag}}.
+function call or from a TDA/TDAstats homology calculation like \code{\link[TDA]{ripsDiag}} or \code{\link[TDAstats]{calculate_homology}}.
 }
 \details{
 The persistence Fisher kernel is calculated from the Fisher information metric according to the formula
@@ -33,9 +33,9 @@ Euclidean spaces.
 \examples{
 
 # load three diagrams
-D1 <- generate_TDAML_test_data(1,0,0)
-D2 <- generate_TDAML_test_data(0,1,0)
-D3 <- generate_TDAML_test_data(0,0,1)
+D1 <- generate_TDApplied_test_data(1,0,0)
+D2 <- generate_TDApplied_test_data(0,1,0)
+D3 <- generate_TDApplied_test_data(0,0,1)
 
 # calculate the kernel value between D1 and D2 with sigma = 2, t = 2
 diagram_kernel(D1,D2,dim = 0,sigma = 2,t = 2)
