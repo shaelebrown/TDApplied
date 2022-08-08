@@ -22,6 +22,7 @@ test_that("diagram_kernel can accept inputs from either TDA/TDAstats homology ou
   expect_gte(diagram_kernel(D1 = D3,D2 = diagram_to_df(D2),dim = 1),0)
   expect_gte(diagram_kernel(D1 = D1,D2 = diagram_to_df(D3),dim = 1),0)
   expect_gte(diagram_kernel(D1 = D1,D2 = D4,dim = 1),0)
+  expect_error(diagram_kernel(D1 = D1,D2 = D2,dim = 0),"Inf")
   
 })
 

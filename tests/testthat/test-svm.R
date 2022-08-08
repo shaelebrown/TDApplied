@@ -24,6 +24,7 @@ test_that("diagram_ksvm can accept inputs from TDA, TDAstats and diagram_to_df",
   D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
   D4 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
   expect_s3_class(diagram_ksvm(diagrams = list(D1,D2,D3,D4),y = c(1,2,3,4),num_workers = 2,dim = c(1)),"diagram_ksvm")
+  expect_error(diagram_ksvm(diagrams = list(D1,D2,D3,D4),y = c(1,2,3,4),num_workers = 2,dim = c(0)),"Inf")
   
 })
 

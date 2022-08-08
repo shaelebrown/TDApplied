@@ -104,6 +104,7 @@ test_that("diagram_kkmeans can accept inputs from TDA, TDAstats and diagram_to_d
   D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
   D4 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
   expect_length(diagram_kkmeans(diagrams = list(D1,D2,D3,D4,D1,D1,D1,D2,D2,D2),centers = 2,dim = 1,num_workers = 2)$clustering@.Data,10)
+  expect_error(diagram_kkmeans(diagrams = list(D1,D2,D3,D4,D1,D1,D1,D2,D2,D2),centers = 2,dim = 0,num_workers = 2),"Inf")
   
 })
 
@@ -194,5 +195,5 @@ test_that("predict_diagram_kkmeans can accept inputs from TDA, TDAstats and diag
   D4 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
   dkk <- diagram_kkmeans(diagrams = list(D1,D2,D3,D4),centers = 2,dim = 1,num_workers = 2)
   expect_equal(predict_diagram_kkmeans(new_diagrams = list(D1,D2,D3,D4),dkk,num_workers = 2),dkk$clustering@.Data)
-  
+
 })
