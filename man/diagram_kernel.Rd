@@ -32,15 +32,16 @@ Euclidean spaces.
 }
 \examples{
 
-# load three diagrams
-D1 <- generate_TDApplied_test_data(1,0,0)
-D2 <- generate_TDApplied_test_data(0,1,0)
-D3 <- generate_TDApplied_test_data(0,0,1)
+# create three diagrams
+D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+                    maxdimension = 1,maxscale = 2)
 
-# calculate the kernel value between D1 and D2 with sigma = 2, t = 2
+# calculate the kernel value between D1 and D2 with sigma = 2, t = 2 in dimension 1
+diagram_kernel(D1,D2,dim = 1,sigma = 2,t = 2)
+# calculate the kernel value between D1 and D2 with sigma = 2, t = 2 in dimension 0
 diagram_kernel(D1,D2,dim = 0,sigma = 2,t = 2)
-# calculate the kernel value between D1 and D3 with sigma = 2, t = 2
-diagram_kernel(D1,D3,dim = 0,sigma = 2,t = 2)
 }
 \references{
 Le T, Yamada M (2018). "Persistence fisher kernel: a riemannian manifold kernel for persistence diagrams." \url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}.

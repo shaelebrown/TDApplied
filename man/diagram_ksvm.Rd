@@ -93,11 +93,19 @@ a character vector for instance will throw an error.
 }
 \examples{
 
-# create 4 diagrams based on two base diagrams
-g <- generate_TDApplied_test_data(2,2,0)
+# create four diagrams
+D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D3 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D4 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+                    maxdimension = 1,maxscale = 2)
+g <- list(D1,D2,D3,D4)
 
 # create response vector
-y <- as.factor(rep(c("D1","D2"),each = 2))
+y <- as.factor(c("circle","sphere","circle","sphere"))
 
 # fit model without cross validation
 model_svm <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0),

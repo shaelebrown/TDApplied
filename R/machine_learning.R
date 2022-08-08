@@ -51,8 +51,14 @@
 #' 
 #' @examples
 #'
-#' # create nine diagrams from three base diagrams
-#' g <- generate_TDApplied_test_data(3,3,3)
+#' # create three diagrams
+#' D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D3 <- TDA::ripsDiag(TDA::torusUnif(n = 20,a = 0.25,c = 0.75),
+#'                     maxdimension = 1,maxscale = 2)
+#' g <- list(D1,D2,D3)
 #' 
 #' # calculate their 2D MDS embedding in dimension 0 with the bottleneck distance
 #' mds <- diagram_mds(diagrams = g,k = 2,dim = 0,p = Inf,num_workers = 2)
@@ -115,10 +121,16 @@ diagram_mds <- function(diagrams,k = 2,distance = "wasserstein",dim = 0,p = 2,si
 #' Dhillon, I and Guan, Y and Kulis, B (2004). "A Unified View of Kernel k-means , Spectral Clustering and Graph Cuts." \url{https://people.bu.edu/bkulis/pubs/spectral_techreport.pdf}.
 #' @examples
 #'
-#' # create nine diagrams from three base diagrams
-#' g <- generate_TDApplied_test_data(3,3,3)
+#' # create three diagrams
+#' D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D3 <- TDA::ripsDiag(TDA::torusUnif(n = 20,a = 0.25,c = 0.75),
+#'                     maxdimension = 1,maxscale = 2)
+#' g <- list(D1,D2,D3)
 #' 
-#' # calculate kmeans clusters with centers = 3, and sigma = t = 2
+#' # calculate kmeans clusters with centers = 3, and sigma = t = 2 in dimension 0
 #' clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
 
 diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers = parallelly::availableCores(omit = 1),...){
@@ -199,14 +211,26 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers
 #' @seealso \code{\link{diagram_kkmeans}} for clustering persistence diagrams.
 #' @examples
 #'
-#' # create six diagrams from three base diagrams
-#' g <- generate_TDApplied_test_data(2,2,2)
+#' # create three diagrams
+#' D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D3 <- TDA::ripsDiag(TDA::torusUnif(n = 20,a = 0.25,c = 0.75),
+#'                     maxdimension = 1,maxscale = 2)
+#' g <- list(D1,D2,D3)
 #' 
-#' # calculate kmeans clusters with centers = 3, and sigma = t = 2
+#' # calculate kmeans clusters with centers = 3, and sigma = t = 2 in dimension 0
 #' clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
 #' 
 #' # create three new diagrams
-#' g_new <- generate_TDApplied_test_data(1,1,1)
+#' D4 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D5 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D6 <- TDA::ripsDiag(TDA::torusUnif(n = 20,a = 0.25,c = 0.75),
+#'                     maxdimension = 1,maxscale = 2)
+#' g <- list(D4,D5,D6)
 #' 
 #' # predict cluster labels
 #' predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)
@@ -288,10 +312,16 @@ predict_diagram_kkmeans <- function(new_diagrams,clustering,num_workers = parall
 #' Scholkopf, B and Smola, A and Muller, K (1998). "Nonlinear Component Analysis as a Kernel Eigenvalue Problem." \url{https://www.mlpack.org/papers/kpca.pdf}.
 #' @examples
 #'
-#' # create nine diagrams from three base diagrams
-#' g <- generate_TDApplied_test_data(3,3,3)
+#' # create three diagrams
+#' D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D3 <- TDA::ripsDiag(TDA::torusUnif(n = 20,a = 0.25,c = 0.75),
+#'                     maxdimension = 1,maxscale = 2)
+#' g <- list(D1,D2,D3)
 #' 
-#' # calculate their 2D PCA embedding with sigma = t = 2
+#' # calculate their 2D PCA embedding with sigma = t = 2 in dimension 0
 #' pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_workers = 2)
 
 diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_workers = parallelly::availableCores(omit = 1),th = 1e-4){
@@ -349,14 +379,24 @@ diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_worke
 #' @seealso \code{\link{diagram_kpca}} for embedding persistence diagrams into a low-dimensional space.
 #' @examples
 #'
-#' # create six diagrams from three base diagrams
-#' g <- generate_TDApplied_test_data(2,2,2)
+#' # create three diagrams
+#' D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D3 <- TDA::ripsDiag(TDA::torusUnif(n = 20,a = 0.25,c = 0.75),
+#'                     maxdimension = 1,maxscale = 2)
+#' g <- list(D1,D2,D3)
 #' 
-#' # calculate their 2D PCA embedding with sigma = t = 2
+#' # calculate their 2D PCA embedding with sigma = t = 2 in dimension 0
 #' pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_workers = 2)
 #' 
-#' # project two new diagrams onto old model
-#' g_new <- generate_TDApplied_test_data(1,1,0)
+#' # project new diagrams onto old model
+#' D4 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D5 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' g_new <- list(D4,D5)
 #' 
 #' # calculate new embedding coordinates
 #' new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers = 2)
@@ -453,11 +493,19 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
 #' Murphy, K. "Machine learning: a probabilistic perspective." MIT press (2012).
 #' @examples
 #'
-#' # create 4 diagrams based on two base diagrams
-#' g <- generate_TDApplied_test_data(2,2,0)
+#' # create four diagrams
+#' D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D3 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D4 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' g <- list(D1,D2,D3,D4)
 #' 
 #' # create response vector
-#' y <- as.factor(rep(c("D1","D2"),each = 2))
+#' y <- as.factor(c("circle","sphere","circle","sphere"))
 #' 
 #' # fit model without cross validation
 #' model_svm <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0),
@@ -712,19 +760,31 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
 #' @importFrom methods is
 #' @examples
 #'
-#' # create eight diagrams based on four base diagrams
-#' g <- generate_TDApplied_test_data(2,2,0)
+#' # create four diagrams
+#' D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D3 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D4 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' g <- list(D1,D2,D3,D4)
 #' 
 #' # create response vector
-#' y <- as.factor(rep(c("D1","D2"),each = 2))
+#' y <- as.factor(c("circle","sphere","circle","sphere"))
 #' 
 #' # fit model without cross validation
 #' model_svm <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0),
 #'                           y = y,sigma = c(1),t = c(1),
 #'                           num_workers = 2)
 #'
-#' # create one new diagram
-#' g_new <- list(generate_TDApplied_test_data(1,0,0))
+#' # create new diagrams
+#' D5 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D6 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' g_new <- list(D5,D6)
 #' 
 #' # predict
 #' predict_diagram_ksvm(new_diagrams = g_new,model = model_svm,num_workers = 2)

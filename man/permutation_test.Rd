@@ -74,13 +74,17 @@ so care should be taken to use the desired function when using TDApplied with TD
 \examples{
 
 # create two groups of diagrams
-g1 <- generate_TDApplied_test_data(2,0,0)
-g2 <- generate_TDApplied_test_data(0,2,0)
+D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D2 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+g1 <- list(D1,D2)
+g2 <- list(D1,D2)
 
-# run test in dimension 0 with 3 iterations
+# run test in dimension 1 with 1 iteration
 perm_test <- permutation_test(g1,g2,iterations = 1,
                               num_workers = 2,
-                              dims = c(0))
+                              dims = c(1))
 }
 \references{
 Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.

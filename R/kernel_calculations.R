@@ -24,15 +24,16 @@
 #' Murphy, K. "Machine learning: a probabilistic perspective", MIT press (2012).
 #' @examples
 #'
-#' # load three diagrams
-#' D1 <- generate_TDApplied_test_data(1,0,0)
-#' D2 <- generate_TDApplied_test_data(0,1,0)
-#' D3 <- generate_TDApplied_test_data(0,0,1)
+#' # create three diagrams
+#' D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
 #' 
-#' # calculate the kernel value between D1 and D2 with sigma = 2, t = 2
+#' # calculate the kernel value between D1 and D2 with sigma = 2, t = 2 in dimension 1
+#' diagram_kernel(D1,D2,dim = 1,sigma = 2,t = 2)
+#' # calculate the kernel value between D1 and D2 with sigma = 2, t = 2 in dimension 0
 #' diagram_kernel(D1,D2,dim = 0,sigma = 2,t = 2)
-#' # calculate the kernel value between D1 and D3 with sigma = 2, t = 2
-#' diagram_kernel(D1,D3,dim = 0,sigma = 2,t = 2)
 
 diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
   
@@ -70,11 +71,12 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
 #' @importFrom iterators iter
 #' @examples
 #'
-#' # load three diagrams
-#' D1 <- generate_TDApplied_test_data(1,0,0)
-#' D2 <- generate_TDApplied_test_data(0,1,0)
-#' D3 <- generate_TDApplied_test_data(0,0,1)
-#' g <- list(D1,D2,D3)
+#' # create two diagrams
+#' D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' g <- list(D1,D2)
 #'
 #' # calculate the Gram matrix in dimension 1 with sigma = 2, t = 2
 #' G <- gram_matrix(diagrams = g,dim = 1,sigma = 2,t = 2,num_workers = 2)

@@ -72,8 +72,14 @@ in a particular dimension. If `distance` is "fisher" then `sigma` must not be NU
 }
 \examples{
 
-# create nine diagrams from three base diagrams
-g <- generate_TDApplied_test_data(3,3,3)
+# create three diagrams
+D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D3 <- TDA::ripsDiag(TDA::torusUnif(n = 20,a = 0.25,c = 0.75),
+                    maxdimension = 1,maxscale = 2)
+g <- list(D1,D2,D3)
 
 # calculate their 2D MDS embedding in dimension 0 with the bottleneck distance
 mds <- diagram_mds(diagrams = g,k = 2,dim = 0,p = Inf,num_workers = 2)

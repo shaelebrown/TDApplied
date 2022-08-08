@@ -59,10 +59,16 @@ function.
 }
 \examples{
 
-# create nine diagrams from three base diagrams
-g <- generate_TDApplied_test_data(3,3,3)
+# create three diagrams
+D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D3 <- TDA::ripsDiag(TDA::torusUnif(n = 20,a = 0.25,c = 0.75),
+                    maxdimension = 1,maxscale = 2)
+g <- list(D1,D2,D3)
 
-# calculate kmeans clusters with centers = 3, and sigma = t = 2
+# calculate kmeans clusters with centers = 3, and sigma = t = 2 in dimension 0
 clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
 }
 \references{

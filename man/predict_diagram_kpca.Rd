@@ -26,14 +26,24 @@ previously-computed kernel PCA embedding (from the \code{\link{diagram_kpca}} fu
 }
 \examples{
 
-# create six diagrams from three base diagrams
-g <- generate_TDApplied_test_data(2,2,2)
+# create three diagrams
+D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D3 <- TDA::ripsDiag(TDA::torusUnif(n = 20,a = 0.25,c = 0.75),
+                    maxdimension = 1,maxscale = 2)
+g <- list(D1,D2,D3)
 
-# calculate their 2D PCA embedding with sigma = t = 2
+# calculate their 2D PCA embedding with sigma = t = 2 in dimension 0
 pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_workers = 2)
 
-# project two new diagrams onto old model
-g_new <- generate_TDApplied_test_data(1,1,0)
+# project new diagrams onto old model
+D4 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D5 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+                    maxdimension = 1,maxscale = 2)
+g_new <- list(D4,D5)
 
 # calculate new embedding coordinates
 new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers = 2)

@@ -52,13 +52,17 @@
 #' @examples
 #'
 #' # create two groups of diagrams
-#' g1 <- generate_TDApplied_test_data(2,0,0)
-#' g2 <- generate_TDApplied_test_data(0,2,0)
+#' D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D2 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' g1 <- list(D1,D2)
+#' g2 <- list(D1,D2)
 #'
-#' # run test in dimension 0 with 3 iterations
+#' # run test in dimension 1 with 1 iteration
 #' perm_test <- permutation_test(g1,g2,iterations = 1,
 #'                               num_workers = 2,
-#'                               dims = c(0))
+#'                               dims = c(1))
 
 permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paired = F,distance = "wasserstein",sigma = NULL,num_workers = parallelly::availableCores(omit = 1),verbose = FALSE){
 
@@ -268,12 +272,17 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
 #' Gretton A et al. (2007). "A Kernel Statistical Test of Independence." \url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf}.
 #' @examples
 #'
-#' # create two independent groups of diagrams
-#' g1 <- generate_TDApplied_test_data(6,0,0)
-#' g2 <- generate_TDApplied_test_data(0,6,0)
+#' # create two independent groups of diagrams of length 6, which
+#' # is the minimum length
+#' D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' D2 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+#'                     maxdimension = 1,maxscale = 2)
+#' g1 <- list(D1,D2,D2,D2,D2,D2)
+#' g2 <- list(D2,D1,D1,D1,D1,D1)
 #' 
-#' # do independence test with sigma = t = 1
-#' indep_test <- independence_test(g1,g2,dims = c(0),num_workers = 2)
+#' # do independence test with sigma = t = 1 in dimension 1
+#' indep_test <- independence_test(g1,g2,dims = c(1),num_workers = 2)
 
 independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,num_workers = parallelly::availableCores(omit = 1),verbose = FALSE){
   

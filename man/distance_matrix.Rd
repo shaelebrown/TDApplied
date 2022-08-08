@@ -43,13 +43,14 @@ If `distance` is "fisher" then `sigma` must not be NULL.
 }
 \examples{
 
-# load three diagrams
-D1 <- generate_TDApplied_test_data(1,0,0)
-D2 <- generate_TDApplied_test_data(0,1,0)
-D3 <- generate_TDApplied_test_data(0,0,1)
-g <- list(D1,D2,D3)
+# create two diagrams
+D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+                    maxdimension = 1,maxscale = 2)
+g <- list(D1,D2)
 
-# calculate their distance matrix in dimension 1 with the 2-wasserstein metric using 2 cores
+# calculate their distance matrix in dimension 1 with the 2-wasserstein metric using 2 cores in dimension 1
 D <- distance_matrix(diagrams = g,dim = 1,distance = "wasserstein",p = 2,num_workers = 2)
 
 # now do the cross distance matrix, which is the same as the original

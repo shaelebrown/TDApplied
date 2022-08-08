@@ -39,11 +39,12 @@ Gram matrices are used in downstream analyses, like in the `diagram_kkmeans`, `d
 }
 \examples{
 
-# load three diagrams
-D1 <- generate_TDApplied_test_data(1,0,0)
-D2 <- generate_TDApplied_test_data(0,1,0)
-D3 <- generate_TDApplied_test_data(0,0,1)
-g <- list(D1,D2,D3)
+# create two diagrams
+D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+                    maxdimension = 1,maxscale = 2)
+g <- list(D1,D2)
 
 # calculate the Gram matrix in dimension 1 with sigma = 2, t = 2
 G <- gram_matrix(diagrams = g,dim = 1,sigma = 2,t = 2,num_workers = 2)

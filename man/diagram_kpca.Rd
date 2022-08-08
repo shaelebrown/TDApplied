@@ -11,7 +11,7 @@ diagram_kpca(
   sigma = 1,
   features = 1,
   num_workers = parallelly::availableCores(omit = 1),
-  ...
+  th = 1e-04
 )
 }
 \arguments{
@@ -27,7 +27,7 @@ diagram_kpca(
 
 \item{num_workers}{the number of cores used for parallel computation, default is one less than the number of cores on the machine.}
 
-\item{...}{additional parameters.}
+\item{th}{the threshold value under which principal components are ignored (default 0.0001).}
 }
 \value{
 a list containing the elements
@@ -59,10 +59,16 @@ be used for further analysis, or simply as a data visualization tool for persist
 }
 \examples{
 
-# create nine diagrams from three base diagrams
-g <- generate_TDApplied_test_data(3,3,3)
+# create three diagrams
+D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D3 <- TDA::ripsDiag(TDA::torusUnif(n = 20,a = 0.25,c = 0.75),
+                    maxdimension = 1,maxscale = 2)
+g <- list(D1,D2,D3)
 
-# calculate their 2D PCA embedding with sigma = t = 2
+# calculate their 2D PCA embedding with sigma = t = 2 in dimension 0
 pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_workers = 2)
 }
 \references{

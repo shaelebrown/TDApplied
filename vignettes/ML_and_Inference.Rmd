@@ -118,9 +118,9 @@ devtools::load_all()
 Since TDApplied uses the output of TDA/TDAstats calculations as inputs to its functions, either TDA or TDAstats should be at least installed (if not attached) when using TDApplied. All examples will analyze simple diagrams which are random deviations of three persistence diagrams called D1, D2 and D3 (each with points in dimension 0 only):
 
 ```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center'}
-D1 = generate_TDApplied_test_data(1,0,0)
-D2 = generate_TDApplied_test_data(0,1,0)
-D3 = generate_TDApplied_test_data(0,0,1)
+D1 = data.frame(dimension = c(0),birth = c(2),death = c(3))
+D2 = data.frame(dimension = c(0),birth = c(2,0),death = c(3.3,0.5))
+D3 = data.frame(dimension = c(0),birth = c(0),death = c(0.5))
 par(mfrow = c(1,3))
 plot(x = D1$birth,y = D1$death,main = "D1",xlab = "",ylab = "",xlim = c(0,4),ylim = c(0,4))
 abline(a = 0,b = 1)
@@ -131,11 +131,65 @@ abline(a = 0,b = 1)
 par(mfrow = c(1,1))
 ```
 
-When desired, random Gaussian noise with a small variance will be added to the birth and death values of the points in these three diagrams (being careful make sure the points always have appropriate birth and death values), which will be achieved with the TDApplied internal (but documented) function `generate_TDApplied_test_data`. Here is an example of making noisy copies of D1:
+When desired, random Gaussian noise with a small variance will be added to the birth and death values of the points in these three diagrams (being careful make sure the points always have appropriate birth and death values), which will be achieved with the following function (only used in this vignette), `generate_TDApplied_vignette_data`: 
+
+```{r,echo = T}
+generate_TDApplied_vignette_data <- function(num_D1,num_D2,num_D3){
+  
+  # num_D1 is the number of desired copies of D1, and likewise
+  # for num_D2 and num_D3
+  
+  # create data
+  D1 = data.frame(dimension = c(0),birth = c(2),death = c(3))
+  D2 = data.frame(dimension = c(0),birth = c(2,0),death = c(3.3,0.5))
+  D3 = data.frame(dimension = c(0),birth = c(0),death = c(0.5))
+  
+  # make noisy copies
+  noisy_copies <- lapply(X = 1:(num_D1 + num_D2 + num_D3),FUN = function(X){
+    
+    # i stores the number of the data frame to make copies of:
+    # i = 1 is for D1, i = 2 is for D2 and i = 3 is for D3
+    i <- 1
+    if(X > num_D1 & X <= num_D1 + num_D2)
+    {
+      i <- 2
+    }
+    if(X > num_D1 + num_D2)
+    {
+      i <- 3
+    }
+    # store correct data in noisy_copy
+    noisy_copy <- get(paste0("D",i))
+    
+    # add Gaussian noise to birth and death values
+    n <- nrow(noisy_copy)
+    noisy_copy$dimension <- as.numeric(as.character(noisy_copy$dimension))
+    noisy_copy$birth <- noisy_copy$birth + stats::rnorm(n = n,mean = 0,sd = 0.05)
+    noisy_copy$death <- noisy_copy$death + stats::rnorm(n = n,mean = 0,sd = 0.05)
+    
+    # make any birth values which are less than 0 equal 0
+    noisy_copy[which(noisy_copy$birth < 0),2] <- 0
+    
+    # make any birth values which are greater than their death values equal their death values
+    noisy_copy[which(noisy_copy$birth > noisy_copy$death),2] <- 
+      noisy_copy[which(noisy_copy$birth > noisy_copy$death),3]
+    return(noisy_copy)
+    
+  })
+  
+  # return list containing num_D1 noisy copies of D1, then
+  # num_D2 noisy copies of D2, and finally num_D3 noisy copies
+  # of D3
+  return(noisy_copies)
+  
+}
+```
+
+Here is an example of making noisy copies of D1:
 
 ```{r,echo = F,fig.height = 5,fig.width = 5,fig.align = 'center'}
 par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-noisy_copies_D1 = generate_TDApplied_test_data(2,0,0)
+noisy_copies_D1 = generate_TDApplied_vignette_data(2,0,0)
 cols = factor(c("D1","Copy 1","Copy 2"),levels = c("D1","Copy 1","Copy 2"))
 plot(x = c(D1$birth,noisy_copies_D1[[1]]$birth,noisy_copies_D1[[2]]$birth),y = c(D1$death,noisy_copies_D1[[1]]$death,noisy_copies_D1[[2]]$death),main = "D1 and noisy copies",xlab = "",ylab = "",xlim = c(0,4),ylim = c(0,4),col = c("black","red","blue"),bty = "L")
 lines(x = c(-0.15,4.15),y = c(-0.15,4.15))
@@ -143,8 +197,6 @@ legend("topright", inset=c(-0.2,0),
        legend=levels(cols), 
        pch=16, col=c("black","red","blue"))
 ```
-
-The parameters to the function are the numbers of copies desired from each of D1, D2 and D3. So, for example, the code `generate_TDApplied_test_data(3,3,3)` would generate a list of three noisy copies of D1 follows by three noisy copies of D2 followed by three noisy copies of D3.
 
 ## Distance Between Persistence Diagrams
 
@@ -243,7 +295,7 @@ Dimension reduction is a task in machine learning which is commonly used for dat
 
 ```{r,echo = T,fig.height = 3,fig.width = 6,fig.align = 'center'}
 # create 9 diagrams based on D1, D2 and D3
-g <- generate_TDApplied_test_data(3,3,3)
+g <- generate_TDApplied_vignette_data(3,3,3)
 
 # calculate their 2D MDS embedding in dimension 0 with the bottleneck distance
 mds <- diagram_mds(diagrams = g,dim = 0,p = Inf,k = 2,num_workers = 2)
@@ -269,9 +321,9 @@ In order to demonstrate the utility of the permutation test we will detect diffe
 
 ```{r,echo = T}
 # permutation test between three diagrams
-g1 <- generate_TDApplied_test_data(3,0,0)
-g2 <- generate_TDApplied_test_data(0,3,0)
-g3 <- generate_TDApplied_test_data(0,0,3)
+g1 <- generate_TDApplied_vignette_data(3,0,0)
+g2 <- generate_TDApplied_vignette_data(0,3,0)
+g3 <- generate_TDApplied_vignette_data(0,0,3)
 perm_test <- permutation_test(g1,g2,g3,
                               num_workers = 2,
                               dims = c(0))
@@ -305,7 +357,7 @@ Kernel k-means [@kkmeans] is a method which can find hidden groups in complex da
 
 ```{r,echo = T}
 # create noisy copies of D1, D2 and D3
-g <- generate_TDApplied_test_data(3,3,3)
+g <- generate_TDApplied_vignette_data(3,3,3)
                               
 # calculate kmeans clusters with centers = 3, and sigma = t = 2
 clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
@@ -320,7 +372,7 @@ If we wish to predict the cluster label for new persistence diagrams (computed v
 
 ```{r,echo = T}
 # create nine new diagrams
-g_new <- generate_TDApplied_test_data(3,3,3)
+g_new <- generate_TDApplied_vignette_data(3,3,3)
 
 # predict cluster labels
 predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)
@@ -334,7 +386,7 @@ PCA is another dimension reduction technique in machine learning, but can be pre
 
 ```{r,echo = T,fig.height = 3,fig.width = 6,fig.align = 'center'}
 # create noisy copies of D1, D2 and D3
-g <- generate_TDApplied_test_data(3,3,3)
+g <- generate_TDApplied_vignette_data(3,3,3)
 
 # calculate their 2D PCA embedding with sigma = t = 2
 pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_workers = 2)
@@ -353,7 +405,7 @@ The function was able to recognize the three groups, and the embedding coordinat
 
 ```{r,echo = T,fig.height = 3,fig.width = 6,fig.align = 'center'}
 # create nine new diagrams
-g_new <- generate_TDApplied_test_data(3,3,3)
+g_new <- generate_TDApplied_vignette_data(3,3,3)
 
 # project new diagrams onto old model
 new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers = 2)
@@ -378,7 +430,7 @@ SVMs have been implemented in the function `diagram_ksvm`, tailored for input da
 
 ```{r,echo = T}
 # create thirty noisy copies of D1, D2 and D3
-g <- generate_TDApplied_test_data(10,10,10)
+g <- generate_TDApplied_vignette_data(10,10,10)
 
 # create response vector
 y <- as.factor(rep(c("D1","D2","D3"),each = 10))
@@ -393,7 +445,7 @@ We can use the function `predict_diagram_ksvm` to predict new diagrams like so:
 
 ```{r,echo = T}
 # create nine new diagrams
-g_new <- generate_TDApplied_test_data(3,3,3)
+g_new <- generate_TDApplied_vignette_data(3,3,3)
 
 # predict
 predict_diagram_ksvm(new_diagrams = g_new,model = model_svm,num_workers = 2)
@@ -409,8 +461,8 @@ This inference procedure has been implemented in the `independence_test` functio
 
 ```{r,echo = T}
 # create 10 noisy copies of D1 and D2
-g1 <- generate_TDApplied_test_data(10,0,0)
-g2 <- generate_TDApplied_test_data(0,10,0)
+g1 <- generate_TDApplied_vignette_data(10,0,0)
+g2 <- generate_TDApplied_vignette_data(0,10,0)
 
 # do independence test with sigma = t = 1
 indep_test <- independence_test(g1,g2,dims = c(0),num_workers = 2)
