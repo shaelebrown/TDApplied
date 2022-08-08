@@ -230,7 +230,7 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers
 #'                     maxdimension = 1,maxscale = 2)
 #' D6 <- TDA::ripsDiag(TDA::torusUnif(n = 20,a = 0.25,c = 0.75),
 #'                     maxdimension = 1,maxscale = 2)
-#' g <- list(D4,D5,D6)
+#' g_new <- list(D4,D5,D6)
 #' 
 #' # predict cluster labels
 #' predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)

@@ -54,9 +54,9 @@ library(TDApplied)
 For these examples we will use three base persistence diagrams:
 
 ``` r
-D1 = generate_TDApplied_test_data(1,0,0)
-D2 = generate_TDApplied_test_data(0,1,0)
-D3 = generate_TDApplied_test_data(0,0,1)
+D1 = data.frame(dimension = c(0),birth = c(2),death = c(3))
+D2 = data.frame(dimension = c(0),birth = c(2,0),death = c(3.3,0.5))
+D3 = data.frame(dimension = c(0),birth = c(0),death = c(0.5))
 ```
 
 Computing distances between persistence diagrams:
@@ -93,7 +93,14 @@ diagram_kernel(D1,D3,dim = 0,sigma = 2,t = 2)
 Computing a MDS projection of persistence diagrams:
 
 ``` r
-g <- generate_TDApplied_test_data(3,3,3)
+# create three diagrams
+D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                   maxdimension = 1,maxscale = 2)
+D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+                   maxdimension = 1,maxscale = 2)
+D3 <- TDA::ripsDiag(TDA::torusUnif(n = 20,a = 0.25,c = 0.75),
+                   maxdimension = 1,maxscale = 2)
+g <- list(D1,D2,D3)
 
 # calculate their 2D MDS embedding in dimension 1 with the bottleneck distance
 mds <- diagram_mds(diagrams = g,dim = 0,p = Inf,k = 2,num_workers = 2)
@@ -102,10 +109,14 @@ mds <- diagram_mds(diagrams = g,dim = 0,p = Inf,k = 2,num_workers = 2)
 Looking for group differences in groups of persistence diagrams:
 
 ``` r
-g1 <- generate_TDApplied_test_data(3,0,0)
-g2 <- generate_TDApplied_test_data(0,3,0)
-g3 <- generate_TDApplied_test_data(0,0,3)
-perm_test <- permutation_test(g1,g2,g3,
+# create two groups of diagrams
+D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D2 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+g1 <- list(D1,D2)
+g2 <- list(D1,D2)
+perm_test <- permutation_test(g1,g2,
                               num_workers = 2,
                               dims = c(0))
 ```
@@ -113,7 +124,14 @@ perm_test <- permutation_test(g1,g2,g3,
 Clustering persistence diagrams with kernel k-means:
 
 ``` r
-g <- generate_TDApplied_test_data(3,3,3)
+# create three diagrams
+D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D3 <- TDA::ripsDiag(TDA::torusUnif(n = 20,a = 0.25,c = 0.75),
+                    maxdimension = 1,maxscale = 2)
+g <- list(D1,D2,D3)
 
 # calculate kmeans clusters with centers = 3, and sigma = t = 2
 clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
@@ -122,18 +140,31 @@ clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_wo
 Predicting new cluster labels:
 
 ``` r
-# create nine new diagrams
-g_new <- generate_TDApplied_test_data(3,3,3)
+# create three new diagrams
+D4 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D5 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D6 <- TDA::ripsDiag(TDA::torusUnif(n = 20,a = 0.25,c = 0.75),
+                    maxdimension = 1,maxscale = 2)
+g_new <- list(D4,D5,D6)
 
 # predict cluster labels
 predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)
-#> [1] 3 3 3 1 1 1 2 2 2
+#> [1] 3 1 2
 ```
 
 Computing a kernel PCA embedding of persistence diagrams:
 
 ``` r
-g <- generate_TDApplied_test_data(3,3,3)
+# create three diagrams
+D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D3 <- TDA::ripsDiag(TDA::torusUnif(n = 20,a = 0.25,c = 0.75),
+                    maxdimension = 1,maxscale = 2)
+g <- list(D1,D2,D3)
 
 # calculate their 2D PCA embedding with sigma = t = 2
 pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_workers = 2)
@@ -143,7 +174,11 @@ Project new persistence diagrams into a kernel PCA embedding:
 
 ``` r
 # project new diagrams onto old model
-g_new <- generate_TDApplied_test_data(3,3,3)
+D4 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D5 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+                    maxdimension = 1,maxscale = 2)
+g_new <- list(D4,D5)
 
 # predict cluster labels
 new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers = 2)
@@ -152,37 +187,54 @@ new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers
 Fit a kernel SVM model on persistence diagrams:
 
 ``` r
-# create thirty diagrams
-g <- generate_TDApplied_test_data(10,10,10)
+# create four diagrams
+D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D3 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D4 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+                    maxdimension = 1,maxscale = 2)
+g <- list(D1,D2,D3,D4)
 
 # create response vector
-y <- as.factor(rep(c("D1","D2","D3"),each = 10))
+y <- as.factor(c("circle","sphere","circle","sphere"))
 
-# fit model with cross validation
-model_svm <- diagram_ksvm(diagrams = g,cv = 2,dim = c(0),
-                          y = y,sigma = c(1,0.1),t = c(1,2),
+# fit model without cross validation
+model_svm <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0),
+                          y = y,sigma = c(1),t = c(1),
                           num_workers = 2)
 ```
 
 Predict labels for new persistence diagrams:
 
 ``` r
-# create nine new diagrams
-g_new <- generate_TDApplied_test_data(3,3,3)
+# create new diagrams
+D5 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D6 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+                    maxdimension = 1,maxscale = 2)
+g_new <- list(D5,D6)
 
 # predict
 predict_diagram_ksvm(new_diagrams = g_new,model = model_svm,num_workers = 2)
-#> [1] D1 D1 D1 D2 D2 D2 D3 D3 D3
-#> Levels: D1 D2 D3
+#> [1] circle sphere
+#> Levels: circle sphere
 ```
 
 Check if two groups of persistence diagrams are independent or not:
 
 ``` r
-# create copies of D1 and D2
-g1 <- generate_TDApplied_test_data(10,0,0)
-g2 <- generate_TDApplied_test_data(0,10,0)
+# create two independent groups of diagrams of length 6, which
+# is the minimum length
+D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+D2 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                    maxdimension = 1,maxscale = 2)
+g1 <- list(D1,D2,D2,D2,D2,D2)
+g2 <- list(D2,D1,D1,D1,D1,D1)
 
-# do independence test with sigma = t = 1
-indep_test <- independence_test(g1,g2,dims = c(0),num_workers = 2)
+# do independence test with sigma = t = 1 in dimension 1
+indep_test <- independence_test(g1,g2,dims = c(1),num_workers = 2)
 ```
