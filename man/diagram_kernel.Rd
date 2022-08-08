@@ -32,7 +32,7 @@ Euclidean spaces.
 }
 \examples{
 
-# create three diagrams
+# create two diagrams
 D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
                     maxdimension = 1,maxscale = 2)
 D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),

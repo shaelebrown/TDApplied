@@ -59,17 +59,23 @@ be used for further analysis, or simply as a data visualization tool for persist
 }
 \examples{
 
-# create three diagrams
-D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
-                    maxdimension = 1,maxscale = 2)
-D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
-                    maxdimension = 1,maxscale = 2)
-D3 <- TDA::ripsDiag(TDA::torusUnif(n = 20,a = 0.25,c = 0.75),
-                    maxdimension = 1,maxscale = 2)
-g <- list(D1,D2,D3)
+# create six diagrams
+D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
+                                   dim = 1,threshold = 2)
+D2 <- TDAstats::calculate_homology(TDA::sphereUnif(n = 50,d = 2,r = 1),
+                                   dim = 1,threshold = 2)
+D3 <- TDAstats::calculate_homology(TDA::torusUnif(n = 50,a = 0.25,c = 0.75),
+                                   dim = 1,threshold = 2)
+D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
+                                   dim = 1,threshold = 2)
+D5 <- TDAstats::calculate_homology(TDA::sphereUnif(n = 50,d = 2,r = 1),
+                                   dim = 1,threshold = 2)
+D6 <- TDAstats::calculate_homology(TDA::torusUnif(n = 50,a = 0.25,c = 0.75),
+                                   dim = 1,threshold = 2)
+g <- list(D1,D2,D3,D4,D5,D6)
 
-# calculate their 2D PCA embedding with sigma = t = 2 in dimension 0
-pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_workers = 2)
+# calculate their 2D PCA embedding with sigma = t = 2 in dimension 1
+pca <- diagram_kpca(diagrams = g,dim = 1,t = 2,sigma = 2,features = 2,num_workers = 2)
 }
 \references{
 Scholkopf, B and Smola, A and Muller, K (1998). "Nonlinear Component Analysis as a Kernel Eigenvalue Problem." \url{https://www.mlpack.org/papers/kpca.pdf}.

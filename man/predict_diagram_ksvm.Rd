@@ -29,14 +29,14 @@ This function is a wrapper of the kernlab \code{\link{predict}} function.
 \examples{
 
 # create four diagrams
-D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
-                    maxdimension = 1,maxscale = 2)
-D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
-                    maxdimension = 1,maxscale = 2)
-D3 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
-                    maxdimension = 1,maxscale = 2)
-D4 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
-                    maxdimension = 1,maxscale = 2)
+D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                   dim = 0,threshold = 2)
+D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                   dim = 0,threshold = 2)
+D3 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                   dim = 0,threshold = 2)
+D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                   dim = 0,threshold = 2)
 g <- list(D1,D2,D3,D4)
 
 # create response vector
@@ -47,11 +47,11 @@ model_svm <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0),
                           y = y,sigma = c(1),t = c(1),
                           num_workers = 2)
 
-# create new diagrams
-D5 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
-                    maxdimension = 1,maxscale = 2)
-D6 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
-                    maxdimension = 1,maxscale = 2)
+# create two new diagrams
+D5 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                   dim = 0,threshold = 2)
+D6 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                   dim = 0,threshold = 2)
 g_new <- list(D5,D6)
 
 # predict

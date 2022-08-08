@@ -40,17 +40,17 @@ Gram matrices are used in downstream analyses, like in the `diagram_kkmeans`, `d
 \examples{
 
 # create two diagrams
-D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
-                    maxdimension = 1,maxscale = 2)
-D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
-                    maxdimension = 1,maxscale = 2)
+D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                   dim = 0,threshold = 2)
+D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                   dim = 0,threshold = 2)
 g <- list(D1,D2)
 
-# calculate the Gram matrix in dimension 1 with sigma = 2, t = 2
-G <- gram_matrix(diagrams = g,dim = 1,sigma = 2,t = 2,num_workers = 2)
+# calculate the Gram matrix in dimension 0 with sigma = 2, t = 2
+G <- gram_matrix(diagrams = g,dim = 0,sigma = 2,t = 2,num_workers = 2)
 
 # calculate cross-Gram matrix, which is the same as G
-G_cross <- gram_matrix(diagrams = g,other_diagrams = g,dim = 1,sigma = 2,
+G_cross <- gram_matrix(diagrams = g,other_diagrams = g,dim = 0,sigma = 2,
                        t = 2,num_workers = 2)
 }
 \author{

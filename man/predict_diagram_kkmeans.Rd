@@ -26,26 +26,22 @@ This allows for reusing old cluster models for new tasks, or to perform cross va
 }
 \examples{
 
-# create three diagrams
-D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
-                    maxdimension = 1,maxscale = 2)
-D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
-                    maxdimension = 1,maxscale = 2)
-D3 <- TDA::ripsDiag(TDA::torusUnif(n = 20,a = 0.25,c = 0.75),
-                    maxdimension = 1,maxscale = 2)
-g <- list(D1,D1,D1,D2,D2,D2,D3,D3,D3)
+# create two diagrams
+D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                   dim = 0,threshold = 2)
+D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                   dim = 0,threshold = 2)
+g <- list(D1,D1,D2,D2)
 
-# calculate kmeans clusters with centers = 3, and sigma = t = 2 in dimension 0
-clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
+# calculate kmeans clusters with centers = 2, and sigma = t = 2 in dimension 0
+clust <- diagram_kkmeans(diagrams = g,centers = 2,dim = 0,t = 2,sigma = 2,num_workers = 2)
 
-# create three new diagrams
-D4 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
-                    maxdimension = 1,maxscale = 2)
-D5 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
-                    maxdimension = 1,maxscale = 2)
-D6 <- TDA::ripsDiag(TDA::torusUnif(n = 20,a = 0.25,c = 0.75),
-                    maxdimension = 1,maxscale = 2)
-g_new <- list(D4,D5,D6)
+# create two new diagrams
+D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                   dim = 0,threshold = 2)
+D5 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                   dim = 0,threshold = 2)
+g_new <- list(D4,D5)
 
 # predict cluster labels
 predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)

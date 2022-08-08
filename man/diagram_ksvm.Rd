@@ -94,14 +94,14 @@ a character vector for instance will throw an error.
 \examples{
 
 # create four diagrams
-D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
-                    maxdimension = 1,maxscale = 2)
-D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
-                    maxdimension = 1,maxscale = 2)
-D3 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
-                    maxdimension = 1,maxscale = 2)
-D4 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
-                    maxdimension = 1,maxscale = 2)
+D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                   dim = 0,threshold = 2)
+D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                   dim = 0,threshold = 2)
+D3 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                   dim = 0,threshold = 2)
+D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                   dim = 0,threshold = 2)
 g <- list(D1,D2,D3,D4)
 
 # create response vector
