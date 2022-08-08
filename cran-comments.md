@@ -12,7 +12,7 @@
 
 ## Notes
 
-* This is a first submission.
+* This is a second submission for this package (the first was rejected). The first submission contained two failed tests, and this has been fixed.
 * A previous version of this package was submitted under the name "TDAML", however that submission should be ignored.
 * The words "TDApplied" and "scalable", in the DESCRIPTION file are all spelled correctly. 
 * There are other domain-specific words and author names in ML_and_Inference.Rmd which were flagged by devtools::check_spelling() but to the author's knowledge they are all spelled correctly (this did not result in a Note, however).
@@ -20,4 +20,3 @@
 * Occasionally a Note is found like "checking for detritus in the temp directory ... NOTE
   Found the following files/directories:..." however there doesn't seem to be a clear fix for this.
 * There is a PREPERROR when checking on rhub Ubuntu Linux, however the log files say the build was successful.
-* A previous submission contained two failed tests, and this has been fixed.
