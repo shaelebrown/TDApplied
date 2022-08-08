@@ -20,3 +20,4 @@
 * Occasionally a Note is found like "checking for detritus in the temp directory ... NOTE
   Found the following files/directories:..." however there doesn't seem to be a clear fix for this.
 * There is a PREPERROR when checking on rhub Ubuntu Linux, however the log files say the build was successful.
+* A previous submission contained two failed tests, and this has been fixed.
