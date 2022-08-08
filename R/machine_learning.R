@@ -262,7 +262,7 @@ predict_diagram_kkmeans <- function(new_diagrams,clustering,num_workers = parall
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1
 #' @param features number of features (principal components) to return, default 1.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
-#' @param ... additional parameters.
+#' @param th the threshold value under which principal components are ignored (default 0.0001).
 #'
 #' @return a list containing the elements
 #' 
@@ -294,7 +294,7 @@ predict_diagram_kkmeans <- function(new_diagrams,clustering,num_workers = parall
 #' # calculate their 2D PCA embedding with sigma = t = 2
 #' pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 2,features = 2,num_workers = 2)
 
-diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_workers = parallelly::availableCores(omit = 1),...){
+diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_workers = parallelly::availableCores(omit = 1),th = 1e-4){
   
   # error check diagrams argument
   check_param("diagrams",diagrams,numeric = F,multiple = T)
@@ -304,13 +304,21 @@ diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_worke
   K <- gram_matrix(diagrams = diagrams,t = t,sigma = sigma,dim = dim,num_workers = num_workers)
   
   # return kernlab computation, ignore unhelpful kernlab warnings
-  tryCatch(expr = {ret_list <- list(pca = kernlab::kpca(x = K,features = features,...),diagrams = diagrams,t = t,sigma = sigma,dim = dim)},
+  tryCatch(expr = {ret_list <- list(pca = kernlab::kpca(x = K,features = features),diagrams = diagrams,t = t,sigma = sigma,dim = dim)},
            error = function(e){stop(e)},
            warning = function(w){
              
-             if(grepl(pattern = "closing unused connection",w) == F)
+             if(grepl(pattern = "closing unused connection",w) == F & grepl(pattern = "below threshold!",w) == F)
              {
                message(w)
+             }
+             
+           },
+           finally = {
+             
+             if(!exists(x = "ret_list"))
+             {
+               stop(paste0("The embedding could not be computed - try decreasing the th parameter (input value was ",th,")."))
              }
              
            })

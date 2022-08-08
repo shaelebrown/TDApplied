@@ -15,7 +15,7 @@ check_diagram <- function(d,ret){
   {
     if(!methods::is(d,"data.frame"))
     {
-      stop("Diagrams must either be the output of a TDA/TDAstats computation or data frame.")
+      stop("Diagrams must either be the output of a TDA/TDAstats computation or a data frame.")
     }
   }
 
@@ -52,6 +52,11 @@ check_diagram <- function(d,ret){
   if(length(which(stats::complete.cases(d))) != nrow(d))
   {
     stop("Diagrams can't have missing values.")
+  }
+  
+  if(length(which(d[,3] < d[,2])) > 0)
+  {
+    stop("Death values must always be at least as large as birth values.")
   }
   
   if(ret == T)

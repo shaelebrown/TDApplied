@@ -17,6 +17,16 @@ test_that("diagram_ksvm detects incorrect parameters correctly",{
   
 })
 
+test_that("diagram_ksvm can accept inputs from TDA, TDAstats and diagram_to_df",{
+  
+  D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
+  D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)
+  D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
+  D4 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
+  expect_s3_class(diagram_ksvm(diagrams = list(D1,D2,D3,D4),y = c(1,2,3,4),num_workers = 2,dim = c(1)),"diagram_ksvm")
+  
+})
+
 test_that("predict_diagram_ksvm detects incorrect parameters correctly",{
   
   D1 <- data.frame(dimension = 0,birth = 2,death = 3)
@@ -65,6 +75,17 @@ test_that("predict_diagram_ksvm is computing correctly",{
                    spheres[[1]],spheres[[2]],spheres[[3]],spheres[[4]],spheres[[5]])
   ksvm <- diagram_ksvm(diagrams = diagrams,dim = 1,y = as.factor(c(rep("circle",5),rep("torus",5),rep("sphere",5))),num_workers = 2)
   expect_equal(as.character(predict_diagram_ksvm(new_diagrams = diagrams,ksvm,num_workers = 2)),c(rep("circle",5),rep("torus",5),rep("sphere",5)))
+  
+})
+
+test_that("diagram_ksvm can accept inputs from TDA, TDAstats and diagram_to_df",{
+  
+  D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
+  D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)
+  D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
+  D4 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
+  ksvm = diagram_ksvm(diagrams = list(D1,D2,D3,D4),y = c(1,2,3,4),num_workers = 2,dim = c(1))
+  expect_length(predict_diagram_ksvm(new_diagrams = list(D1,D2,D3,D4),model = ksvm,num_workers = 2),4)
   
 })
 

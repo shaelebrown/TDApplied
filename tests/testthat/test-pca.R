@@ -28,6 +28,16 @@ test_that("diagram_kpca is computing correctly",{
   
 })
 
+test_that("diagram_kpca can accept inputs from TDA, TDAstats and diagram_to_df",{
+  
+  D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
+  D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)
+  D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
+  D4 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
+  expect_error(diagram_kpca(diagrams = list(D1,D2,D3,D4),dim = 1,features = 2,num_workers = 2),"embedding")
+
+})
+
 test_that("predict_diagram_kpca detects incorrect parameters correctly",{
   
   D1 <- data.frame(dimension = 0,birth = 2,death = 3)
@@ -49,6 +59,20 @@ test_that("predict_diagram_kpca is computing correctly",{
   D3 <- data.frame(dimension = 0,birth = c(2,5),death = c(3.1,6))
   kpca <- diagram_kpca(diagrams = list(D1,D2,D3),features = 2,num_workers = 2)
   expect_equal(predict_diagram_kpca(new_diagrams = list(D1,D2,D3),embedding = kpca,num_workers = 2),kpca$pca@rotated)
+  
+})
+
+test_that("predict_diagram_kpca can accept inputs from TDA, TDAstats and diagram_to_df",{
+  
+  D1 <- data.frame(dimension = 0,birth = 2,death = 3)
+  D2 <- data.frame(dimension = 0,birth = 2,death = 3.1)
+  D3 <- data.frame(dimension = 0,birth = c(2,5),death = c(3.1,6))
+  kpca <- diagram_kpca(diagrams = list(D1,D2,D3),features = 2,num_workers = 2)
+  D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
+  D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)
+  D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
+  D4 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
+  expect_length(predict_diagram_kpca(new_diagrams = list(D1,D2,D3,D4),embedding = kpca,num_workers = 2),4)
   
 })
 

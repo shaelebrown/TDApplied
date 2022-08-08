@@ -76,6 +76,12 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
   D2_subset <- D2[which(D2$dimension == dim),1:3]
   D1_subset <- D1_subset[,2:3]
   D2_subset <- D2_subset[,2:3]
+  
+  # check if there are any Inf values
+  if(length(which(is.infinite(D1_subset[,2]))) > 0 | length(which(is.infinite(D2_subset[,2]))))
+  {
+    stop("Diagrams must not contain Inf values. This can occur when the function \'calculate_homoloy\' is used to calculate persistence diagrams. Try converting such diagrams to dataframes using the \'diagram_to_df\' function and replacing Inf values with a suitable number (at least the largest finite death value).")
+  }
 
   # create empty diagonals for the persistence diagrams
   diag1 <- D1_subset[0,]

@@ -68,7 +68,8 @@ Like in (\url{https://github.com/hassan-abdallah/Statistical_Inference_PH_fMRI/b
 an option is provided for pairing diagrams between groups to reduce variance (in order to boost statistical power), and
 like it was suggested in the original paper functionality is provided for an arbitrary number of groups (not just 2).
 A small p-value in a dimension suggests that the groups are different (separated) in that dimension.
-If `distance` is "fisher" then `sigma` must not be NULL.
+If `distance` is "fisher" then `sigma` must not be NULL. TDAstats also has a `permutation_test` function
+so care should be taken to use the desired function when using TDApplied with TDAstats.
 }
 \examples{
 
