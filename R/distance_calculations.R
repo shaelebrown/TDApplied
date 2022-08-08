@@ -230,7 +230,8 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
 #'                     maxdimension = 1,maxscale = 2)
 #' g <- list(D1,D2)
 #'
-#' # calculate their distance matrix in dimension 1 with the 2-wasserstein metric using 2 cores in dimension 1
+#' # calculate their distance matrix in dimension 1 with the 2-wasserstein metric 
+#' # using 2 cores in dimension 1
 #' D <- distance_matrix(diagrams = g,dim = 1,distance = "wasserstein",p = 2,num_workers = 2)
 #' 
 #' # now do the cross distance matrix, which is the same as the original

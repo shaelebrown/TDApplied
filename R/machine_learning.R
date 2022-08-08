@@ -128,7 +128,7 @@ diagram_mds <- function(diagrams,k = 2,distance = "wasserstein",dim = 0,p = 2,si
 #'                     maxdimension = 1,maxscale = 2)
 #' D3 <- TDA::ripsDiag(TDA::torusUnif(n = 20,a = 0.25,c = 0.75),
 #'                     maxdimension = 1,maxscale = 2)
-#' g <- list(D1,D2,D3)
+#' g <- list(D1,D1,D1,D2,D2,D2,D3,D3,D3)
 #' 
 #' # calculate kmeans clusters with centers = 3, and sigma = t = 2 in dimension 0
 #' clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
@@ -218,7 +218,7 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers
 #'                     maxdimension = 1,maxscale = 2)
 #' D3 <- TDA::ripsDiag(TDA::torusUnif(n = 20,a = 0.25,c = 0.75),
 #'                     maxdimension = 1,maxscale = 2)
-#' g <- list(D1,D2,D3)
+#' g <- list(D1,D1,D1,D2,D2,D2,D3,D3,D3)
 #' 
 #' # calculate kmeans clusters with centers = 3, and sigma = t = 2 in dimension 0
 #' clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
