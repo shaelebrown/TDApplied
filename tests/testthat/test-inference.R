@@ -23,7 +23,7 @@ test_that("permutation_test can accept inputs from TDA, TDAstats and diagram_to_
   
   circle = TDA::ripsDiag(X = TDA::circleUnif(n = 20,r = 1),maxdimension = 1,maxscale = 2)
   sphere = TDAstats::calculate_homology(TDA::sphereUnif(n = 20,d = 2,r = 1),threshold = 2)
-  expect_length(permutation_test(list(circle,circle,diagram_to_df(circle)),list(sphere,sphere,sphere),iterations = 10,dims = c(1),num_workers = 2)$permvals[[1]],10)
+  expect_length(permutation_test(list(circle,circle,diagram_to_df(circle)),list(sphere,sphere,sphere),iterations = 1,dims = c(1),num_workers = 2)$permvals[[1]],1)
   
 })
 
@@ -35,16 +35,16 @@ test_that("permutation_test is working",{
   sphere2 <- TDA::ripsDiag(X = TDA::sphereUnif(n = 50,d = 2,r = 1),maxdimension = 2,maxscale = 2,library = "dionysus",location = T)
   d <- diagram_distance(circle,sphere,dim = 1) # wasserstein distance in dimension 1
   # one check to make sure when cycle locations are calculated there are no errors
-  expect_length(permutation_test(list(circle2,circle2,circle2),list(sphere2,sphere2,sphere2),iterations = 10,dims = c(1),num_workers = 2)$permvals[[1]],10)
-  expect_length(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = 10,dims = c(1),num_workers = 2)$permvals[[1]],10)
-  expect_length(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = 15,dims = c(1),num_workers = 2)$permvals[[1]],15)
-  expect_equal(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = 10,dims = c(1),num_workers = 2)$test_statistics[[1]],0)
-  expect_equal(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = 10,dims = c(2),num_workers = 2)$test_statistics[[1]],0)
-  expect_equal(permutation_test(list(circle,circle,circle),list(sphere,circle,sphere),iterations = 10,dims = c(1),num_workers = 2)$test_statistics[[1]],d^2/3)
-  expect_equal(permutation_test(list(circle,circle,circle),list(sphere,circle,circle),iterations = 10,dims = c(1),num_workers = 2)$test_statistics[[1]],d^2/3)
-  expect_equal(permutation_test(list(circle,sphere,circle),list(sphere,circle,sphere),iterations = 10,dims = c(1),num_workers = 2)$test_statistics[[1]],2*d^2/3)
-  expect_length(unique(permutation_test(list(circle,sphere,circle),list(circle,sphere,circle),paired = T,iterations = 10,dims = c(1),num_workers = 2)$permvals[[1]]),1)
-  expect_length(unique(permutation_test(list(sphere,sphere,circle),list(sphere,sphere,circle),paired = T,iterations = 10,dims = c(1),num_workers = 2)$permvals[[1]]),1)
+  expect_length(permutation_test(list(circle2,circle2,circle2),list(sphere2,sphere2,sphere2),iterations = 1,dims = c(1),num_workers = 2)$permvals[[1]],1)
+  expect_length(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = 3,dims = c(1),num_workers = 2)$permvals[[1]],3)
+  expect_length(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = 5,dims = c(1),num_workers = 2)$permvals[[1]],5)
+  expect_equal(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = 1,dims = c(1),num_workers = 2)$test_statistics[[1]],0)
+  expect_equal(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = 1,dims = c(2),num_workers = 2)$test_statistics[[1]],0)
+  expect_lte(abs(permutation_test(list(circle,circle,circle),list(sphere,circle,sphere),iterations = 1,dims = c(1),num_workers = 2)$test_statistics[[1]] - d^2/3),0.01)
+  expect_lte(abs(permutation_test(list(circle,circle,circle),list(sphere,circle,circle),iterations = 1,dims = c(1),num_workers = 2)$test_statistics[[1]] - d^2/3),0.01)
+  expect_lte(abs(permutation_test(list(circle,sphere,circle),list(sphere,circle,sphere),iterations = 1,dims = c(1),num_workers = 2)$test_statistics[[1]] - 2*d^2/3),0.01)
+  expect_length(unique(permutation_test(list(circle,sphere,circle),list(circle,sphere,circle),paired = T,iterations = 3,dims = c(1),num_workers = 2)$permvals[[1]]),1)
+  expect_length(unique(permutation_test(list(sphere,sphere,circle),list(sphere,sphere,circle),paired = T,iterations = 3,dims = c(1),num_workers = 2)$permvals[[1]]),1)
 
 })
 
