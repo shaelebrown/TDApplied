@@ -26,7 +26,7 @@ R package TDA:
 
 R package TDAstats:
 
-> Wadhwa, Raoul R., Drew R. K. Williamson, Andrew Dhawan, and Jacob G. Scott. 2018. TDAstats: R pipeline for computing persistent homology in topological data analysis. https://CRAN.R-projects.org/package=TDAstats.
+> Wadhwa, Raoul R., Drew R. K. Williamson, Andrew Dhawan, and Jacob G. Scott. 2018. TDAstats: R pipeline for computing persistent homology in topological data analysis. https://CRAN.R-project.org/package=TDAstats.
 
 ## Installation
 
