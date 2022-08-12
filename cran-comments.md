@@ -12,7 +12,7 @@
 
 ## Notes
 
-* This is a third submission for this package (the first two were rejected). The first submission contained two failed tests, and this has been fixed. The second submission had one bad url, which has been fixed.
+* This is a fourth submission for this package (the first three were rejected). The first submission contained two failed tests, and this has been fixed. The second submission had one bad url, which has been fixed. The third submission needed single quotes around 'TDApplied' in the description file, default values of TRUE and FALSE rather than T and F in functions, and resetting graphical parameters at the end of the package vignette.
 * A previous version of this package was submitted under the name "TDAML", however that submission should be ignored.
 * The words "TDApplied" and "scalable", in the DESCRIPTION file are all spelled correctly. 
 * There are other domain-specific words and author names in ML_and_Inference.Rmd which were flagged by devtools::check_spelling() but to the author's knowledge they are all spelled correctly (this did not result in a Note, however).

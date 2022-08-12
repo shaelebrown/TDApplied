@@ -15,12 +15,12 @@ diagram_ksvm(
   C = 1,
   nu = 0.2,
   epsilon = 0.1,
-  prob.model = F,
+  prob.model = FALSE,
   class.weights = NULL,
-  fit = T,
+  fit = TRUE,
   cache = 40,
   tol = 0.001,
-  shrinking = T,
+  shrinking = TRUE,
   num_workers = parallelly::availableCores(omit = 1)
 )
 }

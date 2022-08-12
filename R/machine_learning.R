@@ -516,7 +516,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
 #'                           y = y,sigma = c(1),t = c(1),
 #'                           num_workers = 2)
                           
-diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1,nu = 0.2,epsilon = 0.1,prob.model = F,class.weights = NULL,fit = T,cache = 40,tol = 0.001,shrinking = T,num_workers = parallelly::availableCores(omit = 1)){
+diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1,nu = 0.2,epsilon = 0.1,prob.model = FALSE,class.weights = NULL,fit = TRUE,cache = 40,tol = 0.001,shrinking = TRUE,num_workers = parallelly::availableCores(omit = 1)){
   
   # set internal variables to NULL to avoid build issues
   r <- NULL

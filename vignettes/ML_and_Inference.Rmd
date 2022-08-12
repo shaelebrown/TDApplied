@@ -16,6 +16,11 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+# get original graphic parameters to be able to
+# revert back at the end of the vignette
+original_mfrow <- par()$mfrow
+original_xpd <- par()$xpd
+original_mar <- par()$mar
 ```
 
 # Introduction
@@ -733,6 +738,11 @@ summary(model)$coefficients
 ```
 
 Nevertheless, the raw speed increase in python could be the basis for a very fast python counterpart to the TDApplied package in the future.
+
+```{r,echo = F}
+# reset graphic parameters
+par(mfrow = original_mfrow,xpd = original_xpd,mar = original_mar)
+```
 
 # Limitations of TDApplied
 

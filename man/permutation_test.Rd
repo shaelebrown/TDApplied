@@ -10,7 +10,7 @@ permutation_test(
   p = 2,
   q = 2,
   dims = c(0, 1),
-  paired = F,
+  paired = FALSE,
   distance = "wasserstein",
   sigma = NULL,
   num_workers = parallelly::availableCores(omit = 1),

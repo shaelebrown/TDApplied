@@ -8,7 +8,7 @@ Author: Shael Brown [aut, cre],
         Dr. Reza Farivar [aut, fnd]
 Maintainer: Shael Brown <shaelebrown@gmail.com>
 Description: Topological data analysis is a powerful tool for finding non-linear global structure
-    in whole datasets. TDApplied aims to bridge topological data analysis with data, statistical
+    in whole datasets. 'TDApplied' aims to bridge topological data analysis with data, statistical
     and machine learning practitioners so that more analyses may benefit from the
     power of topological data analysis. The main tool of topological data analysis is
     persistent homology, which computes a shape descriptor of a dataset, called

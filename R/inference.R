@@ -64,7 +64,7 @@
 #'                               num_workers = 2,
 #'                               dims = c(0))
 
-permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paired = F,distance = "wasserstein",sigma = NULL,num_workers = parallelly::availableCores(omit = 1),verbose = FALSE){
+permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paired = FALSE,distance = "wasserstein",sigma = NULL,num_workers = parallelly::availableCores(omit = 1),verbose = FALSE){
 
   # function to test whether or not multiple groups of persistence diagrams come from the same geometric process
   # ... are the groups of diagrams, either stored as lists or vectors
