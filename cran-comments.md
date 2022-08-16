@@ -13,6 +13,7 @@
 ## Notes
 
 * This is a fifth submission for this package (the first three were rejected). The first submission contained two failed tests, and this has been fixed. The second submission had one bad url, which has been fixed. The third submission needed single quotes around 'TDApplied' in the description file, default values of TRUE and FALSE rather than T and F in functions, and resetting graphical parameters at the end of the package vignette. The fourth submission passed, however a test failed in two Mac releases because eigenvectors were negative of the ones calculated on my local Mac, so the issue was not with the code but rather with the test structure and this has been fixed.
+* The version is now 0.1.1 to reflect the test bug fix.
 * A previous version of this package was submitted under the name "TDAML", however that submission should be ignored.
 * The words "TDApplied" and "scalable", in the DESCRIPTION file are all spelled correctly. 
 * There are other domain-specific words and author names in ML_and_Inference.Rmd which were flagged by devtools::check_spelling() but to the author's knowledge they are all spelled correctly (this did not result in a Note, however).
