@@ -25,7 +25,16 @@ test_that("diagram_mds is computing correctly",{
   ev <- eigen(S)
   embedding <- -1*t(diag(sqrt(ev$values[1:2])) %*% t(ev$vectors[,1:2]))
   dimnames(embedding) <- list(NULL,NULL)
-  expect_equal(diagram_mds(diagrams = list(D1,D2,D3),num_workers = 2),embedding)
+  dmds <- diagram_mds(diagrams = list(D1,D2,D3),num_workers = 2)
+  if(embedding[1,1] < 0)
+  {
+    embedding <- embedding/-1
+  }
+  if(dmds[1,1] < 0)
+  {
+    dmds <- dmds/-1
+  }
+  expect_equal(dmds,embedding)
   
 })
 
