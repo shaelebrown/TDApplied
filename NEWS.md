@@ -4,6 +4,10 @@
 [Pull Request](https://github.com/shaelebrown/TDApplied/pulls) number.
 Please see those for more details.
 
+# 0.1.2
+
+- fixed bug with mds test
+
 # 0.1.1
 
 - Fixed bug with one diagram_mds test, although code was working properly
