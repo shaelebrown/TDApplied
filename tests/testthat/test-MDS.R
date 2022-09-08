@@ -28,11 +28,19 @@ test_that("diagram_mds is computing correctly",{
   dmds <- diagram_mds(diagrams = list(D1,D2,D3),num_workers = 2)
   if(embedding[1,1] < 0)
   {
-    embedding <- embedding/-1
+    embedding[,1] <- embedding[,1]/-1
   }
   if(dmds[1,1] < 0)
   {
-    dmds <- dmds/-1
+    dmds[,1] <- dmds[,1]/-1
+  }
+  if(embedding[1,2] < 0)
+  {
+    embedding[,2] <- embedding[,2]/-1
+  }
+  if(dmds[1,2] < 0)
+  {
+    dmds[,2] <- dmds[,2]/-1
   }
   expect_equal(dmds,embedding)
   
