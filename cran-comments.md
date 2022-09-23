@@ -12,12 +12,8 @@
 
 ## Notes
 
-* This is a seventh submission for this package (the first six were rejected). The first submission contained two failed tests, and this has been fixed. The second submission had one bad url, which has been fixed. The third submission needed single quotes around 'TDApplied' in the description file, default values of TRUE and FALSE rather than T and F in functions, and resetting graphical parameters at the end of the package vignette. The fourth submission passed, however a test failed in two Mac releases because eigenvectors were negative of the ones calculated on my local Mac, so the issue was not with the code but rather with the test structure and this has been fixed. The remaining submissions have been due to issues with a note caused by "number of days since last submission: X", which should now be fixed (and occasionally a found detritus).
-* The version is now 0.1.1 to reflect the test bug fix.
+* This is an eighth submission of this package, after a brief removal from CRAN (the authors were on vacation and unable to fix a bug quickly enough). The issue was that a Detritus was found due to improper clean up from parallelization, but this has been fixed. The version is now 0.1.2 to reflect this fix.
 * A previous version of this package was submitted under the name "TDAML", however that submission should be ignored.
-* The words "TDApplied" and "scalable", in the DESCRIPTION file are all spelled correctly. 
-* There are other domain-specific words and author names in ML_and_Inference.Rmd which were flagged by devtools::check_spelling() but to the author's knowledge they are all spelled correctly (this did not result in a Note, however).
+* There are domain-specific words and author names in ML_and_Inference.Rmd which were flagged by devtools::check_spelling() but to the author's knowledge they are all spelled correctly (this did not result in a Note, however).
 * On the various platforms there are up to eleven functions with examples taking longer than 5s in elapsed time. These examples were made to be as small as possible while not throwing an error and not being unrealistic. The functions in this long examples are often intended to be run with more cores than two, however two cores were used to avoid causing issues on the server.
-* Occasionally a Note is found like "checking for detritus in the temp directory ... NOTE
-  Found the following files/directories:..." however there doesn't seem to be a clear fix for this.
 * There is a PREPERROR when checking on rhub Ubuntu Linux, however the log files say the build was successful.

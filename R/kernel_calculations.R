@@ -67,7 +67,7 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
 #' @importFrom foreach foreach %dopar%
 #' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
 #' @importFrom parallelly availableCores
-#' @importFrom doParallel registerDoParallel
+#' @importFrom doParallel registerDoParallel stopImplicitCluster
 #' @importFrom iterators iter
 #' @examples
 #'
@@ -150,6 +150,7 @@ gram_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,sigma = 1,t = 1,n
     
   }
   
+  doParallel::stopImplicitCluster()
   parallel::stopCluster(cl)
   
   # update class for interfacing with kernlab package

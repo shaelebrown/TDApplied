@@ -219,7 +219,7 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
 #' @importFrom foreach foreach %dopar%
 #' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
 #' @importFrom parallelly availableCores
-#' @importFrom doParallel registerDoParallel
+#' @importFrom doParallel registerDoParallel stopImplicitCluster
 #' @importFrom iterators iter
 #' @examples
 #'
@@ -313,7 +313,7 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
     }
   }
   
-  
+  doParallel::stopImplicitCluster()
   parallel::stopCluster(cl)
   
   return(d)
@@ -345,7 +345,7 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
 #' @param num_workers the number of cores used for parallel computation.
 #'
 #' @importFrom parallel makeCluster clusterEvalQ clusterExport stopCluster
-#' @importFrom doParallel registerDoParallel
+#' @importFrom doParallel registerDoParallel stopImplicitCluster
 #' @importFrom foreach foreach %dopar%
 #' @importFrom utils combn
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
@@ -441,6 +441,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,num_workers){
   }
 
   # cleanup
+  doParallel::stopImplicitCluster()
   parallel::stopCluster(cl)
 
   # return the test statistics and distance matrices in all dimensions

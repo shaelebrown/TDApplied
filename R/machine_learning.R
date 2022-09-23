@@ -41,9 +41,6 @@
 #' }
 #' 
 #' @importFrom stats cmdscale
-#' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
-#' @importFrom parallelly availableCores
-#' @importFrom doParallel registerDoParallel
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @references 
@@ -369,10 +366,6 @@ diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_worke
 #' @return the data projection (rotation), stored as a numeric matrix. Each row corresponds to the same-index diagram in `new_diagrams`.
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
-#' @importFrom foreach foreach %dopar% %do%
-#' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
-#' @importFrom parallelly availableCores
-#' @importFrom doParallel registerDoParallel
 #' @importFrom methods is
 #' @seealso \code{\link{diagram_kpca}} for embedding persistence diagrams into a low-dimensional space.
 #' @examples
@@ -491,7 +484,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
 #' @importFrom foreach foreach %dopar%
 #' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
 #' @importFrom parallelly availableCores
-#' @importFrom doParallel registerDoParallel
+#' @importFrom doParallel registerDoParallel stopImplicitCluster
 #' @importFrom iterators iter
 #' @references 
 #' Murphy, K. "Machine learning: a probabilistic perspective." MIT press (2012).
@@ -706,6 +699,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
       })
   }
 
+  doParallel::stopImplicitCluster()
   parallel::stopCluster(cl)
   
   # get best parameters
@@ -756,10 +750,6 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @seealso \code{\link{diagram_ksvm}} for training a SVM model on a training set of persistence diagrams.
-#' @importFrom foreach foreach %dopar% %do%
-#' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
-#' @importFrom parallelly availableCores
-#' @importFrom doParallel registerDoParallel
 #' @importFrom kernlab predict as.kernelMatrix
 #' @importFrom methods is
 #' @examples

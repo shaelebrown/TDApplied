@@ -14,7 +14,7 @@
 #' @docType package
 #' @name TDApplied
 #' @importFrom clue solve_LSAP
-#' @importFrom doParallel registerDoParallel
+#' @importFrom doParallel registerDoParallel stopImplicitCluster
 #' @importFrom foreach foreach %dopar% %do%
 #' @importFrom iterators iter
 #' @importFrom kernlab as.kernelMatrix kkmeans kpca ksvm predict

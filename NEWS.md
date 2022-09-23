@@ -6,7 +6,7 @@ Please see those for more details.
 
 # 0.1.2
 
-- fixed bug with mds test
+- fixed bug with mds test and properly cleaned up parallelization clusters
 
 # 0.1.1
 
