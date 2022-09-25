@@ -29,32 +29,32 @@ check_diagram <- function(d,ret){
     stop("Every diagram must have three columns.")
   }
 
-  if(!methods::is(d[,1],"numeric") | !methods::is(d[,2],"numeric") | !methods::is(d[,3],"numeric"))
+  if(!methods::is(d[,1L],"numeric") | !methods::is(d[,2L],"numeric") | !methods::is(d[,3L],"numeric"))
   {
     stop("Diagrams must have numeric columns.")
   }
 
-  if(!all.equal(d[,1],as.integer(d[,1])))
+  if(length(which(d[,1L] != round(d[,1L]))) > 0)
   {
     stop("Homology dimensions must be whole numbers.")
   }
 
-  if(length(which(d[,1] < 0)) > 0)
+  if(length(which(d[,1L] < 0)) > 0)
   {
     stop("Homology dimensions must be >= 0.")
   }
 
-  if(length(which(d[,2] < 0)) > 0 | length(which(d[,3] < 0)) > 0)
+  if(length(which(d[,2L] < 0)) > 0 | length(which(d[,3L] < 0)) > 0)
   {
     stop("Birth and death radii must be >= 0.")
   }
 
-  if(length(which(stats::complete.cases(d))) != nrow(d))
+  if(length(which(stats::complete.cases(d) == T)) != nrow(d))
   {
     stop("Diagrams can't have missing values.")
   }
   
-  if(length(which(d[,3] < d[,2])) > 0)
+  if(length(which(d[,3L] < d[,2L])) > 0)
   {
     stop("Death values must always be at least as large as birth values.")
   }
@@ -88,6 +88,7 @@ all_diagrams <- function(diagram_groups,inference){
     for(diag in 1:length(diagram_groups[[g]]))
     {
       # check to make sure each diagram is actually the output of some TDA/TDAstats computation or a data frame
+      check_diagram(diagram_groups[[g]][[diag]],ret = F) # will stop here if there is an error
       diagram_groups[[g]][[diag]] <- check_diagram(diagram_groups[[g]][[diag]],ret = T)
       # if of the right form, format into a data frame and store diagram index for difference inference
       if(inference == "difference")
@@ -103,7 +104,9 @@ all_diagrams <- function(diagram_groups,inference){
   
 }
 
-check_param <- function(param_name,param,numeric = T,multiple = F,whole_numbers = F,finite = T,at_least_one = F,positive = F,non_negative = T,min_length = 1){
+check_param <- function(param_name,param,...){
+  
+  extra_params <- list(...)
   
   # check if a single parameter satisfies certain constraints
   if(!is.list(param) & (!is.vector(param) | length(param) == 1))
@@ -120,16 +123,18 @@ check_param <- function(param_name,param,numeric = T,multiple = F,whole_numbers 
   
   if(param_name == "diagrams" | param_name == "other_diagrams" | param_name == "diagram_groups" | param_name == "new_diagrams")
   {
-    if(!is.list(param) | length(param) < min_length)
+    if(!is.list(param) | length(param) < extra_params$min_length)
     {
-      stop(paste0(param_name," must be a list of persistence diagrams of length at least ",min_length,"."))
+      stop(paste0(param_name," must be a list of persistence diagrams of length at least ",extra_params$min_length,"."))
     }
-    return()
   }
   
-  if(multiple == F & length(param) > 1)
+  if("multiple" %in% names(extra_params))
   {
-    stop(paste0(param_name," must be a single value."))
+    if(extra_params$multiple == F & length(param) > 1)
+    {
+      stop(paste0(param_name," must be a single value."))
+    }
   }
   
   if(param_name == "distance")
@@ -138,48 +143,64 @@ check_param <- function(param_name,param,numeric = T,multiple = F,whole_numbers 
     {
       stop("distance must either be \'wasserstein\' or \'fisher\'.")
     }
-    return()
   }
   
-  if(numeric == T)
+  if("numeric" %in% names(extra_params))
   {
-    if(is.numeric(param) == F)
+    if(extra_params$numeric == T)
     {
-      stop(paste0(param_name," must be numeric."))
-    }
-  }else
-  {
-    if(is.logical(param) == F)
+      if(is.numeric(param) == F)
+      {
+        stop(paste0(param_name," must be numeric."))
+      }
+    }else
     {
-      stop(paste0(param_name," must be T or F."))
+      if(is.logical(param) == F)
+      {
+        stop(paste0(param_name," must be T or F."))
+      }
+      
     }
-    
-    return()
   }
   
-  if(numeric == T & whole_numbers == T & length(which(floor(param) != param)) > 0)
+  if("numeric" %in% names(extra_params) & "whole_numbers" %in% names(extra_params))
   {
-    stop(paste0(param_name," must be whole numbers."))
+    if(extra_params$numeric == T & extra_params$whole_numbers == T & length(which(floor(param) != param)) > 0)
+    {
+      stop(paste0(param_name," must be whole numbers."))
+    }
   }
   
-  if(finite == T & length(which(!is.finite(param))) > 0)
+  if("finite" %in% names(extra_params))
   {
-    stop(paste0(param_name," must be finite."))
+    if(extra_params$finite == T & length(which(!is.finite(param))) > 0)
+    {
+      stop(paste0(param_name," must be finite."))
+    }
   }
   
-  if(non_negative == T & length(which(param < 0)) > 0)
+  if("non_negative" %in% names(extra_params))
   {
-    stop(paste0(param_name," must be non-negative"))
+    if(extra_params$non_negative == T & length(which(param < 0)) > 0)
+    {
+      stop(paste0(param_name," must be non-negative"))
+    }
   }
   
-  if(positive == T & length(which(param <= 0)) > 0)
+  if("positive" %in% names(extra_params))
   {
-    stop(paste0(param_name," must be positive."))
+    if(extra_params$positive == T & length(which(param <= 0)) > 0)
+    {
+      stop(paste0(param_name," must be positive."))
+    }
   }
   
-  if(at_least_one == T & length(which(param < 1)) > 0)
+  if("at_least_one" %in% names(extra_params))
   {
-    stop(paste0(param_name," must be at least one."))
+    if(extra_params$at_least_one == T & length(which(param < 1)) > 0)
+    {
+      stop(paste0(param_name," must be at least one."))
+    }
   }
   
 }

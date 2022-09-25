@@ -3,7 +3,7 @@ test_that("diagram_kkmeans detects incorrect parameters correctly",{
   
   D <- data.frame(dimension = c(0),birth = c(0),death = c(1))
   expect_error(diagram_kkmeans(diagrams = list(D,D,D[0,]),centers = 2,num_workers = 2),"empty")
-  expect_error(diagram_kkmeans(diagrams = list(),centers = 2,num_workers = 2),"1")
+  expect_error(diagram_kkmeans(diagrams = list(),centers = 2,num_workers = 2),"2")
   expect_error(diagram_kkmeans(diagrams = list(D,D,D),centers = 1,t = NaN,num_workers = 2),"t")
   expect_error(diagram_kkmeans(diagrams = list(D,D,D),centers = 1,sigma = NA,num_workers = 2),"sigma")
   expect_error(diagram_kkmeans(diagrams = list(D,D,D),dim = c(1,2),centers = 1,num_workers = 2),"single value")

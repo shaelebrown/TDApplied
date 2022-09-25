@@ -95,20 +95,21 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
   })
 
   # check each diagram, converting each to a data frame and storing their indices in all the diagrams
+  all_diagrams(diagram_groups,inference = "difference")
   diagram_groups <- all_diagrams(diagram_groups,inference = "difference")
 
   # error check function parameters
-  check_param("iterations",iterations,whole_numbers = T,at_least_one = T)
-  check_param("p",p,finite = F,at_least_one = T)
-  check_param("q",q,at_least_one = T)
-  check_param("dims",dims,multiple = T,whole_numbers = T,non_negative = T,positive = F)
-  check_param("paired",paired,numeric = F)
+  check_param("iterations",iterations,whole_numbers = T,at_least_one = T,numeric = T,finite = T)
+  check_param("p",p,finite = F,at_least_one = T,numeric = T,multiple = F)
+  check_param("q",q,at_least_one = T,numeric = T,multiple = F)
+  check_param("dims",dims,multiple = T,whole_numbers = T,non_negative = T,positive = F,numeric = T,finite = T)
+  check_param("paired",paired,numeric = F,multiple = F)
   check_param("distance",distance)
   if(distance == "fisher")
   {
-    check_param("sigma",sigma,non_negative = T,positive = F)
+    check_param("sigma",sigma,non_negative = T,positive = F,numeric = T,finite = T,multiple = F)
   }
-  check_param("num_workers",num_workers,whole_numbers = T,at_least_one = T)
+  check_param("num_workers",num_workers,whole_numbers = T,at_least_one = T,numeric = T,multiple = F)
   if(num_workers > parallelly::availableCores())
   {
     warning("num_workers is greater than the number of available cores - setting to maximum value.")
@@ -304,12 +305,13 @@ independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,num_workers = 
   check_param("diagram_groups",diagram_groups,min_length = 2)
   
   # check each diagram, converting each to a data frame
+  all_diagrams(diagram_groups,inference = "independence")
   diagram_groups <- all_diagrams(diagram_groups,inference = "independence")
   
   # error check function parameters
-  check_param("dims",dims,multiple = T,whole_numbers = T,non_negative = T,positive = F)
-  check_param("sigma",sigma,non_negative = F,positive = T)
-  check_param("t",t,non_negative = F,positive = T)
+  check_param("dims",dims,multiple = T,whole_numbers = T,non_negative = T,positive = F,numeric = T,finite = T)
+  check_param("sigma",sigma,non_negative = F,positive = T,multiple = F,finite = T,numeric = T)
+  check_param("t",t,non_negative = F,positive = T,numeric = T,multiple = F,finite = T)
   
   # make sure that the two groups have the same number of diagrams
   if(length(g1) != length(g2))

@@ -87,8 +87,8 @@ Cross validation is carried out in parallel, using a trick
 noted in \doi{10.1007/s41468-017-0008-7} - since the persistence Fisher kernel can be
 written as \eqn{d_{PF}(D_1,D_2)=exp(t*d_{FIM}(D_1,D_2))=exp(d_{FIM}(D_1,D_2))^t}, we can
 store the Fisher information metric distance matrix for each sigma value in the parameter grid to avoid
-recomputing distances. Parallelization occurs either over CV folds or over the parameter combinations,
-whichever has more elements. Note that the response parameter `y` must be a factor for classification - 
+recomputing distances, and cross validation is therefore performed in parallel. 
+Note that the response parameter `y` must be a factor for classification - 
 a character vector for instance will throw an error.
 }
 \examples{

@@ -57,16 +57,18 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
   # sigma is the positive bandwidth for the Fisher information metric, default NULL
 
   # for standalone usage force D1 and D2 to be data frames if they are the output of a homology calculation
+  check_diagram(D1,ret = F)
+  check_diagram(D2,ret = F)
   D1 <- check_diagram(D1,ret = T)
   D2 <- check_diagram(D2,ret = T)
   
   # error check other parameters
-  check_param("dim",dim,whole_numbers = T,positive = F)
+  check_param("dim",dim,whole_numbers = T,positive = F,numeric = T,multiple = F,finite = T,non_negative = T)
   check_param("distance",distance)
-  check_param("p",p,at_least_one = T,finite = F,non_negative = F)
+  check_param("p",p,at_least_one = T,finite = F,non_negative = F,numeric = T,multiple = F)
   if(distance == "fisher")
   {
-    check_param("sigma",sigma,positive = T,non_negative = F)
+    check_param("sigma",sigma,positive = T,non_negative = F,numeric = T,finite = T,multiple = F)
   }
   
   # subset both diagrams by dimension dim and for birth and death columns
@@ -216,7 +218,7 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
 #' @return the numeric distance matrix.
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
-#' @importFrom foreach foreach %dopar%
+#' @importFrom foreach foreach %dopar% %:%
 #' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
 #' @importFrom parallelly availableCores
 #' @importFrom doParallel registerDoParallel stopImplicitCluster
@@ -246,71 +248,49 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
   X <- NULL
   
   # error check diagrams argument
-  check_param("diagrams",diagrams,numeric = F,multiple = T)
+  check_param("diagrams",diagrams,min_length = 1)
   diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
   if(!is.null(other_diagrams))
   {
-    check_param("other_diagrams",other_diagrams,numeric = F,multiple = T)
+    check_param("other_diagrams",other_diagrams,min_length = 1)
     other_diagrams <- all_diagrams(diagram_groups = list(other_diagrams),inference = "independence")[[1]]
   }
   
   # check other parameters
-  check_param("p",p,finite = F,at_least_one = T)
-  check_param("dim",dim,whole_numbers = T,non_negative = T,positive = F)
+  check_param("p",p,finite = F,at_least_one = T,numeric = T,multiple = F)
+  check_param("dim",dim,whole_numbers = T,non_negative = T,positive = F,numeric = T,multiple = F)
   check_param("distance",distance)
   if(distance == "fisher")
   {
-    check_param("sigma",sigma,positive = T)
+    check_param("sigma",sigma,positive = T,numeric = T,finite = T,multiple = F)
   }
   
   # error check num_workers argument
-  check_param("num_workers",num_workers,whole_numbers = T,at_least_one = T)
+  check_param("num_workers",num_workers,whole_numbers = T,at_least_one = T,finite = T,numeric = T,multiple = F)
   if(num_workers > parallelly::availableCores())
   {
-    warning("num_workers is greater than the number of available cores - setting to maximum value.")
-    num_workers <- parallelly::availableCores()
+    warning("num_workers is greater than the number of available cores - setting to maximum value less one.")
+    num_workers <- parallelly::availableCores(omit = 1)
   }
 
   # compute distance matrix in parallel
   m = length(diagrams)
   cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
-  parallel::clusterEvalQ(cl,c(library(clue),library(rdist)))
-  parallel::clusterExport(cl,c("diagram_distance","check_diagram","check_param"),envir = environment())
+  parallel::clusterEvalQ(cl,c(library("clue"),library("rdist")))
+  parallel::clusterExport(cl,varlist = c("diagram_distance","check_diagram","check_param"),envir = environment())
   force(diagrams) # required for parallel computation in this environment
   
   if(is.null(other_diagrams))
   {
     d <- matrix(data = 0,nrow = m,ncol = m)
-    d_off_diag <- foreach::`%dopar%`(obj = foreach::foreach(r = iterators::iter(which(upper.tri(d),arr.ind = T),by = 'row'),.combine = c),ex = {
-      
-      return(diagram_distance(D1 = diagrams[[r[[1]]]],D2 = diagrams[[r[[2]]]],dim = dim,p = p,distance = distance,sigma = sigma))
-      
-    })
+    d_off_diag <- foreach::`%dopar%`(obj = foreach::foreach(r = iterators::iter(which(upper.tri(d),arr.ind = T),by = 'row'),.combine = c),ex = {diagram_distance(D1 = diagrams[[r[[1]]]],D2 = diagrams[[r[[2]]]],dim = dim,p = p,distance = distance,sigma = sigma)})
     d[upper.tri(d)] <- d_off_diag
     d[which(upper.tri(d),arr.ind = T)[,c("col","row")]] <- d_off_diag
     diag(d) <- rep(0,m)
   }else
   {
-    if(length(other_diagrams) > length(diagrams))
-    {
-      d <- foreach::`%dopar%`(obj = foreach::foreach(r = 1:length(other_diagrams),.combine = cbind),ex = {
-        
-        return(unlist(lapply(X = 1:length(diagrams),FUN = function(X){return(diagram_distance(D1 = other_diagrams[[r]],D2 = diagrams[[X]],dim = dim,p = p,distance = distance,sigma = sigma))})))
-        
-      })
-    }else
-    {
-      d <- foreach::`%do%`(obj = foreach::foreach(r = 1:length(other_diagrams),.combine = cbind),ex = {
-        
-        return(foreach::`%dopar%`(obj = foreach::foreach(X = 1:length(diagrams),.combine = c),ex = {
-          
-          return(diagram_distance(D1 = other_diagrams[[r]],D2 = diagrams[[X]],dim = dim,p = p,distance = distance,sigma = sigma))
-          
-        }))
-        
-      })
-    }
+    d <- foreach::`%dopar%`(foreach::`%:%`(foreach::foreach(r = 1:length(other_diagrams),.combine = cbind),foreach::foreach(X = 1:length(diagrams),.combine = c)),ex = {diagram_distance(D1 = other_diagrams[[r]],D2 = diagrams[[X]],dim = dim,p = p,distance = distance,sigma = sigma)})
   }
   
   doParallel::stopImplicitCluster()
@@ -405,11 +385,13 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,num_workers){
       # if the distance between these two diagrams has not already been computed, compute their distance
       if(dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind] == -1)
       {
-        return(diagram_distance(D1 = diagram_groups[[g]][[d1]]$diag,D2 = diagram_groups[[g]][[d2]]$diag,p = p,dim = dim,distance = distance,sigma = sigma)^q)
+        res <- diagram_distance(D1 = diagram_groups[[g]][[d1]]$diag,D2 = diagram_groups[[g]][[d2]]$diag,p = p,dim = dim,distance = distance,sigma = sigma)^q
+      }else
+      {
+        # else return the already stored distance value
+        res <- dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind]
       }
-
-      # else return the already stored distance value
-      return(dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind])
+      res
 
     })
 

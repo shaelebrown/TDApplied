@@ -38,7 +38,7 @@
 diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
   
   # check kernel-specific parameter, other inputs are checked in distance calculation
-  check_param("t",t,non_negative = T,positive = F)
+  check_param("t",t,non_negative = T,positive = F,numeric = T,finite = T,multiple = F)
   
   # return kernel calculation
   return(exp(-1*t*diagram_distance(D1 = D1,D2 = D2,dim = dim,distance = "fisher",sigma = sigma)))
@@ -64,11 +64,6 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
 #' @return the numeric (cross) Gram matrix of class 'kernelMatrix'.
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
-#' @importFrom foreach foreach %dopar%
-#' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
-#' @importFrom parallelly availableCores
-#' @importFrom doParallel registerDoParallel stopImplicitCluster
-#' @importFrom iterators iter
 #' @examples
 #'
 #' # create two diagrams
@@ -87,71 +82,8 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
 
 gram_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,sigma = 1,t = 1,num_workers = parallelly::availableCores(omit = 1)){
   
-  # set internal variables to NULL to avoid build issues
-  r <- NULL
-  X <- NULL
-  
-  # error check diagrams and other_diagrams arguments
-  check_param("diagrams",diagrams,numeric = F,multiple = T)
-  diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
-  if(!is.null(other_diagrams))
-  {
-    check_param("other_diagrams",other_diagrams,numeric = F,multiple = T)
-  }
-  
-  # error check num_workers argument
-  check_param("num_workers",num_workers,whole_numbers = T,at_least_one = T)
-  if(num_workers > parallelly::availableCores())
-  {
-    warning("num_workers is greater than the number of available cores - setting to maximum value.")
-    num_workers <- parallelly::availableCores()
-  }
-  
-  # compute Gram matrix in parallel
-  m = length(diagrams)
-  cl <- parallel::makeCluster(num_workers)
-  doParallel::registerDoParallel(cl)
-  force(check_diagram)
-  parallel::clusterExport(cl,c("diagram_distance","diagram_kernel","check_diagram","check_param","diagram_to_df"),envir = environment())
-  force(diagrams) # required for parallel computation in this environment
-  
-  if(is.null(other_diagrams))
-  {
-    K <- matrix(data = 1,nrow = m,ncol = m)
-    k <- foreach::`%dopar%`(obj = foreach::foreach(r = iterators::iter(which(upper.tri(K),arr.ind = T),by = 'row'),.combine = c),ex = {
-      
-      return(diagram_kernel(D1 = diagrams[[r[[1]]]],D2 = diagrams[[r[[2]]]],dim = dim,sigma = sigma,t = t))
-      
-    })
-    K[upper.tri(K)] <- k
-    K[which(upper.tri(K),arr.ind = T)[,c("col","row")]] <- k
-    diag(K) <- rep(1,m)
-  }else
-  {
-    if(length(other_diagrams) > length(diagrams))
-    {
-      K <- foreach::`%dopar%`(obj = foreach::foreach(r = 1:length(other_diagrams),.combine = cbind),ex = {
-        
-        return(unlist(lapply(X = 1:length(diagrams),FUN = function(X){return(diagram_kernel(D1 = other_diagrams[[r]],D2 = diagrams[[X]],dim = dim,sigma = sigma,t = t))})))
-        
-      })
-    }else
-    {
-      K <- foreach::`%do%`(obj = foreach::foreach(r = 1:length(other_diagrams),.combine = cbind),ex = {
-        
-        return(foreach::`%dopar%`(obj = foreach::foreach(X = 1:length(diagrams),.combine = c),ex = {
-          
-          return(diagram_kernel(D1 = other_diagrams[[r]],D2 = diagrams[[X]],dim = dim,sigma = sigma,t = t))
-          
-        }))
-        
-      })
-    }
-    
-  }
-  
-  doParallel::stopImplicitCluster()
-  parallel::stopCluster(cl)
+  # compute gram matrix from distance matrix
+  K <- exp(-t*distance_matrix(diagrams = diagrams,other_diagrams = other_diagrams,dim = dim,distance = "fisher",sigma = sigma,num_workers = num_workers))
   
   # update class for interfacing with kernlab package
   class(K) <- "kernelMatrix"

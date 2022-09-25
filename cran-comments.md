@@ -16,4 +16,5 @@
 * A previous version of this package was submitted under the name "TDAML", however that submission should be ignored.
 * There are domain-specific words and author names in ML_and_Inference.Rmd which were flagged by devtools::check_spelling() but to the author's knowledge they are all spelled correctly (this did not result in a Note, however).
 * On the various platforms there are up to eleven functions with examples taking longer than 5s in elapsed time. These examples were made to be as small as possible while not throwing an error and not being unrealistic. The functions in this long examples are often intended to be run with more cores than two, however two cores were used to avoid causing issues on the server.
+* When checking on rhub windows there was a note about finding a detritus, called "lastMiKTeXException", however according to online posts this should not be an issue.
 * There is a PREPERROR when checking on rhub Ubuntu Linux, however the log files say the build was successful.

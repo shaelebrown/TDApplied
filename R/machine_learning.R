@@ -61,7 +61,7 @@
 diagram_mds <- function(diagrams,k = 2,distance = "wasserstein",dim = 0,p = 2,sigma = NULL,eig = FALSE,add = FALSE,x.ret = FALSE,list. = eig || add || x.ret,num_workers = parallelly::availableCores(omit = 1)){
   
   # error check diagrams argument
-  check_param("diagrams",diagrams,numeric = F,multiple = T)
+  check_param("diagrams",diagrams,min_length = 2)
   diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
 
   # compute distance matrix
@@ -84,7 +84,7 @@ diagram_mds <- function(diagrams,k = 2,distance = "wasserstein",dim = 0,p = 2,si
 #' to estimate cluster labels for new persistence diagrams in the `predict_diagram_kkmeans`
 #' function.
 #'
-#' @param diagrams a list of persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or the \code{\link{diagram_to_df}} function.
+#' @param diagrams a list of n>=2 persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or the \code{\link{diagram_to_df}} function.
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1
@@ -129,9 +129,9 @@ diagram_mds <- function(diagrams,k = 2,distance = "wasserstein",dim = 0,p = 2,si
 diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers = parallelly::availableCores(omit = 1),...){
   
   # error check arguments
-  check_param("diagrams",diagrams,numeric = F,multiple = T)
+  check_param("diagrams",diagrams,min_length = 2)
   diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
-  check_param("centers",centers,whole_numbers = T,at_least_one = T)
+  check_param("centers",centers,whole_numbers = T,at_least_one = T,numeric = T,finite = T,multiple = F)
   
   # make sure there aren't more centers than data point - this tends to lead to kernlab errors
   if(centers > length(diagrams))
@@ -230,7 +230,7 @@ predict_diagram_kkmeans <- function(new_diagrams,clustering,num_workers = parall
   X <- NULL
   
   # error check diagrams argument
-  check_param("new_diagrams",new_diagrams,numeric = F,multiple = T,min_length = 1)
+  check_param("new_diagrams",new_diagrams,min_length = 1)
   new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
   
   # error check clustering argument
@@ -322,7 +322,7 @@ predict_diagram_kkmeans <- function(new_diagrams,clustering,num_workers = parall
 diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_workers = parallelly::availableCores(omit = 1),th = 1e-4){
   
   # error check diagrams argument
-  check_param("diagrams",diagrams,numeric = F,multiple = T)
+  check_param("diagrams",diagrams,min_length = 2)
   diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
   
   # compute Gram matrix
@@ -405,7 +405,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
   X <- NULL
   
   # error check new_diagrams argument
-  check_param("new_diagrams",new_diagrams,numeric = F,multiple = T,min_length = 1)
+  check_param("new_diagrams",new_diagrams,min_length = 1)
   new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
   
   # error check embedding argument
@@ -438,8 +438,8 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
 #' noted in \doi{10.1007/s41468-017-0008-7} - since the persistence Fisher kernel can be
 #' written as \eqn{d_{PF}(D_1,D_2)=exp(t*d_{FIM}(D_1,D_2))=exp(d_{FIM}(D_1,D_2))^t}, we can
 #' store the Fisher information metric distance matrix for each sigma value in the parameter grid to avoid
-#' recomputing distances. Parallelization occurs either over CV folds or over the parameter combinations,
-#' whichever has more elements. Note that the response parameter `y` must be a factor for classification - 
+#' recomputing distances, and cross validation is therefore performed in parallel. 
+#' Note that the response parameter `y` must be a factor for classification - 
 #' a character vector for instance will throw an error.
 #'
 #' @param diagrams a list of persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.
@@ -481,7 +481,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @seealso \code{\link{predict_diagram_ksvm}} for predicting labels of new diagrams.
 #' @importFrom kernlab ksvm
-#' @importFrom foreach foreach %dopar%
+#' @importFrom foreach foreach %dopar% %:%
 #' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
 #' @importFrom parallelly availableCores
 #' @importFrom doParallel registerDoParallel stopImplicitCluster
@@ -517,11 +517,11 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
   X <- NULL
   
   # error check diagrams argument
-  check_param("diagrams",diagrams,numeric = F,multiple = T)
+  check_param("diagrams",diagrams,min_length = 2)
   diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
   
   # error check cv parameters
-  check_param("cv",cv,whole_numbers = T)
+  check_param("cv",cv,whole_numbers = T,finite = T,numeric = T,multiple = F)
   if(cv < 1 | cv > length(diagrams))
   {
     stop("cv must be at least one and at most the number of diagrams.")
@@ -579,8 +579,8 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
   # set up for parallel computation
   cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
-  parallel::clusterEvalQ(cl,c(library(clue),library(rdist)))
-  parallel::clusterExport(cl,c("y","predict_diagram_ksvm","all_diagrams","check_diagram","gram_matrix","diagram_distance","diagram_kernel","check_param","diagram_to_df","%do%","%dopar%"),envir = environment())
+  parallel::clusterEvalQ(cl,c(library(clue),library(rdist),library(foreach),library(iterators)))
+  parallel::clusterExport(cl,c("y","predict_diagram_ksvm","all_diagrams","check_diagram","gram_matrix","diagram_distance","diagram_kernel","check_param","diagram_to_df"),envir = environment())
   force(diagrams)
   force(distance_matrices)
   force(diagrams_split)
@@ -594,117 +594,59 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
   
   # for each model (combination of parameters), train the model on each subset and get the
   # prediction error on the hold out set
-  if(cv < nrow(params))
-  {
-    # parallelize over parameter combinations
-    model_errors <- foreach::`%dopar%`(obj = foreach::foreach(r = iterators::iter(params,by = "row"),.combine = c),ex = 
-      {
-        # use precomputed distance matrices to calculate Gram matrix from parameters
-        K <- exp(-1*r[[2]]*distance_matrices[[paste0(r[[1]],"_",r[[3]])]])
-        return(mean(foreach::`%do%`(obj = foreach::foreach(s = 1:cv,.combine = c),ex =
-                      {
-                        # foreach but not in parallel for cv folds
-                        if(cv > 1)
-                        {
-                          # split into training and test set based on cv parameter
-                          training_indices <- unlist(diagrams_split[setdiff(1:cv,s)])
-                          training_indices <- training_indices[order(training_indices)]
-                          test_indices <- setdiff(1:length(diagrams),training_indices)
-                          m <- length(test_indices)
-                          K_subset <- K[training_indices,training_indices]
-                          class(K_subset) <- "kernelMatrix"
-                          # suppress unhelpful kernlab warnings when fitting model
-                          tryCatch(expr = {model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)},
-                                   error = function(e){stop(e)},
-                                   warning = function(w){
-                                     
-                                     if(grepl(pattern = "closing unused connection",w) == F)
-                                     {
-                                       message(w)
-                                     }
-                                     
-                                   })
-                          
-                          return(model@error)
-                        }else
-                        {
-                          class(K) <- "kernelMatrix"
-                          # suppress unhelpful kernlab warnings when fitting model
-                          tryCatch(expr = {model <- kernlab::ksvm(x = K,y = y,type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)},
-                                   error = function(e){stop(e)},
-                                   warning = function(w){
-                                     
-                                     if(grepl(pattern = "closing unused connection",w) == F)
-                                     {
-                                       message(w)
-                                     }
-                                     
-                                   })
-                          return(model@error)
-                          
-                        }
-                        
-                      })))
-      })
-  }else
-  {
-    # parallelize over cv folds
-    model_errors <- foreach::`%do%`(obj = foreach::foreach(r = iterators::iter(params,by = "row"),.combine = c),ex =
-      {
-        # use precomputed distance matrices to calculate Gram matrix from parameters
-        K <- exp(-1*r[[2]]*distance_matrices[[paste0(r[[1]],"_",r[[3]])]])
-        return(mean(foreach::`%dopar%`(obj = foreach::foreach(s = 1:cv,.combine = c),ex = 
-                      {
-                        if(cv > 1)
-                        {
-                          # split into training and test set based on cv parameter
-                          training_indices <- unlist(diagrams_split[setdiff(1:cv,s)])
-                          training_indices <- training_indices[order(training_indices)]
-                          test_indices <- setdiff(1:length(diagrams),training_indices)
-                          m <- length(test_indices)
-                          K_subset <- K[training_indices,training_indices]
-                          class(K_subset) <- "kernelMatrix"
-                          # suppress unhelpful kernlab warnings when fitting model
-                          tryCatch(expr = {model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)},
-                                   error = function(e){stop(e)},
-                                   warning = function(w){
-                                     
-                                     if(grepl(pattern = "closing unused connection",w) == F)
-                                     {
-                                       message(w)
-                                     }
-                                     
-                                   })
-                          
-                          return(model@error)
-                        }else
-                        {
-                          class(K) <- "kernelMatrix"
-                          # suppress unhelpful kernlab warnings when fitting model
-                          tryCatch(expr = {model <- kernlab::ksvm(x = K,y = y,type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)},
-                                   error = function(e){stop(e)},
-                                   warning = function(w){
-                                     
-                                     if(grepl(pattern = "closing unused connection",w) == F)
-                                     {
-                                       message(w)
-                                     }
-                                     
-                                   })
-                          return(model@error)
-                          
-                        }
-                        
-                      })))
-      })
-  }
+  model_errors <- foreach::`%dopar%`(foreach::`%:%`(foreach::foreach(r = iter(params,by = "row"),.combine = c),foreach::foreach(s = 1:cv,.combine = mean)),ex = {
+    
+    # use precomputed distance matrices to calculate Gram matrix from parameters
+    K <- exp(-1*r[[2]]*distance_matrices[[paste0(r[[1]],"_",r[[3]])]])
+    
+    if(cv > 1)
+    {
+      # split into training and test set based on cv parameter
+      training_indices <- unlist(diagrams_split[setdiff(1:cv,s)])
+      training_indices <- training_indices[order(training_indices)]
+      test_indices <- setdiff(1:length(diagrams),training_indices)
+      m <- length(test_indices)
+      K_subset <- K[training_indices,training_indices]
+      class(K_subset) <- "kernelMatrix"
+      # suppress unhelpful kernlab warnings when fitting model
+      tryCatch(expr = {model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)},
+               error = function(e){stop(e)},
+               warning = function(w){
+                 
+                 if(grepl(pattern = "closing unused connection",w) == F)
+                 {
+                   message(w)
+                 }
+                 
+               })
+      
+    }else
+    {
+      class(K) <- "kernelMatrix"
+      # suppress unhelpful kernlab warnings when fitting model
+      tryCatch(expr = {model <- kernlab::ksvm(x = K,y = y,type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)},
+               error = function(e){stop(e)},
+               warning = function(w){
+                 
+                 if(grepl(pattern = "closing unused connection",w) == F)
+                 {
+                   message(w)
+                 }
+                 
+               })
+      
+    }
+    
+    model@error
+    
+  })
 
   doParallel::stopImplicitCluster()
   parallel::stopCluster(cl)
   
   # get best parameters
   params$error <- model_errors
-  best_params <- params[which.min(model_errors),1:(ncol(params) - 1)]
+  best_params <- params[which.min(model_errors),c("dim","t","sigma","C","nu","epsilon")]
   
   # fit full model using those parameters
   K <- exp(-1*best_params[[2]]*distance_matrices[[paste0(best_params[[1]],"_",best_params[[3]])]])
@@ -790,7 +732,7 @@ predict_diagram_ksvm <- function(new_diagrams,model,num_workers = parallelly::av
   X <- NULL
   
   # error check new_diagrams argument
-  check_param("new_diagrams",new_diagrams,numeric = F,multiple = T,min_length = 1)
+  check_param("new_diagrams",new_diagrams,min_length = 1)
   new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
   
   # error check model argument
