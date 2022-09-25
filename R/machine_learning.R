@@ -579,8 +579,8 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
   # set up for parallel computation
   cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
-  parallel::clusterEvalQ(cl,c(library(clue),library(rdist),library(foreach),library(iterators)))
-  parallel::clusterExport(cl,c("y","predict_diagram_ksvm","all_diagrams","check_diagram","gram_matrix","diagram_distance","diagram_kernel","check_param","diagram_to_df"),envir = environment())
+  parallel::clusterEvalQ(cl,c(library(clue),library(rdist),library(foreach),library(iterators),library(kernlab)))
+  parallel::clusterExport(cl,c("y","predict_diagram_ksvm","all_diagrams","check_diagram","gram_matrix","diagram_distance","diagram_kernel","check_param","diagram_to_df","cv","distance_matrices","diagrams_split","prob.model","class.weights","fit","cache","tol","shrinking"),envir = environment())
   force(diagrams)
   force(distance_matrices)
   force(diagrams_split)
