@@ -594,7 +594,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
   
   # for each model (combination of parameters), train the model on each subset and get the
   # prediction error on the hold out set
-  model_errors <- foreach::`%dopar%`(foreach::`%:%`(foreach::foreach(r = iter(params,by = "row"),.combine = c),foreach::foreach(s = 1:cv,.combine = mean)),ex = {
+  model_errors <- foreach::`%dopar%`(foreach::`%:%`(foreach::foreach(r = iter(params,by = "row"),.combine = c),foreach::foreach(s = 1:cv,.combine = "+")),ex = {
     
     # use precomputed distance matrices to calculate Gram matrix from parameters
     K <- exp(-1*r[[2]]*distance_matrices[[paste0(r[[1]],"_",r[[3]])]])
@@ -639,7 +639,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
     
     model@error
     
-  })
+  })/cv
 
   doParallel::stopImplicitCluster()
   parallel::stopCluster(cl)
