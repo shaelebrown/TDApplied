@@ -13,7 +13,6 @@
 ## NOTES
 
 * a note about how this package used to be on CRAN but was removed due to not fixing problems in time is always there
-* when using rhub to check for cran, a note is given that says a detritus was found in the temp directory, but then nothing is listed 
 * a 'lastMiKTeXException' was found when looking for a detritus on windows when checking on rhub, but I've read that this shouldn't be an issue (and no other detritus was found in other checks)
 * some of the examples run for over 5s, however these examples have been made as small and fast as possible without throwing errors
 * on Ubuntu there was a PREP error, however in the log there were only notes (like the ones above) and the build was successful
