@@ -278,23 +278,32 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
   cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
   parallel::clusterEvalQ(cl,c(library("clue"),library("rdist")))
-  parallel::clusterExport(cl,varlist = c("diagram_distance","check_diagram","check_param","dim","p","distance","sigma"),envir = environment())
-  force(diagrams) # required for parallel computation in this environment
+  parallel::clusterExport(cl,varlist = c("diagram_distance","check_diagram","check_param","dim","p","distance","sigma","diagrams"),envir = environment())
   
-  if(is.null(other_diagrams))
-  {
-    d <- matrix(data = 0,nrow = m,ncol = m)
-    d_off_diag <- foreach::`%dopar%`(obj = foreach::foreach(r = iterators::iter(which(upper.tri(d),arr.ind = T),by = 'row'),.combine = c),ex = {diagram_distance(D1 = diagrams[[r[[1]]]],D2 = diagrams[[r[[2]]]],dim = dim,p = p,distance = distance,sigma = sigma)})
-    d[upper.tri(d)] <- d_off_diag
-    d[which(upper.tri(d),arr.ind = T)[,c("col","row")]] <- d_off_diag
-    diag(d) <- rep(0,m)
-  }else
-  {
-    d <- foreach::`%dopar%`(foreach::`%:%`(foreach::foreach(r = 1:length(other_diagrams),.combine = cbind),foreach::foreach(X = 1:length(diagrams),.combine = c)),ex = {diagram_distance(D1 = other_diagrams[[r]],D2 = diagrams[[X]],dim = dim,p = p,distance = distance,sigma = sigma)})
-  }
-  
-  doParallel::stopImplicitCluster()
-  parallel::stopCluster(cl)
+  # catch errors during parallel calculations to make sure
+  # clusters are closed
+  tryCatch(expr = {
+    
+    if(is.null(other_diagrams))
+    {
+      d <- matrix(data = 0,nrow = m,ncol = m)
+      d_off_diag <- foreach::`%dopar%`(obj = foreach::foreach(r = iterators::iter(which(upper.tri(d),arr.ind = T),by = 'row'),.combine = c),ex = {diagram_distance(D1 = diagrams[[r[[1]]]],D2 = diagrams[[r[[2]]]],dim = dim,p = p,distance = distance,sigma = sigma)})
+      d[upper.tri(d)] <- d_off_diag
+      d[which(upper.tri(d),arr.ind = T)[,c("col","row")]] <- d_off_diag
+      diag(d) <- rep(0,m)
+    }else
+    {
+      d <- foreach::`%dopar%`(foreach::`%:%`(foreach::foreach(r = 1:length(other_diagrams),.combine = cbind),foreach::foreach(X = 1:length(diagrams),.combine = c)),ex = {diagram_distance(D1 = other_diagrams[[r]],D2 = diagrams[[X]],dim = dim,p = p,distance = distance,sigma = sigma)})
+    }
+    
+  }, warning = function(w){warning(w)},
+  error = function(e){stop(e)},
+  finally = {
+    
+    doParallel::stopImplicitCluster()
+    parallel::stopCluster(cl)
+    
+  })
   
   return(d)
   
@@ -363,68 +372,77 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,num_workers){
   parallel::clusterEvalQ(cl,c(library(clue),library(rdist)))
   parallel::clusterExport(cl,c("check_diagram","diagram_distance","diagram_groups","dist_mats","dims","combinations","p","check_param"),envir = environment())
 
-  # initialize return vector of statistics, one for each dimension
-  statistics <- c()
-
-  # compute loss function and update distance matrices in each dimension dim
-  for(dim in dims)
-  {
-
-    parallel::clusterExport(cl,"dim")
-
-    d_tots <- foreach::`%dopar%`(obj = foreach::foreach(comb = 1:nrow(combinations),.combine = c),ex = {
-
-      # get group and diagram indices from combinations
-      g <- as.numeric(combinations[comb,1])
-      d1 <- as.numeric(combinations[comb,2])
-      d2 <- as.numeric(combinations[comb,3])
-
-      # get index of dim in dims
-      dim_ind <- min(which(dims == dim))
-
-      # if the distance between these two diagrams has not already been computed, compute their distance
-      if(dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind] == -1)
-      {
-        res <- diagram_distance(D1 = diagram_groups[[g]][[d1]]$diag,D2 = diagram_groups[[g]][[d2]]$diag,p = p,dim = dim,distance = distance,sigma = sigma)^q
-      }else
-      {
-        # else return the already stored distance value
-        res <- dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind]
-      }
-      res
-
-    })
-
-    # update the upper triangle of dist_mat to account for new distances just calculated
-    for(comb in 1:nrow(combinations))
+  tryCatch(expr = {
+    
+    # initialize return vector of statistics, one for each dimension
+    statistics <- c()
+    
+    # compute loss function and update distance matrices in each dimension dim
+    for(dim in dims)
     {
-      # get group and diagram indices
-      g <- as.numeric(combinations[comb,1])
-      d1 <- as.numeric(combinations[comb,2])
-      d2 <- as.numeric(combinations[comb,3])
-
-      # get index of dim in dims
-      dim_ind <- min(which(dims == dim))
-
-      # update the correct entry of the current dimension distance matrix with the newly calculated distances
-      dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind] = d_tots[[comb]]
-
+      
+      parallel::clusterExport(cl,"dim")
+      
+      d_tots <- foreach::`%dopar%`(obj = foreach::foreach(comb = 1:nrow(combinations),.combine = c),ex = {
+        
+        # get group and diagram indices from combinations
+        g <- as.numeric(combinations[comb,1])
+        d1 <- as.numeric(combinations[comb,2])
+        d2 <- as.numeric(combinations[comb,3])
+        
+        # get index of dim in dims
+        dim_ind <- min(which(dims == dim))
+        
+        # if the distance between these two diagrams has not already been computed, compute their distance
+        if(dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind] == -1)
+        {
+          res <- diagram_distance(D1 = diagram_groups[[g]][[d1]]$diag,D2 = diagram_groups[[g]][[d2]]$diag,p = p,dim = dim,distance = distance,sigma = sigma)^q
+        }else
+        {
+          # else return the already stored distance value
+          res <- dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind]
+        }
+        res
+        
+      })
+      
+      # update the upper triangle of dist_mat to account for new distances just calculated
+      for(comb in 1:nrow(combinations))
+      {
+        # get group and diagram indices
+        g <- as.numeric(combinations[comb,1])
+        d1 <- as.numeric(combinations[comb,2])
+        d2 <- as.numeric(combinations[comb,3])
+        
+        # get index of dim in dims
+        dim_ind <- min(which(dims == dim))
+        
+        # update the correct entry of the current dimension distance matrix with the newly calculated distances
+        dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind] = d_tots[[comb]]
+        
+      }
+      
+      # append calculated loss statistic to statistics vector
+      statistics <- c(statistics,sum(unlist(lapply(X = 1:length(diagram_groups),FUN = function(X){
+        
+        # loss statistic is the sum of all within group distances of unique diagram pairs, normalized
+        # by the number of those pairs in the group
+        return(sum(d_tots[which(combinations$group == X)])/(length(diagram_groups[[X]])*(length(diagram_groups[[X]]) - 1)))
+        
+      }))))
+      
     }
-
-    # append calculated loss statistic to statistics vector
-    statistics <- c(statistics,sum(unlist(lapply(X = 1:length(diagram_groups),FUN = function(X){
-
-      # loss statistic is the sum of all within group distances of unique diagram pairs, normalized
-      # by the number of those pairs in the group
-      return(sum(d_tots[which(combinations$group == X)])/(length(diagram_groups[[X]])*(length(diagram_groups[[X]]) - 1)))
-
-    }))))
-
-  }
-
-  # cleanup
-  doParallel::stopImplicitCluster()
-  parallel::stopCluster(cl)
+    
+  },
+  warning = function(w){warning(w)},
+  error = function(e){stop(e)},
+  finally = {
+    
+    # cleanup
+    doParallel::stopImplicitCluster()
+    parallel::stopCluster(cl)
+    
+  })
 
   # return the test statistics and distance matrices in all dimensions
   return(list(statistics = statistics,dist_mats = dist_mats))

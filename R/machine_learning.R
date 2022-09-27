@@ -581,20 +581,10 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
   doParallel::registerDoParallel(cl)
   parallel::clusterEvalQ(cl,c(library(clue),library(rdist),library(foreach),library(iterators),library(kernlab)))
   parallel::clusterExport(cl,c("y","predict_diagram_ksvm","all_diagrams","check_diagram","gram_matrix","diagram_distance","diagram_kernel","check_param","diagram_to_df","cv","distance_matrices","diagrams_split","prob.model","class.weights","fit","cache","tol","shrinking"),envir = environment())
-  force(diagrams)
-  force(distance_matrices)
-  force(diagrams_split)
-  force(type)
-  force(prob.model)
-  force(class.weights)
-  force(fit)
-  force(cache)
-  force(tol)
-  force(shrinking)
   
   # for each model (combination of parameters), train the model on each subset and get the
-  # prediction error on the hold out set
-  model_errors <- foreach::`%dopar%`(foreach::`%:%`(foreach::foreach(r = iter(params,by = "row"),.combine = c),foreach::foreach(s = 1:cv,.combine = "+")),ex = {
+  # prediction error on the hold out set, wrapped in tryCatch to ensure cluster is stopped
+  tryCatch(expr = {model_errors <- foreach::`%dopar%`(foreach::`%:%`(foreach::foreach(r = iter(params,by = "row"),.combine = c),foreach::foreach(s = 1:cv,.combine = "+")),ex = {
     
     # use precomputed distance matrices to calculate Gram matrix from parameters
     K <- exp(-1*r[[2]]*distance_matrices[[paste0(r[[1]],"_",r[[3]])]])
@@ -615,7 +605,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
                  
                  if(grepl(pattern = "closing unused connection",w) == F)
                  {
-                   message(w)
+                   warning(w)
                  }
                  
                })
@@ -630,7 +620,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
                  
                  if(grepl(pattern = "closing unused connection",w) == F)
                  {
-                   message(w)
+                   warning(w)
                  }
                  
                })
@@ -639,10 +629,15 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
     
     model@error
     
-  })/cv
-
-  doParallel::stopImplicitCluster()
-  parallel::stopCluster(cl)
+  })/cv},
+  error = function(e){stop(e)},
+  warning = function(w){warning(w)},
+  finally = {
+    
+    doParallel::stopImplicitCluster()
+    parallel::stopCluster(cl)
+    
+  })
   
   # get best parameters
   params$error <- model_errors

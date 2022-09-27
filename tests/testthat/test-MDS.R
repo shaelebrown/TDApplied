@@ -42,7 +42,7 @@ test_that("diagram_mds is computing correctly",{
   {
     dmds[,2] <- dmds[,2]/-1
   }
-  expect_equal(dmds,embedding)
+  expect_equal((abs(dmds[1,1])-abs(embedding[1,1]))+(abs(dmds[2,1])-abs(embedding[2,1]))+(abs(dmds[3,1])-abs(embedding[3,1])) + (abs(dmds[1,2])-abs(embedding[1,2]))+(abs(dmds[2,2])-abs(embedding[2,2]))+(abs(dmds[3,2])-abs(embedding[3,2])),0)
   
 })
 
