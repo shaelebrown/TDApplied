@@ -42,6 +42,79 @@ test_that("diagram_distance is computing correctly",{
   expect_identical(diagram_distance(D1 = D1,D2 = D1,p = 2,distance = "wasserstein",dim = 0),0)
   expect_identical(diagram_distance(D1 = D1,D2 = D1,distance = "fisher",sigma = 1,dim = 0),0)
   
+  D1 = data.frame(dimension = 0,birth = rnorm(3),death = rnorm(3))
+  D2 = data.frame(dimension = 0,birth = rnorm(3),death = rnorm(3))
+  phom1 = TDAstats::calculate_homology(D1,dim = 0)
+  phom2 = TDAstats::calculate_homology(D2,dim = 0)
+
+  D1 = as.data.frame(phom1)
+  D2 = as.data.frame(phom2)
+  
+  D1_subset <- D1[,2:3]
+  D2_subset <- D2[,2:3]
+  diag1 <- D1_subset[0,]
+  diag2 <- D2_subset[0,]
+  D1_subset <- D1_subset[which(D1_subset[,1] != D1_subset[,2]),]
+  D2_subset <- D2_subset[which(D2_subset[,1] != D2_subset[,2]),]
+  if(nrow(D1_subset) > 0)
+  {
+    for(i in 1:nrow(D1_subset))
+    {
+      proj_diag <- mean(as.numeric(D1_subset[i,]))
+      diag1 <- rbind(diag1,data.frame(birth = proj_diag,death = proj_diag))
+    }
+  }
+  if(nrow(D2_subset) > 0)
+  {
+    for(i in 1:nrow(D2_subset))
+    {
+      proj_diag <- mean(as.numeric(D2_subset[i,]))
+      diag2 <- rbind(diag2,data.frame(birth = proj_diag,death = proj_diag))
+    }
+  }
+  D1_subset <- rbind(D1_subset,diag2)
+  D2_subset <- rbind(D2_subset,diag1)
+
+  dist_mat_bottleneck <- as.matrix(rdist::cdist(D1_subset,D2_subset,metric = "maximum"))
+  dist_mat_2 <- dist_mat_bottleneck^2
+  dist_mat_3 <- dist_mat_bottleneck^3
+  
+  min_bottleneck = Inf
+  min_wass_2 = Inf
+  min_wass_3 = Inf
+  
+  perms = matrix(data = c(1,2,3,4,1,2,4,3,1,3,2,4,1,3,4,2,1,4,2,3,1,4,3,2,2,1,3,4,2,1,4,3,2,3,1,4,2,3,4,1,2,4,1,3,2,4,3,1,3,1,2,4,3,1,4,2,3,2,1,4,3,2,4,1,3,4,1,2,3,4,2,1,4,1,2,3,4,1,3,2,4,2,1,3,4,2,3,1,4,3,1,2,4,3,2,1),nrow = 24,ncol = 4,byrow = T)
+  class(perms) <- c("matrix","array")
+  
+  for(i in 1:nrow(perms))
+  {
+    for(j in 1:nrow(perms))
+    {
+      if(i != j)
+      {
+        temp = cbind(data.frame(x = perms[i,]),data.frame(y = perms[j,]))
+        temp = as.matrix(temp[which(temp[,1] <= (nrow(D1_subset) - nrow(diag2)) | temp[,2] <= (nrow(D2_subset) - nrow(diag1))),])
+        if(max(dist_mat_bottleneck[temp]) < min_bottleneck)
+        {
+          min_bottleneck <- max(dist_mat_bottleneck[temp])
+        }
+        if(sqrt(sum(dist_mat_2[temp])) < min_wass_2)
+        {
+          print(paste0(i," ",j))
+          min_wass_2 <- sqrt(sum(dist_mat_2[temp]))
+        }
+        if((sum(dist_mat_3[temp]))^(1/3) < min_wass_3)
+        {
+          min_wass_3 <- (sum(dist_mat_3[temp]))^(1/3)
+        }
+      }
+    }
+  }
+  
+  expect_equal(diagram_distance(phom1,phom2,p = 2),min_wass_2)
+  expect_equal(diagram_distance(phom1,phom2,p = 3),min_wass_3)
+  expect_equal(diagram_distance(phom1,phom2,p = Inf),min_bottleneck)
+  
 })
 
 test_that("distance_matrix detects incorrect parameters correctly",{

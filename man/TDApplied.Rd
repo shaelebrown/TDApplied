@@ -15,4 +15,5 @@ easily be used in personalized analyses, (2) provide a fast method for computing
 distances between persistence diagrams, (3) implement kernel machine learning
 method for persistence diagrams (currently kernel multidimensional scaling and
 kernel SVM), and (4) provide methods for inference on groups of persistence diagrams.
+A fast persistent homology calculation is also provided via python and reticulate.
 }

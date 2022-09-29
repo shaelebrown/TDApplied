@@ -126,6 +126,11 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
   {
     # compute the bottleneck distance matrix between rows of D1_subset and D2_subset
     dist_mat <- as.matrix(rdist::cdist(D1_subset,D2_subset,metric = "maximum"))
+    dist_mat[(nrow(D1_subset) - nrow(diag2) + 1):nrow(D1_subset),(nrow(D2_subset) - nrow(diag1) + 1):nrow(D2_subset)] <- 0
+    if(is.finite(p))
+    {
+      dist_mat <- dist_mat^p
+    }
     
     # use the Hungarian algorithm from the clue package to find the minimal weight matching
     best_match <- as.numeric(clue::solve_LSAP(x = dist_mat,maximum = F))
@@ -138,7 +143,7 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
     # if p is finite, exponentiate each matched distance and take the p-th root of their sum
     if(is.finite(p))
     {
-      return((sum(dist_mat[indices]^(p)))^(1/p))
+      return(sum(dist_mat[indices])^(1/p))
     }
     
     # otherwise, return the regular bottleneck distance
