@@ -15,7 +15,7 @@ distance_matrix(
 )
 }
 \arguments{
-\item{diagrams}{a list of persistence diagrams, either the output of TDA/TDAstats calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.}
+\item{diagrams}{a list of persistence diagrams, either the output of persistent homology calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.}
 
 \item{other_diagrams}{either NULL (default) or another list of persistence diagrams to compute a cross-distance matrix.}
 

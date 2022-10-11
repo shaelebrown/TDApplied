@@ -16,7 +16,7 @@
 #' If `distance` is "fisher" then `sigma` must not be NULL. TDAstats also has a `permutation_test` function
 #' so care should be taken to use the desired function when using TDApplied with TDAstats.
 #'
-#' @param ... lists of persistence diagrams which are either the output of a TDA/TDAstats calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}. Each list must contain at least 2 diagrams.
+#' @param ... lists of persistence diagrams which are either the output of persistent homology calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Each list must contain at least 2 diagrams.
 #' @param iterations the number of iterations for permuting group labels, default 20.
 #' @param p a positive number representing the wasserstein power parameter, a number at least 1 (and Inf if using the bottleneck distance) and default 2.
 #' @param q  a finite number at least 1 for exponentiation in the Turner loss function, default 2.
@@ -244,8 +244,8 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
 #' The test is carried out with a parametric null distribution, making it much faster than non-parametric
 #' approaches. If all of the diagrams in either g1 or g2 are the same in some dimension, then some p-values may be NaN.
 #'
-#' @param g1 the first group of persistence diagrams, where each diagram was either the output from a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.
-#' @param g2 the second group of persistence diagrams, where each diagram was either the output from a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.
+#' @param g1 the first group of persistence diagrams, where each diagram was either the output from a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
+#' @param g2 the second group of persistence diagrams, where each diagram was either the output from a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
 #' @param dims a non-negative integer vector of the homological dimensions in which the test is to be carried out, default c(0,1).
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1.
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.

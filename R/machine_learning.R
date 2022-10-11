@@ -9,7 +9,7 @@
 #' Returns the output of \code{\link[stats]{cmdscale}} on the desired distance matrix of a group of persistence diagrams
 #' in a particular dimension. If `distance` is "fisher" then `sigma` must not be NULL.
 #'
-#' @param diagrams a list of n>=2 persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.
+#' @param diagrams a list of n>=2 persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
 #' @param k the dimension of the space which the data are to be represented in; must be in {1,2,...,n-1}.
 #' @param distance a string representing the desired distance metric to be used, either 'wasserstein' (default) or 'fisher'.
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
@@ -84,7 +84,7 @@ diagram_mds <- function(diagrams,k = 2,distance = "wasserstein",dim = 0,p = 2,si
 #' to estimate cluster labels for new persistence diagrams in the `predict_diagram_kkmeans`
 #' function.
 #'
-#' @param diagrams a list of n>=2 persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or the \code{\link{diagram_to_df}} function.
+#' @param diagrams a list of n>=2 persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or the \code{\link{diagram_to_df}} function.
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1
@@ -193,7 +193,7 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers
 #' Returns the nearest (highest kernel value) \code{\link[kernlab]{kkmeans}} cluster center label for new persistence diagrams.
 #' This allows for reusing old cluster models for new tasks, or to perform cross validation.
 #'
-#' @param new_diagrams a list of persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.
+#' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
 #' @param clustering the output of a \code{\link{diagram_kkmeans}} function call.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #'
@@ -269,7 +269,7 @@ predict_diagram_kkmeans <- function(new_diagrams,clustering,num_workers = parall
 #' advantage of using \code{\link{diagram_kpca}} over \code{\link{diagram_mds}}. The embedding coordinates can also
 #' be used for further analysis, or simply as a data visualization tool for persistence diagrams.
 #'
-#' @param diagrams a list of persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.
+#' @param diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1
@@ -359,7 +359,7 @@ diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_worke
 #' Compute the location in low-dimensional space of each element of a list of new persistence diagrams using a
 #' previously-computed kernel PCA embedding (from the \code{\link{diagram_kpca}} function).
 #'
-#' @param new_diagrams a list of persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.
+#' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
 #' @param embedding the output of a \code{\link{diagram_kpca}} function call.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #'
@@ -442,7 +442,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
 #' Note that the response parameter `y` must be a factor for classification - 
 #' a character vector for instance will throw an error.
 #'
-#' @param diagrams a list of persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.
+#' @param diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
 #' @param cv a positive number at most the length of `diagrams` which determines the number of cross validation splits to be performed (default 1, aka no cross-validation).
 #' @param dim a non-negative integer vector of homological dimensions in which the model is to be fit.
 #' @param t a vector of positive numbers representing the grid of values for the scale of the persistence Fisher kernel, default 1.
@@ -680,7 +680,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
 #' This function is a wrapper of the kernlab \code{\link{predict}} function.
 #'
 #'
-#' @param new_diagrams a list of persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.
+#' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
 #' @param model the output of a \code{\link{diagram_ksvm}} function call.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #' @return a vector containing the output of \code{\link[kernlab]{predict.ksvm}} on the cross Gram matrix of the new diagrams and the support vector diagrams stored in the model.

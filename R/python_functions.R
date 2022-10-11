@@ -1,81 +1,30 @@
-#### PYTHON SETUP ####
-#' Configure R to interface with python for fast persistent homology calculations.
-#'
-#' Installs the "reticulate" package, python and the python module "ripser". 
-#'
-#' The "ripser" python module has faster persistent homology calculations than the R wrapper for ripser, the TDAstats
-#' package, even when using the reticulate package as an interface. This function allows
-#' access to the added python speedup, and only needs to be called one time after TDApplied has been
-#' installed (not at the beginning of every R session).
-#' 
-#' @importFrom reticulate py_available install_python py_list_packages py_install
-#' @importFrom utils install.packages
-#' @export
-#' @author Shael Brown - \email{shaelebrown@@gmail.com}
-#' @examples
-#'
-#' # set up python for fast PH
-#' PyH_setup()
-PyH_setup <- function(){
-  
-  # first make sure that reticulate is installed
-  if(requireNamespace("reticulate",quietly = T) == F)
-  {
-    message("The reticulate package could not be found, trying to download now...")
-    utils::install.packages("reticulate")
-  }
-  
-  # then make sure that python is installed
-  if(reticulate::py_available() == F)
-  {
-    message("python has not yet been installed, trying now...")
-    reticulate::install_python()
-  }
-  
-  modules <- reticulate::py_list_packages()[,1]
-  
-  # finally make sure that ripser module has been downloaded
-  if("ripser" %in% modules == F)
-  {
-    message("ripser has not yet been installed, trying now...")
-    reticulate::py_install("ripser")
-  }
-  # 
-  # # finally make sure that persim module has been downloaded
-  # if("persim" %in% modules == F)
-  # {
-  #   message("persim has not yet been installed, trying now...")
-  #   reticulate::py_install("persim")
-  # }
-  
-}
-
 #### CHECK PYTHON SETUP ####
 #' Make sure that python has been configured correctly for persistent homology calculations.
 #' 
-#' Ensures that the reticulate package, python and the python module "ripser" have all been installed.
+#' Ensures that the reticulate package has been installed, that python is available to be used
+#' by reticulate functions, and that the python module "ripser" has been installed. 
 #' 
-#' @importFrom reticulate py_available py_list_packages
+#' An error message will be thrown if any of the above conditions are not met.
+#' 
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 check_PyH_setup <- function(){
   
   # first make sure that reticulate is installed
   if(requireNamespace("reticulate",quietly = T) == F)
   {
-    stop("reticulate package must be installed. Try using PyH_setup() function.")
+    stop("the reticulate package must be installed. Try installing with 'install.packages(\'reticulate\')'.")
   }
   
   # then make sure that python is installed
   if(reticulate::py_available() == F)
   {
-    stop("python must be installed. Try using PyH_setup() function.")
+    stop("python must be installed. Try installing from 'https://python.org'.")
   }
   
   # finally make sure that ripser module has been downloaded
-  modules <- reticulate::py_list_packages()[,1]
-  if("ripser" %in% modules == F)
+  if(reticulate::py_module_available("ripser") == F)
   {
-    stop("ripser must be installed. Try using PyH_setup() function.")
+    stop("the ripser module must be installed. Try using 'reticulate::py_install(\"ripser\")'.")
   }
   # 
   # # finally make sure that persim module has been downloaded
@@ -87,19 +36,19 @@ check_PyH_setup <- function(){
 }
 
 #### IMPORT RIPSER MODULE ####
-#' Import the python module ripser for fast persistent homology calculations.
+#' Import the python module ripser.
 #' 
-#' Same as "reticulate::import("ripser")".
+#' The ripser module is needed for fast persistent homology calculations with the PyH function.
 #' 
-#' @importFrom reticulate import
+#' Same as "reticulate::import("ripser")", just with additional checks.
+#' 
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @examples
-#' # set up python for fast PH
-#' PyH_setup()
-#' 
+#' \dontrun{
 #' # import ripser
 #' ripser <- import_ripser()
+#' }
 import_ripser <- function(){
   
   # check python configuration
@@ -157,10 +106,7 @@ check_ripser <- function(ripser){
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @examples
-#'
-#' # set up python for fast PH
-#' PyH_setup()
-#' 
+#' \dontrun{
 #' # create sample data
 #' df <- data.frame(x = 1:10,y = 1:10)
 #' 
@@ -170,6 +116,7 @@ check_ripser <- function(ripser){
 #' # calculate persistent homology up to dimension 1 with a maximum
 #' # radius of 5
 #' phom <- PyH(X = df,thresh = 5,ripser = ripser)
+#' }
 PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_clusters = TRUE){
   
   # error check parameters
@@ -253,6 +200,70 @@ PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_
 }
 
 # old functions which can use python to calculate distances...
+
+#### PYTHON SETUP ####
+#' Configure R to interface with python for fast persistent homology calculations.
+#'
+#' Installs the "reticulate" package, python and the python module "ripser" (installations are skipped if
+#' already completed). 
+#'
+#' This function only needs to be called one time after TDApplied has been
+#' installed (not at the beginning of every R session). If the setup was unsuccessful, 
+#' try installing reticulate, then ensure that you have installed git and openssl, 
+#'install python and miniconda from source and download the ripser module 
+#'with "reticulate::py_install('ripser')". If reticulate
+#' is already configured and working on your computer then just install the ripser module.
+#' 
+#' @importFrom utils install.packages
+# @export
+#' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @examples
+#' \dontrun{
+#' # set up python for fast PH
+#' PyH_setup()
+#' }
+# PyH_setup <- function(){
+#   
+#   # first make sure that reticulate is installed
+#   if(requireNamespace("reticulate",quietly = T) == F)
+#   {
+#     message("The reticulate package could not be found, trying to download now...")
+#     utils::install.packages("reticulate")
+#   }
+#   
+#   # then make sure that python is installed
+#   if(reticulate::py_available() == F)
+#   {
+#     message("python has not yet been installed, trying now...")
+#     tryCatch(expr = {reticulate::install_python()},error = function(e){
+#       
+#       if(grepl("setwd",e) == T)
+#       {
+#         stop("try installing git,restarting r and trying again. If this doesn't work try installing python directly from 'https://www.python.org'")
+#       }else
+#       {
+#         stop(e)
+#       }
+#       
+#     })
+#     
+#   }
+#   
+#   # finally make sure that ripser module has been downloaded
+#   if(reticulate::py_module_available("ripser") == F)
+#   {
+#     message("ripser has not yet been installed, trying now...")
+#     reticulate::py_install("ripser")
+#   }
+#   # 
+#   # # finally make sure that persim module has been downloaded
+#   # if("persim" %in% modules == F)
+#   # {
+#   #   message("persim has not yet been installed, trying now...")
+#   #   reticulate::py_install("persim")
+#   # }
+#   
+# }
 
 #### IMPORT PERSIM MODULE ####
 #' Import the python persim module for fast persistent homology distance calculations.

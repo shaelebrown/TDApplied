@@ -63,6 +63,12 @@ D2 = data.frame(dimension = c(0),birth = c(2,0),death = c(3.3,0.5))
 D3 = data.frame(dimension = c(0),birth = c(0),death = c(0.5))
 ```
 
+Plotting a diagram:
+
+```{r,echo = T,eval = F}
+plot_diagram(D1,title = "D1")
+```
+
 Computing distances between persistence diagrams:
 
 ```{r,echo = T}
@@ -232,4 +238,17 @@ g2 <- list(D2,D1,D1,D1,D1,D1)
 
 # do independence test with sigma = t = 1 in dimension 1
 indep_test <- independence_test(g1,g2,dims = c(1),num_workers = 2)
+```
+
+Performing fast persistent homology with python:
+
+```{r,echo = T,eval = F}
+# uniformly sample from a unit circle
+circ <- TDA::circleUnif(n = 50,r = 1)
+
+# import the ripser python module
+ripser <- import_ripser()
+
+# run persistent homology
+diagram <- PyH(circ,maxdim = 1,thresh = 1,ripser = ripser)
 ```

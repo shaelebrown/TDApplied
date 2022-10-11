@@ -7,10 +7,9 @@
 #' goals of this package: (1) convert the output from the persistent homology
 #' calculations in the two main R package for TDA into a data frame which can
 #' easily be used in personalized analyses, (2) provide a fast method for computing
-#' distances between persistence diagrams, (3) implement kernel machine learning
-#' method for persistence diagrams (currently kernel multidimensional scaling and
-#' kernel SVM), and (4) provide methods for inference on groups of persistence diagrams.
-#' A fast persistent homology calculation is also provided via python and reticulate.
+#' distances between persistence diagrams, (3) implement kernel machine learning and statistical
+#' methods for analyzing groups of persistence diagrams and (4) supply a fast persistent homology 
+#' calculation via python and reticulate.
 #'
 #' @docType package
 #' @name TDApplied

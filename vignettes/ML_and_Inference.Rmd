@@ -28,10 +28,11 @@ original_mar <- par()$mar
 Topological data analysis is a relatively new area of data science which can find unique, non-linear global structure in whole datasets. The main tool of topological data analysis is called *persistent homology*, which produces a "shape descriptor" (called a *persistence diagram*) of its input dataset. Two main R packages exist for computing persistence diagrams; the more flexible of the two, called TDA, stores persistence diagrams in a non-standard data structure, and the faster of the two, called TDAstats, does not provide functionality for analyzing diagrams with published techniques. Methods exist for computing distances and kernels (which are a special type of similarity functions) between pairs of persistence diagrams, but only distance calculations are currently available in the R package TDA. Several papers have used distance and kernel computations in order to perform machine learning or inferences tasks with groups of persistence diagrams, but to date no publicly available software in either python or R provides the functionality for these types of analyses. In order to make the power of topological data analysis more readily available to data and machine learning practitioners, it would be very helpful to have a software package that can
 
 1. convert persistence diagrams computed using the R packages TDA and TDAstats into a commonly-used data type for data analyses (a data frame), 
+
 2. implement fast versions of both distance and kernel calculations for pairs of persistence diagrams, and 
 3. provide scalable methods for machine learning and inference for persistence diagrams. 
 
-It is with these goals that the package TDApplied was created.
+It is with these goals that the package TDApplied was created. However, in order to make TDApplied a self-contained package for topological data analysis functionality is included for plotting persistence diagrams and quickly calculating persistence diagrams with python.
 
 # Software Review
 
@@ -119,19 +120,16 @@ In this section we will describe the various computational tools implemented in 
 library("TDApplied")
 ``` 
 
-Since TDApplied uses the output of TDA/TDAstats calculations as inputs to its functions, either TDA or TDAstats should be at least installed (if not attached) when using TDApplied. All examples will analyze simple diagrams which are random deviations of three persistence diagrams called D1, D2 and D3 (each with points in dimension 0 only):
+Since TDApplied uses the output of TDA/TDAstats calculations (or its own persistent homology function, "PyH", discussed later) as inputs to its functions, either TDA or TDAstats should be at least installed (if not attached) when using TDApplied. All examples will analyze simple diagrams which are random deviations of three persistence diagrams called D1, D2 and D3 (each with points in dimension 0 only), which we will plot with the TDApplied function `plot_diagram`:
 
-```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center'}
+```{r,echo = T,fig.height = 3,fig.width = 7,fig.align = 'center'}
 D1 = data.frame(dimension = c(0),birth = c(2),death = c(3))
 D2 = data.frame(dimension = c(0),birth = c(2,0),death = c(3.3,0.5))
 D3 = data.frame(dimension = c(0),birth = c(0),death = c(0.5))
 par(mfrow = c(1,3))
-plot(x = D1$birth,y = D1$death,main = "D1",xlab = "",ylab = "",xlim = c(0,4),ylim = c(0,4))
-abline(a = 0,b = 1)
-plot(x = D2$birth,y = D2$death,main = "D2",xlab = "",ylab = "",xlim = c(0,4),ylim = c(0,4))
-abline(a = 0,b = 1)
-plot(x = D3$birth,y = D3$death,main = "D3",xlab = "",ylab = "",xlim = c(0,4),ylim = c(0,4))
-abline(a = 0,b = 1)
+plot_diagram(D1,title = "D1",xlim = c(0,4),ylim = c(0,4),legend = F)
+plot_diagram(D2,title = "D2",xlim = c(0,4),ylim = c(0,4),legend = F)
+plot_diagram(D3,title = "D3",xlim = c(0,4),ylim = c(0,4),legend = F)
 par(mfrow = c(1,1))
 ```
 
@@ -240,7 +238,7 @@ diagram_distance(D1,D2,dim = 0,p = Inf,distance = "wasserstein")
 diagram_distance(D1,D3,dim = 0,p = Inf,distance = "wasserstein")
 ```
 
-There is a generalization of the 2-wasserstein distance for any $p \geq 1$, the $p$-wasserstein distance, which can also be computed using the `diagram_distance` function by varying the parameter `p`.
+There is a generalization of the 2-wasserstein distance for any $p \geq 1$, the $p$-wasserstein distance, which can also be computed using the `diagram_distance` function by varying the parameter `p`. To see the computational details and proof of correctness for wasserstein and bottleneck distance calculations, see the appendix.
 
 Another distance metric between persistence diagrams, which will be useful for kernel calculations, is called the *Fisher information metric*, $d_{FIM}(D_1,D_2,\sigma)$ (details can be found in [@persistence_fisher]). The idea is to represent the two persistence diagrams as probability density functions, with a 2D-Gaussian point mass centered at each point in both diagrams (including the diagonal projections of the points in the opposite diagram), all of variance $\sigma^2 > 0$, and calculate how much those distributions agree on their pdf value at each point in the plane (called their *Fisher information metric*). 
 
@@ -754,4 +752,18 @@ The TDApplied package aims to bridge topological data analysis with researchers 
 
 ## References
 
+# Appendix
 
+Even though the Hungarian algorithm can be used to solve the linear sum assignment problem (LSAP), some work needs to be done to properly apply the algorithm to calculate wasserstein or bottleneck distances. For an example we will consider the botteneck distance, although the argument still holds with a simple change for the wasserstein distance (squaring matrix entries). Let Diag1 and Diag2 be two diagrams, with $n_1$ and $n_2$ points respectively, whose projections are denoted by $\pi(\mbox{Diag1})$ and $\pi(\mbox{Diag2})$ respectively. Then take $M$ to be the following $(n_1 + n_2) \times (n_1 + n_2)$ matrix: 
+
+$$M =
+\left[
+  \begin{array}{c|c}
+  d_{\infty}(\mbox{Diag1},\mbox{Diag2}) & d_{\infty}(\mbox{Diag1},\pi(\mbox{Diag2})) \\
+  \hline
+  d_{\infty}(\pi(\mbox{Diag1}),\mbox{Diag2}) & 0
+\end{array} \right]$$
+
+Each row corresponds to the $n_1$ points in Diag1 followed by the $n_2$ projections $\pi(\mbox{Diag2})$, and vice versa for the columns. Then we claim that the solution of the LSAP problem on $M$ has the same cost as the real bottleneck distance value between Diag1 and Diag2.
+
+The proof is as follows: since projection points are matched together with cost 0 in $M$, a matching $m$ for $M$, containing the pairs of matched points, can always to converted to a matching $m' = R(m)$ for the distance calculation by removing all matches between two projection points. Therefore, let the minimal cost matching for the distance calculation be denoted $s$. Now suppose, to reach a contradiction, that there existed a lower-cost matching in $M$, $s'$. Then the cost of the matching $R(s')$ would be lower than $s$ for the distance problem, contradicting the assumption that $s$ was of minimal cost. This is contradiction, and therefore the solution of the LSAP problem on $M$ has the same cost as the real bottleneck distance between Diag 1 and Diag2.

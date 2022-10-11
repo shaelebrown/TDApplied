@@ -100,7 +100,6 @@ test_that("diagram_distance is computing correctly",{
         }
         if(sqrt(sum(dist_mat_2[temp])) < min_wass_2)
         {
-          print(paste0(i," ",j))
           min_wass_2 <- sqrt(sum(dist_mat_2[temp]))
         }
         if((sum(dist_mat_3[temp]))^(1/3) < min_wass_3)

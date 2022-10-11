@@ -14,7 +14,7 @@ gram_matrix(
 )
 }
 \arguments{
-\item{diagrams}{a list of persistence diagrams, where each diagram is either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.}
+\item{diagrams}{a list of persistence diagrams, where each diagram is either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.}
 
 \item{other_diagrams}{either NULL (default) or another list of persistence diagrams to compute a cross-Gram matrix.}
 

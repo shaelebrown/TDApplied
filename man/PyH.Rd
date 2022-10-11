@@ -39,10 +39,7 @@ result of an `import_ripser` function call, but since that function is slow the 
 be explicitly created before a PyH function call (see examples).
 }
 \examples{
-
-# set up python for fast PH
-PyH_setup()
-
+\dontrun{
 # create sample data
 df <- data.frame(x = 1:10,y = 1:10)
 
@@ -52,6 +49,7 @@ ripser <- import_ripser()
 # calculate persistent homology up to dimension 1 with a maximum
 # radius of 5
 phom <- PyH(X = df,thresh = 5,ripser = ripser)
+}
 }
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}

@@ -14,9 +14,9 @@ diagram_distance(
 )
 }
 \arguments{
-\item{D1}{the first persistence diagram, either computed from a TDA/TDAstats function like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or such an object converted to a data frame with \code{\link{diagram_to_df}}.}
+\item{D1}{the first persistence diagram.}
 
-\item{D2}{the second persistence diagram, either computed from TDA/TDAstats function like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or such an object converted to a data frame with \code{\link{diagram_to_df}}.}
+\item{D2}{the second persistence diagram.}
 
 \item{dim}{the non-negative integer homological dimension in which the distance is to be computed, default 0.}
 
@@ -30,8 +30,9 @@ diagram_distance(
 the numeric value of the distance calculation.
 }
 \description{
-Calculates the distance between a pair of persistence diagrams in a particular homological dimension,
-either the output from a \code{\link{diagram_to_df}} function call or from a TDA/TDAstats homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}.
+Calculates the distance between a pair of persistence diagrams, either the output from a \code{\link{diagram_to_df}} function call
+or from a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}},
+in a particular homological dimension.
 }
 \details{
 The most common distance calculations between persistence diagrams

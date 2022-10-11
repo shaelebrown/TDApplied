@@ -19,7 +19,7 @@ diagram_mds(
 )
 }
 \arguments{
-\item{diagrams}{a list of n>=2 persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.}
+\item{diagrams}{a list of n>=2 persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.}
 
 \item{k}{the dimension of the space which the data are to be represented in; must be in {1,2,...,n-1}.}
 

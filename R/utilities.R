@@ -59,6 +59,11 @@ check_diagram <- function(d,ret){
     stop("Death values must always be at least as large as birth values.")
   }
   
+  # if(length(which(is.infinite(d[,3L]))) > 0)
+  # {
+  #   stop("Death values must be finite.")
+  # }
+  
   if(ret == T)
   {
     return(d) 

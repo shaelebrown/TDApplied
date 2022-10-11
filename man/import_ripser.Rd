@@ -2,19 +2,21 @@
 % Please edit documentation in R/python_functions.R
 \name{import_ripser}
 \alias{import_ripser}
-\title{Import the python module ripser for fast persistent homology calculations.}
+\title{Import the python module ripser.}
 \usage{
 import_ripser()
 }
 \description{
-Same as "reticulate::import("ripser")".
+The ripser module is needed for fast persistent homology calculations with the PyH function.
+}
+\details{
+Same as "reticulate::import("ripser")", just with additional checks.
 }
 \examples{
-# set up python for fast PH
-PyH_setup()
-
+\dontrun{
 # import ripser
 ripser <- import_ripser()
+}
 }
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}

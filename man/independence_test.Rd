@@ -15,9 +15,9 @@ independence_test(
 )
 }
 \arguments{
-\item{g1}{the first group of persistence diagrams, where each diagram was either the output from a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.}
+\item{g1}{the first group of persistence diagrams, where each diagram was either the output from a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.}
 
-\item{g2}{the second group of persistence diagrams, where each diagram was either the output from a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.}
+\item{g2}{the second group of persistence diagrams, where each diagram was either the output from a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.}
 
 \item{dims}{a non-negative integer vector of the homological dimensions in which the test is to be carried out, default c(0,1).}
 

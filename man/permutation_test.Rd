@@ -18,7 +18,7 @@ permutation_test(
 )
 }
 \arguments{
-\item{...}{lists of persistence diagrams which are either the output of a TDA/TDAstats calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}. Each list must contain at least 2 diagrams.}
+\item{...}{lists of persistence diagrams which are either the output of persistent homology calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Each list must contain at least 2 diagrams.}
 
 \item{iterations}{the number of iterations for permuting group labels, default 20.}
 

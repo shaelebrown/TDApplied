@@ -15,7 +15,7 @@ diagram_kkmeans(
 )
 }
 \arguments{
-\item{diagrams}{a list of n>=2 persistence diagrams which are either the output of a TDA/TDAstats calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or the \code{\link{diagram_to_df}} function.}
+\item{diagrams}{a list of n>=2 persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or the \code{\link{diagram_to_df}} function.}
 
 \item{centers}{number of clusters to initialize, no more than the number of diagrams although smaller values are recommended.}
 

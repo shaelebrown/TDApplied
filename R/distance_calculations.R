@@ -1,8 +1,9 @@
 #### DIAGRAM DISTANCE METRICS ####
 #' Calculate distance between a pair of persistence diagrams.
 #'
-#' Calculates the distance between a pair of persistence diagrams in a particular homological dimension,
-#' either the output from a \code{\link{diagram_to_df}} function call or from a TDA/TDAstats homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}.
+#' Calculates the distance between a pair of persistence diagrams, either the output from a \code{\link{diagram_to_df}} function call
+#' or from a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}},
+#' in a particular homological dimension.
 #'
 #' The most common distance calculations between persistence diagrams
 #' are the wasserstein and bottleneck distances, both of which "match" points between
@@ -14,8 +15,8 @@
 #' (\url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}).
 #' If the `distance` parameter is "fisher" then `sigma` must not be NULL.
 #'
-#' @param D1 the first persistence diagram, either computed from a TDA/TDAstats function like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or such an object converted to a data frame with \code{\link{diagram_to_df}}.
-#' @param D2 the second persistence diagram, either computed from TDA/TDAstats function like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or such an object converted to a data frame with \code{\link{diagram_to_df}}.
+#' @param D1 the first persistence diagram.
+#' @param D2 the second persistence diagram.
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param p  a number representing the wasserstein power parameter, at least 1 and default 2.
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".
@@ -212,7 +213,7 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
 #' \code{\link{diagram_mds}}, \code{\link{permutation_test}} and \code{\link{diagram_ksvm}} functions. 
 #' If `distance` is "fisher" then `sigma` must not be NULL.
 #'
-#' @param diagrams a list of persistence diagrams, either the output of TDA/TDAstats calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or \code{\link{diagram_to_df}}.
+#' @param diagrams a list of persistence diagrams, either the output of persistent homology calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
 #' @param other_diagrams either NULL (default) or another list of persistence diagrams to compute a cross-distance matrix.
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param distance a character determining which metric to use, either "wasserstein" (default) or "fisher".

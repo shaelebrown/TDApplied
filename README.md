@@ -8,20 +8,21 @@
 
 TDApplied is an R package for applied topological data analysis using
 machine learning and statistical inference, and uses the output of
-persistent homology calculations from the R packages TDA/TDAstats as input to its
-methods.
+persistent homology calculations from the R packages TDA/TDAstats as
+input to its methods.
 
 R package TDA:
 
 > Fasy, Brittany T., Jisu Kim, Fabrizio Lecci, Clement Maria, David L.
-> Millman, and Vincent Rouvreau. 2021.TDA: Statistical Tools for
+> Millman, and Vincent Rouvreau. 2021. TDA: Statistical Tools for
 > Topological Data Analysis. <https://CRAN.R-project.org/package=TDA>.
 
 R package TDAstats:
 
-> Wadhwa, Raoul R., Drew R. K. Williamson, Andrew Dhawan, and Jacob G. Scott.
-> 2018. TDAstats: R pipeline for computing persistent homology in topological 
-> data analysis. <https://CRAN.R-project.org/package=TDAstats>.
+> Wadhwa, Raoul R., Drew R. K. Williamson, Andrew Dhawan, and Jacob G.
+> Scott. 2018. TDAstats: R pipeline for computing persistent homology in
+> topological data analysis.
+> <https://CRAN.R-project.org/package=TDAstats>.
 
 ## Installation
 
@@ -57,6 +58,12 @@ For these examples we will use three base persistence diagrams:
 D1 = data.frame(dimension = c(0),birth = c(2),death = c(3))
 D2 = data.frame(dimension = c(0),birth = c(2,0),death = c(3.3,0.5))
 D3 = data.frame(dimension = c(0),birth = c(0),death = c(0.5))
+```
+
+Plotting a diagram:
+
+``` r
+plot_diagram(D1,title = "D1")
 ```
 
 Computing distances between persistence diagrams:
@@ -151,7 +158,7 @@ g_new <- list(D4,D5,D6)
 
 # predict cluster labels
 predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)
-#> [1] 3 1 2
+#> [1] 1 2 3
 ```
 
 Computing a kernel PCA embedding of persistence diagrams:
@@ -237,4 +244,17 @@ g2 <- list(D2,D1,D1,D1,D1,D1)
 
 # do independence test with sigma = t = 1 in dimension 1
 indep_test <- independence_test(g1,g2,dims = c(1),num_workers = 2)
+```
+
+Performing fast persistent homology with python:
+
+``` r
+# uniformly sample from a unit circle
+circ <- TDA::circleUnif(n = 50,r = 1)
+
+# import the ripser python module
+ripser <- import_ripser()
+
+# run persistent homology
+diagram <- PyH(circ,maxdim = 1,thresh = 1,ripser = ripser)
 ```
