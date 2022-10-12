@@ -10,7 +10,7 @@ PyH(
   thresh,
   distance_mat = FALSE,
   ripser,
-  ignore_infinite_clusters = TRUE
+  ignore_infinite_cluster = TRUE
 )
 }
 \arguments{
@@ -25,7 +25,7 @@ must be at least two rows and 1 column.}
 
 \item{ripser}{the ripser python module.}
 
-\item{ignore_infinite_clusters}{a boolean representing whether to remove clusters (0 dimensional cycles) which
+\item{ignore_infinite_cluster}{a boolean representing whether to remove clusters (0 dimensional cycles) which
 die at the threshold value. Default is TRUE as this is the default for TDAstats homology calculations, but can be set to
 FALSE which is the default for python ripser.}
 }

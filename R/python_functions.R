@@ -99,7 +99,7 @@ check_ripser <- function(ripser){
 #' @param thresh the non-negative numeric radius threshold for the Vietoris-Rips filtration.
 #' @param distance_mat a boolean representing whether the input X is a distance matrix or not, default FALSE.
 #' @param ripser the ripser python module.
-#' @param ignore_infinite_clusters a boolean representing whether to remove clusters (0 dimensional cycles) which
+#' @param ignore_infinite_cluster a boolean representing whether to remove clusters (0 dimensional cycles) which
 #' die at the threshold value. Default is TRUE as this is the default for TDAstats homology calculations, but can be set to
 #' FALSE which is the default for python ripser. 
 #' @importFrom methods is
@@ -117,7 +117,7 @@ check_ripser <- function(ripser){
 #' # radius of 5
 #' phom <- PyH(X = df,thresh = 5,ripser = ripser)
 #' }
-PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_clusters = TRUE){
+PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_cluster = TRUE){
   
   # error check parameters
   if(is.null(distance_mat))
@@ -133,17 +133,17 @@ PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_
     stop("distance_mat must not be NA/NAN.")
   }
   
-  if(is.null(ignore_infinite_clusters))
+  if(is.null(ignore_infinite_cluster))
   {
-    stop("ignore_infinite_clusters must not be NULL.")
+    stop("ignore_infinite_cluster must not be NULL.")
   }
-  if(length(ignore_infinite_clusters) > 1 | !methods::is(ignore_infinite_clusters,"logical"))
+  if(length(ignore_infinite_cluster) > 1 | !methods::is(ignore_infinite_cluster,"logical"))
   {
-    stop("ignore_infinite_clusters must be a single logical (i.e. T or F).")
+    stop("ignore_infinite_cluster must be a single logical (i.e. T or F).")
   }
-  if(is.na(ignore_infinite_clusters) | is.nan(ignore_infinite_clusters) )
+  if(is.na(ignore_infinite_cluster) | is.nan(ignore_infinite_cluster) )
   {
-    stop("ignore_infinite_clusters must not be NA/NAN.")
+    stop("ignore_infinite_cluster must not be NA/NAN.")
   }
   
   check_param(param = maxdim,param_name = "maxdim",numeric = T,whole_numbers = T,multiple = F,finite = T,non_negative = T)
@@ -185,7 +185,7 @@ PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_
     d <- d[,c(3,1,2)]
     colnames(d) = c("dimension","birth","death")
     d[which(d$death == Inf),3] <- thresh
-    if(ignore_infinite_clusters == T & X == 1)
+    if(ignore_infinite_cluster == T & X == 1)
     {
       d <- d[which(d$birth > 0 | d$death < thresh),]
     }
