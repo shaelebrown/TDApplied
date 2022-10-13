@@ -10,7 +10,8 @@ PyH(
   thresh,
   distance_mat = FALSE,
   ripser,
-  ignore_infinite_cluster = TRUE
+  ignore_infinite_cluster = TRUE,
+  calculate_representatives = FALSE
 )
 }
 \arguments{
@@ -28,15 +29,28 @@ must be at least two rows and 1 column.}
 \item{ignore_infinite_cluster}{a boolean representing whether to remove clusters (0 dimensional cycles) which
 die at the threshold value. Default is TRUE as this is the default for TDAstats homology calculations, but can be set to
 FALSE which is the default for python ripser.}
+
+\item{calculate_representatives}{a boolean representing whether to return a list of representative cocycles for the
+topological features found in the persistence diagram, default FALSE.}
+}
+\value{
+Either a dataframe containing the persistence diagram if `calculate_representatives` is `FALSE` (the default), otherwise a list with two elements: 
+diagram of class diagram, containing the persistence diagram,
+and representatives, a list containing the edges, triangles etc. contained in each representative cocycle.
 }
 \description{
-This function is a wrapper of the python wrapper of the ripser engine, but is still faster than using the
-R package TDAstats (see the TDApplied package vignette for details).
+This function is a wrapper of the python wrapper of the ripser engine for persistent cohomology, 
+but is still faster than using the R package TDAstats (see the TDApplied package vignette for details).
 }
 \details{
 If `distance_mat` is `TRUE` then `X` must be a square matrix. The `ripser` parameter should be the
 result of an `import_ripser` function call, but since that function is slow the ripser object should
-be explicitly created before a PyH function call (see examples).
+be explicitly created before a PyH function call (see examples). Cohomology is computed over Z2,
+as is the case for the TDAstats function \code{\link[TDAstats]{calculate_homology}} (this is also the
+default for ripser in c++). If representative cocycles are returned, then they are stored in a list with
+one element for each point in the persistence diagram, ignoring dimension 0 points. Each representative of
+a dimension d cocycle (1 for loops, 2 for voids, etc.) is a kxd dimension matrix/array containing the row number-labelled
+edges, triangles etc. in the cocycle.
 }
 \examples{
 \dontrun{
@@ -46,7 +60,7 @@ df <- data.frame(x = 1:10,y = 1:10)
 # import the ripser module
 ripser <- import_ripser()
 
-# calculate persistent homology up to dimension 1 with a maximum
+# calculate persistence diagram up to dimension 1 with a maximum
 # radius of 5
 phom <- PyH(X = df,thresh = 5,ripser = ripser)
 }

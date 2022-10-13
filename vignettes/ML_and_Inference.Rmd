@@ -2,7 +2,7 @@
 title: "Machine learning and statistical inference of persistence diagrams with TDApplied"
 author: "Shael Brown and Dr. Reza Farivar"
 output: 
-  rmarkdown::htlm_vignette:
+  rmarkdown::html_document:
     fig_caption: yes
 vignette: >
   %\VignetteIndexEntry{inference}
@@ -41,7 +41,7 @@ It is with these goals that the package TDApplied was created. However, in order
 Topological data analysis has gained popularity over the past two decades since the original paper on persistent homology was published [@PHoriginal], and two main R packages have been created for persistent homology calculations:
 
 1. The R package TDA [@R-TDA] is a wrapper for a number of C++ persistent homology packages, including Dionysus [@Dionysus], GUDHI [@GUDHI] and PHAT [@PHAT], and provides both distance calculation capabilities between persistence diagrams and the ability to find representative data points of each topological feature in a persistence diagram (the points for each feature are called a "representative cycle").
-2. The R package TDAstats [@R-TDAstats] is a wrapper of the C++ persistent homology engine Ripser [@Ripser], and provides an inference method for detecting group differences of two groups of persistence diagrams (as in [@Robinson_Turner]. However, the distance calculation currently implemented in that package, is not based on an accepted distance metric for persistence diagrams. 
+2. The R package TDAstats [@R-TDAstats] is a wrapper of the C++ persistent (co)homology engine Ripser [@Ripser,@PChom], and provides an inference method for detecting group differences of two groups of persistence diagrams (as in [@Robinson_Turner]. However, the distance calculation currently implemented in that package, is not based on an accepted distance metric for persistence diagrams. 
 
 The paper [@PH_benchmarking] compared the runtimes of the homology calculations in the R packages TDA and TDAstats, and concluded that certain persistent homology calculations are faster with TDAstats. The choice of which package to use therefore may vary by application, depending on whether speed is desired or whether knowledge of which data points represent which topological feature. Therefore, TDApplied can accept as input persistence diagrams computed from either package in order to cover a wide variety of potential use-cases.
 
@@ -609,7 +609,6 @@ The fast and scalable distance calculation in TDApplied makes the applications o
 While the functionality of python packages for topological data analysis packages are out of the scope for an R package, in order to fully situate TDApplied in the landscape of topological data analysis software we will benchmark the `diagram_distance` function against its counterpart from the sci-kit TDA collection of libraries, namely the `wasserstein` function from the persim python module. The code for this R vs. python benchmarking is very similar to the code from the previous section, with a few modifications. The general set up is the same, with tori and spheres generated with various numbers of rows with ten iterations at each number of rows. The benchmarking was also carried out on a Windows 10 64-bit machine, with an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM. However, the package reticulate [@R-reticulate] is attached before the benchmarking and two python modules from scikit-TDA are loaded - persim and ripser. Persim will be used to calculate the wasserstein distances via its `wasserstein` function, and ripser will be used to create persistence diagrams which can be used as input to the `wasserstein` function. Before running this code miniconda was installed through the reticulate package, using the `install_miniconda` function, and the modules persim and ripser were installed using the code `py_install("persim")` and `py_install("ripser")` respectively. The code for benchmarking is included below, but not run in this vignette:
 
 ```{r,echo = T,warning=F,eval = F}
-
 # load reticulate package
 library(reticulate)
 persim <- reticulate::import("persim")
@@ -743,9 +742,9 @@ summary(model)$coefficients
 
 Nevertheless, the raw speed increase in python could be the basis for a very fast python counterpart to the TDApplied package in the future.
 
-# Fast Persistent Homology Calculations Using Reticulate
+# Fast Persistence Diagram Calculations Using Reticulate
 
-While the focus of TDApplied is carrying out applied topological data analysis with persistence diagrams computed with the R packages TDA and TDAstats, TDApplied also provides its own persistent homology engine via python. The ripser module in python is a wrapper for the same persistent homology engine as the R package TDAstats, which is currently the state-of-the-art of persistent homology calculation speed in R. However, it was observed by the authors that the python implementation seemed faster, even when called via the reticulate package. Therefore, the `PyH` function is a wrapper of the python ripser module for Vietoris-Rips filtration persistent homology.
+While the focus of TDApplied is carrying out applied topological data analysis with persistence diagrams computed with the R packages TDA and TDAstats, TDApplied also provides its own persistent cohomology engine via python, which produces the exact same persistence diagram as persistent homology just much faster [@PChom,@PHom_dualities]. The ripser module in python is a wrapper for the same persistent cohomology engine as the R package TDAstats, which is currently the state-of-the-art of persistence diagram calculation speed in R. However, it was observed by the authors that the python implementation seemed faster, even when called via the reticulate package. Therefore, the `PyH` function is a wrapper of the python ripser module for Vietoris-Rips filtration persistent cohomology.
 
 ## `PyH` Requirements and Usage
 
@@ -770,11 +769,57 @@ ripser <- import_ripser()
 diag <- PyH(X = circ,maxdim = 1,thresh = 1,ripser = ripser)
 ```
 
-The ripser module is important outside of the `PyH` function using the `import_ripser` function, because this operation can be slow and if many persistence diagrams are to be computed then repeating this operation would be highly prohibitive. Additionally, the `import_ripser` function checks the three prerequisites for `PyH` listed earlier in this section, to avoid repeating checks. The `import_ripser` function is the same as `reticulate::import("ripser")`, but with the extra checks. It was verified in the TDApplied testing that the `PyH` output matches the TDAstats `calculate_homology` output for the same input data and parameters, but there is one small difference: in the python ripser calculation there is always one connected component (i.e. dimension 0 topological feature) with infinite death value, whereas this feature is omitted in the TDAstats calculation. Whether or not to include this feature in the outputted diagram can be decided by the user via the `ignore_infinite_cluster` parameter being set to `TRUE` (the default value) or `FALSE` respectively. The output of `PyH` is an R dataframe, and is a suitable input to any TDApplied function.
+The ripser module is important outside of the `PyH` function using the `import_ripser` function, because this operation can be slow and if many persistence diagrams are to be computed then repeating this operation would be highly prohibitive. Additionally, the `import_ripser` function checks the three prerequisites for `PyH` listed earlier in this section, to avoid repeating checks. The `import_ripser` function is the same as `reticulate::import("ripser")`, but with the extra checks. It was verified in the TDApplied testing that the `PyH` output matches the TDAstats `calculate_homology` output for the same input data and parameters, but there is one small difference: in the python ripser calculation there is always one connected component (i.e. dimension 0 topological feature) with infinite death value, whereas this feature is omitted in the TDAstats calculation. Whether or not to include this feature in the outputted diagram can be decided by the user via the `ignore_infinite_cluster` parameter being set to `TRUE` (the default value) or `FALSE` respectively. The output of `PyH` is a suitable input to any TDApplied function, as either a data frame or a list of a data frame and a list of representative cocycles which we will describe in more detail in the following section.
+
+## Representative Cocycles
+
+One of the advantages of the R package TDA over TDAstats is its ability to calculate representative cycles in the data, i.e. localizing the persistence diagram topological features in the input data set. This can permit deep analyses of the original data set by finding particular types of features spanned by certain subsets of data points. For example, a representative cycle of a 1-dimensional topological feature would be a set of edges between data points which lie along that feature (a loop). The `PyH` function can also find representative (co)cycles in its input data, which are returned if the `calculate_representatives` parameter is set to `TRUE`. In that case, the `PyH` function returns a list with a data frame called "diagram", containing the persistence diagram, and a list called "representatives". The representatives element has one element for each dimension in the persistence diagram, with one matrix/array for each point in the persistence diagram of that dimension (except for dimension 0, for the list is always empty). The matrix for a $d$-dimensional feature (1 for loops, 2 for voids, etc.) has $d$ columns, where row $i$ contains the row indices in the data set of the data points in the $i$-th substructure in the representative (a substructure of a loop would be an edge, a substructure of a void would be a triangle, etc.). Here is an example where we calculate the representative cocycles of a precomputed circle data set called "circ":
+
+```{r,echo = F,eval = T}
+# create the data
+circ <- data.frame(x = c(0.37206401439763,0.187252903758128,-0.941946837003475,0.0442567282078249,0.184638555615293,-0.0837545101464481,-0.364816992194448,-0.722635069185668,-0.965713143554718,-0.832555262051846,0.416857546850322,0.262628948512087,0.335630458504239,-0.987359078856224,0.971143015697996,0.828642381920149,-0.993094328640157,0.864705993526812,-0.601822463909246,0.00855304668431679,-0.694732418249695,0.281097726412362,-0.536528403939666,0.999578844170687,0.500427719325381,0.972755007124087,-0.985828528101177,0.382116090228366,0.187341042513765,-0.999497942642912,0.447939273429357,-0.995551072494437,0.582222964962477,0.852912225230687,0.914794382538427,-0.977030870815178,0.999052449805392,0.986668984725482,0.379560512351362,-0.99022104692615,-0.9293797636278,0.028209644693279,0.125079985118729,0.126437768180937,0.504013549595047,0.933397935474915,0.574043084808964,0.747953695502559,0.841062122135969,0.228565768955052),y = c(-0.928207072366032,0.982311737705576,-0.335762053036297,0.999020190991323,-0.982806493558268,-0.996486418387189,0.93107924593248,-0.691229742403367,-0.259611487353053,0.553941996629414,0.908971828845059,-0.964896904028319,-0.941993734227694,-0.158499367191759,0.238497889007434,0.559778351569352,0.117318602202532,-0.502278353862486,-0.798629902980225,-0.999963422027234,-0.719268285852317,-0.959679148573001,-0.843882261791273,-0.0290195500721963,0.865778319046393,0.231835493648013,-0.167756112204196,0.924114329284308,0.982294932181702,0.0316837916384251,0.894063983906957,0.0942234687069815,-0.813029162496834,0.52205434204883,0.403919840656704,0.213097811988145,0.0435224371772166,-0.162740021447664,0.925166913299201,-0.13950726943238,-0.369124985552503,-0.999602028782595,-0.992146661196165,0.991974541395808,-0.863695746096159,-0.358842993593529,-0.818825095354929,-0.663750909139916,0.540938542450194,-0.973528473780806))
+```
+
+```{r,echo = T,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
+plot(x = circ$x,y = circ$y,xlab = "x",ylab = "y",main = "circ")
+```
+
+```{r,echo = T,eval = F}
+# ripser has already been imported, so calculate diagram with representatives
+res <- PyH(circ,maxdim = 1,thresh = 2,ripser = ripser,calculate_representatives = T)
+
+# identify the loops in the diagram
+res$diagram[which(res$diagram$dimension == 1),]
+```
+
+```{r,echo = F}
+data.frame(dimension = c(1),birth = c(0.6008424),death = c(1.738894),row.names = c("50"))
+```
+
+```{r,echo = T,eval = F}
+# show the representative for the loop
+res$representatives[[2]][[1]]
+```
+
+```{r,echo = F}
+matrix(data = c(9,6,35,6,9,3,16,6,31,6,43,9,29,6,9,1,28,9,39,6,13,6,26,6,38,9,27,9,35,3,10,9,30,9,8,6,43,35,16,3,24,9,31,3,6,2,35,1,35,28,40,6,43,16,29,3,43,31,16,1,28,16,31,1,31,28,43,29,29,1,29,28,38,35,35,27,39,3,13,3,26,3,35,10,35,30,43,39,38,16,27,16,43,13,38,31,43,26,31,27,8,3,35,24,16,10,39,1,39,28,31,10,30,16,13,1,28,13,26,1,28,26,38,29,29,27,31,30,3,2,43,8,15,9,7,6,29,10,24,16,48,9,40,3,20,6,31,24,30,29,33,9,8,1,28,8,43,2,29,24,43,40,39,38,2,1,28,2,39,27),nrow = 85,ncol = 2,byrow = T)
+```
+
+The representative of the one loop contains the edges found to be present in the loop. We could iterate over the representative for the loop to find all the data point in that representative:
+
+```{r,echo = T,eval = F}
+unique(c(res$representatives[[2]][[1]][,1],res$representatives[[2]][[1]][,2]))
+```
+
+```{r,echo = F}
+c(9,35,16,31,43,29,28,39,13,26,38,27,10,30,8,24,6,40,3,15,7,48,20,33,2,1)
+```
+
+Since we know that these data points form a loop in the original data set, we could perform a further exploratory analysis in circ to explore the periodic nature of the feature. While in this example we know that a loop will be present, this type of analysis could help find hidden latent structure in data sets. In this way `PyH` is as flexible as the TDA persistent homology functions.
 
 ## Benchmarking `PyH` Against TDAstat's `calculate_homology` Function
 
-Now we will benchmark the run time of the `PyH` function to the TDAstats `calculate_homology` function. This comparison makes sense since both functions are wrappers of the same computational engine, and because TDAstats has faster persistent homology calculations than TDA @PH_benchmarking. Once again, the benchmarking was carried out on a Windows 10 64-bit machine, with an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM. For this simulation, circles, tori and spheres were sampled 10 times at each number of points 100, 200,..., 1000. The runtime of the `PyH` and `calculate_homology` functions were stored, with both functions operating on the same data and using the same function parameters. The code that was used was as follows (but is not executed in this vignette):
+Now we will benchmark the run time of the `PyH` function to the TDAstats `calculate_homology` function. This comparison makes sense since both functions are wrappers of the same computational engine, and because TDAstats has faster persistence diagram calculations than TDA [@PH_benchmarking]. Once again, the benchmarking was carried out on a Windows 10 64-bit machine, with an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM. For this simulation, circles, tori and spheres were sampled 10 times at each number of points 100, 200,..., 1000. The runtime of the `PyH` and `calculate_homology` functions were stored, with both functions operating on the same data and using the same function parameters. The code that was used was as follows (but is not executed in this vignette):
 
 ```{r,echo = T,eval = F}
 # generate persistence diagrams from circles with  100,200,...,1000 data points.
@@ -1070,43 +1115,9 @@ par(mfrow = original_mfrow,xpd = original_xpd,mar = original_mar)
 options(scipen = original_scipen)
 ```
 
-## Future Work: Persistent Cohomology with Python
-
-Persistent cohomology is another tool from topological data analysis which computes persistence diagrams from point clouds, but even faster than persistent homology and localizing topological features concretely in data space (@PChom, @PHom_dualities). This makes persistent cohomology an attractive alternative to persistent homology for applied topological data analysis, so why is it not included in TDApplied? The dionysus python module has a persistent cohomology function for point clouds, however due to the complex data structure in which the results are stored (essentially a list of "diagram point" python objects) the fast conversion of the output of dionysus calculations remains an open problem (currently the fastest that we could find is `lapply` and `do.call` function calls). We include here example code for calculating the persistent cohomology of a circle data set, with the hopes that in the future someone will find a way to either adapt the conversion to a data frame, or to write a persistent cohomology function from scratch in R. Here is our current example:
-
-```{r,echo = T,eval = F}
-# create circle dataset
-circ = TDA::circleUnif(n = 50,r = 1)
-
-# download and import the dionysus python module
-reticulate::py_install("dionysus")
-dionysus = reticulate::import("dionysus")
-
-# calculate persistent cohomology using dionysus up to dimension 1 and radius 2
-f = dionysus$fill_rips(reticulate::np_array(data = circ,dtype = 'float'),k = 1L,r = 2)
-p = dionysus$cohomology_persistence(f)
-dgms = dionysus$init_diagrams(p,f)
-
-# convert output to data frame by creating one dataframe for each dimension and then
-# combining with rbind
-dgm0 <- do.call(rbind,lapply(X = 0:(length(dgms[[1]])-1),FUN = function(X){
-  
-  return(data.frame(dimension = 0,birth = dgms[[1]][[X]]$birth,death = dgms[[1]][[X]]$death))
-  
-}))
-dgm1 <- do.call(rbind,lapply(X = 0:(length(dgms[[2]])-1),FUN = function(X){
-  
-  return(data.frame(dimension = 1,birth = dgms[[2]][[X]]$birth,death = dgms[[2]][[X]]$death))
-  
-}))
-diag <- do.call(rbind,list(dgm0,dgm1))
-```
-
-Note that this code was not found to be nearly as fast as the `PyH` function on some circle data sets, pointing towards the need of a proper persistent cohomology function in R. Moreover, if homology dimension 2 is also calculated then the disparity in run time is even greater.
-
 # Limitations of TDApplied
 
-There are three main limitations of TDApplied which should be discussed for its own future improvements. The first limitation is in the function `diagram_ksvm` - the only acceptable input is a dataset where the single training feature is a persistence diagram (one diagram for each training example). This may be too inflexible for some applications, where the training features may include several persistence diagrams, or a mix of persistence diagrams, numeric and categorical features. A future update to TDApplied should provide the functionality for allowing any number of training features, of various types, to the `diagram_ksvm` function via a weighted sum of kernels. The second limitation of TDApplied is the long runtime of its `diagram_distance` function compared to python's persim `wasserstein` function. Even with a potential runtime increase caused by the reticulate package, the persim `wasserstein` function was significantly faster than the TDApplied `diagram_distance` function. As such, a future version of TDApplied could attempt to speed up its distance calculations in order to be competitive with python implementations. Finally, while TDApplied has implemented a fast persistent homology calculation via reticulate, the faster persistent cohomology currently has no implementation, and this should be the focus of a future update. While TDApplied has been created with flexibility and scalability at its core, there will always be room for adding more functionality and speedups.
+There are two main limitations of TDApplied which should be discussed for its own future improvements. The first limitation is in the function `diagram_ksvm` - the only acceptable input is a dataset where the single training feature is a persistence diagram (one diagram for each training example). This may be too inflexible for some applications, where the training features may include several persistence diagrams, or a mix of persistence diagrams, numeric and categorical features. A future update to TDApplied should provide the functionality for allowing any number of training features, of various types, to the `diagram_ksvm` function via a weighted sum of kernels. The second limitation of TDApplied is the long runtime of its `diagram_distance` function compared to python's persim `wasserstein` function. Even with a potential runtime increase caused by the reticulate package, the persim `wasserstein` function was significantly faster than the TDApplied `diagram_distance` function. As such, a future version of TDApplied could attempt to speed up its distance calculations in order to be competitive with python implementations. While TDApplied has been created with flexibility and scalability at its core, there will always be room for adding more functionality and speedups.
 
 # Conclusions
 

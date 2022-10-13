@@ -42,9 +42,9 @@ diagram_to_df <- function(d){
     return(d)
   }
   
-  if((is.list(d) && ((length(d) == 1 && all(names(d) %in% "diagram") && methods::is(d$diagram,"diagram")) || ((length(d) == 4 && all(names(d) %in% c("diagram","birthLocation","deathLocation","cycleLocation")) && methods::is(d$diagram,"diagram"))))) == F && (methods::is(d,"matrix") && methods::is(d,"array") & all(colnames(d) %in% c("dimension","birth","death"))) == F)
+  if((is.list(d) && ((length(d) == 1 && all(names(d) %in% "diagram") && (methods::is(d$diagram,"diagram")) || methods::is(d$diagram,"data.frame")) || ((length(d) == 4 && all(names(d) %in% c("diagram","birthLocation","deathLocation","cycleLocation")) && methods::is(d$diagram,"diagram"))))) == F && (methods::is(d,"matrix") && methods::is(d,"array") & all(colnames(d) %in% c("dimension","birth","death"))) == F)
   {
-    stop("Diagrams must either be the output of a TDA/TDAstats computation.")
+    stop("Diagrams must either be the output of a TDA/TDAstats/PyH computation.")
   }
   
   if(methods::is(d,"matrix") & methods::is(d,"array"))

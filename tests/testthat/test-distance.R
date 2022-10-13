@@ -41,14 +41,13 @@ test_that("diagram_distance is computing correctly",{
   expect_identical(diagram_distance(D1 = D1,D2 = D1,p = Inf,distance = "wasserstein",dim = 0),0)
   expect_identical(diagram_distance(D1 = D1,D2 = D1,p = 2,distance = "wasserstein",dim = 0),0)
   expect_identical(diagram_distance(D1 = D1,D2 = D1,distance = "fisher",sigma = 1,dim = 0),0)
-  
-  D1 = data.frame(dimension = 0,birth = rnorm(3),death = rnorm(3))
-  D2 = data.frame(dimension = 0,birth = rnorm(3),death = rnorm(3))
-  phom1 = TDAstats::calculate_homology(D1,dim = 0)
-  phom2 = TDAstats::calculate_homology(D2,dim = 0)
 
-  D1 = as.data.frame(phom1)
-  D2 = as.data.frame(phom2)
+  # this example was picked the TDA function wasserstein disagrees with the actual minimum values
+  # for p = 2,3, but diagram_distance gets the correct answer
+  D1 = data.frame(dimension = c(0,0),birth = c(0,0),death = c(0.9640122,1.3467424))
+  D2 = data.frame(dimension = c(0,0),birth = c(0,0),death = c(1.233867,1.398447))
+  phom1 = D1
+  phom2 = D2
   
   D1_subset <- D1[,2:3]
   D2_subset <- D2[,2:3]

@@ -38,11 +38,12 @@ check_PyH_setup <- function(){
 #### IMPORT RIPSER MODULE ####
 #' Import the python module ripser.
 #' 
-#' The ripser module is needed for fast persistent homology calculations with the PyH function.
+#' The ripser module is needed for fast persistent cohomology calculations with the PyH function.
 #' 
 #' Same as "reticulate::import("ripser")", just with additional checks.
 #' 
 #' @export
+#' @return the python ripser module.
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @examples
 #' \dontrun{
@@ -83,15 +84,20 @@ check_ripser <- function(ripser){
   
 }
 
-#### PYTHON PERSISTENT HOMOLOGY ####
+#### PYTHON PERSISTENT COHOMOLOGY ####
 #' Fast persistent homology calculations with python.
 #'
-#' This function is a wrapper of the python wrapper of the ripser engine, but is still faster than using the
-#' R package TDAstats (see the TDApplied package vignette for details). 
+#' This function is a wrapper of the python wrapper of the ripser engine for persistent cohomology, 
+#' but is still faster than using the R package TDAstats (see the TDApplied package vignette for details).
 #' 
 #' If `distance_mat` is `TRUE` then `X` must be a square matrix. The `ripser` parameter should be the
 #' result of an `import_ripser` function call, but since that function is slow the ripser object should
-#' be explicitly created before a PyH function call (see examples).
+#' be explicitly created before a PyH function call (see examples). Cohomology is computed over Z2,
+#' as is the case for the TDAstats function \code{\link[TDAstats]{calculate_homology}} (this is also the
+#' default for ripser in c++). If representative cocycles are returned, then they are stored in a list with
+#' one element for each point in the persistence diagram, ignoring dimension 0 points. Each representative of
+#' a dimension d cocycle (1 for loops, 2 for voids, etc.) is a kxd dimension matrix/array containing the row number-labelled
+#' edges, triangles etc. in the cocycle.
 #' 
 #' @param X either a matrix or dataframe, representing either point cloud data or a distance matrix. In either case there
 #' must be at least two rows and 1 column.
@@ -102,6 +108,11 @@ check_ripser <- function(ripser){
 #' @param ignore_infinite_cluster a boolean representing whether to remove clusters (0 dimensional cycles) which
 #' die at the threshold value. Default is TRUE as this is the default for TDAstats homology calculations, but can be set to
 #' FALSE which is the default for python ripser. 
+#' @param calculate_representatives a boolean representing whether to return a list of representative cocycles for the
+#' topological features found in the persistence diagram, default FALSE.
+#' @return Either a dataframe containing the persistence diagram if `calculate_representatives` is `FALSE` (the default), otherwise a list with two elements: 
+#' diagram of class diagram, containing the persistence diagram,
+#' and representatives, a list containing the edges, triangles etc. contained in each representative cocycle.
 #' @importFrom methods is
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
@@ -113,11 +124,11 @@ check_ripser <- function(ripser){
 #' # import the ripser module
 #' ripser <- import_ripser()
 #' 
-#' # calculate persistent homology up to dimension 1 with a maximum
+#' # calculate persistence diagram up to dimension 1 with a maximum
 #' # radius of 5
 #' phom <- PyH(X = df,thresh = 5,ripser = ripser)
 #' }
-PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_cluster = TRUE){
+PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_cluster = TRUE,calculate_representatives = FALSE){
   
   # error check parameters
   if(is.null(distance_mat))
@@ -146,6 +157,19 @@ PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_
     stop("ignore_infinite_cluster must not be NA/NAN.")
   }
   
+  if(is.null(calculate_representatives))
+  {
+    stop("calculate_representatives must not be NULL.")
+  }
+  if(length(calculate_representatives) > 1 | !methods::is(calculate_representatives,"logical"))
+  {
+    stop("calculate_representatives must be a single logical (i.e. T or F).")
+  }
+  if(is.na(calculate_representatives) | is.nan(calculate_representatives) )
+  {
+    stop("calculate_representatives must not be NA/NAN.")
+  }
+  
   check_param(param = maxdim,param_name = "maxdim",numeric = T,whole_numbers = T,multiple = F,finite = T,non_negative = T)
   check_param(param = thresh,param_name = "thresh",numeric = T,whole_numbers = T,multiple = F,finite = T,non_negative = T)
   check_ripser(ripser)
@@ -171,7 +195,28 @@ PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_
   }
   
   # calculate persistent homology
-  PH <- ripser$ripser(X = X,maxdim = maxdim,thresh = thresh,distance_matrix = distance_mat)
+  PH <- ripser$ripser(X = X,maxdim = maxdim,thresh = thresh,distance_matrix = distance_mat,do_cocycles = calculate_representatives)
+  
+  # calculate representatives if desired
+  if(calculate_representatives == T)
+  {
+    representatives <- list()
+    for(i in 0:maxdim)
+    {
+      if(length(PH$cocycles[[i + 1]]) == 0)
+      {
+        representatives[[length(representatives) + 1]] <- list()
+      }else
+      {
+        representatives[[length(representatives) + 1]] <- lapply(X = PH$cocycles[[i + 1]],FUN = function(X){
+          
+          # removing edge weight 1
+          return(X[,1:(ncol(X)-1)])
+          
+        })
+      }
+    }
+  }
   
   # format output
   PH <- do.call(rbind,lapply(X = 1:(maxdim + 1),FUN = function(X){
@@ -195,7 +240,12 @@ PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_
   
   PH <- as.data.frame(PH)
   
-  return(PH)
+  if(calculate_representatives == F)
+  {
+    return(PH)
+  }
+  # else
+  return(list(diagram = PH,representatives = representatives))
   
 }
 

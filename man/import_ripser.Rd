@@ -6,8 +6,11 @@
 \usage{
 import_ripser()
 }
+\value{
+the python ripser module.
+}
 \description{
-The ripser module is needed for fast persistent homology calculations with the PyH function.
+The ripser module is needed for fast persistent cohomology calculations with the PyH function.
 }
 \details{
 Same as "reticulate::import("ripser")", just with additional checks.
