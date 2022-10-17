@@ -4,23 +4,21 @@
 \alias{plot_diagram}
 \title{Plot persistence diagrams}
 \usage{
-plot_diagram(D, title = NULL, xlim = NULL, ylim = NULL, legend = TRUE)
+plot_diagram(D, title = NULL, max_radius = NULL, legend = TRUE)
 }
 \arguments{
 \item{D}{a persistence diagram, either outputted from either a persistent homology homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}} or from \code{\link{diagram_to_df}}, with
-maximum dimension at most 3.}
+maximum dimension at most 12.}
 
 \item{title}{the character string plot title, default NULL.}
 
-\item{xlim}{the x-limits of the plot as a length 2 numeric vector, default is c(0,max death value).}
-
-\item{ylim}{the y-limits of the plot as a length 2 numeric vector, default is c(0,max death value).}
+\item{max_radius}{the x and y limits of the plot are defined as `c(0,max_radius)`, and the default value of `max_radius` is the maximum death value in `D`.}
 
 \item{legend}{a logical indicating whether to include a legend of feature dimensions, default TRUE.}
 }
 \description{
 Plots a persistence diagram outputted from either a persistent homology calculation or from diagram_to_df, with
-maximum homological dimension no more than 3.
+maximum homological dimension no more than 12 (otherwise the legend doesn't fit in the plot).
 Each homological dimension has its own color and point type (with colors chosen to be clear and distinct from each other), 
 and the main plot title can be altered via the `title` parameter.
 }

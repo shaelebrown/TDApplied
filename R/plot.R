@@ -2,15 +2,14 @@
 #' Plot persistence diagrams
 #'
 #' Plots a persistence diagram outputted from either a persistent homology calculation or from diagram_to_df, with
-#' maximum homological dimension no more than 3.
+#' maximum homological dimension no more than 12 (otherwise the legend doesn't fit in the plot).
 #' Each homological dimension has its own color and point type (with colors chosen to be clear and distinct from each other), 
 #' and the main plot title can be altered via the `title` parameter.
 #' 
 #' @param D a persistence diagram, either outputted from either a persistent homology homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}} or from \code{\link{diagram_to_df}}, with
-#' maximum dimension at most 3.
+#' maximum dimension at most 12.
 #' @param title the character string plot title, default NULL.
-#' @param xlim the x-limits of the plot as a length 2 numeric vector, default is c(0,max death value).
-#' @param ylim the y-limits of the plot as a length 2 numeric vector, default is c(0,max death value).
+#' @param max_radius the x and y limits of the plot are defined as `c(0,max_radius)`, and the default value of `max_radius` is the maximum death value in `D`.
 #' @param legend a logical indicating whether to include a legend of feature dimensions, default TRUE.
 #' @importFrom graphics legend abline
 #' @export
@@ -25,13 +24,13 @@
 #' 
 #' # plot with title
 #' plot_diagram(diag,title = "Example diagram")
-plot_diagram <- function(D,title = NULL,xlim = NULL,ylim = NULL,legend = TRUE){
+plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE){
   
   # error check parameters
   check_diagram(d = D,ret = F)
-  if(max(D[,1L]) > 3)
+  if(max(D[,1L]) > 12)
   {
-    stop("diagram must have maximum dimension no more than 3.")
+    stop("diagram must have maximum dimension no more than 12.")
   }
   if(!is.null(title))
   {
@@ -48,48 +47,30 @@ plot_diagram <- function(D,title = NULL,xlim = NULL,ylim = NULL,legend = TRUE){
       stop("title must be a character string.")
     }
   }
-  if(is.null(xlim))
+  if(is.null(max_radius))
   {
-    xlim <- c(0,max(D[,3L]))
+    max_radius <- max(D[,3L])
+    if(is.infinite(max_radius))
+    {
+      stop("when D contains Inf death values either remove those points, set their death value to be finite, or set a finite max_radius value.")
+    }
   }else
   {
-    if(!is.vector(xlim) | !is.numeric(xlim))
+    if(!is.vector(max_radius) | !is.numeric(max_radius))
     {
-      stop("xlim must be a numeric vector")
+      stop("max_radius must be numeric.")
     }
-    if(length(xlim) != 2)
+    if(length(max_radius) != 1)
     {
-      stop("xlim must be a length 2 vector.")
+      stop("max_radius must be a single number.")
     }
-    if(xlim[[1]] >= xlim[[2]])
+    if(is.infinite(max_radius))
     {
-      stop("lower limit of xlim must be smaller than its upper limit.")
+      stop("max_radius must be finite.")
     }
-    if(is.infinite(xlim[[2]]))
+    if(max_radius <= 0)
     {
-      stop("xlim must have a finite upper limit.")
-    }
-  }
-  if(is.null(ylim))
-  {
-    ylim <- c(0,max(D[,3L]))
-  }else
-  {
-    if(!is.vector(ylim) | !is.numeric(ylim))
-    {
-      stop("ylim must be a numeric vector")
-    }
-    if(length(ylim) != 2)
-    {
-      stop("ylim must be a length 2 vector.")
-    }
-    if(ylim[[1]] >= ylim[[2]])
-    {
-      stop("lower limit of ylim must be smaller than its upper limit.")
-    }
-    if(is.infinite(ylim[[2]]))
-    {
-      stop("ylim must have a finite upper limit.")
+      stop("max_radius must be positive.")
     }
   }
   if(is.null(legend))
@@ -104,12 +85,15 @@ plot_diagram <- function(D,title = NULL,xlim = NULL,ylim = NULL,legend = TRUE){
   # convert diagram to df
   D <- diagram_to_df(D)
   
+  # subset by max_radius
+  D <- D[which(D$birth < max_radius & D$death <= max_radius),]
+  
   # build plot
-  pchs <- c(15:18)
-  cols <- c("black","red","blue","darkgreen")
+  pchs <- c(15:18,0:8)
+  cols <- c("black","red","blue","darkgreen","violet","salmon","purple","orange","maroon","gold","chocolate","aquamarine","brown")
   dims <- unique(D[,1L])
   dims <- dims[order(dims)]
-  plot(x = D[,2L],y = D[,3L],xlim = xlim,ylim = ylim,
+  plot(x = D[,2L],y = D[,3L],xlim = c(0,max_radius),ylim = c(0,max_radius),
        xlab = "Feature birth",ylab = "Feature death",col = cols[D[,1L] + 1],
        pch = pchs[D[,1L] + 1],main = ifelse(test = is.null(title),yes = "",no = title))
   if(legend == T)
