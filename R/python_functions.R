@@ -171,7 +171,7 @@ PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_
   }
   
   check_param(param = maxdim,param_name = "maxdim",numeric = T,whole_numbers = T,multiple = F,finite = T,non_negative = T)
-  check_param(param = thresh,param_name = "thresh",numeric = T,whole_numbers = T,multiple = F,finite = T,non_negative = T)
+  check_param(param = thresh,param_name = "thresh",numeric = T,whole_numbers = F,multiple = F,finite = T,non_negative = T)
   check_ripser(ripser)
   if(!methods::is(X,"data.frame") & !methods::is(X,"matrix"))
   {
