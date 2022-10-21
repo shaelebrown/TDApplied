@@ -123,7 +123,7 @@ In this section we will describe the various computational tools implemented in 
 devtools::load_all()
 ``` 
 
-Since TDApplied uses the output of TDA/TDAstats calculations (or its own persistent homology function, "PyH", discussed later) as inputs to its functions, either TDA or TDAstats should be at least installed (if not attached) when using TDApplied. All examples will analyze simple diagrams which are random deviations of three persistence diagrams called D1, D2 and D3 (each with points in dimension 0 only), which we will plot with the TDApplied function `plot_diagram`:
+Since TDApplied uses the output of TDA/TDAstats calculations (or its own persistent homology function, "PyH", discussed later) as inputs to its functions, either TDA or TDAstats should be at least installed (if not attached) when using TDApplied. All examples, except those in the subsection on bootstrapping, will analyze simple diagrams which are random deviations of three persistence diagrams called D1, D2 and D3 (each with points in dimension 0 only), which we will plot with the TDApplied function `plot_diagram`:
 
 ```{r,echo = T,fig.height = 3,fig.width = 7,fig.align = 'center'}
 D1 = data.frame(dimension = c(0),birth = c(2),death = c(3))
@@ -475,6 +475,18 @@ indep_test$p_values
 ```
 
 The p-value of this test would not be significant at any typical significance threshold, reflecting the fact that there is no real (i.e. non-spurious) dependence between the two groups, as expected.
+
+## Finding Real Topological Features via Bootstrapping
+
+While the focus of TDApplied is applied topological data analysis, and as such this vignette has focused on machinery for carrying out such analyses, a fundamental question in topological data analysis which must not be overlooked is how to tell if a point in a persistence diagram should be considered "real" (signal) or not (noise). This question has been addressed via a bootstrapping approach in [@bootstrap], which has been implemented in the TDA package. TDApplied has its own implementation of this procedure, due to the speed increase of its distance function calculations (this is discussed in the following section).
+
+The idea of the bootstrap procedure is as follows, where $X$ is the input data set and $\alpha$ is the desired threshold for type 1 error:
+
+1. We first compute the diagram of $X$, $D$.
+2. Then we repeatedly sample, with replacement, the original data and compute new persistence diagrams $\{D_1,\dots,D_n\}$.
+3. We calculate the bottleneck distance of each new diagram with the original, either in each dimension separately (obtaining one threshold for each dimension) or for all points altogether, and compute the $1-\alpha$ percentile of these values (in each dimension or altogether as was calculated).
+
+This/these thresholds is/are the maximum bottleneck distance from any point which the geometry of the persistence diagram changes significantly, forming a "confidence interval" around each point in $D$ (where the bottleneck distance to that point is at most the threshold, forming a square around the point). Therefore, "real" points will be those whose confidence intervals do not touch the diagonal line, where birth and death is the same, so the persistence threshold is twice the bottleneck distance threshold calculated above.
 
 # Comparing the TDApplied `diagram_distance` Function Against R and Python Counterparts
 

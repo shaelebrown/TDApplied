@@ -21,7 +21,7 @@
 #' @importFrom parallel clusterEvalQ clusterExport detectCores makeCluster stopCluster
 #' @importFrom parallelly availableCores
 #' @importFrom rdist cdist
-#' @importFrom stats cmdscale complete.cases pgamma lm
+#' @importFrom stats cmdscale complete.cases pgamma lm quantile
 #' @importFrom utils combn
 #' @importFrom iterators iter
 NULL
