@@ -18,7 +18,12 @@ check_PyH_setup <- function(){
   # then make sure that python is installed
   if(reticulate::py_available() == F)
   {
-    stop("python must be installed. Try installing from 'https://python.org'.")
+    # sometimes doing this helps reticulate locate python
+    check_config <- reticulate::py_config()
+    if(reticulate::py_available() == F) # still...
+    {
+      stop("python must be installed. Try installing from 'https://python.org'.")
+    }
   }
   
   # finally make sure that ripser module has been downloaded
