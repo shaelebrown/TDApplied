@@ -7,7 +7,7 @@
 #' Either one threshold can be computed across all desired dimensions or one threshold for
 #' each dimension.
 #' 
-#' The thresholds are determined by calculating the 1-\alpha percentile of the bottleneck
+#' The thresholds are determined by calculating the 1-alpha percentile of the bottleneck
 #' distance values between the real persistence diagram and other diagrams obtained
 #' by bootstrap resampling the data. Note that since \code{\link[TDAstats]{calculate_homology}} and
 #' \code{\link{PyH}} (when `ignore_infinite_cluster` is TRUE as is the default) can ignore the longest-lived
@@ -30,11 +30,19 @@
 #' @param alpha the type-1 error threshold, default 0.05.
 #' @param return_diag a boolean representing whether or not to return the calculated persistence diagram, default TRUE.
 #' @param return_subsetted a boolean representing whether or not to return the subsetted persistence diagram (with or without representatives), default TRUE.
+#' @param num_workers the integer number of cores used for parallelizing (over bootstrap samples), default one less the maximum amount of cores on the machine.
 #' @return either one numeric threshold value (if `global_threshold` is TRUE) or a vector of such values with one for each
 #' dimension 0..`maxdim` (in that order).
 #' @export
 #' @importFrom methods is
 #' @importFrom stats quantile
+#' @importFrom foreach foreach
+#' @importFrom future plan
+#' @importFrom doFuture registerDoFuture
+#' @importFrom parallel makeCluster stopCluster
+#' @importFrom parallelly availableCores
+#' @importFrom doRNG %dorng%
+#' @importFrom doParallel registerDoParallel stopImplicitCluster
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @examples
 #'
@@ -43,9 +51,10 @@
 #'
 #' # calculate persistence thresholds for alpha = 0.05 
 #' # and return the calculated diagram as well as the subsetted diagram
-#' bootstrapped_diagram <- bootstrap_persistence_thresholds(X = df,FUN = "calculate_homology",maxdim = 1,thresh = 2)
+#' bootstrapped_diagram <- bootstrap_persistence_thresholds(X = df,
+#' FUN = "calculate_homology",maxdim = 1,thresh = 2)
 
-bootstrap_persistence_thresholds <- function(X,FUN = "PyH",maxdim = 0,thresh,distance_mat = FALSE,global_threshold = TRUE,ripser = NULL,ignore_infinite_cluster = TRUE,calculate_representatives = FALSE,num_samples = 30,alpha = 0.05,return_subsetted = TRUE,return_diag = TRUE){
+bootstrap_persistence_thresholds <- function(X,FUN = "PyH",maxdim = 0,thresh,distance_mat = FALSE,global_threshold = TRUE,ripser = NULL,ignore_infinite_cluster = TRUE,calculate_representatives = FALSE,num_samples = 30,alpha = 0.05,return_subsetted = TRUE,return_diag = TRUE,num_workers = parallelly::availableCores(omit = 1)){
 
   # error check parameters
   if(is.null(distance_mat))
@@ -190,6 +199,12 @@ bootstrap_persistence_thresholds <- function(X,FUN = "PyH",maxdim = 0,thresh,dis
   {
     stop("alpha must be between 0 and 1 (non-inclusive).")
   }
+  check_param("num_workers",num_workers,whole_numbers = T,at_least_one = T,finite = T,numeric = T,multiple = F)
+  if(num_workers > parallelly::availableCores())
+  {
+    warning("num_workers is greater than the number of available cores - setting to maximum value less one.")
+    num_workers <- parallelly::availableCores(omit = 1)
+  }
   
   # first calculate the "real" persistence diagram, storing representative cycles if need be
   if(FUN == "PyH")
@@ -219,60 +234,107 @@ bootstrap_persistence_thresholds <- function(X,FUN = "PyH",maxdim = 0,thresh,dis
     diag <- diagram_to_df(diag)
   }
   
-  # now perform bootstrapping, in parallel if desired
-  bootstrap_values <- lapply(X = 1:num_samples,FUN = function(X){
+  # compute distance matrix in parallel
+  doFuture::registerDoFuture()
+  cl = parallel::makeCluster(num_workers)
+  future::plan(strategy = "cluster",workers = cl)
+
+  # perform bootstrapping in parallel
+  tryCatch(expr = {
     
-    # sample data points with replacement
-    s <- sample(1:nrow(parent.frame(n = 2)$X),size = nrow(parent.frame(n = 2)$X),replace = T)
-    if(distance_mat == F)
-    {
-      X_sample <- parent.frame(n = 2)$X[s,]
-    }else
-    {
-      # also subset columns for a distance matrix
-      X_sample <- parent.frame(n = 2)$X[s,s]
-    }
-    
-    # calculate diagram (without representatives)
-    if(FUN == "PyH")
-    {
-      bootstrap_diag <- PyH(X = X_sample,maxdim = maxdim,thresh = thresh,distance_mat = distance_mat,ripser = ripser,ignore_infinite_cluster = ignore_infinite_cluster,calculate_representatives = F)
-    }
-    if(FUN == "calculate_homology")
-    {
-      bootstrap_diag <- diagram_to_df(TDAstats::calculate_homology(mat = X_sample,dim = maxdim,threshold = thresh,format = ifelse(test = distance_mat == T,yes = "distmat",no = "cloud")))
-    }
-    if(FUN == "ripsDiag")
-    {
-      bootstrap_diag <- diagram_to_df(TDA::ripsDiag(X = X_sample,maxdimension = maxdim,maxscale = thresh,dist = ifelse(test = distance_mat == F,yes = "euclidean",no = "arbitrary"),library = "dionysus",location = F,printProgress = F))
-    }
-    
-    if(global_threshold == T)
-    {
-      # return bottleneck distance with original diagram considering each point to have the same dimension
-      bootstrap_diag$dimension = rep(0,nrow(bootstrap_diag))
-      return(diagram_distance(D1 = data.frame(dimension = rep(0,nrow(diag)),birth = diag$birth,death = diag$death),D2 = bootstrap_diag,p = Inf))
-    }else
-    {
-      # return bottleneck distance with original diagram in each dimension
-      ret_vec <- list()
-      for(d in 0:maxdim)
+    bootstrap_values <- doRNG::`%dorng%`(foreach::foreach(N = 1:num_samples,.combine = c),ex = {
+      
+      # sample data points with replacement
+      s <- sample(1:nrow(X),size = nrow(X),replace = T)
+      if(distance_mat == F)
       {
-        ret_vec[[length(ret_vec) + 1]] <- diagram_distance(D1 = diag,D2 = bootstrap_diag,p = Inf,dim = d)
+        X_sample <- X[s,]
+      }else
+      {
+        # also subset columns for a distance matrix
+        X_sample <- X[s,s]
       }
-      return(ret_vec)
-    }
+      
+      # calculate diagram (without representatives)
+      if(FUN == "PyH")
+      {
+        # calculate persistent homology
+        bootstrap_diag <- ripser$ripser(X = X_sample,maxdim = maxdim,thresh = thresh,distance_matrix = distance_mat,do_cocycles = F)
+        
+        # format output
+        bootstrap_diag <- do.call(rbind,lapply(X = 1:(maxdim + 1),FUN = function(X){
+          
+          d <- as.data.frame(bootstrap_diag$dgms[[X]])
+          if(nrow(d) == 0)
+          {
+            return(data.frame(dimension = numeric(),birth = numeric(),death = numeric()))
+          }
+          d$D <- X - 1
+          d <- d[,c(3,1,2)]
+          colnames(d) = c("dimension","birth","death")
+          d[which(d$death == Inf),3] <- thresh
+          if(ignore_infinite_cluster == T & X == 1)
+          {
+            d <- d[which(d$birth > 0 | d$death < thresh),]
+          }
+          return(d)
+          
+        }))
+        bootstrap_diag <- as.data.frame(bootstrap_diag)
+        
+      }
+      if(FUN == "calculate_homology")
+      {
+        bootstrap_diag <- diagram_to_df(TDAstats::calculate_homology(mat = X_sample,dim = maxdim,threshold = thresh,format = ifelse(test = distance_mat == T,yes = "distmat",no = "cloud")))
+      }
+      if(FUN == "ripsDiag")
+      {
+        bootstrap_diag <- diagram_to_df(TDA::ripsDiag(X = X_sample,maxdimension = maxdim,maxscale = thresh,dist = ifelse(test = distance_mat == F,yes = "euclidean",no = "arbitrary"),library = "dionysus",location = F,printProgress = F))
+      }
+      
+      if(global_threshold == T)
+      {
+        # return bottleneck distance with original diagram considering each point to have the same dimension
+        bootstrap_diag$dimension = rep(0,nrow(bootstrap_diag))
+        return(diagram_distance(D1 = data.frame(dimension = rep(0,nrow(diag)),birth = diag$birth,death = diag$death),D2 = bootstrap_diag,p = Inf))
+      }else
+      {
+        # return bottleneck distance with original diagram in each dimension
+        ret_vec <- list()
+        for(d in 0:maxdim)
+        {
+          ret_vec[[length(ret_vec) + 1]] <- diagram_distance(D1 = diag,D2 = bootstrap_diag,p = Inf,dim = d)
+        }
+        return(ret_vec)
+      }
+    })
+    
+  },
+  warning = function(w){
+    
+    if(grepl(pattern = "Every diagram must be non-empty.",w))
+    {
+      warning("A diagram in some dimension was empty. Try decreasing the maxdim parameter.")
+    }else
+    {
+      warning(w)
+    }},
+  error = function(e){stop(e)},
+  finally = {
+             
+    parallel::stopCluster(cl)
+             
   })
   
   # convert distance threshold(s) into persistence threshold(s)
-  if(length(bootstrap_values[[1]]) == 1)
+  if(length(bootstrap_values) == num_samples)
   {
     thresholds <- 2*stats::quantile(unlist(bootstrap_values),probs = c(1-alpha))[[1]]
   }else
   {
     thresholds <- unlist(lapply(X = 0:maxdim,FUN = function(X){
       
-      return(2*stats::quantile(sapply(bootstrap_values,"[[",X + 1),probs = c(1-alpha))[[1]])
+      return(2*stats::quantile(unlist(bootstrap_values[seq(X + 1,length(bootstrap_values),maxdim + 1)]),probs = c(1-alpha))[[1]])
       
     }))
   }

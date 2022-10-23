@@ -108,15 +108,15 @@ test_that("bootstrap_persistence_thresholds is computing properly",{
   # expect_true(min(bs$subsetted_diag$death - bs$subsetted_diag$birth) > bs$thresholds)
   
   # # PyH with multiple thresholds
-  # bs <- bootstrap_persistence_thresholds(X = D,FUN = "ripsDiag",maxdim = 1,thresh = 2,calculate_representatives = T,return_diag = T,global_threshold = F,ripser = ripser)
-  # expect_length(bs$representatives,nrow(bs$diag))
+  # bs <- bootstrap_persistence_thresholds(X = D,FUN = "PyH",maxdim = 1,thresh = 2,calculate_representatives = T,return_diag = T,global_threshold = F,ripser = ripser)
+  # expect_length(bs$representatives[[2]],length(which(bs$diag$dimension == 1)))
   # expect_length(bs$thresholds,2)
   # expect_gt(bs$thresholds[[1]],0)
   # expect_gt(bs$thresholds[[2]],0)
-  # expect_length(bs$subsetted_representatives,nrow(bs$subsetted_diag))
+  # expect_length(bs$subsetted_representatives,nrow(bs$subsetted_diag) + 1)
   # expect_true(min(bs$subsetted_diag[which(bs$subsetted_diag$dimension == 0),]$death - bs$subsetted_diag[which(bs$subsetted_diag$dimension == 0),]$birth) > bs$thresholds[[1]])
   # expect_true(min(bs$subsetted_diag[which(bs$subsetted_diag$dimension == 1),]$death - bs$subsetted_diag[which(bs$subsetted_diag$dimension == 1),]$birth) > bs$thresholds[[2]])
-  
+
   # check on circle:
   bs <- bootstrap_persistence_thresholds(X = D,FUN = "ripsDiag",maxdim = 1,thresh = 2,return_diag = T)
   expect_equal(bs$subsetted_diag$dimension,c(0,1))

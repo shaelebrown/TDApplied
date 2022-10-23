@@ -17,7 +17,8 @@ bootstrap_persistence_thresholds(
   num_samples = 30,
   alpha = 0.05,
   return_subsetted = TRUE,
-  return_diag = TRUE
+  return_diag = TRUE,
+  num_workers = parallelly::availableCores(omit = 1)
 )
 }
 \arguments{
@@ -49,6 +50,8 @@ calculated when using the 'calculate_homology' function.}
 \item{return_subsetted}{a boolean representing whether or not to return the subsetted persistence diagram (with or without representatives), default TRUE.}
 
 \item{return_diag}{a boolean representing whether or not to return the calculated persistence diagram, default TRUE.}
+
+\item{num_workers}{the integer number of cores used for parallelizing (over bootstrap samples), default one less the maximum amount of cores on the machine.}
 }
 \value{
 either one numeric threshold value (if `global_threshold` is TRUE) or a vector of such values with one for each
@@ -62,7 +65,7 @@ Either one threshold can be computed across all desired dimensions or one thresh
 each dimension.
 }
 \details{
-The thresholds are determined by calculating the 1-\alpha percentile of the bottleneck
+The thresholds are determined by calculating the 1-alpha percentile of the bottleneck
 distance values between the real persistence diagram and other diagrams obtained
 by bootstrap resampling the data. Note that since \code{\link[TDAstats]{calculate_homology}} and
 \code{\link{PyH}} (when `ignore_infinite_cluster` is TRUE as is the default) can ignore the longest-lived
@@ -76,7 +79,8 @@ df = TDA::circleUnif(n = 50)
 
 # calculate persistence thresholds for alpha = 0.05 
 # and return the calculated diagram as well as the subsetted diagram
-bootstrapped_diagram <- bootstrap_persistence_thresholds(X = df,FUN = "calculate_homology",maxdim = 1,thresh = 2)
+bootstrapped_diagram <- bootstrap_persistence_thresholds(X = df,
+FUN = "calculate_homology",maxdim = 1,thresh = 2)
 }
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}
