@@ -252,3 +252,13 @@ ripser <- import_ripser()
 # run persistent homology
 diagram <- PyH(circ,maxdim = 1,thresh = 1,ripser = ripser)
 ```
+
+Finding real topological features in data:
+
+```{r,echo = T}
+# uniformly sample from a unit circle
+circ <- TDA::circleUnif(n = 50,r = 1)
+
+# find real topological features
+boot <- bootstrap_persistence_thresholds(X = circ,FUN = "calculate_homology",maxdim = 1,thresh = 2)
+```
