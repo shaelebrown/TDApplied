@@ -19,9 +19,6 @@
 #' @importFrom iterators iter
 #' @importFrom kernlab as.kernelMatrix kkmeans kpca ksvm predict
 #' @importFrom parallel clusterEvalQ clusterExport detectCores makeCluster stopCluster
-#' @importFrom future plan
-#' @importFrom doFuture registerDoFuture
-#' @importFrom doRNG %dorng%
 #' @importFrom parallelly availableCores
 #' @importFrom rdist cdist
 #' @importFrom stats cmdscale complete.cases pgamma lm quantile

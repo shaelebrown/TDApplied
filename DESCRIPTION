@@ -19,7 +19,7 @@ Description: Topological data analysis is a powerful tool for finding non-linear
     and inference for persistence diagrams which scale well, and (4) provide a fast implementation
     of persistent homology via a python interface.
 Depends: R (>= 3.2.2)
-Imports: parallel, doParallel, foreach, clue, rdist, parallelly, kernlab, iterators, methods, stats, utils, doRNG, future, doFuture
+Imports: parallel, doParallel, foreach, clue, rdist, parallelly, kernlab, iterators, methods, stats, utils
 License: GPL-3
 URL: https://github.com/shaelebrown/TDApplied
 BugReports: https://github.com/shaelebrown/TDApplied/issues

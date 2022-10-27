@@ -4,26 +4,23 @@
 #' Bootstrapping is used to find a conservative estimate of a "confidence interval" around
 #' each point in the persistence diagram of the data set, and points whose intervals do not
 #' overlap with the diagonal (birth = death) would be considered "significant" or "real".
-#' Either one threshold can be computed across all desired dimensions or one threshold for
-#' each dimension.
+#' One threshold is computed for each dimension in the diagram.
 #' 
 #' The thresholds are determined by calculating the 1-alpha percentile of the bottleneck
 #' distance values between the real persistence diagram and other diagrams obtained
-#' by bootstrap resampling the data. Note that since \code{\link[TDAstats]{calculate_homology}} and
-#' \code{\link{PyH}} (when `ignore_infinite_cluster` is TRUE as is the default) can ignore the longest-lived
-#' cluster, fewer "real" clusters may be found when using these functions. To avoid this possibility
-#' either set `FUN` equal to 'ripsDiag' or to 'PyH' and set `ignore_infinite_cluster` to FALSE.
+#' by bootstrap resampling the data. Note that since \code{\link[TDAstats]{calculate_homology}} 
+#' can ignore the longest-lived cluster, fewer "real" clusters may be found. To avoid this possibility
+#' try setting `FUN` equal to 'ripsDiag'.
 #'
 #' @param X the input dataset, must either be a matrix or data frame.
 #' @param FUN a string representing the persistent homology function to use, either
-#' 'calculate_homology', 'ripsDiag' or 'PyH' (default).
+#' 'calculate_homology' (the default) or 'ripsDiag'.
 #' @param maxdim the integer maximum homological dimension for persistent homology, default 0.
 #' @param thresh the positive numeric maximum radius of the Vietoris-Rips filtration.
 #' @param distance_mat a boolean representing if `X` is a distance matrix (TRUE) or not (FALSE, default).
-#' @param global_threshold a boolean representing if one threshold should be calculated for all 
 #' dimensions together (TRUE, the default) or if one threshold should be calculated for each dimension separately (FALSE).
-#' @param ripser either NULL (default) or the ripser module for `PyH` calculations, as imported by the `import_ripser` function.
-#' @param ignore_infinite_cluster a boolean representing whether to ignore the infinitely persisting cluster when using the `PyH` function, default TRUE.
+#' @param ripser the imported ripser module when `FUN` is `PyH`.
+#' @param ignore_infinite_cluster a boolean indicating whether or not to ignore the infinitely lived cluster when `FUN` is `PyH`.
 #' @param calculate_representatives a boolean representing whether to calculate representative (co)cycles, default FALSE. Note that representatives cant be
 #' calculated when using the 'calculate_homology' function.
 #' @param num_samples the positive integer number of bootstrap samples, default 30.
@@ -31,19 +28,17 @@
 #' @param return_diag a boolean representing whether or not to return the calculated persistence diagram, default TRUE.
 #' @param return_subsetted a boolean representing whether or not to return the subsetted persistence diagram (with or without representatives), default TRUE.
 #' @param num_workers the integer number of cores used for parallelizing (over bootstrap samples), default one less the maximum amount of cores on the machine.
-#' @return either one numeric threshold value (if `global_threshold` is TRUE) or a vector of such values with one for each
-#' dimension 0..`maxdim` (in that order).
+#' @return a numeric vector of threshold values ,with one for each dimension 0..`maxdim` (in that order).
 #' @export
 #' @importFrom methods is
 #' @importFrom stats quantile
-#' @importFrom foreach foreach
-#' @importFrom future plan
-#' @importFrom doFuture registerDoFuture
-#' @importFrom parallel makeCluster stopCluster
+#' @importFrom foreach foreach %dopar% %do%
+#' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
 #' @importFrom parallelly availableCores
-#' @importFrom doRNG %dorng%
-#' @importFrom doParallel registerDoParallel stopImplicitCluster
+#' @importFrom doParallel registerDoParallel
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @references
+#' Chazal F et al (2017). "Robust Topological Inference: Distance to a Measure and Kernel Distance." \url{https://www.jmlr.org/papers/volume18/15-484/15-484.pdf}.
 #' @examples
 #'
 #' # create a persistence diagram from a sample of the unit circle
@@ -54,7 +49,7 @@
 #' bootstrapped_diagram <- bootstrap_persistence_thresholds(X = df,
 #' FUN = "calculate_homology",maxdim = 1,thresh = 2)
 
-bootstrap_persistence_thresholds <- function(X,FUN = "PyH",maxdim = 0,thresh,distance_mat = FALSE,global_threshold = TRUE,ripser = NULL,ignore_infinite_cluster = TRUE,calculate_representatives = FALSE,num_samples = 30,alpha = 0.05,return_subsetted = TRUE,return_diag = TRUE,num_workers = parallelly::availableCores(omit = 1)){
+bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim = 0,thresh,distance_mat = FALSE,ripser = NULL,ignore_infinite_cluster = TRUE,calculate_representatives = FALSE,num_samples = 30,alpha = 0.05,return_subsetted = TRUE,return_diag = TRUE,num_workers = parallelly::availableCores(omit = 1)){
 
   # error check parameters
   if(is.null(distance_mat))
@@ -98,10 +93,6 @@ bootstrap_persistence_thresholds <- function(X,FUN = "PyH",maxdim = 0,thresh,dis
   
   check_param(param = maxdim,param_name = "maxdim",numeric = T,whole_numbers = T,multiple = F,finite = T,non_negative = T)
   check_param(param = thresh,param_name = "thresh",numeric = T,whole_numbers = F,multiple = F,finite = T,non_negative = T,positive = T)
-  if(!is.null(ripser))
-  {
-    check_ripser(ripser)
-  }
   
   if(!methods::is(X,"data.frame") & !methods::is(X,"matrix"))
   {
@@ -136,9 +127,9 @@ bootstrap_persistence_thresholds <- function(X,FUN = "PyH",maxdim = 0,thresh,dis
   {
     stop("FUN must not be NA/NAN.")
   }
-  if(FUN %in% c("PyH","calculate_homology","ripsDiag") == F)
+  if(FUN %in% c("calculate_homology","ripsDiag") == F)
   {
-    stop("FUN must be either \'PyH\', \'calculate_homology\' or \'ripsDiag\'.")
+    stop("FUN must be either \'calculate_homology\', \'PyH\' or \'ripsDiag\'.")
   }
   if(FUN == 'calculate_homology')
   {
@@ -155,30 +146,24 @@ bootstrap_persistence_thresholds <- function(X,FUN = "PyH",maxdim = 0,thresh,dis
     }
   }
   
-  if(is.null(global_threshold))
+  if(FUN == "PyH")
   {
-    stop("global_threshold must not be NULL.")
-  }
-  if(length(global_threshold) > 1 | !methods::is(global_threshold,"logical"))
-  {
-    stop("global_threshold must be a single boolean value.")
-  }
-  if(is.na(global_threshold) | is.nan(global_threshold) )
-  {
-    stop("global_threshold must not be NA/NAN.")
-  }
-  
-  if(is.null(ignore_infinite_cluster))
-  {
-    stop("ignore_infinite_cluster must not be NULL.")
-  }
-  if(length(ignore_infinite_cluster) > 1 | !methods::is(ignore_infinite_cluster,"logical"))
-  {
-    stop("ignore_infinite_cluster must be a single boolean value.")
-  }
-  if(is.na(ignore_infinite_cluster) | is.nan(ignore_infinite_cluster) )
-  {
-    stop("ignore_infinite_cluster must not be NA/NAN.")
+    
+    if(is.null(ignore_infinite_cluster))
+    {
+      stop("ignore_infinite_cluster must not be NULL.")
+    }
+    if(length(ignore_infinite_cluster) > 1 | !methods::is(ignore_infinite_cluster,"logical"))
+    {
+      stop("ignore_infinite_cluster must be a single logical (i.e. T or F).")
+    }
+    if(is.na(ignore_infinite_cluster) | is.nan(ignore_infinite_cluster) )
+    {
+      stop("ignore_infinite_cluster must not be NA/NAN.")
+    }
+    
+    check_ripser(ripser)
+    
   }
   
   if(is.null(calculate_representatives))
@@ -212,11 +197,8 @@ bootstrap_persistence_thresholds <- function(X,FUN = "PyH",maxdim = 0,thresh,dis
     diag <- PyH(X = X,maxdim = maxdim,thresh = thresh,distance_mat = distance_mat,ripser = ripser,ignore_infinite_cluster = ignore_infinite_cluster,calculate_representatives = calculate_representatives)
     if(calculate_representatives == T)
     {
-      representatives <- diag$representatives
-      diag <- diagram_to_df(diag$diagram)
-    }else
-    {
-      representatives <- NULL
+      representatives = diag$representatives
+      diag <- diag$diagram
     }
   }
   if(FUN == "calculate_homology")
@@ -234,15 +216,23 @@ bootstrap_persistence_thresholds <- function(X,FUN = "PyH",maxdim = 0,thresh,dis
     diag <- diagram_to_df(diag)
   }
   
-  # compute distance matrix in parallel
-  doFuture::registerDoFuture()
-  cl = parallel::makeCluster(num_workers)
-  future::plan(strategy = "cluster",workers = cl)
-
+  # compute distance matrix in parallel if FUN != "PyH"
+  if(FUN != "PyH")
+  {
+    cl <- parallel::makeCluster(num_workers)
+    doParallel::registerDoParallel(cl)
+    parallel::clusterEvalQ(cl,c(library("clue"),library("rdist")))
+    parallel::clusterExport(cl,varlist = c("diagram_distance","check_diagram","check_param","diagram_to_df"),envir = environment())
+    foreach_func <- foreach::`%dopar%`
+  }else
+  {
+    foreach_func <- foreach::`%do%`
+  }
+  
   # perform bootstrapping in parallel
   tryCatch(expr = {
     
-    bootstrap_values <- doRNG::`%dorng%`(foreach::foreach(N = 1:num_samples,.combine = c),ex = {
+    bootstrap_values <- foreach_func(foreach::foreach(N = 1:num_samples,.combine = c),ex = {
       
       # sample data points with replacement
       s <- sample(1:nrow(X),size = nrow(X),replace = T)
@@ -258,30 +248,7 @@ bootstrap_persistence_thresholds <- function(X,FUN = "PyH",maxdim = 0,thresh,dis
       # calculate diagram (without representatives)
       if(FUN == "PyH")
       {
-        # calculate persistent homology
-        bootstrap_diag <- ripser$ripser(X = X_sample,maxdim = maxdim,thresh = thresh,distance_matrix = distance_mat,do_cocycles = F)
-        
-        # format output
-        bootstrap_diag <- do.call(rbind,lapply(X = 1:(maxdim + 1),FUN = function(X){
-          
-          d <- as.data.frame(bootstrap_diag$dgms[[X]])
-          if(nrow(d) == 0)
-          {
-            return(data.frame(dimension = numeric(),birth = numeric(),death = numeric()))
-          }
-          d$D <- X - 1
-          d <- d[,c(3,1,2)]
-          colnames(d) = c("dimension","birth","death")
-          d[which(d$death == Inf),3] <- thresh
-          if(ignore_infinite_cluster == T & X == 1)
-          {
-            d <- d[which(d$birth > 0 | d$death < thresh),]
-          }
-          return(d)
-          
-        }))
-        bootstrap_diag <- as.data.frame(bootstrap_diag)
-        
+        bootstrap_diag <- PyH(X = X,maxdim = maxdim,thresh = thresh,distance_mat = distance_mat,ripser = ripser,ignore_infinite_cluster = T,calculate_representatives = F)
       }
       if(FUN == "calculate_homology")
       {
@@ -292,21 +259,13 @@ bootstrap_persistence_thresholds <- function(X,FUN = "PyH",maxdim = 0,thresh,dis
         bootstrap_diag <- diagram_to_df(TDA::ripsDiag(X = X_sample,maxdimension = maxdim,maxscale = thresh,dist = ifelse(test = distance_mat == F,yes = "euclidean",no = "arbitrary"),library = "dionysus",location = F,printProgress = F))
       }
       
-      if(global_threshold == T)
+      # return bottleneck distance with original diagram in each dimension
+      ret_vec <- list()
+      for(d in 0:maxdim)
       {
-        # return bottleneck distance with original diagram considering each point to have the same dimension
-        bootstrap_diag$dimension = rep(0,nrow(bootstrap_diag))
-        return(diagram_distance(D1 = data.frame(dimension = rep(0,nrow(diag)),birth = diag$birth,death = diag$death),D2 = bootstrap_diag,p = Inf))
-      }else
-      {
-        # return bottleneck distance with original diagram in each dimension
-        ret_vec <- list()
-        for(d in 0:maxdim)
-        {
-          ret_vec[[length(ret_vec) + 1]] <- diagram_distance(D1 = diag,D2 = bootstrap_diag,p = Inf,dim = d)
-        }
-        return(ret_vec)
+        ret_vec[[length(ret_vec) + 1]] <- diagram_distance(D1 = diag,D2 = bootstrap_diag,p = Inf,dim = d)
       }
+      return(ret_vec)
     })
     
   },
@@ -322,22 +281,19 @@ bootstrap_persistence_thresholds <- function(X,FUN = "PyH",maxdim = 0,thresh,dis
   error = function(e){stop(e)},
   finally = {
              
-    parallel::stopCluster(cl)
+    if(FUN != "PyH")
+    {
+      parallel::stopCluster(cl)
+    }
              
   })
   
   # convert distance threshold(s) into persistence threshold(s)
-  if(length(bootstrap_values) == num_samples)
-  {
-    thresholds <- 2*stats::quantile(unlist(bootstrap_values),probs = c(1-alpha))[[1]]
-  }else
-  {
-    thresholds <- unlist(lapply(X = 0:maxdim,FUN = function(X){
-      
-      return(2*stats::quantile(unlist(bootstrap_values[seq(X + 1,length(bootstrap_values),maxdim + 1)]),probs = c(1-alpha))[[1]])
-      
-    }))
-  }
+  thresholds <- unlist(lapply(X = 0:maxdim,FUN = function(X){
+    
+    return(2*stats::quantile(unlist(bootstrap_values[seq(X + 1,length(bootstrap_values),maxdim + 1)]),probs = c(1-alpha))[[1]])
+    
+  }))
   
   # make return list
   ret_list <- list(thresholds = thresholds)
@@ -351,21 +307,14 @@ bootstrap_persistence_thresholds <- function(X,FUN = "PyH",maxdim = 0,thresh,dis
   }
   if(return_subsetted == T)
   {
-    if(length(thresholds) == 1)
+    # subset in each dimension
+    inds <- c()
+    for(d in 0:maxdim)
     {
-      # subset globally over all dimensions
-      inds <- which(diag$death - diag$birth > thresholds)
-      ret_list$subsetted_diag <- diag[inds,]
-    }else
-    {
-      # subset in each dimension
-      inds <- c()
-      for(d in 0:maxdim)
-      {
-        inds <- c(inds,which(diag$dimension == d & diag$death - diag$birth > thresholds[[d + 1]]))
-      }
-      ret_list$subsetted_diag <- diag[inds,]
+      inds <- c(inds,which(diag$dimension == d & diag$death - diag$birth > thresholds[[d + 1]]))
     }
+    ret_list$subsetted_diag <- diag[inds,]
+    
     if(calculate_representatives == T & FUN == "ripsDiag")
     {
       ret_list$subsetted_representatives = representatives[inds]

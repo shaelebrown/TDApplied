@@ -21,7 +21,7 @@ test_that("bootstrap_persistence_thresholds can do homology calculation with all
 
 test_that("bootstrap_persistence_thresholds can detect incorrect parameters correctly",{
   
-  # X, FUN, maxdim, thresh, distance_mat, global_threshold, ripser, ignore_infinite_cluster, calculate_representatives, num_samples, alpha, return_subsetted, return_diag
+  # X, FUN, maxdim, thresh, distance_mat, ripser, ignore_infinite_cluster, calculate_representatives, num_samples, alpha, return_subsetted, return_diag
   expect_error(bootstrap_persistence_thresholds(data.frame(),FUN = "calculate_homology",maxdim = 1,thresh = 2),"X")
   expect_error(bootstrap_persistence_thresholds(data.frame(x = 1),FUN = "calculate_homology",maxdim = 1,thresh = 2),"X")
   expect_error(bootstrap_persistence_thresholds(data.frame(x = c(1,2),y = c("1","2")),FUN = "calculate_homology",maxdim = 1,thresh = 2),"X")
@@ -44,8 +44,6 @@ test_that("bootstrap_persistence_thresholds can detect incorrect parameters corr
   expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "calculate_homology",maxdim = 1,thresh = 2,distance_mat = "F"),"logical")
   expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "ripsDiag",maxdim = 1,thresh = 2,distance_mat = c(F,T)),"single")
   
-  expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "calculate_homology",maxdim = 1,thresh = 2,global_threshold = 2),"boolean")
-  
   # PyH parameters (ripser,ignore_infinite_cluster,calculate_representatives) are all working, tested in test-python.R
   
   expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "ripsDiag",maxdim = 1,thresh = 2,calculate_representatives = c(T,F)),"boolean")
@@ -67,48 +65,25 @@ test_that("bootstrap_persistence_thresholds is computing properly",{
   
   D <- TDA::circleUnif(n = 50,r = 1)
   
-  # ripsDiag with global threshold
+  # ripsDiag
   bs <- bootstrap_persistence_thresholds(X = D,FUN = "ripsDiag",maxdim = 1,thresh = 2,calculate_representatives = T,return_diag = T)
   expect_length(bs$representatives,nrow(bs$diag))
-  expect_length(bs$thresholds,1)
-  expect_gt(bs$thresholds,0)
-  expect_length(bs$subsetted_representatives,nrow(bs$subsetted_diag))
-  expect_true(min(bs$subsetted_diag$death - bs$subsetted_diag$birth) > bs$thresholds)
-  
-  # ripsDiag with multiple thresholds
-  bs <- bootstrap_persistence_thresholds(X = D,FUN = "ripsDiag",maxdim = 1,thresh = 2,calculate_representatives = T,return_diag = T,global_threshold = F)
-  expect_length(bs$representatives,nrow(bs$diag))
-  expect_length(bs$thresholds,2)
+  expect_lte(length(bs$thresholds),2)
   expect_gt(bs$thresholds[[1]],0)
   expect_gt(bs$thresholds[[2]],0)
   expect_length(bs$subsetted_representatives,nrow(bs$subsetted_diag))
   expect_true(min(bs$subsetted_diag[which(bs$subsetted_diag$dimension == 0),]$death - bs$subsetted_diag[which(bs$subsetted_diag$dimension == 0),]$birth) > bs$thresholds[[1]])
   expect_true(min(bs$subsetted_diag[which(bs$subsetted_diag$dimension == 1),]$death - bs$subsetted_diag[which(bs$subsetted_diag$dimension == 1),]$birth) > bs$thresholds[[2]])
   
-  # calculate_homology with global threshold
+  # calculate_homology
   bs <- bootstrap_persistence_thresholds(X = D,FUN = "calculate_homology",maxdim = 1,thresh = 2,return_diag = T)
-  expect_length(bs$thresholds,1)
-  expect_gt(bs$thresholds,0)
-  expect_true(min(bs$subsetted_diag$death - bs$subsetted_diag$birth) > bs$thresholds)
-  
-  # calculate_homology with multiple thresholds
-  bs <- bootstrap_persistence_thresholds(X = D,FUN = "calculate_homology",maxdim = 1,thresh = 2,return_diag = T,global_threshold = F)
   expect_length(bs$thresholds,2)
   expect_gt(bs$thresholds[[1]],0)
   expect_gt(bs$thresholds[[2]],0)
   expect_true(min(bs$subsetted_diag[which(bs$subsetted_diag$dimension == 1),]$death - bs$subsetted_diag[which(bs$subsetted_diag$dimension == 1),]$birth) > bs$thresholds[[2]])
   
-  # ripser = import_ripser()
-  # # PyH with global threshold
-  # bs <- bootstrap_persistence_thresholds(X = D,FUN = "PyH",maxdim = 1,thresh = 2,calculate_representatives = T,return_diag = T,ripser = ripser)
-  # expect_length(bs$representatives[[2]],length(which(bs$diag$dimension == 1)))
-  # expect_length(bs$thresholds,1)
-  # expect_gt(bs$thresholds,0)
-  # expect_length(bs$subsetted_representatives[[2]],nrow(bs$subsetted_diag))
-  # expect_true(min(bs$subsetted_diag$death - bs$subsetted_diag$birth) > bs$thresholds)
-  
   # # PyH with multiple thresholds
-  # bs <- bootstrap_persistence_thresholds(X = D,FUN = "PyH",maxdim = 1,thresh = 2,calculate_representatives = T,return_diag = T,global_threshold = F,ripser = ripser)
+  # bs <- bootstrap_persistence_thresholds(X = D,FUN = "PyH",maxdim = 1,thresh = 2,calculate_representatives = T,return_diag = T,ripser = ripser)
   # expect_length(bs$representatives[[2]],length(which(bs$diag$dimension == 1)))
   # expect_length(bs$thresholds,2)
   # expect_gt(bs$thresholds[[1]],0)
@@ -125,14 +100,6 @@ test_that("bootstrap_persistence_thresholds is computing properly",{
   # bs <- bootstrap_persistence_thresholds(X = D,FUN = "PyH",maxdim = 1,thresh = 2,return_diag = T,ripser = ripser)
   # expect_lte(length(bs$subsetted_diag$dimension),1)
   # bs <- bootstrap_persistence_thresholds(X = D,FUN = "PyH",maxdim = 1,thresh = 2,return_diag = T,ripser = ripser,ignore_infinite_cluster = F)
-  # expect_lte(length(bs$subsetted_diag$dimension),2)
-  bs <- bootstrap_persistence_thresholds(X = D,FUN = "ripsDiag",maxdim = 1,thresh = 2,return_diag = T,global_threshold = F)
-  expect_lte(length(bs$subsetted_diag$dimension),2)
-  bs <- bootstrap_persistence_thresholds(X = D,FUN = "calculate_homology",maxdim = 1,thresh = 2,return_diag = T,global_threshold = F)
-  expect_lte(length(bs$subsetted_diag$dimension),1)
-  # bs <- bootstrap_persistence_thresholds(X = D,FUN = "PyH",maxdim = 1,thresh = 2,return_diag = T,ripser = ripser,global_threshold = F)
-  # expect_lte(length(bs$subsetted_diag$dimension),1)
-  # bs <- bootstrap_persistence_thresholds(X = D,FUN = "PyH",maxdim = 1,thresh = 2,return_diag = T,ripser = ripser,ignore_infinite_cluster = F,global_threshold = F)
   # expect_lte(length(bs$subsetted_diag$dimension),2)
   
   # one example by hand to verify thresholds

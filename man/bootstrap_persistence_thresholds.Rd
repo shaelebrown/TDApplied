@@ -6,11 +6,10 @@
 \usage{
 bootstrap_persistence_thresholds(
   X,
-  FUN = "PyH",
+  FUN = "calculate_homology",
   maxdim = 0,
   thresh,
   distance_mat = FALSE,
-  global_threshold = TRUE,
   ripser = NULL,
   ignore_infinite_cluster = TRUE,
   calculate_representatives = FALSE,
@@ -25,20 +24,18 @@ bootstrap_persistence_thresholds(
 \item{X}{the input dataset, must either be a matrix or data frame.}
 
 \item{FUN}{a string representing the persistent homology function to use, either
-'calculate_homology', 'ripsDiag' or 'PyH' (default).}
+'calculate_homology' (the default) or 'ripsDiag'.}
 
 \item{maxdim}{the integer maximum homological dimension for persistent homology, default 0.}
 
 \item{thresh}{the positive numeric maximum radius of the Vietoris-Rips filtration.}
 
-\item{distance_mat}{a boolean representing if `X` is a distance matrix (TRUE) or not (FALSE, default).}
-
-\item{global_threshold}{a boolean representing if one threshold should be calculated for all 
+\item{distance_mat}{a boolean representing if `X` is a distance matrix (TRUE) or not (FALSE, default).
 dimensions together (TRUE, the default) or if one threshold should be calculated for each dimension separately (FALSE).}
 
-\item{ripser}{either NULL (default) or the ripser module for `PyH` calculations, as imported by the `import_ripser` function.}
+\item{ripser}{the imported ripser module when `FUN` is `PyH`.}
 
-\item{ignore_infinite_cluster}{a boolean representing whether to ignore the infinitely persisting cluster when using the `PyH` function, default TRUE.}
+\item{ignore_infinite_cluster}{a boolean indicating whether or not to ignore the infinitely lived cluster when `FUN` is `PyH`.}
 
 \item{calculate_representatives}{a boolean representing whether to calculate representative (co)cycles, default FALSE. Note that representatives cant be
 calculated when using the 'calculate_homology' function.}
@@ -54,23 +51,20 @@ calculated when using the 'calculate_homology' function.}
 \item{num_workers}{the integer number of cores used for parallelizing (over bootstrap samples), default one less the maximum amount of cores on the machine.}
 }
 \value{
-either one numeric threshold value (if `global_threshold` is TRUE) or a vector of such values with one for each
-dimension 0..`maxdim` (in that order).
+a numeric vector of threshold values ,with one for each dimension 0..`maxdim` (in that order).
 }
 \description{
 Bootstrapping is used to find a conservative estimate of a "confidence interval" around
 each point in the persistence diagram of the data set, and points whose intervals do not
 overlap with the diagonal (birth = death) would be considered "significant" or "real".
-Either one threshold can be computed across all desired dimensions or one threshold for
-each dimension.
+One threshold is computed for each dimension in the diagram.
 }
 \details{
 The thresholds are determined by calculating the 1-alpha percentile of the bottleneck
 distance values between the real persistence diagram and other diagrams obtained
-by bootstrap resampling the data. Note that since \code{\link[TDAstats]{calculate_homology}} and
-\code{\link{PyH}} (when `ignore_infinite_cluster` is TRUE as is the default) can ignore the longest-lived
-cluster, fewer "real" clusters may be found when using these functions. To avoid this possibility
-either set `FUN` equal to 'ripsDiag' or to 'PyH' and set `ignore_infinite_cluster` to FALSE.
+by bootstrap resampling the data. Note that since \code{\link[TDAstats]{calculate_homology}} 
+can ignore the longest-lived cluster, fewer "real" clusters may be found. To avoid this possibility
+try setting `FUN` equal to 'ripsDiag'.
 }
 \examples{
 
@@ -81,6 +75,9 @@ df = TDA::circleUnif(n = 50)
 # and return the calculated diagram as well as the subsetted diagram
 bootstrapped_diagram <- bootstrap_persistence_thresholds(X = df,
 FUN = "calculate_homology",maxdim = 1,thresh = 2)
+}
+\references{
+Chazal F et al (2017). "Robust Topological Inference: Distance to a Measure and Kernel Distance." \url{https://www.jmlr.org/papers/volume18/15-484/15-484.pdf}.
 }
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}
