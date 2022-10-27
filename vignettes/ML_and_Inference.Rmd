@@ -34,7 +34,7 @@ Topological data analysis is a relatively new area of data science which can fin
 2. implement fast versions of both distance and kernel calculations for pairs of persistence diagrams, and 
 3. provide scalable methods for machine learning and inference for persistence diagrams. 
 
-It is with these goals that the package TDApplied was created. However, in order to make TDApplied a self-contained package for topological data analysis functionality is included for plotting persistence diagrams and quickly calculating persistence diagrams with python.
+It is with these goals that the package TDApplied was created. However, in order to make TDApplied a self-contained package for topological data analysis functionality is included for plotting persistence diagrams, determining which topological features are "real" in a dataset, and quickly calculating persistence diagrams with python.
 
 # Software Review
 
@@ -133,6 +133,9 @@ par(mfrow = c(1,3))
 plot_diagram(D1,title = "D1",max_radius = 4,legend = F)
 plot_diagram(D2,title = "D2",max_radius = 4,legend = F)
 plot_diagram(D3,title = "D3",max_radius = 4,legend = F)
+```
+
+```{r,echo = F}
 par(mfrow = c(1,1))
 ```
 
@@ -339,6 +342,48 @@ As expected, a difference was found (at the $\alpha = 0.05$ significance level) 
 
 The package TDAstats also has a function called `permutation_test` which is based on the same test procedure, however it uses an unpublished distance metric between persistence diagrams and does not use parallelization for scalability. As such, care must be taken if both TDApplied and TDAstats are attached in an R script to use the desired `permutation_test` function.
 
+## Finding Real Topological Features via Bootstrapping
+
+While the focus of TDApplied is applied topological data analysis, and as such this vignette focuses on machinery for carrying out such analyses, a fundamental question in topological data analysis which must not be overlooked is how to tell if a point in a persistence diagram should be considered "real" (signal) or not (noise). This question has been addressed via a bootstrapping approach in [@bootstrap], which has been implemented in the TDA package. TDApplied has its own implementation of this procedure, due to the speed increase of its distance function calculations (this is discussed in the following section):
+
+The idea of the bootstrap procedure is as follows, where $X$ is the input data set and $\alpha$ is the desired threshold for type 1 error:
+
+1. We first compute the diagram of $X$, $D$.
+2. Then we repeatedly sample, with replacement, the original data to obtain $\{X_1,\dots,X_n\}$and compute new persistence diagrams $\{D_1,\dots,D_n\}$.
+3. We calculate the bottleneck distance of each new diagram with the original, $d_{\infty}(D_i,D)$, in each dimension separately, obtaining one threshold for each dimension.
+4. Finally we compute the $1-\alpha$ percentile of these values in each dimension.
+
+These thresholds are the maximum bottleneck distance from any point which the geometry of the persistence diagram changes significantly, forming a square-shaped "confidence interval" around each point in $D$. In particular, if $t$ was the threshold found for dimension $k$ then the confidence interval around a point $(x,y) \in D$ (of dimension $k$) is the set of points $\{(x',y')|\mbox{max}(|x-x'|,|y-y'|) <= t\}$. For example, if we sampled 50 points on the unit circle, calculated the bottleneck-threshold-based confidence interval around the single 1-dimensional point, we would get something like this:
+
+```{r,echo = F,fig.height = 5,fig.width = 5,fig.align = 'center'}
+par(mfrow = c(1,1))
+D <- TDAstats::calculate_homology(mat = TDA::circleUnif(n = 50),dim = 1,threshold = 2)
+pt <- as.numeric(D[which(D[,1L] == 1),])[2:3]
+plot_diagram(D = D,title = "Circle diagram with confidence interval",legend = T,max_radius = 2*0.3953059 + pt[[2]])
+graphics::rect(xleft = pt[[1]]-0.3953059,xright = pt[[1]]+0.3953059,ybottom = pt[[2]]-0.3953059,ytop = pt[[2]]+0.3953059)
+graphics::lines(x = c(pt[[1]],pt[[1]] + 0.3953059),y = c(pt[[2]],pt[[2]]))
+graphics::lines(x = c(pt[[1]],pt[[1]]),y = c(pt[[2]],pt[[2]] - 0.3953059))
+graphics::text(x = c(pt[[1]] + 0.3953059/2,0.4),y = c(1.83,1.55),c("t","t"))
+```
+
+In this setup, "real" points will be those whose confidence intervals do not touch the diagonal line, where birth and death is the same. Note that the persistence threshold is twice the bottleneck distance threshold calculated above: the (Euclidean) distance from the point to the bottom right corner of the box is $\sqrt{2}t$, which must be greater than the (Euclidean) distance of the point to its diagonal projection, which is $\frac{y-x}{\sqrt{2}}$. Therefore, for the point to be considered real, $\sqrt{2}t < \frac{y-x}{\sqrt{2}}$, implying that the persistence of the point, $y-x$, must be at least twice the bottleneck threshold $t$.
+
+The function `bootstrap_persistence_thresholds` can be used to determine these persistence thresholds. Here is an example for a circle dataset (which is not the same as the one from above):
+
+```{r}
+# sample 50 points from the unit circle
+circle <- TDA::circleUnif(n = 50)
+
+# calculate the bootstrapped persistence thresholds using 2 cores
+# and 20 iterations
+bootstrap_persistence_thresholds(X = circle,FUN = "calculate_homology",
+                                 maxdim = 1,thresh = 2,return_diag = F,
+                                 return_subsetted = F,num_workers = 2,
+                                 num_samples = 20)
+```
+
+The bootstrap procedure can be done in parallel or sequentially, depending on which function is specified to calculate the persistence diagrams. There are three possible such functions - TDAstat's `calculate_homology`, TDA's `ripsDiag` and TDApplied's `PyH` (described in later sections). Based on our simulations, the order of fastest to slowest of these functions are `PyH`, `calculate_homology` and `ripsDiag`. Moreover, both `ripsDiag` and `PyH` allow for the calculation of representative (co)cycles (i.e. the approximate location in the data of each topological feature), whereas `calculate_homology` does not. Therefore, our recommendation is to pick the function according to the following criteria: if a user can use the `PyH` function, then it should be used in all cases except for when the input data set is small, the machine has many available cores and the number of desired bootstrap iterations is large. Otherwise, use `calculate_homology` for speed or `ripsDiag` if the other two functions are not available. 
+
 ## Kernels Between Persistence Diagrams
 
 A kernel function is a special (positive semi-definite) symmetric similarity measure between objects in some complicated space which can be used to project data into a space suitable for machine learning [@murphyML]. Some examples of machine learning techniques which can be "kernelized" when dealing with complicated data are *k-means* (kernel k-means), *principal components analysis* (kernel PCA), and *support vector machines* (SVM) which are inherently based on kernel calculations.
@@ -476,23 +521,6 @@ indep_test$p_values
 
 The p-value of this test would not be significant at any typical significance threshold, reflecting the fact that there is no real (i.e. non-spurious) dependence between the two groups, as expected.
 
-## Finding Real Topological Features via Bootstrapping
-
-While the focus of TDApplied is applied topological data analysis, and as such this vignette has focused on machinery for carrying out such analyses, a fundamental question in topological data analysis which must not be overlooked is how to tell if a point in a persistence diagram should be considered "real" (signal) or not (noise). This question has been addressed via a bootstrapping approach in [@bootstrap], which has been implemented in the TDA package. TDApplied has its own implementation of this procedure, due to the speed increase of its distance function calculations (this is discussed in the following section):
-
-The idea of the bootstrap procedure is as follows, where $X$ is the input data set and $\alpha$ is the desired threshold for type 1 error:
-
-1. We first compute the diagram of $X$, $D$.
-2. Then we repeatedly sample, with replacement, the original data and compute new persistence diagrams $\{D_1,\dots,D_n\}$.
-3. We calculate the bottleneck distance of each new diagram with the original, either in each dimension separately (obtaining one threshold for each dimension) or for all points altogether.
-4. Finally we compute the $1-\alpha$ percentile of these values (in each dimension or altogether as was calculated).
-
-This/these thresholds is/are the maximum bottleneck distance from any point which the geometry of the persistence diagram changes significantly, forming a "confidence interval" around each point in $D$ (where the bottleneck distance to that point is at most the threshold, forming a square around the point). Therefore, "real" points will be those whose confidence intervals do not touch the diagonal line, where birth and death is the same, so the persistence threshold is twice the bottleneck distance threshold calculated above.
-
-```{r}
-
-```
-
 # Fast Persistence Diagram Calculations Using Reticulate
 
 While the focus of TDApplied is carrying out applied topological data analysis with persistence diagrams computed with the R packages TDA and TDAstats, TDApplied also provides its own persistent cohomology engine via python, which produces the exact same persistence diagram as persistent homology just much faster [@PChom,@PHom_dualities]. The ripser module in python is a wrapper for the same persistent cohomology engine as the R package TDAstats, which is currently the state-of-the-art of persistence diagram calculation speed in R. However, it was observed by the authors that the python implementation seemed faster, even when called via the reticulate package. Therefore, the `PyH` function is a wrapper of the python ripser module for Vietoris-Rips filtration persistent cohomology.
@@ -507,12 +535,20 @@ There are three prerequisites that must be satisfied in order to use the `PyH` f
 
 Note that the installation status of python is checked using the function `reticulate::py_available()`, which according to several online forums does not always behave as expected. If error messages occur using TDApplied functions regarding python not being installed then we recommend consulting online resources to ensure that the `py_available` function returns `TRUE` on your system. Due to the complicated dependencies required to use the `PyH` function, it is only an optional function in the package and therefore the reticulate package is only suggested in the TDApplied namespace.
 
-An example use of `PyH` would be as follows:
+For an example use of `PyH` we will use the following pre-loaded dataset called "circ" (which is stored as a data frame in this vignette):
+
+```{r,echo = F,eval = T}
+# create the data
+circ <- data.frame(x = c(0.37206401439763,0.187252903758128,-0.941946837003475,0.0442567282078249,0.184638555615293,-0.0837545101464481,-0.364816992194448,-0.722635069185668,-0.965713143554718,-0.832555262051846,0.416857546850322,0.262628948512087,0.335630458504239,-0.987359078856224,0.971143015697996,0.828642381920149,-0.993094328640157,0.864705993526812,-0.601822463909246,0.00855304668431679,-0.694732418249695,0.281097726412362,-0.536528403939666,0.999578844170687,0.500427719325381,0.972755007124087,-0.985828528101177,0.382116090228366,0.187341042513765,-0.999497942642912,0.447939273429357,-0.995551072494437,0.582222964962477,0.852912225230687,0.914794382538427,-0.977030870815178,0.999052449805392,0.986668984725482,0.379560512351362,-0.99022104692615,-0.9293797636278,0.028209644693279,0.125079985118729,0.126437768180937,0.504013549595047,0.933397935474915,0.574043084808964,0.747953695502559,0.841062122135969,0.228565768955052),y = c(-0.928207072366032,0.982311737705576,-0.335762053036297,0.999020190991323,-0.982806493558268,-0.996486418387189,0.93107924593248,-0.691229742403367,-0.259611487353053,0.553941996629414,0.908971828845059,-0.964896904028319,-0.941993734227694,-0.158499367191759,0.238497889007434,0.559778351569352,0.117318602202532,-0.502278353862486,-0.798629902980225,-0.999963422027234,-0.719268285852317,-0.959679148573001,-0.843882261791273,-0.0290195500721963,0.865778319046393,0.231835493648013,-0.167756112204196,0.924114329284308,0.982294932181702,0.0316837916384251,0.894063983906957,0.0942234687069815,-0.813029162496834,0.52205434204883,0.403919840656704,0.213097811988145,0.0435224371772166,-0.162740021447664,0.925166913299201,-0.13950726943238,-0.369124985552503,-0.999602028782595,-0.992146661196165,0.991974541395808,-0.863695746096159,-0.358842993593529,-0.818825095354929,-0.663750909139916,0.540938542450194,-0.973528473780806))
+```
+
+```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
+plot(x = circ$x,y = circ$y,xlab = "x",ylab = "y",main = "circ")
+```
+
+We would then calculate the persistence diagram as follows:
 
 ```{r,echo = T,eval = F}
-# sample 50 points from the unit circle
-circ <- TDA::circleUnif(n = 50,r = 1)
-
 # import the ripser module
 ripser <- import_ripser()
 
@@ -524,23 +560,14 @@ The ripser module is important outside of the `PyH` function using the `import_r
 
 ## Representative Cocycles
 
-One of the advantages of the R package TDA over TDAstats is its ability to calculate representative cycles in the data, i.e. localizing the persistence diagram topological features in the input data set. This can permit deep analyses of the original data set by finding particular types of features spanned by certain subsets of data points. For example, a representative cycle of a 1-dimensional topological feature would be a set of edges between data points which lie along that feature (a loop). The `PyH` function can also find representative (co)cycles in its input data, which are returned if the `calculate_representatives` parameter is set to `TRUE`. In that case, the `PyH` function returns a list with a data frame called "diagram", containing the persistence diagram, and a list called "representatives". The representatives element has one element for each dimension in the persistence diagram, with one matrix/array for each point in the persistence diagram of that dimension (except for dimension 0, for the list is always empty). The matrix for a $d$-dimensional feature (1 for loops, 2 for voids, etc.) has $d$ columns, where row $i$ contains the row indices in the data set of the data points in the $i$-th substructure in the representative (a substructure of a loop would be an edge, a substructure of a void would be a triangle, etc.). Here is an example where we calculate the representative cocycles of a precomputed circle data set called "circ":
-
-```{r,echo = F,eval = T}
-# create the data
-circ <- data.frame(x = c(0.37206401439763,0.187252903758128,-0.941946837003475,0.0442567282078249,0.184638555615293,-0.0837545101464481,-0.364816992194448,-0.722635069185668,-0.965713143554718,-0.832555262051846,0.416857546850322,0.262628948512087,0.335630458504239,-0.987359078856224,0.971143015697996,0.828642381920149,-0.993094328640157,0.864705993526812,-0.601822463909246,0.00855304668431679,-0.694732418249695,0.281097726412362,-0.536528403939666,0.999578844170687,0.500427719325381,0.972755007124087,-0.985828528101177,0.382116090228366,0.187341042513765,-0.999497942642912,0.447939273429357,-0.995551072494437,0.582222964962477,0.852912225230687,0.914794382538427,-0.977030870815178,0.999052449805392,0.986668984725482,0.379560512351362,-0.99022104692615,-0.9293797636278,0.028209644693279,0.125079985118729,0.126437768180937,0.504013549595047,0.933397935474915,0.574043084808964,0.747953695502559,0.841062122135969,0.228565768955052),y = c(-0.928207072366032,0.982311737705576,-0.335762053036297,0.999020190991323,-0.982806493558268,-0.996486418387189,0.93107924593248,-0.691229742403367,-0.259611487353053,0.553941996629414,0.908971828845059,-0.964896904028319,-0.941993734227694,-0.158499367191759,0.238497889007434,0.559778351569352,0.117318602202532,-0.502278353862486,-0.798629902980225,-0.999963422027234,-0.719268285852317,-0.959679148573001,-0.843882261791273,-0.0290195500721963,0.865778319046393,0.231835493648013,-0.167756112204196,0.924114329284308,0.982294932181702,0.0316837916384251,0.894063983906957,0.0942234687069815,-0.813029162496834,0.52205434204883,0.403919840656704,0.213097811988145,0.0435224371772166,-0.162740021447664,0.925166913299201,-0.13950726943238,-0.369124985552503,-0.999602028782595,-0.992146661196165,0.991974541395808,-0.863695746096159,-0.358842993593529,-0.818825095354929,-0.663750909139916,0.540938542450194,-0.973528473780806))
-```
-
-```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
-plot(x = circ$x,y = circ$y,xlab = "x",ylab = "y",main = "circ")
-```
+One of the advantages of the R package TDA over TDAstats is its ability to calculate representative cycles in the data, i.e. localizing the persistence diagram topological features in the input data set. This can permit deep analyses of the original data set by finding particular types of features spanned by certain subsets of data points. For example, a representative cycle of a 1-dimensional topological feature would be a set of edges between data points which lie along that feature (a loop). The `PyH` function can also find representative (co)cycles in its input data, which are returned if the `calculate_representatives` parameter is set to `TRUE`. In that case, the `PyH` function returns a list with a data frame called "diagram", containing the persistence diagram, and a list called "representatives". The representatives element has one element for each dimension in the persistence diagram, with one matrix/array for each point in the persistence diagram of that dimension (except for dimension 0, for the list is always empty). The matrix for a $d$-dimensional feature (1 for loops, 2 for voids, etc.) has $d$ columns, where row $i$ contains the row indices in the data set of the data points in the $i$-th substructure in the representative (a substructure of a loop would be an edge, a substructure of a void would be a triangle, etc.). Here is an example where we calculate the representative cocycles our circ dataset:
 
 ```{r,echo = T,eval = F}
 # ripser has already been imported, so calculate diagram with representatives
-res <- PyH(circ,maxdim = 1,thresh = 2,ripser = ripser,calculate_representatives = T)
+diag <- PyH(circ,maxdim = 1,thresh = 2,ripser = ripser,calculate_representatives = T)
 
 # identify the loops in the diagram
-res$diagram[which(res$diagram$dimension == 1),]
+diag$diagram[which(diag$diagram$dimension == 1),]
 ```
 
 ```{r,echo = F}
@@ -549,24 +576,77 @@ data.frame(dimension = c(1),birth = c(0.6008424),death = c(1.738894),row.names =
 
 ```{r,echo = T,eval = F}
 # show the representative for the loop
-res$representatives[[2]][[1]]
+diag$representatives[[2]][[1]]
 ```
 
 ```{r,echo = F}
-matrix(data = c(9,6,35,6,9,3,16,6,31,6,43,9,29,6,9,1,28,9,39,6,13,6,26,6,38,9,27,9,35,3,10,9,30,9,8,6,43,35,16,3,24,9,31,3,6,2,35,1,35,28,40,6,43,16,29,3,43,31,16,1,28,16,31,1,31,28,43,29,29,1,29,28,38,35,35,27,39,3,13,3,26,3,35,10,35,30,43,39,38,16,27,16,43,13,38,31,43,26,31,27,8,3,35,24,16,10,39,1,39,28,31,10,30,16,13,1,28,13,26,1,28,26,38,29,29,27,31,30,3,2,43,8,15,9,7,6,29,10,24,16,48,9,40,3,20,6,31,24,30,29,33,9,8,1,28,8,43,2,29,24,43,40,39,38,2,1,28,2,39,27),nrow = 85,ncol = 2,byrow = T)
+representative = matrix(data = c(9,6,35,6,9,3,16,6,31,6,43,9,29,6,9,1,28,9,39,6,13,6,26,6,38,9,27,9,35,3,10,9,30,9,8,6,43,35,16,3,24,9,31,3,6,2,35,1,35,28,40,6,43,16,29,3,43,31,16,1,28,16,31,1,31,28,43,29,29,1,29,28,38,35,35,27,39,3,13,3,26,3,35,10,35,30,43,39,38,16,27,16,43,13,38,31,43,26,31,27,8,3,35,24,16,10,39,1,39,28,31,10,30,16,13,1,28,13,26,1,28,26,38,29,29,27,31,30,3,2,43,8,15,9,7,6,29,10,24,16,48,9,40,3,20,6,31,24,30,29,33,9,8,1,28,8,43,2,29,24,43,40,39,38,2,1,28,2,39,27),nrow = 85,ncol = 2,byrow = T)
+representative
 ```
 
 The representative of the one loop contains the edges found to be present in the loop. We could iterate over the representative for the loop to find all the data point in that representative:
 
 ```{r,echo = T,eval = F}
-unique(c(res$representatives[[2]][[1]][,1],res$representatives[[2]][[1]][,2]))
+unique(c(diag$representatives[[2]][[1]][,1],diag$representatives[[2]][[1]][,2]))
 ```
 
 ```{r,echo = F}
 c(9,35,16,31,43,29,28,39,13,26,38,27,10,30,8,24,6,40,3,15,7,48,20,33,2,1)
 ```
 
-Since we know that these data points form a loop in the original data set, we could perform a further exploratory analysis in circ to explore the periodic nature of the feature. While in this example we know that a loop will be present, this type of analysis could help find hidden latent structure in data sets. In this way `PyH` is as flexible as the TDA persistent homology functions.
+Since the circ dataset is two-dimensional, we can actually plot the loop representative as follows:
+
+```{r,echo = T,eval = F}
+plot(x = circ$x,y = circ$y,xlab = "x",ylab = "y",main = "circ with representative")
+for(i in 1:nrow(diag$representatives[[2]][[1]]))
+{
+  pt1 <- circ[diag$representatives[[2]][[1]][i,1],]
+  pt2 <- circ[diag$representatives[[2]][[1]][i,2],]
+  graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]))
+}
+```
+
+```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
+plot(x = circ$x,y = circ$y,xlab = "x",ylab = "y",main = "circ with representative")
+for(i in 1:nrow(representative))
+{
+  pt1 <- circ[representative[i,1],]
+  pt2 <- circ[representative[i,2],]
+  graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]))
+}
+```
+
+Now this plot doesn't quite look like how we would expect - it's not a proper loop! In order to fix this we need to subset the edges we plot which have distance less than the death value of the loop. This value was 1.738894, so we will pick 1.7:
+
+```{r,echo = T,eval = F}
+plot(x = circ$x,y = circ$y,xlab = "x",ylab = "y",main = "circ with representative")
+for(i in 1:nrow(diag$representatives[[2]][[1]]))
+{
+  pt1 <- circ[diag$representatives[[2]][[1]][i,1],]
+  pt2 <- circ[diag$representatives[[2]][[1]][i,2],]
+  if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) < 1.7)
+  {
+    graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]))
+  }
+}
+```
+
+```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
+plot(x = circ$x,y = circ$y,xlab = "x",ylab = "y",main = "circ with representative")
+for(i in 1:nrow(representative))
+{
+  pt1 <- circ[representative[i,1],]
+  pt2 <- circ[representative[i,2],]
+  if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) < 1.7)
+  {
+    graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]))
+  }
+}
+```
+
+This representative cocycle is a proper loop, as desired. Not every point in our data set is a part of the representative cycle though, but enough points were found that we could reconstruct the main loop.
+
+Since we know that these data points form a loop in the original data set, we could perform a further exploratory analysis in circ to explore the periodic nature of the feature. While in this example we know that a loop will be present, this type of analysis could help find hidden latent structure in data sets. In this way `PyH` is as flexible as the TDA persistent homology function `calculate_homology`.
 
 # Benchmarking TDApplied Against Other Packages
 
@@ -575,15 +655,14 @@ In order to properly situate TDApplied in the landscape of software for topologi
 (1) Persistent (co)homology calculations with TDApplied's `PyH` and TDAstat's `calculate_homology`.
 (2) Wasserstein distances between persistence diagrams with TDApplied's `diagram_distance` and TDA's `wasserstein`.
 (3) Wasserstein distances between persistence diagrams with TDApplied's `diagram_distance` and the persim python module's `wasserstein`.
-(4) Determining persistence thresholds with TDApplied's `bootstrap_persistence_thresholds` and TDA's `bootstrapDiagram`.
 
-While it would be ideal to benchmark kernel calculations as well, there is no current R implementation and the python implementation is for a different kernel then what is used in TDApplied. Since no comparison to other functions is reasonable, we leave it for future work to further optimize the speed of the `diagram_kernel` function.
+While it would be ideal to benchmark kernel calculations as well, there is no current R implementation and the python implementation is for a different kernel then what is used in TDApplied. Since no comparison to other functions is reasonable, we leave it for future work to further optimize the speed of the `diagram_kernel` function. Moreover, since TDA's `bootstrapDiagram` function uses the same bootstrap procedure for persistence thresholds it will be left for future work to benchmark that function against `bootstrap_persistence_thresholds`.
 
-An important note is that the three distance functions (TDApplied's `diagram_distance`, TDA's `wasserstein` and persim's `wasserstein`) often did not agree on the distance value of certain calculations, and without knowing the exact details of the persim and TDA functions the only clear explanation is that perhaps the other two packages use alternative definitions for the wasserstein/bottleneck distances. For example, the definitions in @Robinson_Turner and @Computing_PH are different. Nevertheless, the `diagram_distance` function has been tested against examples with distances worked out by hand (these can be found in the test folder of the package), and a proof of algorithm correctness is given in the appendix.
+An important note is that the three distance functions (TDApplied's `diagram_distance`, TDA's `wasserstein` and persim's `wasserstein`) often did not agree on the distance value of certain calculations, and without knowing the exact details of the persim and TDA functions the only clear explanation is that perhaps the other two packages use alternative definitions for the wasserstein/bottleneck distances. For example, the definitions in @Robinson_Turner and @ComputingPH are different. Nevertheless, the `diagram_distance` function has been tested against examples with distances worked out by hand (these can be found in the test folder of the package), and a proof of algorithm correctness is given in the appendix.
 
-The script that was used to perform benchmarking is available in the `exec` directory of this package, using `PyH` in certain cases (and thus requiring python, although the script can easily be modified to avoid this dependency). In all cases, benchmarking followed a similar procedure, involving sampling data from simple shapes (unit circles, unit spheres and tori with inner tube radius 0.25 and major radius 0.75) with various number of rows, and performing 10 benchmarking iterations at each number of rows. The mean and standard deviation of run time for the two functions were then calculated. The benchmarking of points (1), (2) and (3) were all carried out on a Windows 10 64-bit machine, with an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM. The benchmarking of point (4) was carried out on a Mac OS Big Sur 64-bit machine, with a 2.7 GHz Dual-Core Intel Core i5 processor with 4 cores and 16 GB of RAM. The reason why we switched computer for benchmarking the bootstrap operations is that TDA's `bootstrapDiagram` function performs parallelization using the `mclapply` function, which does not work on Windows machines and hence the function operates serially. In order to make a fair comparison between `bootstrap_persistence_thresholds` and `bootstrapDiagram` we benchmarked them on a Mac OS machine.
+The script that was used to perform benchmarking is available in the `exec` directory of this package, using `PyH` in certain cases (and thus requiring python, although the script can easily be modified to avoid this dependency). In all cases, benchmarking followed a similar procedure, involving sampling data from simple shapes (unit circles, unit spheres and tori with inner tube radius 0.25 and major radius 0.75) with various number of rows, and performing 10 benchmarking iterations at each number of rows. The mean and standard deviation of run time for the two functions were then calculated. The benchmarking of points (1), (2) and (3) were all carried out on a Windows 10 64-bit machine, with an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM. The future benchmarking of the bootstrapping technique would need to be carried out on a Mac OS machine, because TDA's `bootstrapDiagram` function performs parallelization using the `mclapply` function, which does not work on Windows machines and hence the function operates serially. In order to make a fair comparison between `bootstrap_persistence_thresholds` and `bootstrapDiagram` we would need to benchmark them on a Mac OS machine.
 
-The benchmarking results are displayed graphically in the following four subsections. On top of considering raw run time of the functions, we also analyze their ability to scale by regressing the quotient of their run times onto the number of rows. Overall we found that TDApplied's functions are faster and scale better than R counterparts, and scale similarly to python counterparts. These results indicate that TDApplied is a powerful and efficient tool for applied topological data analysis in R.
+The benchmarking results are displayed graphically in the following three subsections. On top of considering raw run time of the functions, we also analyze their ability to scale by regressing the quotient of their run times onto the number of rows. Overall we found that TDApplied's functions are faster and scale better than R counterparts, and scale similarly to python counterparts. These results indicate that TDApplied is a powerful and efficient tool for applied topological data analysis in R.
 
 ## Benchmarking `PyH` Against TDAstat's `calculate_homology` Function
 
@@ -597,7 +676,7 @@ summary_table_torus = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = 
 summary_table_sphere = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.0109694957733154,0.0594853162765503,0.0540436983108521,0.469167232513428,0.182804441452026,1.57912936210632,0.410391473770142,3.69215035438538,0.822147560119629,7.32947452068329,1.40918028354645,12.8482979059219,2.47986209392548,20.9446493387222,3.76364696025848,31.2942998409271,5.3408855676651,44.884921503067,7.59271986484528,62.6113245010376),sd = c(0.00193647497299544,0.00600547924173666,0.00563514382927968,0.0210564179408907,0.0129015865529426,0.0403660633577451,0.0218388344325696,0.077772517180065,0.0319754379649263,0.0762356686089166,0.0567664459109207,0.171412828638123,0.240398206520162,0.398396221629952,0.320522372278111,0.459994662433323,0.365647918767674,0.417413443923572,0.394211392866084,0.746903966284143),package = rep(c("TDApplied","TDAstats"),10))
 ```
 
-```{r,echo = T,warning=F,fig.height = 4,fig.width = 7,fig.align = 'center'}
+```{r,echo = F,warning=F,fig.height = 4,fig.width = 7,fig.align = 'center'}
 par(mfrow = c(1,3))
 plot(summary_table_circle$n_row[summary_table_circle$package=="TDAstats"], 
      summary_table_circle$mean[summary_table_circle$package=="TDAstats"], 
@@ -681,9 +760,9 @@ arrows(summary_table_sphere$n_row[summary_table_sphere$package == "TDAstats"],
        length=0.05, angle=90, code=3,col = "black")
 ```
 
-As we can see the run time of `PyH` was significantly less than that of `calculate_homology`. We then used a linear model to analyze how the two functions scale compared to each other for all three shapes:
+As we can see the run time of `PyH` was significantly less than that of `calculate_homology`. We then used a linear model to analyze how the two functions scale compared to each other for all three shapes, regressing the ratio of TDAstat's runtime divided by TDApplied's runtime onto the number of rows in the data set. For each of the three datasets, the model intercept was highly significant ($p < 0.001$) and the coefficient estimate for number of rows was not. This suggests that the runtime of the two functions scale similarly, but there was a constant speed increase of `PyH` which differed by shape (about 3 times faster for circles, 7 times faster for tori and 8 times faster for spheres). Overall, if python is available to a TDApplied user then the `PyH` function can provide a very fast means to calculate persistence diagrams in R making analyses containing many large persistent homology calculations much more feasible.
 
-```{r,echo = T}
+```{r,echo = F,eval = F}
 model_circle <- stats::lm(data = 
                             data.frame(ratio =
                                        summary_table_circle$mean[summary_table_circle$package
@@ -718,8 +797,6 @@ model_sphere <- stats::lm(data =
 summary(model_sphere)$coefficients
 ```
 
-All three models find that both functions scale similarly since the number of rows had no significant effect, but there was a significant speed increase for each shape for the `PyH` function which was about 3 times for the circles, about 7 times for the tori and about 8 times for the spheres. Overall, if python is available to a TDApplied user then the `PyH` function can provide a very fast means to calculate persistence diagrams in R making analyses containing many large persistent homology calculations much more feasible.
-
 ## Benchmarking the TDApplied `diagram_distance` and TDA `wasserstein` Functions
 
 Computing wasserstein (or bottleneck) distances between persistence diagrams is a key feature of some of the main topological data analysis software packages in R and python. However, these calculations can be very expensive, rendering practical applications of topological data analysis nearly unfeasible. Since TDAstats has implemented an unconventional distance calculation, we will benchmark TDApplied's `diagram_distance` function against the TDA `wasserstein` function on spheres and tori, calculating their distance in dimensions 0, 1 and 2 and recording the total time. The results were as follows:
@@ -736,9 +813,9 @@ arrows(summary_table$n_row[summary_table$package == "TDApplied"], summary_table$
 arrows(summary_table$n_row[summary_table$package == "TDA"], summary_table$mean[summary_table$package == "TDA"]-1.96*summary_table$sd[summary_table$package == "TDA"]/sqrt(10), summary_table$n_row[summary_table$package == "TDA"], summary_table$mean[summary_table$package == "TDA"]+1.96*summary_table$sd[summary_table$package == "TDA"]/sqrt(10), length=0.05, angle=90, code=3,col = "black")
 ```
 
-A linear model was used to verify that `diagram_distance` scaled better than `wasserstein` (with about a 95x speed up for 1000 data points), suggesting that distance calculations with TDApplied are faster and more scalable: 
+A linear model, regressing the ratio of TDA's runtime divided by TDApplied's runtime onto the number of rows in the data set, found a significant positive coefficient of the number of rows. This suggests that `diagram_distance` scales better than `wasserstein`, and the model estimated a 95x speed up for 1000 data points. These results suggest that distance calculations with TDApplied are faster and more scalable, making the applications of statistics and machine learning with persistence diagrams more feasible in R. This is why the TDA distance calculation was not used in the TDApplied package.
 
-```{r,echo = T}
+```{r,echo = F,eval = F}
 model <- stats::lm(data = data.frame(ratio = 
                                      summary_table$mean[summary_table$package == "TDA"]/summary_table$mean[summary_table$package == "TDApplied"],
                                      n_row = seq(100,1000,100)),
@@ -746,8 +823,6 @@ model <- stats::lm(data = data.frame(ratio =
 summary(model)$coefficients
 predict(model,newdata = data.frame(n_row = 1000))[[1]]
 ```
-
-The fast and scalable distance calculation in TDApplied makes the applications of statistics and machine learning with persistence diagrams more feasible in R. This is why the TDA distance calculation was not used in the TDApplied package.
 
 ## Benchmarking the TDApplied `diagram_distance` Function against persim's `wasserstein` Function
 
@@ -766,9 +841,9 @@ arrows(summary_table$n_row[summary_table$package == "TDApplied"], summary_table$
 arrows(summary_table$n_row[summary_table$package == "persim"], summary_table$mean[summary_table$package == "persim"]-1.96*summary_table$sd[summary_table$package == "persim"]/sqrt(10), summary_table$n_row[summary_table$package == "persim"], summary_table$mean[summary_table$package == "persim"]+1.96*summary_table$sd[summary_table$package == "persim"]/sqrt(10), length=0.05, angle=90, code=3,col = "black")
 ```
 
-The runtime of the persim `wasserstein` function was significantly faster than TDApplied's `diagram_distance` function. However, a linear model of the run time ratio of TDApplied vs. persim against the number of points in the shape finds evidence that the two functions scale similarly (via a constant run time ratio of mean 15):
+The runtime of the persim `wasserstein` function was significantly faster than TDApplied's `diagram_distance` function. However, a linear model of the runtime ratio of TDApplied vs. persim against the number of points in the shape finds evidence that the two functions scale similarly, since the estimated coefficient for number of data points was not significant but the intercept (15) was highly significant. Nevertheless, the raw speed increase in python could be the basis for a very fast python counterpart to the TDApplied package in the future.
 
-```{r,echo = T}
+```{r,echo = F,eval = F}
 model <- stats::lm(data = data.frame(ratio = 
                                      summary_table$mean[summary_table$package == "TDApplied"]
                                      /summary_table$mean[summary_table$package == "persim"],
@@ -777,15 +852,13 @@ model <- stats::lm(data = data.frame(ratio =
 summary(model)$coefficients
 ```
 
-Nevertheless, the raw speed increase in python could be the basis for a very fast python counterpart to the TDApplied package in the future.
+<!-- ## Benchmarking TDApplied's `bootstrap_persistence_thresholds` Function Against TDA's `bootstrapDiagram` Function -->
 
-## Benchmarking TDApplied's `bootstrap_persistence_thresholds` Function Against TDA's `bootstrapDiagram` Function
+<!-- One of the key problems in topological data analysis is determining when a topological feature is "real" or not, and the functions `bootstrap_persistence_thresholds` (TDApplied) and `bootstrapDiagram` (TDA) solve that problem via a bootstrapping approach. As mentioned earlier, these functions were benchmarked on a Mac OS to ensure that both could operate in parallel. The results were as follows: -->
 
-One of the key problems in topological data analysis is determining when a topological feature is "real" or not, and the functions `bootstrap_persistence_thresholds` (TDApplied) and `bootstrapDiagram` (TDA) solve that problem via a bootstrapping approach. As mentioned earlier, these functions were benchmarked on a Mac OS to ensure that both could operate in parallel. The results were as follows:
+<!-- DO -->
 
-DO
-
-DO CONCLUSIONS
+<!-- DO CONCLUSIONS -->
 
 # Limitations of TDApplied
 
