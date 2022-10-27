@@ -95,9 +95,15 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
   }
 
   # remove diagonal entries from D1_subset and D2_subset
-  D1_subset <- D1_subset[which(D1_subset[,1] != D1_subset[,2]),]
-  D2_subset <- D2_subset[which(D2_subset[,1] != D2_subset[,2]),]
-
+  if(nrow(D1_subset) > 0)
+  {
+    D1_subset <- D1_subset[which(D1_subset[,1] != D1_subset[,2]),]
+  }
+  if(nrow(D2_subset) > 0)
+  {
+    D2_subset <- D2_subset[which(D2_subset[,1] != D2_subset[,2]),]
+  }
+  
   # for each non-trivial element in D1_subset we add its projection onto the diagonal in diag1
   if(nrow(D1_subset) > 0)
   {
@@ -115,6 +121,55 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
     {
       proj_diag <- mean(as.numeric(D2_subset[i,]))
       diag2 <- rbind(diag2,data.frame(birth = proj_diag,death = proj_diag))
+    }
+  }
+  
+  # check if either subset is empty, if so return the norm of the other diagram
+  if(distance == "wasserstein")
+  {
+    if(nrow(diag1) == 0)
+    {
+      if(is.infinite(p))
+      {
+        # bottleneck norm
+        return(max(unlist(lapply(X = 1:nrow(D2_subset),FUN = function(X){
+          
+          coord <- (D2_subset[X,1L] + D2_subset[X,2L])/2
+          return(max(c(D2_subset[X,2L] - coord,coord - D2_subset[X,1L])))
+          
+        }))))
+      }else
+      {
+        # wasserstein norm
+        return((sum(unlist(lapply(X = 1:nrow(D2_subset),FUN = function(X){
+          
+          coord <- (D2_subset[X,1L] + D2_subset[X,2L])/2
+          return(max(c(D2_subset[X,2L] - coord,coord - D2_subset[X,1L]))^p)
+          
+        }))))^(1/p))
+      }
+    }
+    if(nrow(diag2) == 0)
+    {
+      if(is.infinite(p))
+      {
+        # bottleneck norm
+        return(max(unlist(lapply(X = 1:nrow(D1_subset),FUN = function(X){
+          
+          coord <- (D1_subset[X,1L] + D1_subset[X,2L])/2
+          return(max(c(D1_subset[X,2L] - coord,coord - D1_subset[X,1L])))
+          
+        }))))
+      }else
+      {
+        # wasserstein norm
+        return((sum(unlist(lapply(X = 1:nrow(D1_subset),FUN = function(X){
+          
+          coord <- (D1_subset[X,1L] + D1_subset[X,2L])/2
+          return(max(c(D1_subset[X,2L] - coord,coord - D1_subset[X,1L]))^p)
+          
+        }))))^(1/p))
+      }
     }
   }
 
