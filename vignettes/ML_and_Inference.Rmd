@@ -27,20 +27,24 @@ options(scipen = 999)
 
 # Introduction
 
-Topological data analysis is a relatively new area of data science which can find unique, non-linear global structure in whole datasets. The main tool of topological data analysis is called *persistent homology*, which produces a "shape descriptor" (called a *persistence diagram*) of its input dataset. Two main R packages exist for computing persistence diagrams; the more flexible of the two, called TDA, stores persistence diagrams in a non-standard data structure, and the faster of the two, called TDAstats, does not provide functionality for analyzing diagrams with published techniques. Methods exist for computing distances and kernels (which are a special type of similarity functions) between pairs of persistence diagrams, but only distance calculations are currently available in the R package TDA. Several papers have used distance and kernel computations in order to perform machine learning or inferences tasks with groups of persistence diagrams, but to date no publicly available software in either python or R provides the functionality for these types of analyses. In order to make the power of topological data analysis more readily available to data and machine learning practitioners, it would be very helpful to have a software package that can
+Topological data analysis is a relatively new area of data science which can find unique, non-linear global structure in whole datasets. The main tool of topological data analysis is called *persistent homology*, which produces a "shape descriptor" (called a *persistence diagram*) of its input dataset. Two main R packages exist for computing persistence diagrams; the more flexible of the two, called TDA, stores persistence diagrams in a non-standard data structure, and the faster of the two, called TDAstats, does not provide functionality for analyzing diagrams with published techniques. Methods exist for computing distances and kernels (which are a special type of similarity functions) between pairs of persistence diagrams, but only distance calculations are currently available in the R package TDA. Several papers have used distance and kernel computations in order to perform machine learning or inferences tasks with groups of persistence diagrams, but to date no publicly available software in either python or R provides the functionality for these types of analyses. In order to make the power of topological data analysis more readily available to data and machine learning practitioners, it would be very helpful to have a single software package that can
 
 1. convert persistence diagrams computed using the R packages TDA and TDAstats into a commonly-used data type for data analyses (a data frame), 
 
-2. implement fast versions of both distance and kernel calculations for pairs of persistence diagrams, and 
-3. provide scalable methods for machine learning and inference for persistence diagrams. 
+2. implement fast versions of both distance and kernel calculations for pairs of persistence diagrams,  
+3. provide scalable methods for machine learning and inference for persistence diagrams,
 
-It is with these goals that the package TDApplied was created. However, in order to make TDApplied a self-contained package for topological data analysis functionality is included for plotting persistence diagrams, determining which topological features are "real" in a dataset, and quickly calculating persistence diagrams with python.
+4. supply a fast engine for calculating persistence diagrams, and
+
+5. supply tools for interpreting machine learning diagrams.
+
+It is with these goals that the package TDApplied was created.
 
 # Software Review
 
-Topological data analysis has gained popularity over the past two decades since the original paper on persistent homology was published [@PHoriginal], and two main R packages have been created for persistent homology calculations:
+Topological data analysis has gained popularity over the past two decades since the original paper on persistent homology was published [@PHoriginal], and two main R packages have been created for topological data analysis:
 
-1. The R package TDA [@R-TDA] is a wrapper for a number of C++ persistent homology packages, including Dionysus [@Dionysus], GUDHI [@GUDHI] and PHAT [@PHAT], and provides both distance calculation capabilities between persistence diagrams and the ability to find representative data points of each topological feature in a persistence diagram (the points for each feature are called a "representative cycle").
+1. The R package TDA [@R-TDA] is a wrapper for a number of C++ persistent homology packages, including Dionysus [@Dionysus], GUDHI [@GUDHI] and PHAT [@PHAT], and provides both distance calculation capabilities between persistence diagrams and the ability to find representative data points of each topological feature in a persistence diagram (the points for each feature are called a "representative cycle"). Moreover, a method is provided for determining which topological features in a persistence diagram should be considered "real" from a statistical perspective.
 2. The R package TDAstats [@R-TDAstats] is a wrapper of the C++ persistent (co)homology engine Ripser [@Ripser,@PChom], and provides an inference method for detecting group differences of two groups of persistence diagrams (as in [@Robinson_Turner]. However, the distance calculation currently implemented in that package, is not based on an accepted distance metric for persistence diagrams. 
 
 The paper [@PH_benchmarking] compared the runtimes of the homology calculations in the R packages TDA and TDAstats, and concluded that certain persistent homology calculations are faster with TDAstats. The choice of which package to use therefore may vary by application, depending on whether speed is desired or whether knowledge of which data points represent which topological feature. Therefore, TDApplied can accept as input persistence diagrams computed from either package in order to cover a wide variety of potential use-cases.
@@ -51,14 +55,14 @@ There are a number of shortcomings of available topological data analysis softwa
 
 # Package TDApplied
 
-The package TDApplied aims to solve the three goals outlined in the introductory paragraph. Firstly, the function `diagram_to_df` allows the conversion of the output of TDA persistent homology calculations to a data frame. Secondly, the functions `diagram_distance` and `diagram_kernel` allow for fast distance and kernel calculations respectively, and their counterparts `distance_matrix` and `gram_matrix` compute in parallel, for scalability, the (cross) distance and (cross) Gram matrices respectively. Thirdly, these distance and kernel calculations are used to perform machine learning and inference on persistence diagrams. Methods include 
+The package TDApplied aims to solve the five goals outlined in the introductory paragraph. Firstly, the function `diagram_to_df` allows the conversion of the output of TDA persistent homology calculations to a data frame. Secondly, the functions `diagram_distance` and `diagram_kernel` allow for fast distance and kernel calculations respectively, and their counterparts `distance_matrix` and `gram_matrix` compute in parallel, for scalability, the (cross) distance and (cross) Gram matrices respectively. Thirdly, these distance and kernel calculations are used to perform machine learning and inference on persistence diagrams. Methods include 
 
 1. dimension reduction with metric multidimensional scaling (MDS) and kernel principal components analysis (kpca),
 2. clustering with kernel k-means,
 3. regression and classification with kernel support-vector machines (ksvm), and
 4. inference with distance and kernel calculations looking for group differences and group independence, respectively.
 
-The kernel machine learning methods implemented in TDApplied are wrappers of the flexible R package for kernel calculations kernlab [@R-kernlab], with some additional processing steps specific to persistence diagrams. In the subsequent sections we will describe these applications in more detail.
+The kernel machine learning methods implemented in TDApplied are wrappers of the flexible R package for kernel calculations kernlab [@R-kernlab], with some additional processing steps specific to persistence diagrams. A fast method for computing persistence diagrams via python is implemented in the `PyH` function. Finally, interpretative tools for persistence diagrams include the `plot_diagram` function for plotting persistence diagrams and the `bootstrap_persistence_thresholds` function for determining which topological features in a dataset should be considered "real". In the subsequent sections we will describe these applications in more detail.
 
 # Background: Persistent Homology
 
