@@ -127,7 +127,7 @@ bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim
   {
     stop("FUN must not be NA/NAN.")
   }
-  if(FUN %in% c("calculate_homology","ripsDiag") == F)
+  if(FUN %in% c("calculate_homology","ripsDiag","PyH") == F)
   {
     stop("FUN must be either \'calculate_homology\', \'PyH\' or \'ripsDiag\'.")
   }
@@ -248,7 +248,7 @@ bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim
       # calculate diagram (without representatives)
       if(FUN == "PyH")
       {
-        bootstrap_diag <- PyH(X = X,maxdim = maxdim,thresh = thresh,distance_mat = distance_mat,ripser = ripser,ignore_infinite_cluster = T,calculate_representatives = F)
+        bootstrap_diag <- PyH(X = X_sample,maxdim = maxdim,thresh = thresh,distance_mat = distance_mat,ripser = ripser,ignore_infinite_cluster = T,calculate_representatives = F)
       }
       if(FUN == "calculate_homology")
       {
