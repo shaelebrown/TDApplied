@@ -47,7 +47,7 @@
 #' # calculate persistence thresholds for alpha = 0.05 
 #' # and return the calculated diagram as well as the subsetted diagram
 #' bootstrapped_diagram <- bootstrap_persistence_thresholds(X = df,
-#' FUN = "calculate_homology",maxdim = 1,thresh = 2)
+#' FUN = "calculate_homology",maxdim = 1,thresh = 2,num_workers = 2)
 
 bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim = 0,thresh,distance_mat = FALSE,ripser = NULL,ignore_infinite_cluster = TRUE,calculate_representatives = FALSE,num_samples = 30,alpha = 0.05,return_subsetted = TRUE,return_diag = TRUE,num_workers = parallelly::availableCores(omit = 1)){
 
