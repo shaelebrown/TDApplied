@@ -123,7 +123,8 @@ A persistence diagram containing $n$ topological features can be represented in 
 In this section we will describe the various computational tools implemented in the package TDApplied to analyze persistence diagrams, both explaining the mathematics and providing functional examples. To run our examples we must start by loading the TDApplied package:
 
 ```{r setup}
-library("TDApplied")
+#library("TDApplied")
+devtools::load_all()
 ``` 
 
 Since TDApplied uses the output of TDA/TDAstats calculations (or its own persistent homology function, "PyH", discussed later) as inputs to its functions, either TDA or TDAstats should be at least installed (if not attached) when using TDApplied. All examples, except those in the subsection on bootstrapping, will analyze simple diagrams which are random deviations of three persistence diagrams called D1, D2 and D3 (each with points in dimension 0 only), which we will plot with the TDApplied function `plot_diagram`:
@@ -371,18 +372,30 @@ graphics::text(x = c(pt[[1]] + 0.3953059/2,0.4),y = c(1.83,1.55),c("t","t"))
 
 In this setup, "real" points will be those whose confidence intervals do not touch the diagonal line, where birth and death is the same. Note that the persistence threshold is twice the bottleneck distance threshold calculated above: the (Euclidean) distance from the point to the bottom right corner of the box is $\sqrt{2}t$, which must be greater than the (Euclidean) distance of the point to its diagonal projection, which is $\frac{y-x}{\sqrt{2}}$. Therefore, for the point to be considered real, $\sqrt{2}t < \frac{y-x}{\sqrt{2}}$, implying that the persistence of the point, $y-x$, must be at least twice the bottleneck threshold $t$.
 
-The function `bootstrap_persistence_thresholds` can be used to determine these persistence thresholds. Here is an example for a circle dataset (which is not the same as the one from above):
+The function `bootstrap_persistence_thresholds` can be used to determine these persistence thresholds. Here is an example for a circle dataset (which is not the same as the one from above), and the results can be plotted with the `plot_diagram` function:
 
-```{r}
+```{r,fig.height = 4,fig.width = 8,fig.align = 'center'}
 # sample 50 points from the unit circle
 circle <- TDA::circleUnif(n = 50)
 
 # calculate the bootstrapped persistence thresholds using 2 cores
 # and 20 iterations
-bootstrap_persistence_thresholds(X = circle,FUN = "calculate_homology",
-                                 maxdim = 1,thresh = 2,return_diag = F,
-                                 return_subsetted = F,num_workers = 2,
-                                 num_samples = 20)
+thresh <- bootstrap_persistence_thresholds(X = circle,FUN = "ripsDiag",
+                                 maxdim = 1,thresh = 2,num_workers = 2,
+                                 num_samples = 30)
+diag <- thresh$diag
+
+# plot original diagram and thresholded diagram side-by-side:
+par(mfrow = c(1,2))
+
+plot_diagram(diag,title = "Circle diagram")
+
+plot_diagram(diag,title = "Circle diagram with thresholds",
+             thresholds = thresh$thresholds)
+```
+
+```{r,echo = F}
+par(mfrow = c(1,1))
 ```
 
 The bootstrap procedure can be done in parallel or sequentially, depending on which function is specified to calculate the persistence diagrams. There are three possible such functions - TDAstat's `calculate_homology`, TDA's `ripsDiag` and TDApplied's `PyH` (described in later sections). Based on our simulations, the order of fastest to slowest of these functions are `PyH`, `calculate_homology` and `ripsDiag`. Moreover, both `ripsDiag` and `PyH` allow for the calculation of representative (co)cycles (i.e. the approximate location in the data of each topological feature), whereas `calculate_homology` does not. Therefore, our recommendation is to pick the function according to the following criteria: if a user can use the `PyH` function, then it should be used in all cases except for when the input data set is small, the machine has many available cores and the number of desired bootstrap iterations is large. Otherwise, use `calculate_homology` for speed or `ripsDiag` if the other two functions are not available. 

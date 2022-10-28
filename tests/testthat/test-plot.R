@@ -6,5 +6,6 @@ test_that("plot_diagram can detect incorrect parameters",{
   expect_error(plot_diagram(D = data.frame(dimension = c(0,1,2,3),birth = c(0,0,0,0),death = c(0,0,0,2)),title = NA),"NA")
   expect_error(plot_diagram(D = data.frame(dimension = c(0,1,2,3),birth = c(0,0,0,0),death = c(0,0,0,2)),max_radius = NA),"numeric")
   expect_error(plot_diagram(D = data.frame(dimension = c(0,1,2,3),birth = c(0,0,0,0),death = c(0,0,0,2)),max_radius = -1),"positive")
+  expect_error(plot_diagram(D = data.frame(dimension = c(0,1,2,3),birth = c(0,0,0,0),death = c(0,0,0,2)),thresholds = c(0,1,2,NA)),"NA")
   
 })
