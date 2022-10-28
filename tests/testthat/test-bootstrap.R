@@ -104,18 +104,35 @@ test_that("bootstrap_persistence_thresholds is computing properly",{
   
   # one example by hand to verify thresholds
   D <- data.frame(x = c(0,0,0),y = c(1,2,2.5))
-  diag <- diagram_to_df(TDA::ripsDiag(D,maxdimension = 0,maxscale = 1,library = "dionysus"))
-  d1 <- diagram_distance(diag,rbind(diag[1,],diag[1,],diag[1,]),dim = 0,p = Inf)
-  d2 <- diagram_distance(diag,rbind(diag[2,],diag[2,],diag[2,]),dim = 0,p = Inf)
-  d3 <- diagram_distance(diag,rbind(diag[3,],diag[3,],diag[3,]),dim = 0,p = Inf)
-  d4 <- diagram_distance(diag,rbind(diag[1,],diag[1,],diag[2,]),dim = 0,p = Inf)
-  d5 <- diagram_distance(diag,rbind(diag[1,],diag[1,],diag[3,]),dim = 0,p = Inf)
-  d6 <- diagram_distance(diag,rbind(diag[2,],diag[1,],diag[2,]),dim = 0,p = Inf)
-  d7 <- diagram_distance(diag,rbind(diag[2,],diag[3,],diag[2,]),dim = 0,p = Inf)
-  d8 <- diagram_distance(diag,rbind(diag[3,],diag[1,],diag[3,]),dim = 0,p = Inf)
-  d9 <- diagram_distance(diag,rbind(diag[3,],diag[2,],diag[3,]),dim = 0,p = Inf)
+  diag <- diagram_to_df(TDA::ripsDiag(D,maxdimension = 0,maxscale = 2.5,library = "dionysus"))
+  permuted_diag <- function(D,s)
+  {
+    return(TDA::ripsDiag(X = D[s,],maxdimension = 0,maxscale = 2.5,library = "dionysus"))
+  }
+  d1 <- diagram_distance(diag,permuted_diag(D = D,s = c(1,1,1)),dim = 0,p = Inf)
+  d2 <- diagram_distance(diag,permuted_diag(D = D,s = c(2,2,2)),dim = 0,p = Inf)
+  d3 <- diagram_distance(diag,permuted_diag(D = D,s = c(3,3,3)),dim = 0,p = Inf)
+  d4 <- diagram_distance(diag,permuted_diag(D = D,s = c(1,1,2)),dim = 0,p = Inf)
+  d5 <- diagram_distance(diag,permuted_diag(D = D,s = c(1,1,3)),dim = 0,p = Inf)
+  d6 <- diagram_distance(diag,permuted_diag(D = D,s = c(2,2,1)),dim = 0,p = Inf)
+  d7 <- diagram_distance(diag,permuted_diag(D = D,s = c(2,2,3)),dim = 0,p = Inf)
+  d8 <- diagram_distance(diag,permuted_diag(D = D,s = c(3,3,1)),dim = 0,p = Inf)
+  d9 <- diagram_distance(diag,permuted_diag(D = D,s = c(3,3,2)),dim = 0,p = Inf)
   d10 <- diagram_distance(diag,diag,dim = 0,p = Inf)
-  expect_equal(bootstrap_persistence_thresholds(X = D,FUN = "ripsDiag",maxdim = 0,thresh = 1,num_workers = 2,num_samples = 3)$thresholds,1)
+  unique_vals <- unique(c(d1,d2,d3,d4,d5,d6,d7,d8,d9,d10))
+  thresholds <- c()
+  for(i in 1:3)
+  {
+    for(j in 1:3)
+    {
+      for(k in 1:3)
+      {
+        thresholds <- c(thresholds,2*stats::quantile(unique_vals[c(i,j,k)],probs = 0.95)[[1]])
+      }
+    }
+  }
+  thresholds <- unique(thresholds)
+  expect_true(bootstrap_persistence_thresholds(X = D,FUN = "ripsDiag",maxdim = 0,thresh = 2.5,num_workers = 2,num_samples = 3)$thresholds %in% thresholds)
   
 })
 
