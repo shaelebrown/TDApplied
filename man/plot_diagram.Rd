@@ -34,7 +34,7 @@ and the main plot title can be altered via the `title` parameter.
 The `thresholds` parameter, if no NULL, can either be a user-defined numeric vector, with
 one entry (persistence threshold) for each dimension in `D`, or the output of
 \code{\link{bootstrap_persistence_thresholds}} (subsetting for the "thresholds" element of the list
-if multiple objects were returned). Points whose persistence are greater than their dimension's
+if multiple objects were returned). Points whose persistence are greater than or equal to their dimension's
 threshold will be plotted in color, and gray otherwise.
 }
 \examples{

@@ -356,7 +356,7 @@ The idea of the bootstrap procedure is as follows, where $X$ is the input data s
 3. We calculate the bottleneck distance of each new diagram with the original, $d_{\infty}(D_i,D)$, in each dimension separately, obtaining one threshold for each dimension.
 4. Finally we compute the $1-\alpha$ percentile of these values in each dimension.
 
-These thresholds are the maximum bottleneck distance from any point which the geometry of the persistence diagram changes significantly, forming a square-shaped "confidence interval" around each point in $D$. In particular, if $t$ was the threshold found for dimension $k$ then the confidence interval around a point $(x,y) \in D$ (of dimension $k$) is the set of points $\{(x',y')|\mbox{max}(|x-x'|,|y-y'|) <= t\}$. For example, if we sampled 50 points on the unit circle, calculated the bottleneck-threshold-based confidence interval around the single 1-dimensional point, we would get something like this:
+These thresholds are the maximum bottleneck distance from any point which the geometry of the persistence diagram changes significantly, forming a square-shaped "confidence interval" around each point in $D$. In particular, if $t$ was the threshold found for dimension $k$ then the confidence interval around a point $(x,y) \in D$ (of dimension $k$) is the set of points $\{(x',y')|\mbox{max}(|x-x'|,|y-y'|) < t\}$. For example, if we sampled 50 points on the unit circle, calculated the bottleneck-threshold-based confidence interval around the single 1-dimensional point, we would get something like this:
 
 ```{r,echo = F,fig.height = 5,fig.width = 5,fig.align = 'center'}
 par(mfrow = c(1,1))
@@ -369,7 +369,7 @@ graphics::lines(x = c(pt[[1]],pt[[1]]),y = c(pt[[2]],pt[[2]] - 0.3953059))
 graphics::text(x = c(pt[[1]] + 0.3953059/2,0.4),y = c(1.83,1.55),c("t","t"))
 ```
 
-In this setup, "real" points will be those whose confidence intervals do not touch the diagonal line, where birth and death is the same. Note that the persistence threshold is twice the bottleneck distance threshold calculated above: the (Euclidean) distance from the point to the bottom right corner of the box is $\sqrt{2}t$, which must be greater than the (Euclidean) distance of the point to its diagonal projection, which is $\frac{y-x}{\sqrt{2}}$. Therefore, for the point to be considered real, $\sqrt{2}t < \frac{y-x}{\sqrt{2}}$, implying that the persistence of the point, $y-x$, must be at least twice the bottleneck threshold $t$.
+In this setup, "real" points will be those whose confidence intervals do not touch the diagonal line, where birth and death is the same. This includes points where the bottom right corner is touching the diagonal line because the inteval is open (i.e. does not include its boundary). Note that the persistence threshold is twice the bottleneck distance threshold calculated above: the (Euclidean) distance from the point to the bottom right corner of the box is $\sqrt{2}t$, which must be greater than or equal to the (Euclidean) distance of the point to its diagonal projection, which is $\frac{y-x}{\sqrt{2}}$. Therefore, for the point to be considered real, $\sqrt{2}t \leq \frac{y-x}{\sqrt{2}}$, implying that the persistence of the point, $y-x$, must be no less than twice the bottleneck threshold $t$.
 
 The function `bootstrap_persistence_thresholds` can be used to determine these persistence thresholds. Here is an example for a circle dataset (which is not the same as the one from above), and the results can be plotted with the `plot_diagram` function:
 
