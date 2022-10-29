@@ -15,7 +15,7 @@ bootstrap_persistence_thresholds(
   calculate_representatives = FALSE,
   num_samples = 30,
   alpha = 0.05,
-  return_subsetted = TRUE,
+  return_subsetted = FALSE,
   return_diag = TRUE,
   num_workers = parallelly::availableCores(omit = 1)
 )
@@ -44,7 +44,7 @@ calculated when using the 'calculate_homology' function.}
 
 \item{alpha}{the type-1 error threshold, default 0.05.}
 
-\item{return_subsetted}{a boolean representing whether or not to return the subsetted persistence diagram (with or without representatives), default TRUE.}
+\item{return_subsetted}{a boolean representing whether or not to return the subsetted persistence diagram (with or without representatives), default FALSE.}
 
 \item{return_diag}{a boolean representing whether or not to return the calculated persistence diagram, default TRUE.}
 

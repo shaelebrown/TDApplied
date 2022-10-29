@@ -36,10 +36,10 @@
 #' # determine persistence thresholds
 #' thresholds <- bootstrap_persistence_thresholds(X = df,maxdim = 1,
 #' thresh = 2,num_samples = 3,
-#' num_workers = 2,return_diag = F)
+#' num_workers = 2)
 #' 
 #' # plot with persistence thresholds
-#' plot_diagram(diag,title = "Example diagram with thresholds",thresholds = thresh)
+#' plot_diagram(diag,title = "Example diagram with thresholds",thresholds = thresholds$thresholds)
 plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,thresholds = NULL){
   
   # error check parameters

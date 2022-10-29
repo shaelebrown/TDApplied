@@ -7,8 +7,8 @@ Please see those for more details.
 # 2.0.1
 
 - added PyH function for fast persistence diagram calculations with python
-- added plot_diagram function for plotting persistence diagrams
 - added bootstrap_persistence_thresholds for finding "real" topological features in a data set
+- added plot_diagram function for plotting persistence diagrams, with or without persistence thresholds
 - fixed problem with diagram_distance in which one of the two diagrams was empty in the
 desired dimension
 

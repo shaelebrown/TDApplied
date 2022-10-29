@@ -3,17 +3,17 @@ test_that("bootstrap_persistence_thresholds can do homology calculation with all
   
   D <- TDA::circleUnif(n = 50,r = 1)
   # ripser = import_ripser()
-  expect_length(bootstrap_persistence_thresholds(X = D,FUN = "calculate_homology",maxdim = 1,thresh = 2.1,num_workers = 2,num_samples = 3),3)
-  expect_length(bootstrap_persistence_thresholds(X = D,FUN = "ripsDiag",maxdim = 1,thresh = 2.1,num_workers = 2,num_samples = 3),3)
+  expect_length(bootstrap_persistence_thresholds(X = D,FUN = "calculate_homology",maxdim = 1,thresh = 2.1,num_workers = 2,num_samples = 3),2)
+  expect_length(bootstrap_persistence_thresholds(X = D,FUN = "ripsDiag",maxdim = 1,thresh = 2.1,num_workers = 2,num_samples = 3),2)
   # expect_length(bootstrap_persistence_thresholds(X = D,FUN = "PyH",maxdim = 1,thresh = 2,ripser = ripser,num_workers = 2,num_samples = 3),3)
-  expect_length(bootstrap_persistence_thresholds(X = D,FUN = "calculate_homology",maxdim = 1,thresh = 2,calculate_representatives = T,num_workers = 2,num_samples = 3),3)
-  expect_length(bootstrap_persistence_thresholds(X = D,FUN = "ripsDiag",maxdim = 1,thresh = 2,calculate_representatives = T,num_workers = 2,num_samples = 3),5)
+  expect_length(bootstrap_persistence_thresholds(X = D,FUN = "calculate_homology",maxdim = 1,thresh = 2,calculate_representatives = T,num_workers = 2,num_samples = 3),2)
+  expect_length(bootstrap_persistence_thresholds(X = D,FUN = "ripsDiag",maxdim = 1,thresh = 2,calculate_representatives = T,num_workers = 2,num_samples = 3),3)
   # expect_length(bootstrap_persistence_thresholds(X = D,FUN = "PyH",maxdim = 1,thresh = 2,ripser = ripser,calculate_representatives = T,num_workers = 2,num_samples = 3),5)
-  expect_length(bootstrap_persistence_thresholds(X = as.matrix(dist(D)),FUN = "calculate_homology",maxdim = 1,thresh = 2,distance_mat = T,num_workers = 2,num_samples = 3),3)
-  expect_length(bootstrap_persistence_thresholds(X = as.matrix(dist(D)),FUN = "ripsDiag",maxdim = 1,thresh = 2,distance_mat = T,num_workers = 2,num_samples = 3),3)
+  expect_length(bootstrap_persistence_thresholds(X = as.matrix(dist(D)),FUN = "calculate_homology",maxdim = 1,thresh = 2,distance_mat = T,num_workers = 2,num_samples = 3),2)
+  expect_length(bootstrap_persistence_thresholds(X = as.matrix(dist(D)),FUN = "ripsDiag",maxdim = 1,thresh = 2,distance_mat = T,num_workers = 2,num_samples = 3),2)
   # expect_length(bootstrap_persistence_thresholds(X = as.matrix(dist(D)),FUN = "PyH",maxdim = 1,thresh = 2,ripser = ripser,distance_mat = T,num_workers = 2,num_samples = 3),3)
-  expect_length(bootstrap_persistence_thresholds(X = as.matrix(dist(D)),FUN = "calculate_homology",maxdim = 1,thresh = 2,calculate_representatives = T,distance_mat = T,num_workers = 2,num_samples = 3),3)
-  expect_length(bootstrap_persistence_thresholds(X = as.matrix(dist(D)),FUN = "ripsDiag",maxdim = 1,thresh = 2,calculate_representatives = T,distance_mat = T,num_workers = 2,num_samples = 3),5)
+  expect_length(bootstrap_persistence_thresholds(X = as.matrix(dist(D)),FUN = "calculate_homology",maxdim = 1,thresh = 2,calculate_representatives = T,distance_mat = T,num_workers = 2,num_samples = 3),2)
+  expect_length(bootstrap_persistence_thresholds(X = as.matrix(dist(D)),FUN = "ripsDiag",maxdim = 1,thresh = 2,calculate_representatives = T,distance_mat = T,num_workers = 2,num_samples = 3),3)
   # expect_length(bootstrap_persistence_thresholds(X = as.matrix(dist(D)),FUN = "PyH",maxdim = 1,thresh = 2,ripser = ripser,calculate_representatives = T,distance_mat = T,num_workers = 2,num_samples = 3),5)
   
 })
@@ -66,7 +66,7 @@ test_that("bootstrap_persistence_thresholds is computing properly",{
   D <- TDA::circleUnif(n = 50,r = 1)
   
   # ripsDiag
-  bs <- bootstrap_persistence_thresholds(X = D,FUN = "ripsDiag",maxdim = 1,thresh = 2,calculate_representatives = T,return_diag = T,num_workers = 2,num_samples = 3)
+  bs <- bootstrap_persistence_thresholds(X = D,FUN = "ripsDiag",maxdim = 1,thresh = 2,calculate_representatives = T,return_diag = T,num_workers = 2,num_samples = 3,return_subsetted = T)
   expect_length(bs$representatives,nrow(bs$diag))
   expect_lte(length(bs$thresholds),2)
   expect_gt(bs$thresholds[[1]],0)
@@ -76,7 +76,7 @@ test_that("bootstrap_persistence_thresholds is computing properly",{
   expect_true(min(bs$subsetted_diag[which(bs$subsetted_diag$dimension == 1),]$death - bs$subsetted_diag[which(bs$subsetted_diag$dimension == 1),]$birth) > bs$thresholds[[2]])
   
   # calculate_homology
-  bs <- bootstrap_persistence_thresholds(X = D,FUN = "calculate_homology",maxdim = 1,thresh = 2,return_diag = T,num_workers = 2,num_samples = 3)
+  bs <- bootstrap_persistence_thresholds(X = D,FUN = "calculate_homology",maxdim = 1,thresh = 2,return_diag = T,num_workers = 2,num_samples = 3,return_subsetted = T)
   expect_length(bs$thresholds,2)
   expect_gt(bs$thresholds[[1]],0)
   expect_gt(bs$thresholds[[2]],0)

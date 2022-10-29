@@ -26,7 +26,7 @@
 #' @param num_samples the positive integer number of bootstrap samples, default 30.
 #' @param alpha the type-1 error threshold, default 0.05.
 #' @param return_diag a boolean representing whether or not to return the calculated persistence diagram, default TRUE.
-#' @param return_subsetted a boolean representing whether or not to return the subsetted persistence diagram (with or without representatives), default TRUE.
+#' @param return_subsetted a boolean representing whether or not to return the subsetted persistence diagram (with or without representatives), default FALSE.
 #' @param num_workers the integer number of cores used for parallelizing (over bootstrap samples), default one less the maximum amount of cores on the machine.
 #' @return a numeric vector of threshold values ,with one for each dimension 0..`maxdim` (in that order).
 #' @export
@@ -49,7 +49,7 @@
 #' bootstrapped_diagram <- bootstrap_persistence_thresholds(X = df,
 #' FUN = "calculate_homology",maxdim = 1,thresh = 2,num_workers = 2)
 
-bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim = 0,thresh,distance_mat = FALSE,ripser = NULL,ignore_infinite_cluster = TRUE,calculate_representatives = FALSE,num_samples = 30,alpha = 0.05,return_subsetted = TRUE,return_diag = TRUE,num_workers = parallelly::availableCores(omit = 1)){
+bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim = 0,thresh,distance_mat = FALSE,ripser = NULL,ignore_infinite_cluster = TRUE,calculate_representatives = FALSE,num_samples = 30,alpha = 0.05,return_subsetted = FALSE,return_diag = TRUE,num_workers = parallelly::availableCores(omit = 1)){
 
   # error check parameters
   if(is.null(distance_mat))
