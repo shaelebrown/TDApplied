@@ -44,6 +44,10 @@ plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,threshol
   
   # error check parameters
   check_diagram(d = D,ret = F)
+  
+  # convert diagram to df
+  D <- diagram_to_df(D)
+  
   if(max(D[,1L]) > 12)
   {
     stop("diagram must have maximum dimension no more than 12.")
@@ -98,9 +102,6 @@ plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,threshol
     stop("legend must be a single logical value.")
   }
   
-  # convert diagram to df
-  D <- diagram_to_df(D)
-  
   # error check thresholds
   if(!is.null(thresholds))
   {
@@ -145,10 +146,12 @@ plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,threshol
     graphics::legend("bottomright",title = "Dimensions:",legend = as.character(dims),col = cols[dims + 1],pch = pchs[dims + 1],inset = 0.01*max(D[,3L])) 
   }
   graphics::abline(a = 0,b = 1)
-  for(i in dims)
+  if(!is.null(thresholds))
   {
-    graphics::abline(b = 1,a = thresholds[[i + 1]],col = cols[i + 1])
+    for(i in dims)
+    {
+      graphics::abline(b = 1,a = thresholds[[i + 1]],col = cols[i + 1],lty = "dashed")
+    } 
   }
-  
 }
 
