@@ -1,6 +1,8 @@
 
 test_that("bootstrap_persistence_thresholds can do homology calculation with all three packages",{
   
+  skip_on_cran()
+  
   D <- TDA::circleUnif(n = 50,r = 1)
   # ripser = import_ripser()
   expect_length(bootstrap_persistence_thresholds(X = D,FUN = "calculate_homology",maxdim = 1,thresh = 2.1,num_workers = 2,num_samples = 3),2)
@@ -62,6 +64,8 @@ test_that("bootstrap_persistence_thresholds can detect incorrect parameters corr
 })
 
 test_that("bootstrap_persistence_thresholds is computing properly",{
+  
+  skip_on_cran()
   
   D <- TDA::circleUnif(n = 50,r = 1)
   
