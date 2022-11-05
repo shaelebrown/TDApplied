@@ -901,7 +901,7 @@ Firstly, we claim that a solution to the LSAP problem on $M$ has a cost which is
 
 Next, we claim that a solution to the LSAP problem on $M$ has a cost which is no greater than the distance value. Now suppose, to reach a contradiction, that the solution to the LSAP on problem $M$ had cost $s$, which was larger than the real distance value, $s'$. Let $m'$ be a matching for the real distance calculation of $s'$. Then since each point in either diagram is either paired with a point in the other diagram or its own diagonal projection, there must be an equal number of unpaired points in both diagrams in $m'$. Therefore, we can augment $m'$ to a matching $m$ on $M$ in which the unpaired diagonal points are arbitrarily paired up with cost 0. Thus, $m$ has cost $s' < s$, contradicting the minimality of $s$. Therefore, a solution to the LSAP problem on $M$ has a cost which is no greater than the distance value.
 
-This completes the proof that the solution to the LSAP problem on $M$ has the same cost as the bottleneck distance value between Diag1 and Diag2.
+Therefore, a solution to the LSAP problem for $M$ has a cost which is both greater than and less than the bottleneck distance value, and hence the two values must be equal.
 
 ```{r,echo = F}
 # reset parameters
