@@ -273,5 +273,5 @@ Plot a diagram with persistence thresholds:
 
 ```r
 diag <- TDAstats::calculate_homology(circ,dim = 1)
-plot_diagram(diag,thresholds = boot$thresholds)
+plot_diagram(diag,thresholds = boot)
 ```

@@ -4,7 +4,7 @@
 [Pull Request](https://github.com/shaelebrown/TDApplied/pulls) number.
 Please see those for more details.
 
-# 2.0.1
+# 2.0.0
 
 - added PyH function for fast persistence diagram calculations with python
 - added bootstrap_persistence_thresholds for finding "real" topological features in a data set

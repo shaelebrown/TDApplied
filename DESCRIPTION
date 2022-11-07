@@ -16,8 +16,8 @@ Description: Topological data analysis is a powerful tool for finding non-linear
     computed using the two main R packages for topological data analysis into a data frame, 
     (2) implement fast versions of both distance and kernel calculations
     for pairs of persistence diagrams, (3) provide methods for machine learning
-    and inference for persistence diagrams which scale well, (4) provide a fast implementation
-    of persistent homology via a python interface, and (5) provide tools for the interpretation of
+    and inference for persistence diagrams which scale well, (4) deliver a fast implementation
+    of persistent homology via a python interface, and (5) contribute tools for the interpretation of
     persistence diagrams.
 Depends: R (>= 3.2.2)
 Imports: parallel, doParallel, foreach, clue, rdist, parallelly, kernlab, iterators, methods, stats, utils
