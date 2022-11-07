@@ -22,7 +22,7 @@ maximum dimension at most 12.}
 
 \item{legend}{a logical indicating whether to include a legend of feature dimensions, default TRUE.}
 
-\item{thresholds}{a numeric vector with one persistence threshold for each dimension in `D`, default NULL.}
+\item{thresholds}{either a numeric vector with one persistence threshold for each dimension in `D` or the output of a \code{\link{bootstrap_persistence_thresholds}} function call, default NULL.}
 }
 \description{
 Plots a persistence diagram outputted from either a persistent homology calculation or from diagram_to_df, with
@@ -31,11 +31,10 @@ Each homological dimension has its own color and point type (with colors chosen 
 and the main plot title can be altered via the `title` parameter.
 }
 \details{
-The `thresholds` parameter, if no NULL, can either be a user-defined numeric vector, with
+The `thresholds` parameter, if not NULL, can either be a user-defined numeric vector, with
 one entry (persistence threshold) for each dimension in `D`, or the output of
-\code{\link{bootstrap_persistence_thresholds}} (subsetting for the "thresholds" element of the list
-if multiple objects were returned). Points whose persistence are greater than or equal to their dimension's
-threshold will be plotted in color, and gray otherwise.
+\code{\link{bootstrap_persistence_thresholds}}. Points whose persistence are greater than or equal to their dimension's
+threshold will be plotted in their dimension's color, and in gray otherwise.
 }
 \examples{
 
@@ -54,8 +53,11 @@ thresholds <- bootstrap_persistence_thresholds(X = df,maxdim = 1,
 thresh = 2,num_samples = 3,
 num_workers = 2)
 
-# plot with persistence thresholds
-plot_diagram(diag,title = "Example diagram with thresholds",thresholds = thresholds$thresholds)
+# plot with bootstrap persistence thresholds
+plot_diagram(diag,title = "Example diagram with thresholds",thresholds = thresholds)
+
+#' # plot with personalized persistence thresholds
+plot_diagram(diag,title = "Example diagram with personalized thresholds",thresholds = c(0.5,1))
 }
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}

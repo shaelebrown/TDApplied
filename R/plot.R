@@ -6,18 +6,17 @@
 #' Each homological dimension has its own color and point type (with colors chosen to be clear and distinct from each other), 
 #' and the main plot title can be altered via the `title` parameter.
 #' 
-#' The `thresholds` parameter, if no NULL, can either be a user-defined numeric vector, with
+#' The `thresholds` parameter, if not NULL, can either be a user-defined numeric vector, with
 #' one entry (persistence threshold) for each dimension in `D`, or the output of
-#' \code{\link{bootstrap_persistence_thresholds}} (subsetting for the "thresholds" element of the list
-#' if multiple objects were returned). Points whose persistence are greater than or equal to their dimension's
-#' threshold will be plotted in color, and gray otherwise.
+#' \code{\link{bootstrap_persistence_thresholds}}. Points whose persistence are greater than or equal to their dimension's
+#' threshold will be plotted in their dimension's color, and in gray otherwise.
 #' 
 #' @param D a persistence diagram, either outputted from either a persistent homology homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}} or from \code{\link{diagram_to_df}}, with
 #' maximum dimension at most 12.
 #' @param title the character string plot title, default NULL.
 #' @param max_radius the x and y limits of the plot are defined as `c(0,max_radius)`, and the default value of `max_radius` is the maximum death value in `D`.
 #' @param legend a logical indicating whether to include a legend of feature dimensions, default TRUE.
-#' @param thresholds a numeric vector with one persistence threshold for each dimension in `D`, default NULL.
+#' @param thresholds either a numeric vector with one persistence threshold for each dimension in `D` or the output of a \code{\link{bootstrap_persistence_thresholds}} function call, default NULL.
 #' @importFrom graphics legend abline
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
@@ -38,8 +37,11 @@
 #' thresh = 2,num_samples = 3,
 #' num_workers = 2)
 #' 
-#' # plot with persistence thresholds
-#' plot_diagram(diag,title = "Example diagram with thresholds",thresholds = thresholds$thresholds)
+#' # plot with bootstrap persistence thresholds
+#' plot_diagram(diag,title = "Example diagram with thresholds",thresholds = thresholds)
+#' 
+#' #' # plot with personalized persistence thresholds
+#' plot_diagram(diag,title = "Example diagram with personalized thresholds",thresholds = c(0.5,1))
 plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,thresholds = NULL){
   
   # error check parameters
@@ -105,17 +107,50 @@ plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,threshol
   # error check thresholds
   if(!is.null(thresholds))
   {
+    # first see if thresholds was the output of the bootstrap
+    # function with multiple return arguments
+    bootstrap_output <- F
+    if(is.list(thresholds))
+    {
+      if("thresholds" %in% names(thresholds))
+      {
+        # if yes, then subset for just the thresholds
+        thresholds = thresholds$thresholds
+        bootstrap_output <- T
+      }else
+      {
+        stop("thresholds must contain a list element called \'thresholds\'.")
+      }
+    }
     if(!is.vector(thresholds) | !is.numeric(thresholds))
     {
-      stop("thresholds should be a numeric vector.")
+      if(bootstrap_output)
+      {
+        stop("the \'thresholds\' element of thresholds should be a numeric vector.")
+      }else
+      {
+        stop("thresholds should be a numeric vector.")
+      }
     }
     if(length(thresholds) != length(unique(D[,1])))
     {
-      stop("thresholds must have one element for each dimension in D.")
+      if(bootstrap_output)
+      {
+        stop("the \'thresholds\' element of thresholds must have one element for each dimension in D.")
+      }else
+      {
+        stop("thresholds must have one element for each dimension in D.")
+      }
     }
     if(length(which(thresholds %in% c(NA,NaN,Inf))) > 0)
     {
-      stop("thresholds must not have any NA, NaN or Inf values.")
+      if(bootstrap_output)
+      {
+        stop("the \'thresholds\' element of thresholds must not have any NA, NaN or Inf values.") 
+      }else
+      {
+        stop("thresholds must not have any NA, NaN or Inf values.")
+      }
     }
   }
   
