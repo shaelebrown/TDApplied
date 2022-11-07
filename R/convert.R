@@ -52,6 +52,15 @@ diagram_to_df <- function(d){
     # diagram was the output of a TDAstats calculation
     return(as.data.frame(d))
   }
+  
+  if("diagram" %in% names(d))
+  {
+    if(methods::is(d$diagram,"data.frame"))
+    {
+      # diagram was the output of a PyH calculation, with representatives
+      return(d$diagram)
+    }
+  }
 
   # else d was the output of a TDA calculation
   d <- d[[1]]
