@@ -311,7 +311,7 @@ bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim
     inds <- c()
     for(d in 0:maxdim)
     {
-      inds <- c(inds,which(diag$dimension == d & diag$death - diag$birth > thresholds[[d + 1]]))
+      inds <- c(inds,which(diag$dimension == d & diag$death - diag$birth >= thresholds[[d + 1]]))
     }
     ret_list$subsetted_diag <- diag[inds,]
     
@@ -328,7 +328,7 @@ bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim
         {
           min_ind <- min(which(diag$dimension == d))
           max_ind <- max(which(diag$dimension == d))
-          ret_list$subsetted_representatives[[d]] <- ret_list$subsetted_representatives[[d]][inds[which(inds %in% c(min_ind:max_ind))] - min_ind + 1]
+          ret_list$subsetted_representatives[[d + 1]] <- ret_list$subsetted_representatives[[d + 1]][inds[which(inds %in% c(min_ind:max_ind))] - min_ind + 1]
         }
       }
     }
