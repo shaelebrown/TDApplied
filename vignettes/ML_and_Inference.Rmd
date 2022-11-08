@@ -595,7 +595,7 @@ diag$representatives[[2]][[1]][1:5,]
 ```
 
 ```{r,echo = F}
-representative = matrix(data = c(9,6,35,6,9,3,16,6,31,6,43,9,29,6,9,1,28,9,39,6,13,6,26,6,38,9,27,9,35,3,10,9,30,9,8,6,43,35,16,3,24,9,31,3,6,2,35,1,35,28,40,6,43,16,29,3,43,31,16,1,28,16,31,1,31,28,43,29,29,1,29,28,38,35,35,27,39,3,13,3,26,3,35,10,35,30,43,39,38,16,27,16,43,13,38,31,43,26,31,27,8,3,35,24,16,10,39,1,39,28,31,10,30,16,13,1,28,13,26,1,28,26,38,29,29,27,31,30,3,2,43,8,15,9,7,6,29,10,24,16,48,9,40,3,20,6,31,24,30,29,33,9,8,1,28,8,43,2,29,24,43,40,39,38,2,1,28,2,39,27),nrow = 85,ncol = 2,byrow = T)
+representative = matrix(data = c(9,6,35,6,9,3,16,6,31,6,43,9,29,6,9,1,28,9,39,6,13,6,26,6,38,9,27,9,35,3,10,9,30,9,8,6,43,35,16,3,24,9,31,3,6,2,35,1,35,28,40,6,43,16,29,3,43,31,16,1,28,16,31,1,31,28,43,29,29,1,29,28,38,35,35,27,39,3,13,3,26,3,35,10,35,30,43,39,38,16,27,16,43,13,38,31,43,26,31,27,8,3,35,24,16,10,39,1,39,28,31,10,30,16,13,1,28,13,26,1,28,26,38,29,29,27,31,30,3,2,43,8,15,9,7,6,29,10,24,16,48,9,40,3,20,6,31,24,30,29,33,9,8,1,28,8,43,2,29,24,43,40,39,38,2,1,28,2,39,27),nrow = 85,ncol = 2,byrow = T) + matrix(data = 1,nrow = 85,ncol = 2)
 representative[1:5,]
 ```
 
@@ -606,62 +606,98 @@ unique(c(diag$representatives[[2]][[1]][,1],diag$representatives[[2]][[1]][,2]))
 ```
 
 ```{r,echo = F}
-c(9,35,16,31,43,29,28,39,13,26,38,27,10,30,8,24,6,40,3,15,7,48,20,33,2,1)
+c(9,35,16,31,43,29,28,39,13,26,38,27,10,30,8,24,6,40,3,15,7,48,20,33,2,1) + rep(1,26)
 ```
 
-Since the circ dataset is two-dimensional, we can actually plot the loop representative as follows:
+Since the circ dataset is two-dimensional, we can actually plot the loop representative according to the following process:
+
+1. Pick a threshold $\epsilon$ less than the death radius of the cocycle.
+2. Plot all edges between pairs of points in circ of distance no more than $\epsilon$.
+3. Highlight all edges in the representative.
+
+Since the death radius of the main cocycle is 1.738894, we can use the following code to plot the cocycle at thresholds value 1.7:
 
 ```{r,echo = T,eval = F}
 plot(x = circ$x,y = circ$y,xlab = "x",ylab = "y",main = "circ with representative")
-for(i in 1:nrow(diag$representatives[[2]][[1]]))
+for(i in 1:nrow(circ))
 {
-  pt1 <- circ[diag$representatives[[2]][[1]][i,1],]
-  pt2 <- circ[diag$representatives[[2]][[1]][i,2],]
-  graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]))
-}
-```
-
-```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
-plot(x = circ$x,y = circ$y,xlab = "x",ylab = "y",main = "circ with representative")
-for(i in 1:nrow(representative))
-{
-  pt1 <- circ[representative[i,1],]
-  pt2 <- circ[representative[i,2],]
-  graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]))
-}
-```
-
-Now this plot doesn't quite look like how we would expect - it's not a proper loop! In order to fix this we need to subset the edges we plot by only plotting edges which have distance less than the death value of the loop. This value was 1.738894, so we will pick a threshold of 1.7 (other representatives for the same loop can be found by picking a different threshold, as long as the threshold is at least as big as the birth value of the loop):
-
-```{r,echo = T,eval = F}
-plot(x = circ$x,y = circ$y,xlab = "x",ylab = "y",main = "circ with representative")
-for(i in 1:nrow(diag$representatives[[2]][[1]]))
-{
-  pt1 <- circ[diag$representatives[[2]][[1]][i,1],]
-  pt2 <- circ[diag$representatives[[2]][[1]][i,2],]
-  if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) < 1.7)
+  for(j in 1:nrow(circ))
   {
-    graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]))
+    pt1 <- circ[i,]
+    pt2 <- circ[j,]
+    if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) <= 1.7)
+    {
+      graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]))
+    }
+  }
+}
+
+for(i in 1:nrow(diag$representatives[[2]][[1]]))
+{
+  pt1 <- circ[diag$representatives[[2]][[1]][i,1],]
+  pt2 <- circ[diag$representatives[[2]][[1]][i,2],]
+  if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) <= 1.7)
+  {
+    graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]),col = "red")
   }
 }
 ```
 
 ```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
 plot(x = circ$x,y = circ$y,xlab = "x",ylab = "y",main = "circ with representative")
+for(i in 1:nrow(circ))
+{
+  for(j in 1:nrow(circ))
+  {
+    pt1 <- circ[i,]
+    pt2 <- circ[j,]
+    if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) < 1.7)
+    {
+      graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]))
+    }
+  }
+}
+
 for(i in 1:nrow(representative))
 {
   pt1 <- circ[representative[i,1],]
   pt2 <- circ[representative[i,2],]
-  if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) < 1.7)
+  if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) <= 1.7)
   {
-    graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]))
+    graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]),col = "red")
   }
 }
 ```
 
-This representative cocycle is a proper loop, as desired. Not every point in our data set is a part of the representative cycle, though, but enough points were found that we could reconstruct the main loop.
+This plot shows the main loop that was found via persistent cohomology, and the representative is a set of edges (in this 2D case) whose removal would destroy the loop. A more intuitive notion of a "representative loop" can be found with persistent homology, for instance using the TDA `ripsDiag` function with the `cycleLocation` parameter set to TRUE. Another example of the representative cocycle can be found using another threshold value, for instance the (rounded up) birth value of 0.6009:
 
-Since we know that these data points form a loop in the original data set, we could perform a further exploratory analysis in circ to explore the periodic nature of the feature. While in this example we know that a loop will be present, this type of analysis could help find hidden latent structure in data sets. In this way `PyH` is as flexible as the TDA persistent homology function `ripsDiag`.
+```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
+plot(x = circ$x,y = circ$y,xlab = "x",ylab = "y",main = "circ with representative")
+for(i in 1:nrow(circ))
+{
+  for(j in 1:nrow(circ))
+  {
+    pt1 <- circ[i,]
+    pt2 <- circ[j,]
+    if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) <= 0.6009)
+    {
+      graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]))
+    }
+  }
+}
+
+for(i in 1:nrow(representative))
+{
+  pt1 <- circ[representative[i,1],]
+  pt2 <- circ[representative[i,2],]
+  if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) <= 0.6009)
+  {
+    graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]),col = "red")
+  }
+}
+```
+
+Since we know that the data points in the representatives help form a loop in the original data set, we could perform a further exploratory analysis in circ to explore the periodic nature of the feature. While in this example we know that a loop will be present, this type of analysis could help find hidden latent structure in data sets. In this way `PyH` is as flexible as the TDA persistent homology function `ripsDiag`, although representative cocycles are less intuitive than representative cycles.
 
 # Benchmarking TDApplied Against Other Packages
 
@@ -671,7 +707,7 @@ In order to properly situate TDApplied in the landscape of software for topologi
 (2) Wasserstein distances between persistence diagrams with TDApplied's `diagram_distance` and TDA's `wasserstein`.
 (3) Wasserstein distances between persistence diagrams with TDApplied's `diagram_distance` and the persim python module's `wasserstein`.
 
-Since TDA's `bootstrapDiagram` function uses the same bootstrap procedure for persistence thresholds as TDApplied's `bootstrap_persistence_thresholds`, it will be left for a future version to benchmark these two functions.
+Another pair of functions that we could benchmark is TDA's `bootstrapDiagram` function and TDApplied's `bootstrap_persistence_thresholds`, since they use the same bootstrap procedure. However, since both functions are built on parallelized distance calculations, comparing the runtime of TDA's `wasserstein` and TDApplied's `diagram_distance` functions should provide the same conclusion of which implementation is faster and more scalable. Nevertheless, one major advantage of the `bootstrap_persistence_thresholds` function over the `bootstrapDiagram` function is that the latter uses the function `mclapply` for parallelization, which does not work on Windows machines, whereas the parallelization of the former function is more flexible and does work on Windows machines.
 
 An important note is that the three distance functions (TDApplied's `diagram_distance`, TDA's `wasserstein` and persim's `wasserstein`) often did not agree on the distance value of certain calculations. Without knowing the exact details of the persim and TDA functions, one possible explanation is that the other two packages use alternative definitions for the wasserstein/bottleneck distances. For example, the definitions of wasserstein distance in [@Robinson_Turner] and [@ComputingPH] are different. Nevertheless, the `diagram_distance` function has been tested against examples with distances worked out by hand (these can be found in the test folder of the package), and a proof of algorithm correctness is given in the appendix.
 
