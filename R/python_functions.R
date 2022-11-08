@@ -215,8 +215,12 @@ PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_
       {
         representatives[[length(representatives) + 1]] <- lapply(X = PH$cocycles[[i + 1]],FUN = function(X){
           
-          # removing edge weight 1
-          return(X[,1:(ncol(X)-1)])
+          # removing edge weight 1 and increase values by 1
+          if(is.matrix(X))
+          {
+            return(X[,1:(ncol(X) - 1)] + matrix(data = 1,nrow = nrow(X),ncol = ncol(X) - 1))
+          }
+          return(X[1:(length(X) - 1)] + rep(1,length(X) - 1))
           
         })
       }
@@ -250,6 +254,7 @@ PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_
     return(PH)
   }
   # else
+  
   return(list(diagram = PH,representatives = representatives))
   
 }
