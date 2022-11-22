@@ -329,7 +329,7 @@ diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_worke
   K <- gram_matrix(diagrams = diagrams,t = t,sigma = sigma,dim = dim,num_workers = num_workers)
   
   # return kernlab computation, ignore unhelpful kernlab warnings
-  tryCatch(expr = {ret_list <- list(pca = kernlab::kpca(x = K,features = features),diagrams = diagrams,t = t,sigma = sigma,dim = dim)},
+  tryCatch(expr = {ret_list <- list(pca = kernlab::kpca(x = K,features = features,th = th),diagrams = diagrams,t = t,sigma = sigma,dim = dim)},
            error = function(e){stop(e)},
            warning = function(w){
              
