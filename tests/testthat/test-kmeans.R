@@ -7,6 +7,7 @@ test_that("diagram_kkmeans detects incorrect parameters correctly",{
   expect_error(diagram_kkmeans(diagrams = list(D,D,D),centers = 1,t = NaN,num_workers = 2),"t")
   expect_error(diagram_kkmeans(diagrams = list(D,D,D),centers = 1,sigma = NA,num_workers = 2),"sigma")
   expect_error(diagram_kkmeans(diagrams = list(D,D,D),dim = c(1,2),centers = 1,num_workers = 2),"single value")
+  expect_error(diagram_kkmeans(diagrams = list(D,D,D),dim = c(1),centers = 4,num_workers = 2),"number of")
   
 })
 
@@ -146,6 +147,7 @@ test_that("predict_diagram_kkmeans detects incorrect parameters correctly",{
   expect_error(predict_diagram_kkmeans(new_diagrams = "D",dkk,num_workers = 2),"list")
   expect_error(predict_diagram_kkmeans(new_diagrams = list(diagrams[[1]],diagrams[[2]][0,]),dkk,num_workers = 2),"empty")
   expect_error(predict_diagram_kkmeans(new_diagrams = diagrams,diagrams,num_workers = 2),"kkmeans")
+  expect_error(predict_diagram_kkmeans(new_diagrams = diagrams,NULL,num_workers = 2),"NULL")
   
 })
 

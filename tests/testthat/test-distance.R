@@ -41,9 +41,13 @@ test_that("diagram_distance is computing correctly",{
   expect_identical(diagram_distance(D1 = D1,D2 = D1,p = Inf,distance = "wasserstein",dim = 0),0)
   expect_identical(diagram_distance(D1 = D1,D2 = D1,p = 2,distance = "wasserstein",dim = 0),0)
   expect_identical(diagram_distance(D1 = D1,D2 = D1,distance = "fisher",sigma = 1,dim = 0),0)
+  expect_identical(diagram_distance(D1 = D1,D2 = D2,dim = 1),0)
   
   D1$dimension = 1
   expect_identical(diagram_distance(D1 = D1,D2 = D2,dim = 1,p = 2,distance = "wasserstein"),sqrt(0.5^2))
+  expect_identical(diagram_distance(D1 = D1,D2 = D2,dim = 1,p = Inf,distance = "wasserstein"),0.5)
+  expect_identical(diagram_distance(D1 = D2,D2 = D1,dim = 1,p = 2,distance = "wasserstein"),sqrt(0.5^2))
+  expect_identical(diagram_distance(D1 = D2,D2 = D1,dim = 1,p = Inf,distance = "wasserstein"),0.5)
 
   # this example was picked the TDA function wasserstein disagrees with the actual minimum values
   # for p = 2,3, but diagram_distance gets the correct answer

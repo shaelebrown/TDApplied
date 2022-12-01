@@ -45,11 +45,15 @@ test_that("bootstrap_persistence_thresholds can detect incorrect parameters corr
   
   expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "calculate_homology",maxdim = 1,thresh = 2,distance_mat = "F"),"logical")
   expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "ripsDiag",maxdim = 1,thresh = 2,distance_mat = c(F,T)),"single")
+  expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "ripsDiag",maxdim = 1,thresh = 2,distance_mat = NULL),"NULL")
+  expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "ripsDiag",maxdim = 1,thresh = 2,distance_mat = NA),"NA")
+  expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "ripsDiag",maxdim = 1,thresh = 2,distance_mat = T),"square")
   
   # PyH parameters (ripser,ignore_infinite_cluster,calculate_representatives) are all working, tested in test-python.R
   
   expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "ripsDiag",maxdim = 1,thresh = 2,calculate_representatives = c(T,F)),"boolean")
   expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "calculate_homology",maxdim = 1,thresh = 2,calculate_representatives = NULL),"NULL")
+  expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "calculate_homology",maxdim = 1,thresh = 2,calculate_representatives = NA),"NA")
   
   expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "ripsDiag",maxdim = 1,thresh = 2,num_samples = 0),"one")
   expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "calculate_homology",maxdim = 1,thresh = 2,num_samples = Inf),"finite")
@@ -59,7 +63,10 @@ test_that("bootstrap_persistence_thresholds can detect incorrect parameters corr
   expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "calculate_homology",maxdim = 1,thresh = 2,alpha = c(0.5,0.4)),"single")
   
   expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "calculate_homology",maxdim = 1,thresh = 2,return_subsetted = c(T,F)),"single")
+  expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "calculate_homology",maxdim = 1,thresh = 2,return_subsetted = NULL),"NULL")
   expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "ripsDiag",maxdim = 1,thresh = 2,return_diag = Inf),"logical")
+  expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "ripsDiag",maxdim = 1,thresh = 2,return_diag = NULL),"NULL")
+  expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "ripsDiag",maxdim = 1,thresh = 2,return_diag = NA),"NA")
   
 })
 
@@ -85,26 +92,12 @@ test_that("bootstrap_persistence_thresholds is computing properly",{
   expect_gt(bs$thresholds[[1]],0)
   expect_gt(bs$thresholds[[2]],0)
   expect_true(min(bs$subsetted_diag[which(bs$subsetted_diag$dimension == 1),]$death - bs$subsetted_diag[which(bs$subsetted_diag$dimension == 1),]$birth) > bs$thresholds[[2]])
-  
-  # # PyH with multiple thresholds
-  # bs <- bootstrap_persistence_thresholds(X = D,FUN = "PyH",maxdim = 1,thresh = 2,calculate_representatives = T,return_diag = T,ripser = ripser,num_workers = 2,num_samples = 3)
-  # expect_length(bs$representatives[[2]],length(which(bs$diag$dimension == 1)))
-  # expect_length(bs$thresholds,2)
-  # expect_gt(bs$thresholds[[1]],0)
-  # expect_gt(bs$thresholds[[2]],0)
-  # expect_length(bs$subsetted_representatives,nrow(bs$subsetted_diag) + 1)
-  # expect_true(min(bs$subsetted_diag[which(bs$subsetted_diag$dimension == 0),]$death - bs$subsetted_diag[which(bs$subsetted_diag$dimension == 0),]$birth) > bs$thresholds[[1]])
-  # expect_true(min(bs$subsetted_diag[which(bs$subsetted_diag$dimension == 1),]$death - bs$subsetted_diag[which(bs$subsetted_diag$dimension == 1),]$birth) > bs$thresholds[[2]])
 
   # check on circle:
   bs <- bootstrap_persistence_thresholds(X = D,FUN = "ripsDiag",maxdim = 1,thresh = 2,return_diag = T,num_workers = 2,num_samples = 3)
   expect_lte(length(bs$subsetted_diag$dimension),2)
   bs <- bootstrap_persistence_thresholds(X = D,FUN = "calculate_homology",maxdim = 1,thresh = 2,return_diag = T,num_workers = 2,num_samples = 3)
   expect_lte(length(bs$subsetted_diag$dimension),1)
-  # bs <- bootstrap_persistence_thresholds(X = D,FUN = "PyH",maxdim = 1,thresh = 2,return_diag = T,ripser = ripser,num_workers = 2,num_samples = 3)
-  # expect_lte(length(bs$subsetted_diag$dimension),1)
-  # bs <- bootstrap_persistence_thresholds(X = D,FUN = "PyH",maxdim = 1,thresh = 2,return_diag = T,ripser = ripser,ignore_infinite_cluster = F,num_workers = 2,num_samples = 3)
-  # expect_lte(length(bs$subsetted_diag$dimension),2)
   
   # one example by hand to verify thresholds
   D <- data.frame(x = c(0,0,0),y = c(1,2,2.5))
