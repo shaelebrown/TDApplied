@@ -350,17 +350,24 @@ independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,num_workers = 
     mu_x_sq <- mean(K[upper.tri(K)])
     mu_y_sq <- mean(L[upper.tri(L)])
     mu <- (1 + mu_x_sq*mu_y_sq - mu_x_sq - mu_y_sq)/m
-    B <- (H %*% K %*% H) * (H %*% L %*% H)
-    B <- B * B
-    diag(B) <- rep(0,m)
-    var <- 2*(m-4)*(m-5)*(sum(colSums(B)))/((m-3)*(m-2)*(m-1)*m)
-    if(var == 0)
+    if(mu <= 0)
     {
-      stop("A zero variance was calculated, please make sure that both g1 and g2 contain at least 2 distinct diagrams.")
+      p_val <- 1
+    }else
+    {
+      B <- (H %*% K %*% H) * (H %*% L %*% H)
+      B <- B * B
+      diag(B) <- rep(0,m)
+      var <- 2*(m-4)*(m-5)*(sum(colSums(B)))/((m-3)*(m-2)*(m-1)*m)
+      if(var == 0)
+      {
+        stop("A zero variance was calculated, please make sure that both g1 and g2 contain at least 2 distinct diagrams.")
+      }
+      
+      # compute p-value
+      p_val <- stats::pgamma(q = HSIC,rate = mu/var,shape = mu^2/var,lower.tail = F)
     }
     
-    # compute p-value
-    p_val <- stats::pgamma(q = HSIC,rate = mu/var,shape = mu^2/var,lower.tail = F)
     p_value <- c(p_value,p_val)
     
   }
