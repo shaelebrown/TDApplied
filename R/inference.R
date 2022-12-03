@@ -353,7 +353,7 @@ independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,num_workers = 
     B <- (H %*% K %*% H) * (H %*% L %*% H)
     B <- B * B
     diag(B) <- rep(0,m)
-    var <- 2*(m-4)*(m-5)*factorial(m - 4)*(sum(colSums(B)))/factorial(m)
+    var <- 2*(m-4)*(m-5)*(sum(colSums(B)))/((m-3)*(m-2)*(m-1)*m)
     if(var == 0)
     {
       stop("A zero variance was calculated, please make sure that both g1 and g2 contain at least 2 distinct diagrams.")
