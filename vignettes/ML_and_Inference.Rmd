@@ -27,18 +27,35 @@ options(scipen = 999)
 
 # Introduction
 
-Topological data analysis is a relatively new area of data science which can find unique, non-linear global structure in whole datasets. The main tool of topological data analysis is called *persistent homology*, which produces a "shape descriptor" (called a *persistence diagram*) of its input dataset. Two main R packages exist for computing persistence diagrams; the more flexible of the two, called TDA, stores persistence diagrams in a non-standard data structure, and the faster of the two, called TDAstats, does not provide functionality for analyzing diagrams with published techniques. Methods exist for computing distances and kernels (which are a special type of similarity functions) between pairs of persistence diagrams, but only distance calculations are currently available in the R package TDA. Several papers have used distance and kernel computations in order to perform machine learning or inferences tasks with groups of persistence diagrams, but to date no publicly available software in either python or R provides the functionality for these types of analyses. In order to make the power of topological data analysis more readily available to data and machine learning practitioners, it would be very helpful to have a single software package that can
+Topological data analysis is a relatively new area of data science which can compare and contrast data sets via non-linear global structure. The main tool of topological data analysis, *persistent homology* [@PHoriginal,
+@ComputingPH], builds on techniques from the field of algebraic topology to describe shape features present in a data set (stored in a "persistence diagram"). Persistent homology has been used to show that the topology of human brain function can distinguish healthy control subjects vs. subjects with a neurological disorder [@TDA_ADHD,@TDA_Alzheimers,@persistent_hom_brain_networks], the topology of stock price correlations over time can be used to detect stock market crashes [@PHeconomics], local patches of naturalistic images contain non-trivial and complex topological structure [@PHpatches], etc.
 
-1. convert persistence diagrams computed using the R packages TDA and TDAstats into a commonly-used data type for data analyses (a data frame), 
+Distance and kernel functions are used to calculate differences and similarities respectively between objects in complicated spaces, and are the foundation of many machine learning algorithms which are used in traditional data science [@murphyML]. Several papers have used distance and kernel computations tailored to persistence diagrams [@distance_calc,@persistence_fisher] in order to perform machine learning or inference tasks with groups of persistence diagrams, but to date no publicly available software in either R or python provides the functionality for these types of analyses.
 
-2. implement fast versions of both distance and kernel calculations for pairs of persistence diagrams,  
-3. provide scalable methods for machine learning and inference for persistence diagrams,
+Two main R packages exist for computing and comparing persistence diagrams -- TDA [@R-TDA] and TDAstats [@R-TDAstats]. While both packages have been used to carry out topological data analysis in R, neither package supports machine learning with groups of persistence diagrams because both lack a kernel function. TDAstats has an inference method; however, it is based on a non-standard distance function (making inferences drawn from this function unsubstantiated). TDA has a standard distance function but no inference function (and also stores persistence diagrams in a non-standard data structure, which requires additional preprocessing steps for further analysis).
 
-4. deliver a fast engine for calculating persistence diagrams, and
+In order to make the power of topological data analysis more readily available to data and machine learning practitioners, it would be very helpful to have a single software package that can
 
-5. contribute tools for interpreting persistence diagrams.
+1. deliver a fast engine for calculating persistence diagrams,
+2. convert persistence diagrams computed using the \texttt{R} packages \textit{TDA} and \textit{TDAstats} into a commonly-used data type for data analyses (a data frame), 
+3. implements fast versions of both distance and kernel calculations for pairs of persistence diagrams, 
+4. contribute tools for interpreting persistence diagrams, and
+5. provide parallelized methods for machine learning and inference for persistence diagrams.
 
-It is with these goals that the package TDApplied was created.
+In accomplishing these goals TDApplied is a comprehensive and optimized package which permits researchers and data scientists to analyze multiple data sets using machine learning and inference via topological data analysis.
+
+<!-- Topological data analysis is a relatively new area of data science which can find unique, non-linear global structure in whole datasets. The main tool of topological data analysis is called *persistent homology*, which produces a "shape descriptor" (called a *persistence diagram*) of its input dataset. Two main R packages exist for computing persistence diagrams; the more flexible of the two, called TDA, stores persistence diagrams in a non-standard data structure, and the faster of the two, called TDAstats, does not provide functionality for analyzing diagrams with published techniques. Methods exist for computing distances and kernels (which are a special type of similarity functions) between pairs of persistence diagrams, but only distance calculations are currently available in the R package TDA. Several papers have used distance and kernel computations in order to perform machine learning or inferences tasks with groups of persistence diagrams, but to date no publicly available software in either python or R provides the functionality for these types of analyses. In order to make the power of topological data analysis more readily available to data and machine learning practitioners, it would be very helpful to have a single software package that can -->
+
+<!-- 1. convert persistence diagrams computed using the R packages TDA and TDAstats into a commonly-used data type for data analyses (a data frame),  -->
+
+<!-- 2. implement fast versions of both distance and kernel calculations for pairs of persistence diagrams,   -->
+<!-- 3. provide scalable methods for machine learning and inference for persistence diagrams, -->
+
+<!-- 4. deliver a fast engine for calculating persistence diagrams, and -->
+
+<!-- 5. contribute tools for interpreting persistence diagrams. -->
+
+<!-- It is with these goals that the package TDApplied was created. -->
 
 # Software Review
 
@@ -904,40 +921,38 @@ model <- stats::lm(data = data.frame(ratio =
 summary(model)$coefficients
 ```
 
-<!-- ## Benchmarking TDApplied's `bootstrap_persistence_thresholds` Function Against TDA's `bootstrapDiagram` Function -->
-
-<!-- One of the key problems in topological data analysis is determining when a topological feature is "real" or not, and the functions `bootstrap_persistence_thresholds` (TDApplied) and `bootstrapDiagram` (TDA) solve that problem via a bootstrapping approach. As mentioned earlier, these functions were benchmarked on a Mac OS to ensure that both could operate in parallel. The results were as follows: -->
-
-<!-- DO -->
-
-<!-- DO CONCLUSIONS -->
-
 # Case Study: Human Connectome Project
 
-ADD HCP PH paper!! persistent homology time and space...
+The human brain is a complex dynamical system which encodes and processes its outside environment to drive behavioral decisions. A very popular technology for studying the function of the brain, i.e. how it encodes and processes its environment, is called functional MRI (fMRI). fMRI has the ability to image the whole brain, where the intensity of each voxel (i.e. 3D volumetric pixel) is a proxy measure of the "activity" of that small volumetric brain region, over multiple time points giving both spatial and temporal information about brain activity. fMRI data is often summarized as "functional connectivity" (FC) correlation matrices, which can either be spatial (correlating the vectors of activity at different time points) or temporal (correlating the time courses of brain regions).
 
-To demonstrate the utility of TDApplied we analyzed neurological data from the Human Connectome Project [@HCP]. The Human Connectome Project contains a huge amount of high quality neuroimaging data collected from about 1200 subjects, which allows researchers to make powerful inferences about the (function of the) human brain. Of the data collected, functional MRI was used to record brain activity over time while participants were doing a number of tasks, including two resting-state scans (i.e. absence of task), an emotion task, a gambling task, a language task, a working memory task, a relational task, a social task and a motor task (see [@HCP] for the details of each task), and for each task there were two scans (resulting in 18 scans per subject). 
-
-The resting state scans were longer than the other task scans, which normally necessitates the use of analysis methods which abstract out temporal information (like forming graphs of inter-regional time-course correlations and comparing graphs across tasks [@twos_company]). However, by using topology we can interrogate the geometry of the "mental states" (activity patterns) without abstracting over time, therefore not losing temporal information. This type of analysis has previously been carried out with another tool from topological data analysis called mapper [@mapper], producing graph structures of clusters of mental states during task and rest [@BrainOrganizationMapper]. However, mapper has multiple parameters to choose, must cluster over time points, and cannot find higher-dimensional structure which likely exists in fMRI data [@twos_company]. Importantly, loops in such an analysis may represent task-related (periodic) processing. Moreover, it was found that persistent (co)homology has the ability to detect topological signal in fMRI data [@topological_feasibility,@cohomology_feasability], and that functional connectivity (correlation) graphs contained robust topological features when preprocessed with ICA-fix which correlated with various measures of WHAT CITE
-
-For these reasons we decided to analyze 100 HCP subject's fMRI data with TDApplied. To this end we 
-
-1. calculated time-point by time-point correlation dissimilarity matrices of each fMRI dataset for each subject, 
-2. normalized the resulting matrices to have maximum value 1, 
-3. computed thresholded persistence diagrams of dimension 1 from those dissimilarity matrices (using the bootstrap method), and 
-4. used machine learning and inference functions from TDApplied to analyze the resulting collection of diagrams.
-
-The script used to generate these results, as well as the subject ID's used, can be found in the exec directory of the package. Since the persistence Fisher kernel takes two parameters, $t$ and $\sigma$, we chose a grid over both parameters to perform the independence tests. In the paper [@persistence_fisher], the $\sigma$ values $10^{\{-3,-2,-1,0,1,2,3\}}$ were used for an SVM task. Since our input data had maximum value 1 (due to normalization) we will use the values $10^{\{-3,-2,-1\}} = \{0.001,0.01,0.1\}$. Also in that paper, values of $t$ were selected by taking the 1, 2, 5, 10, 25, 50 percentile values of the Fisher information metric between all of the diagrams (for each value of $\sigma$), and we used the same procedure to select values of $t$ (after subsetting for only positive values). The parameters that resulted from this process were:
-
-```{r,echo = F}
-data.frame(t = c(0.0249876874399648,0.0329454617744531,0.042378103713154,0.0598132151928147,0.0998022585335929,0.165384794916381,0.0249876874399648,0.0329454617744531,0.042378103713154,0.0598132151928147,0.0998022585335929,0.165384794916381,0.0249876874399648,0.0329454617744531,0.042378103713154,0.0598132151928147,0.0998022585335929,0.165384794916381,0.0000979929586891795,0.000171993496642182,0.000312640568618485,0.000440414334000389,0.000859076303540747,0.00156929386612317,0.0000979929586891795,0.000171993496642182,0.000312640568618485,0.000440414334000389,0.000859076303540747,0.00156929386612317,0.0000979929586891795,0.000171993496642182,0.000312640568618485,0.000440414334000389,0.000859076303540747,0.00156929386612317,0.000000445913341102581,0.000000903949194437481,0.00000228157654069726,0.00000391982119010704,0.00000793999813378195,0.0000151232398106584,0.000000445913341102581,0.000000903949194437481,0.00000228157654069726,0.00000391982119010704,0.00000793999813378195,0.0000151232398106584,0.000000445913341102581,0.000000903949194437481,0.00000228157654069726,0.00000391982119010704,0.00000793999813378195,0.0000151232398106584),sigma = rep(rep(c(0.001,0.01,0.1),each = 6),3))
+```{r,echo = F,eval = T,fig.height = 4,fig.width = 4,fig.align = 'center'}
+knitr::include_graphics("spatial_FC.png")
 ```
 
-## Comparing subjects and tasks
+```{r,echo = F,eval = T,fig.height = 4,fig.width = 4,fig.align = 'center'}
+knitr::include_graphics("temporal_FC.png")
+```
 
-Some functions of healthy human brains are conserved across people, and other functions are not CITE. But are task-induced mental state topologies conserved across subjects or tasks? To answer this question we analyzed distributional properties of the persistence diagrams between subjects and between tasks, and compared the diagrams between subjects and between tasks using the permutation and independence tests.
+In fMRI studies, data is collected from subjects who are either performing some task (for instance viewing pictures from various object categories [@RSA]) or relaxing (fixating at the center of a screen, called "resting state"). This allows researchers to make inferences about which brain regions are responsible for which types of tasks or processes, making it an important tool for studying the brain. Moreover, fMRI (and other similar technologies) have become a popular venue for topological data analysis.
 
-Firstly we visualized the persistence diagrams of subjects and tasks by combining all the diagrams for that subjects/task and plotting the distribution incurred by adding a Gaussian point mass centered at each point (like in the Fisher information metric). Using the $\sigma$ values 0.001, 0.01 and 0.1. Plots with $\sigma = 0.1$ were least informative because it was comparable to the scale of the data. Below we show the diagrams of three subjects and all tasks with $\sigma = 0.001$:
+Topological data analysis has become a powerful tool for analyzing fMRI data due to persistent homology's ability to detect topological signal in fMRI data [@topological_feasibility,@cohomology_feasability] and model high-dimensional communication between multiple brain regions, all without needing to choose an arbitrary threshold for "significant" correlations in FC [@importance_of_the_whole,@twos_company,@persistent_hom_brain_networks,@TDA_ADHD]. In these kinds of studies, persistent homology (or closely related tools) has mainly been used to find the topology of temporal FC. However, such approaches can remove much temporal information in the data, another topological data analysis tool called mapper [@mapper] has analyzed spatial FC to study the "mental state topology" of tasks in fMRI [@BrainOrganizationMapper]. Mapper, however, is not well equipped to study holes in data, which may encode essential periodic patterns in temporal brain activity. Therefore, we will use persistent homology and TDApplied to study topological signatures of task-induced mental state topologies in data from one of the most important sources of high-quality neuroimaging data - the Human Connectome Project [@HCP]. 
+
+The Human Connectome Project contains extensively preprocessed neuroimaging data from about 1200 subjects, allowing researchers to make powerful inferences about the function of the human brain. Of the data collected, fMRI was used to record brain activity over time while participants were doing 9 tasks, including two resting-state scans, and an emotion, gambling, language, working memory, relational, social and motor task, and for each task there were two scans (resulting in 18 scans per subject). The resting state scans were longer than the other task scans, which normally necessitates the use of analysis methods which abstract out temporal information (like temporal FC). However, by using topology we can interrogate the geometry of the "mental states" (i.e. spatial activity patterns - individual time points) without abstracting over time, therefore not losing important, potentially task-related, temporal information. Moreover, it was found that that persistent homology of spatial FC in the HCP dataset contained robust 0-dimensional topological features which correlated with various measures of personality and behavior [@topological_time_and_space]. On the other hand, temporal FC can act as a "fingerprint" for identifying subjects in the HCP dataset [@functional_fingerprinting]. So what role can mental-state topology play in distinguishing between subjects and tasks in the HCP dataset?
+
+To answer this question we analyzed 100 HCP subject's fMRI data with TDApplied by
+
+1. calculating time-point by time-point correlation dissimilarity matrices of each fMRI dataset for each subject, 
+2. normalizing the resulting matrices to have maximum value 1, 
+3. computing thresholded persistence diagrams of dimension 1 from those dissimilarity matrices (using the bootstrap method), and 
+4. using machine learning and inference functions from TDApplied to analyze the resulting collection of diagrams.
+
+The script used to generate these results, as well as the subject ID's used, can be found in the exec directory of the package. Since the persistence Fisher kernel takes two parameters, $t$ and $\sigma$, we chose a grid over both parameters to perform the independence tests. In the paper [@persistence_fisher], the $\sigma$ values $10^{\{-3,-2,-1,0,1,2,3\}}$ were used for an SVM task. Since our input data had maximum value 1 (due to normalization) we will use the values $10^{\{-3,-2,-1\}} = \{0.001,0.01,0.1\}$. Also in that paper, values of $t$ were selected by taking the 1, 2, 5, 10, 25, 50 percentile values of the Fisher information metric between all of the diagrams (for each value of $\sigma$), and we used the same procedure to select values of $t$ (after subsetting for only positive values). The parameters that resulted from this process are stored in the file `kernel_parameters.csv` in the vignette directory of the package.
+
+## Comparing subjects and tasks with inference
+
+Some major functions of healthy human brains are conserved across people, but there is still much inter-subject variability (different people can respond differently to viewing the same image). But are task-induced mental state topologies conserved across subjects or tasks? To answer this question we first analyzed distributional properties of the persistence diagrams between subjects and between tasks, and compared the diagrams between subjects and between tasks using TDApplied's permutation and independence tests.
+
+Firstly we visualized the persistence diagrams of subjects and tasks by combining all the diagrams for that subjects/task and plotting a probability distribution induced by adding a Gaussian point mass centered at each point (like in the Fisher information metric) with $\sigma$ values 0.001, 0.01 and 0.1. Plots with $\sigma = 0.1$ were least informative because $\sigma$ was comparable to the scale of the data. Here are the distribution plots for three subjects:
 
 ```{r,echo = F,eval = T,fig.height = 3,fig.width = 9,fig.align = 'center'}
 par(mfrow = c(1,3))
@@ -994,6 +1009,8 @@ visualize_diagram(s117122,sigma = 0.001,plot_title = "Subject 117122")
 visualize_diagram(s118023,sigma = 0.001,plot_title = "Subject 118023")
 ```
 
+As we can see the distributions were very different between these three subjects. Next we visualized the nine tasks:
+
 ```{r,echo = F,eval = T,fig.height = 9,fig.width = 9,fig.align = 'center'}
 par(mfrow = c(3,3))
 visualize_diagram(rest1,sigma = 0.001,plot_title = "Resting state 1")
@@ -1007,7 +1024,9 @@ visualize_diagram(social,sigma = 0.001,plot_title = "Social")
 visualize_diagram(wm,sigma = 0.001,plot_title = "Working memory")
 ```
 
-We analyzed basic properties of the persistence diagrams - the number of loops, the persistence of loops and the birth and death values of the loops, both across subjects and tasks. The overall distribution of the number of loops across all diagrams was:
+Again we found that the tasks had visually different distributions, with the most pronounced differences when $\sigma = 0.001$. 
+
+Next we analyzed basic properties of the persistence diagrams - the number of loops and the mean persistence of loops, both across subjects and tasks. The overall distribution of the number of loops across all diagrams was:
 
 ```{r,echo = F,eval = T,fig.height = 4,fig.width = 4,fig.align = 'center'}
 par(mfrow = c(1,1))
@@ -1016,21 +1035,21 @@ names(num_loops) = c(0,1,2,3,4,5,6,7)
 barplot(num_loops,xlab = "Number of loops")
 ```
 
-The bootstrap thresholding was evidently very conservative, with about 73\% of the diagrams containing no loops. This is not to say that those diagrams were topologically trivial - on the contrary they may have contained non-trivial higher-dimensional topological structure, or it is possible that task-correlated loops may exist at smaller (i.e. less persistent) scales. To assess the validity of either explanation, which would be an interesting question to explore in the future, would require significantly more computational resources than what was available at the time of writing. On the other hand, the fact that many diagrams did not have any loops provides evidence that topological structure in the fMRI data was not driven by physiological sources, such as heart-rate and breathing, which is known to drive signal in fMRI data CITE.
+The bootstrap thresholding was evidently very conservative, with about 73\% of the diagrams containing no loops. This is not to say that those diagrams were topologically trivial - on the contrary they may have contained non-trivial higher-dimensional topological structure, or it is possible that task-correlated loops may exist at smaller (i.e. less persistent) scales. To assess the validity of either explanation we would require significantly more computational resources than what was available at the time of writing, and we leave this to future work. On the other hand, the fact that many diagrams did not have any loops provides evidence that topological structure was not driven by physiological sources, such as heart-rate and breathing, which is known to drive signal in fMRI data [@Denoising].
 
-We then compared the distribution of the number of loops across subjects and tasks using paired t-tests. About 19\% of the subject-subject pairs had statistically different numbers of loops, and about 22\% of the task-task pairs had statistically significant numbers of loops (all at the $\alpha = 0.05$ significance level using a two-sided alternative hypothesis). Interestingly, most of the differences between tasks were found between resting state scans and task scans, with less loops in the resting state scans, suggesting that tasks may induce large-scale and periodic cycles of mental states which are used to accomplish the task.
+We then compared the distribution of the number of loops across subjects and tasks using paired t-tests (with two-sided alternative hypotheses and at the $\alpha = 0.05$ threshold for type 1 error). About 19\% of the subject-subject pairs had statistically different numbers of loops, and about 22\% of the task-task pairs had statistically significant numbers of loops. Interestingly, most of the differences between tasks were found between resting state scans and task scans, with less loops in the resting state scans, suggesting that tasks may induce large-scale and periodic cycles of mental states which are used to accomplish the task.
 
-Next we then performed the same analysis for the mean persistence of loops in the diagrams. About 12\% of the subject-subject pairs had differences in mean persistence values. We found 14\% statistically different persistence between tasks, mainly being lower persistence in resting state scans compared to task-based scans.
+Next we performed the same analysis for the mean persistence of loops in the diagrams. About 12\% of the subject-subject pairs had differences in mean persistence values. We found 14\% statistically different persistence between tasks, mainly being lower persistence in resting state scans compared to task-based scans.
 
-In order to better understand subject-subject and task-task differences we used the permutation test to compare subjects (matched by task) and tasks (matched by subjects) with both the 2-wasserstein and bottleneck distances, judging significance at the $\alpha = 0.05$ level. For the subjects, both bottleneck and wasserstein distances found about 20\% of the subject-subject pairs to have different topologies, with about 96\% of the differences conserved between the two metrics. For the tasks, in the bottleneck tests there were 4 pairs of different tasks: both resting state scans with the emotion task, the first resting scan with the social task and the emotional task with the relational task. For the wasserstein tests there were 8 pairs of different tasks: the first resting state scan with the emotion, gambling, motor and relational tasks, the second resting state scan with the emotion, motor and working memory tasks, and the relational task with the working memory task. Therefore, the resting state scans were more different from task scans than the task scans were with each other. 
+In order to better understand subject-subject and task-task differences we used TDApplied's permutation test to compare subjects (matched by task) and tasks (matched by subjects) with both the 2-wasserstein and bottleneck distances, again judging significance at the $\alpha = 0.05$ level. For the subjects, both bottleneck and wasserstein distances found about 20\% of the subject-subject pairs to have different topologies, with about 96\% of the differences conserved between the two metrics. For the tasks, in the bottleneck tests there were 4 pairs of different tasks: both resting state scans with the emotion task, the first resting scan with the social task and the emotional task with the relational task. For the wasserstein tests there were 8 pairs of different tasks: the first resting state scan with the emotion, gambling, motor and relational tasks, the second resting state scan with the emotion, motor and working memory tasks, and the relational task with the working memory task. Therefore, the resting state scans were more different from task scans than the task scans were with each other. 
 
-Next we analyzed whether any of the subject-subject or task-task pairs were independent (again at the $\alpha = 0.05$ significance level). Only about 18% of the subject-subject pairs were significantly non-independent (and an interesting question for the future would be whether these pairs were blood-related). On the other hand, over 86% of the task-task pairs were found to be significantly non-independent in at least half of the kernel parameter values. Therefore, task-induced topology may be strongly related between tasks. In order to compare the results of the two inference procedures, we used a two-sided t-test to compare the percentage of kernel values found with significant non-independence between subject-subject pairs which were significantly different in the permutation test vs. not. The results were very similar for both distance metrics, with significantly lower percentage of non-independence in non-different subject-subject pairs.
+Finally, we analyzed whether any of the subject-subject or task-task pairs were independent (again at the $\alpha = 0.05$ significance level). Only about 18% of the subject-subject pairs were significantly non-independent - an interesting future question would be to determine whether these non-independent pairs were blood-related. On the other hand, over 86\% of the task-task pairs were found to be significantly non-independent in at least half of the kernel parameter values. Therefore, task-induced mental state topology may be strongly related between tasks - i.e. computational strategies in different neural domains may be related. In order to compare the results of the two inference procedures, we removed kernel parameters which resulted in no non-independent subject-subject pairs, and then we used a two-sided t-test to compare the percentage of those kernel values which found significant non-independence between subject-subject pairs who were significantly different in the permutation tests compared to pairs of subjects who were not significantly different in the tests (for both distance metrics). The results were very similar for both distance metrics, with significantly lower percentage of non-independence in non-different subject-subject pairs.
 
 ## Machine learning
 
-Our initial analyses revealed some of the underlying topological features/drivers of neural function in the HCP dataset, however without being able to visualize all of the persistence diagrams simultaneously our story is not complete and compelling. In this section we will visualize the diagrams in 2D using MDS computed from both the bottleneck and wasserstein metrics. We will then "correlate" these low dimensional embedding coordinates with external features, including sex, 5-year age bin, and cluster label, by visual inspection. We start by calculating cluster labels, as we describe below.
+Our inference analyses revealed some of the underlying topological differences of rest and task-induced neural function in the HCP dataset. However, what is the overall structure of the space of all the diagrams? In this section we will first cluster the diagrams to find distinct mental-state topological "modes", and then visualize the clusters using 2D MDS computed with both the bottleneck and wasserstein metrics.
 
-Using all of the kernel parameters deduced earlier, we performed kernel kmeans clustering on all the persistence diagrams over a range of values of k - 2,3,4,...,18,25,50,100. These values were chosen because there were 18 scans per subject and 100 subjects. The within-cluster sum of squared distances were calculated for each value of k and for each kernel parameter combination, and the value of k which minimized the withinss (without resulting in empty clusters) was selected as being optimal for that kernel parameter. The results were:
+Using all of the kernel parameters deduced earlier, we performed kernel kmeans clustering on all the persistence diagrams over a range of values of k - 2,3,4,...,18,25,50,100. These values were chosen because there were 18 scans per subject and 100 subjects. The within-cluster sum of squared (withinss) distances were calculated for each value of k and for each kernel parameter combination, and the value of k which minimized the withinss (without resulting in empty clusters) was selected as being optimal for each kernel parameter. The frequency of each number of optimal clusters was:
 
 ```{r,echo = F,fig.height = 4,fig.width = 4,fig.align = 'center'}
 num_clusters <- c(19,18,12,5)
@@ -1040,9 +1059,9 @@ num_clusters <- c(rep(3,19),rep(4,18),rep(5,12),rep(6,5))
 barplot(table(num_clusters),xlab = "Optimal number of clusters",main = "")
 ```
 
-From the graph it seemed like the optimal number of clusters was likely either 3 or 4. We performed clustering with both values of k for all kernel parameters, and calculated for each pair of diagrams for what percentage of kernel parameters that pair was in the same cluster. For k equals 3 we found that about 54\% of the pairs were in the same cluster at least 90\% of the time, and that 31\% of the pairs were in the same cluster less than 5\% of the time. Similarly for four clusters, 53\% of the pairs were in the same cluster at least 90\% of the time, and 34\% percent of the pairs were in the same cluster less than 5\% of the time. These results indicate that the clusterings for k equalling 3 and 4 were highly consistent across all kernel parameters. We then used the kernlab function `kkmeans` to cluster the two results, and only for k = 3 was the clustering able to be resolved (potentially due to the matrix not being a real kernel matrix). We therefore visualized the group of diagrams in each of the three found clusters:
+From the graph it seemed like the optimal number of clusters was likely either 3 or 4. We therefore performed clustering with both values of k (3 and 4) for all kernel parameters, and calculated a membership percentage matrix for each value of k - for what percentage of kernel parameters was each pair of subjects in the same cluster. When k was 3 we found that about 54\% of the pairs were in the same cluster at least 90\% of the time, and that 31\% of the pairs were in the same cluster less than 5\% of the time. Similarly for four clusters, 53\% of the pairs were in the same cluster at least 90\% of the time, and 34\% percent of the pairs were in the same cluster less than 5\% of the time. These results indicate that the clusterings for k being 3 and 4 were highly consistent across all kernel parameters. We then used the kernlab function `kkmeans` to cluster the two membership matrices, and only for k = 3 was the clustering able to be resolved (potentially due to the membership matrix not being a real kernel matrix). We therefore visualized the group of diagrams in each of the three found clusters:
 
-```{r,echo = F,eval = T,fig.height = 9,fig.width = 9,fig.align = 'center'}
+```{r,echo = F,eval = T,fig.height = 3,fig.width = 9,fig.align = 'center'}
 par(mfrow = c(1,3))
 cluster1 = read.csv("cluster1.csv")
 cluster1$X = NULL
@@ -1057,7 +1076,7 @@ visualize_diagram(cluster2,sigma = 0.001,plot_title = "Cluster 2")
 visualize_diagram(cluster3,sigma = 0.001,plot_title = "Cluster 3")
 ```
 
-The three clusters are quite distinct in terms of what topological information they likely represent. For cluster one this is mainly two loops but sometimes a small or very large loop (mean persistence of about 0.0018), for cluster two this is one loop of variable size (mean persistence of about 0.0011), and cluster 3 is one main large loop and sometimes on small loop (this group only had 16 loops in it, with mean persistence about 0.0005).
+The three clusters are quite distinct in terms of what topological information they likely represent. For cluster one this is mainly two loops but sometimes a small or very large loop (with mean persistence in the cluster of about 0.0018), for cluster two this is one loop of variable size (mean persistence in the cluster of about 0.0011), and cluster 3 is one main loop and sometimes one additional small loop (this group only had 16 loops in it, with mean persistence about 0.0005).
 
 Next we analyzed the number of rows in the diagrams of each cluster. The results were as follows:
 
@@ -1087,11 +1106,11 @@ print("Cluster 3:")
 c("emotion" = 0.12,"gambling" = 0.11,"language" = 0.11,"motor" = 0.12,"relational" = 0.10,"rest1" = 0.10,"rest2" = 0.11,"social" = 0.11,"wm" = 0.11)[c("rest1","rest2","emotion","gambling","social","motor","relational","language")]
 ```
 
-Cluster 1 had much higher percentages of resting state scans compared to the other clusters. However, it also had lower percentages of emotion, gambling and social tasks than the other clusters. Clusters 2 and 3 were moreso separated by percentages of resting state 2 (more in cluster 3), gambling (more in cluster 2), social (more in cluster 2) and motor (more in cluster 3).
+Cluster 1 had much higher percentages of resting state scans compared to the other clusters. However, it also had lower percentages of emotion, gambling and social tasks than the other clusters. Clusters 2 and 3 were moreso separated by percentages of resting state 2 and motor (more in cluster 3), and gambling and social (more in cluster 2).
 
-We then calculated MDS embeddings of all the diagrams using both the wasserstein and bottleneck distances. No variable like task, subject ID, subject gender or subject age clearly separated the embedded points, however the cluster labels did:
+We then calculated 2D MDS embeddings of all the diagrams using both the wasserstein and bottleneck distances. No external factor like task, subject ID, subject gender or subject age clearly separated the embedded points, however the cluster labels did a reasonably good job:
 
-```{r,echo = F,eval = T,fig.height = 9,fig.width = 9,fig.align = 'center'}
+```{r,echo = F,eval = T,fig.height = 3,fig.width = 9,fig.align = 'center'}
 par(mfrow = c(1,3))
 
 mds_bottleneck = read.csv("mds_bottleneck.csv")
@@ -1111,11 +1130,11 @@ graphics::legend("top", pch=19, pt.cex=3, cex=1.5, bty='n',
 graphics::mtext("Cluster label",cex=2)
 ```
 
-No clear separation could be seen visually using task, subject ID, subject age or subject gender as the point color in the two plots, suggesting that other variables, like behavioral measures, may be impacting the topology. This could serve as an interesting future analysis. Also cluster 1 seemed to be more 2 dimensional in both embeddings whereas cluster 2 seemed to be more one dimensional, and determining what factors could explain these dimensions would also be an interesting future analysis.
+Behavioral measures may correlate with the mental state topologies, and therefore may be explaining some of the variance within the plots (like how 0-dimensional topological features of spatial FC were found to correlate with behavior [@topological_time_and_space]), and this could be an interesting future analysis. Also cluster 1 seemed to be more 2 dimensional in both embeddings whereas cluster 2 seemed to be more one dimensional, and determining what factors could explain these dimensions would also be an interesting future analysis.
 
 ## Conclusions of HCP Analysis
 
-Taking into account our distributional analysis, permutation test analysis and independence test analysis, our results suggest that major 1-dimensional topological features may be largely conserved across people in tasks and subjects, however there were some major differences in the 1-dimensional topologies of the mental states across tasks and subjects which were tied together. Moreover, topology of tasks were largely different but highly non-independent. Taken together our results point towards a shared "manifold" of mental states which is mainly modulated by task, but also modulated by subject in a structured way. Our machine learning analysis revealed that about three main types of "loopy" spaces occurred across all the subjects and tasks, separated by certain tasks but containing examples of all tasks. MDS embeddings of all the diagrams were able to show that clusters 1 and 2 were likely 2 and 1 dimensional respectively, but that no basic variable was able to explain either of its dimensions, either requiring interactions or more nuanced variables like behavioral measures. Our analysis points towards a rich task and subject dependent topology of mental states during task which are non-trivial and largely low-dimensional. 
+Our inferences analysis results found that major and non-trivial task-related 1-dimensional topological features may be largely conserved across people, but with high variability, and that the topology of tasks were largely different but also highly non-independent. Our machine learning analysis revealed that three main types of mental state topologies occurred across all subjects and tasks, and that these clusters were highly separable and likely either 1 or 2 dimensional (and none of the dimensions were explained by simple external factors). Taken together, these results point towards a small number of neural computational strategies which are largely consistent between people but also highly interrelated across domains, which is consistent with neuroscience literature [@PON,WHAT].
 
 # Limitations of TDApplied
 
