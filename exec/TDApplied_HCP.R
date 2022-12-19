@@ -1,32 +1,39 @@
 
-# script to automatically generate the embedding from HCP subject data
-
 # This script automatically downloads HCP fMRI data from 100 subjects
 # and analyzes the files with TDApplied as described in the package
 # vignette. It is currently configured to run on Windows machines,
 # but can run on other operating systems by changing the commands
-# which create directories to your desired system commands (lines 92, 217-228). 
-# If run from top to bottom it will perform the same
+# which create directories to your desired system commands (lines 99, 362-373).
+# If run from top to bottom (once updating the connectomedb login and desired path
+# on lines 36 and 852 respectively) this script will perform the same
 # analyses as in the vignette for the same subjects, although
 # there is the option to run the analysis for 100 randomly selected
-# subjects from HCP.
+# subjects from HCP. Note that the desired path should be a full path
+# without the ~ symbol (which can be used on Mac OS), otherwise line
+# 474 may throw an error.
+
+# The plotting of HCP resting state 1 loops requires python to be configured
+# as well as the additional modules nibabel, nilearn and hcp_utils
+# to be downloaded (with reticulate::py_install("module_name")). If this is not possible
+# or desired, simply comment line 474 to avoid generating an error.
 
 # Once a 'directory_for_subjects' path is defined, which should have no files in it, each subject's persistence
 # diagrams are saved in 'directory_for_subjects/subject_ID', which is created by this script.
 # The results of applied analyses are saved in 'directory_for_subjects/analysis_results'. 
+# The plots for resting state 1 loops are saved in directory_for_subjects directly.
 
 # initialize script for memory and reproducibility
 set.seed(123)
 memory.limit(850000) # need large memory limit to work with large files
+
+# REQUIRED LIBS
+library(neurohcp)
+library(RNiftyReg)
+library(TDApplied)
+
 # sign on to aws using personal access key and secret key
 # need connectomedb account @ https://db.humanconnectome.org
 set_aws_api_key(access_key = "XXXXXXXXXXXXXXXXXXXX", secret_key = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-
-# LIBS
-library(neurohcp)
-library(RNifti)
-library(RNiftyReg)
-library(TDApplied)
 
 # FUNCTIONS
 
@@ -185,6 +192,145 @@ visualize_group_of_diagrams <- function(diagrams,sigma,plot_title){
   
 }
 
+# plot time point, smoothed spatially in neighborhoods of
+# size sigma and thresholded by absolute value th
+# nib, plotting, np and hcp are required python modules
+plot_smooth_timepoint <- function(f,tp,output_file,time_point,sigma,th,nib,plotting,np,hcp){
+  
+  # load surface mesh
+  coords = hcp$mesh$pial[[1]]
+  
+  # load image and normalize
+  img = nib$load(f)
+  X = img$get_fdata()
+  Xn = hcp$normalize(X)
+  
+  # subset for specific time point
+  spatial_pattern = Xn[tp,]
+  
+  # smooth a time point in parallel
+  cl = parallel::makeCluster(parallel::detectCores() - 1)
+  doParallel::registerDoParallel(cl)
+  parallel::clusterEvalQ(cl,library("rdist"))
+  parallel::clusterExport(cl,c("spatial_pattern","coords","sigma"),envir = environment())
+  smoothed = foreach::`%dopar%`(foreach::foreach(n = 1:64984,.combine = c),{
+    
+    distances = rdist::cdist(coords,t(as.matrix(coords[n,])))
+    return(mean(spatial_pattern[which(distances > 0 & distances <= sigma)]))
+    
+  })
+  
+  # clean up
+  parallel::stopCluster(cl)
+  
+  # plot 
+  plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(smoothed),threshold = th,bg_map = hcp$mesh$sulc,hemi = "right",output_file = paste0(output_file,"_hemi_right.png"))
+  plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(smoothed),threshold = th,bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(output_file,"_hemi_left.png"))
+  
+}
+
+# analyze one loop representative using PyH
+# mainly internal function
+loop_scatterplot <- function(f,directory_for_subjects,ripser,loop_no,time_points,plot_title,output_file){
+  
+  # analyze file
+  fMRI <- readNifti(f)
+  fMRI <- t(fMRI[1,1,1,1,1:dim(fMRI)[[5]],1:91282])
+  RSM <- cor(fMRI)
+  RDM <- matrix(data = 1,nrow = nrow(RSM),ncol = ncol(RSM)) - RSM
+  diag <- PyH(X = RDM,maxdim = 1,distance_mat = T,ripser = ripser,thresh = max(RDM),calculate_representatives = T)
+  repr <- diag$representatives[[2]][[loop_no]]
+  
+  # get birth value of the representative and all indices
+  # in the RDM which have distance at most the birth value
+  birth_val <- min(RDM[repr])
+  indices <- which(RDM <= birth_val,arr.ind = T)
+  indices <- indices[which(indices[,1] < indices[,2]),]
+  
+  # find all time points which are within distance birth value
+  # of each other and include the birth edge time points
+  tp <- c(repr[1,1],repr[1,2])
+  visited <- c()
+  edges <- data.frame(from = numeric(),to = numeric())
+  while(length(tp) > 0)
+  {
+    pt <- tp[[length(tp)]]
+    visited <- c(visited,pt)
+    adj <- setdiff(unique(c(indices[which(indices[,1] == pt),2],indices[which(indices[,2] == pt),1])),visited)
+    tp <- c(tp,adj)
+    tp <- tp[which(tp != pt)]
+    if(length(adj) > 0)
+    {
+      edges <- rbind(edges,data.frame(from = rep(pt,length(adj)),to = adj)) 
+    }
+  }
+  
+  grDevices::png(output_file)
+  
+  # compute embedding and plot
+  if(plot_title == "Loop 1")
+  {
+    emb <- cmdscale(RDM[visited,visited],k = 2)
+    plot(x = emb[,1],y = emb[,2],xlab = "Embedding coordinate 1",ylab = "Embedding coordinate 2",pch = 19,main = plot_title)
+    i <- 1
+    j <- 2
+  }else
+  {
+    # need 4 dimensions to clearly see the second loop
+    emb <- cmdscale(RDM[visited,visited],k = 4)
+    plot(x = emb[,3],y = emb[,4],xlab = "Embedding coordinate 3",ylab = "Embedding coordinate 4",pch = 19,main = plot_title)
+    i <- 3
+    j <- 4
+  }
+  # add red points for specific time points along the loop
+  points(x = emb[time_points,i],y = emb[time_points,j],col = "red",pch = 19)
+  
+  dev.off()
+  
+}
+
+# analyze two specific loops
+analyze_two_loops <- function(directory_for_subjects,output_file_loop_1,output_file_loop_2,th,sigma){
+  
+  # download the two specific files needed
+  try_to_download_one_file("HCP_1200/162228/MNINonLinear/Results/rfMRI_REST1_RL/rfMRI_REST1_RL_Atlas_MSMAll.dtseries.nii",directory_for_subjects = directory_for_subjects)
+  try_to_download_one_file("HCP_1200/341834/MNINonLinear/Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii",directory_for_subjects = directory_for_subjects)
+  
+  # set file names
+  f1 = paste0(directory_for_subjects,"/162228/rfMRI_REST1_RL_Atlas_MSMAll.dtseries.nii")
+  f2 = paste0(directory_for_subjects,"/341834/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii")
+  
+  # plot scatter plots for two loops
+  ripser = import_ripser()
+  loop_scatterplot(f = f1,directory_for_subjects = directory_for_subjects,ripser = ripser,loop_no = 1233,time_points = c(62,46,10,101),output_file = paste0(output_file_loop_1,"_scatter.png"),plot_title = "Loop 1")
+  loop_scatterplot(f = f2,directory_for_subjects = directory_for_subjects,ripser = ripser,loop_no = 1014,time_points = c(50,157,296,20),output_file = paste0(output_file_loop_2,"_scatter.png"),plot_title = "Loop 2")
+  
+  # import python modules
+  nib = reticulate::import("nibabel")
+  plotting = reticulate::import("nilearn.plotting")
+  np = reticulate::import("numpy")
+  hcp = reticulate::import("hcp_utils")
+  
+  # first loop
+  # time points were 62 for the top, 46 for the right, 10 for the bottom and 101 for the left
+  plot_smooth_timepoint(f = f1,tp = 62,output_file = paste0(output_file_loop_1,"_top"),th = th,sigma = sigma,nib = nib,plotting = plotting,np = np,hcp = hcp)
+  plot_smooth_timepoint(f = f1,tp = 46,output_file = paste0(output_file_loop_1,"_right"),th = th,sigma = sigma,nib = nib,plotting = plotting,np = np,hcp = hcp)
+  plot_smooth_timepoint(f = f1,tp = 10,output_file = paste0(output_file_loop_1,"_bottom"),th = th,sigma = sigma,nib = nib,plotting = plotting,np = np,hcp = hcp)
+  plot_smooth_timepoint(f = f1,tp = 101,output_file = paste0(output_file_loop_1,"_left"),th = th,sigma = sigma,nib = nib,plotting = plotting,np = np,hcp = hcp)
+  
+  # second loop
+  # time points were 50 for the top, 157 for the right, 296 for the bottom and 20 for the left
+  plot_smooth_timepoint(f = f2,tp = 50,output_file = paste0(output_file_loop_2,"_top"),th = th,sigma = sigma,nib = nib,plotting = plotting,np = np,hcp = hcp)
+  plot_smooth_timepoint(f = f2,tp = 157,output_file = paste0(output_file_loop_2,"_right"),th = th,sigma = sigma,nib = nib,plotting = plotting,np = np,hcp = hcp)
+  plot_smooth_timepoint(f = f2,tp = 296,output_file = paste0(output_file_loop_2,"_bottom"),th = th,sigma = sigma,nib = nib,plotting = plotting,np = np,hcp = hcp)
+  plot_smooth_timepoint(f = f2,tp = 20,output_file = paste0(output_file_loop_2,"_left"),th = th,sigma = sigma,nib = nib,plotting = plotting,np = np,hcp = hcp)
+  
+  # clean up files
+  unlink(f1)
+  unlink(f2)
+  
+}
+
 # calculate persistence diagrams for all fMRI files for 100 subjects
 # and analyze them
 # if desired subjects can be set to NULL to randomly select 100 new subjects
@@ -323,6 +469,9 @@ analyze_HCP <- function(directory_for_subjects,subjects = c(103111,103212,105620
       dev.off()
     }
   }
+  
+  # plot specifically the two representative loops of resting state 1 task
+  analyze_two_loops(directory_for_subjects = directory_for_subjects,output_file_loop_1 = paste0(directory_for_subjects,"/loop1"),output_file_loop_2 = paste0(directory_for_subjects,"/loop2"),th = 0.75,sigma = 5)
   
   # look for statistical differences in the number of loops in the diagrams between subjects and tasks
   num_loops <- unlist(lapply(unlisted_diagrams,FUN = function(X){return(nrow(X))}))
