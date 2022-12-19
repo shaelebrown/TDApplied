@@ -4,6 +4,12 @@
 [Pull Request](https://github.com/shaelebrown/TDApplied/pulls) number.
 Please see those for more details.
 
+# 2.0.1
+- increased testing coverage
+- fixed issue with th parameter in diagram_kpca
+- fixed issue with gamma distribution in independence_test
+- added applied analysis of TDApplied on HCP data to package vignette
+
 # 2.0.0
 
 - added PyH function for fast persistence diagram calculations with python
