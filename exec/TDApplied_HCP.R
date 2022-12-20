@@ -3,19 +3,19 @@
 # and analyzes the files with TDApplied as described in the package
 # vignette. It is currently configured to run on Windows machines,
 # but can run on other operating systems by changing the commands
-# which create directories to your desired system commands (lines 99, 362-373).
+# which create directories to your desired system commands (lines 99, 398-409).
 # If run from top to bottom (once updating the connectomedb login and desired path
-# on lines 36 and 852 respectively) this script will perform the same
+# on lines 36 and 891 respectively) this script will perform the same
 # analyses as in the vignette for the same subjects, although
 # there is the option to run the analysis for 100 randomly selected
 # subjects from HCP. Note that the desired path should be a full path
-# without the ~ symbol (which can be used on Mac OS), otherwise line
-# 474 may throw an error.
+# without the ~ symbol (which can be used on Mac OS), otherwise lines
+# 510 and 513 may throw an error.
 
 # The plotting of HCP resting state 1 loops requires python to be configured
 # as well as the additional modules nibabel, nilearn and hcp_utils
 # to be downloaded (with reticulate::py_install("module_name")). If this is not possible
-# or desired, simply comment line 474 to avoid generating an error.
+# or desired, simply comment lines 510 and 513 to avoid generating an error.
 
 # Once a 'directory_for_subjects' path is defined, which should have no files in it, each subject's persistence
 # diagrams are saved in 'directory_for_subjects/subject_ID', which is created by this script.
@@ -331,6 +331,42 @@ analyze_two_loops <- function(directory_for_subjects,output_file_loop_1,output_f
   
 }
 
+# plot parcellation
+view_parcellation <- function(output_file){
+  
+  # based on the hcp_utils function view_parcellation
+  # initialize variables for yeo7 parcellation
+  # can be adapted for other parcellations easily, though
+  hcp <- reticulate::import("hcp_utils")
+  np <- reticulate::import("numpy")
+  matplotlib <- reticulate::import("matplotlib")
+  plotting <- reticulate::import("nilearn.plotting")
+  meshLR <- hcp$mesh$inflated
+  parcellation <- hcp$yeo7
+  
+  cortex_map <- hcp$cortex_data(parcellation$map_all)
+  ids <- np$unique(cortex_map)
+  normalized_cortex_map <- np$zeros_like(cortex_map)
+  rgba <- np$zeros(reticulate::tuple(length(ids),4L))
+  for(i in 0:(length(ids)-1))
+  {
+    ind <- which(cortex_map == ids[[i + 1]])
+    normalized_cortex_map[ind] = i
+    rgba[i + 1,] <- get(as.character(i),parcellation$rgba)
+  }
+  
+  cmap = matplotlib$colors$ListedColormap(rgba)
+  
+  # view parcellation on surface
+  plotting$plot_surf(meshLR,normalized_cortex_map,threshold = 0,bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(output_file,"_hemi_left.png"),cmap=cmap)
+  plotting$plot_surf(meshLR,normalized_cortex_map,threshold = 0,bg_map = hcp$mesh$sulc,hemi = "right",output_file = paste0(output_file,"_hemi_right.png"),cmap=cmap)
+  
+  # view parcellation labels
+  hcp$parcellation_labels(parcellation)
+  matplotlib$pyplot$savefig(paste0(output_file,"_labels.png"))
+  
+}
+
 # calculate persistence diagrams for all fMRI files for 100 subjects
 # and analyze them
 # if desired subjects can be set to NULL to randomly select 100 new subjects
@@ -472,6 +508,9 @@ analyze_HCP <- function(directory_for_subjects,subjects = c(103111,103212,105620
   
   # plot specifically the two representative loops of resting state 1 task
   analyze_two_loops(directory_for_subjects = directory_for_subjects,output_file_loop_1 = paste0(directory_for_subjects,"/loop1"),output_file_loop_2 = paste0(directory_for_subjects,"/loop2"),th = 0.75,sigma = 5)
+  
+  # plot surface parcellation
+  view_parcellation(output_file = paste0(directory_for_subjects,"/parcellation"))
   
   # look for statistical differences in the number of loops in the diagrams between subjects and tasks
   num_loops <- unlist(lapply(unlisted_diagrams,FUN = function(X){return(nrow(X))}))
