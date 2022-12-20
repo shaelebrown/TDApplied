@@ -3,19 +3,20 @@
 # and analyzes the files with TDApplied as described in the package
 # vignette. It is currently configured to run on Windows machines,
 # but can run on other operating systems by changing the commands
-# which create directories to your desired system commands (lines 99, 398-409).
+# which create directories to your desired system commands (lines 100, 399-410).
 # If run from top to bottom (once updating the connectomedb login and desired path
-# on lines 36 and 891 respectively) this script will perform the same
+# on lines 37 and 892 respectively) this script will perform the same
 # analyses as in the vignette for the same subjects, although
 # there is the option to run the analysis for 100 randomly selected
 # subjects from HCP. Note that the desired path should be a full path
 # without the ~ symbol (which can be used on Mac OS), otherwise lines
-# 510 and 513 may throw an error.
+# 511 and 514 may throw an error.
 
 # The plotting of HCP resting state 1 loops requires python to be configured
-# as well as the additional modules nibabel, nilearn and hcp_utils
-# to be downloaded (with reticulate::py_install("module_name")). If this is not possible
-# or desired, simply comment lines 510 and 513 to avoid generating an error.
+# as well as the additional modules nibabel, nilearn, matplotlib and hcp_utils
+# to be downloaded (with reticulate::py_install("module_name"), except for hcp_utils which must be downloaded
+# with pip in the terminal: pip install hcp_utils).
+# If this is not possible or desired, simply comment lines 511 and 514 to avoid generating an error.
 
 # Once a 'directory_for_subjects' path is defined, which should have no files in it, each subject's persistence
 # diagrams are saved in 'directory_for_subjects/subject_ID', which is created by this script.
