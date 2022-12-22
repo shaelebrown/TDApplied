@@ -19,10 +19,10 @@ check_diagram <- function(d,ret){
     }
   }
 
-  if(nrow(d) == 0)
-  {
-    stop("Every diagram must be non-empty.")
-  }
+  # if(nrow(d) == 0)
+  # {
+  #   stop("Every diagram must be non-empty.")
+  # }
 
   if(ncol(d) != 3)
   {

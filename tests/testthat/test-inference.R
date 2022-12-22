@@ -58,7 +58,7 @@ test_that("independence_test detects incorrect parameters correctly",{
   expect_error(independence_test(g1,g2,dims = c(0,1.1),sigma = 1,t = 1,num_workers = 2),"whole")
   expect_error(independence_test(g1,g2[1:5],dims = c(0,1),sigma = 1,t = 1,num_workers = 2),"same length")
   expect_error(independence_test(g1[1:5],g2[1:5],dims = c(0,1),sigma = 1,t = 1,num_workers = 2),"6")
-  expect_error(independence_test(list(g1[[1]],g1[[2]],g1[[3]],g1[[4]],g1[[5]],data.frame(dimension = numeric(),birth = numeric(),death = numeric())),g2,dims = c(0,1),sigma = 1,t = 1,num_workers = 2),"empty")
+  # expect_error(independence_test(list(g1[[1]],g1[[2]],g1[[3]],g1[[4]],g1[[5]],data.frame(dimension = numeric(),birth = numeric(),death = numeric())),g2,dims = c(0,1),sigma = 1,t = 1,num_workers = 2),"empty")
   expect_error(independence_test(g1,g2,dims = c(0,1),num_workers = 2.3),"num_workers")
   expect_error(independence_test(g1,g2,dims = c(0,1),num_workers = -2),"num_workers")
 
