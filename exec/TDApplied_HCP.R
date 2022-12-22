@@ -8,7 +8,9 @@
 # on lines 37 and 892 respectively) this script will perform the same
 # analyses as in the vignette for the same subjects, although
 # there is the option to run the analysis for 100 randomly selected
-# subjects from HCP. Note that the desired path should be a full path
+# subjects from HCP (see the notes in the analyze_HCP function). 
+# To analyze a different number of subjects other changes must be made to the code.
+# Note that the desired path should be a full path
 # without the ~ symbol (which can be used on Mac OS), otherwise lines
 # 511 and 514 may throw an error.
 
@@ -371,26 +373,30 @@ view_parcellation <- function(output_file){
 # calculate persistence diagrams for all fMRI files for 100 subjects
 # and analyze them
 # if desired subjects can be set to NULL to randomly select 100 new subjects
-analyze_HCP <- function(directory_for_subjects,subjects = c(103111,103212,105620,106521,108222,110007,110613,113316,117122,118023,118528,118932,119126,122317,123420,123521,123723,129028,129634,130417,130720,131419,133827,135528,136631,136833,138332,138837,140319,140824,143224,143325,147030,147636,151324,153631,153934,154229,154835,156536,156637,158843,160729,162228,162329,173839,173940,176037,177241,178748,179245,180735,185947,186040,186141,187850,192237,198350,200008,202113,205826,206222,213522,219231,237334,239944,255639,299760,305830,329440,334635,341834,353740,395958,406432,424939,433839,456346,479762,510225,545345,555954,561444,562446,567052,571144,579665,579867,580751,586460,590047,599065,599671,657659,663755,687163,786569,788674,800941,818455)){
+analyze_HCP <- function(directory_for_subjects){
+  
+  subjects = c(103111,103212,105620,106521,108222,110007,110613,113316,117122,118023,118528,118932,119126,122317,123420,123521,123723,129028,129634,130417,130720,131419,133827,135528,136631,136833,138332,138837,140319,140824,143224,143325,147030,147636,151324,153631,153934,154229,154835,156536,156637,158843,160729,162228,162329,173839,173940,176037,177241,178748,179245,180735,185947,186040,186141,187850,192237,198350,200008,202113,205826,206222,213522,219231,237334,239944,255639,299760,305830,329440,334635,341834,353740,395958,406432,424939,433839,456346,479762,510225,545345,555954,561444,562446,567052,571144,579665,579867,580751,586460,590047,599065,599671,657659,663755,687163,786569,788674,800941,818455)
   
   # generate 100 new subjects for analysis if desired
   # (i.e. not the same 100 as were analyzed in the vignette)
-  if(is.null(subjects))
-  {
-    possible_subjects <- unlist(strsplit(unname(unlist(parse_list_files(hcp_list_dirs("HCP_1200/"))$prefixes)),split = "HCP_1200/"))
-    possible_subjects <- possible_subjects[seq(2,length(possible_subjects),2)]
-    possible_subjects <- unlist(strsplit(possible_subjects,split = "/"))
-    
-    subjects_with_all_files <- unlist(lapply(X = possible_subjects,FUN = function(X){
-      
-      return(subject_has_all_files(X))
-      
-    }))
-    
-    possible_subjects <- possible_subjects[subjects_with_all_files]
-    
-    subjects <- sample(possible_subjects,size = 100,replace = F)
-  }
+  # note that subjects 162228 and 341834 must be analyzed in order
+  # to not cause an error on lines X and Y.
+  # if(is.null(subjects))
+  # {
+  #   possible_subjects <- unlist(strsplit(unname(unlist(parse_list_files(hcp_list_dirs("HCP_1200/"))$prefixes)),split = "HCP_1200/"))
+  #   possible_subjects <- possible_subjects[seq(2,length(possible_subjects),2)]
+  #   possible_subjects <- unlist(strsplit(possible_subjects,split = "/"))
+  #   
+  #   subjects_with_all_files <- unlist(lapply(X = possible_subjects,FUN = function(X){
+  #     
+  #     return(subject_has_all_files(X))
+  #     
+  #   }))
+  #   
+  #   possible_subjects <- possible_subjects[subjects_with_all_files]
+  #   
+  #   subjects <- sample(possible_subjects,size = 100,replace = F)
+  # }
   
   # start by reading in data, then analyze:
   calculate_diags(directory_for_subjects = directory_for_subjects,subjects = subjects)
@@ -627,7 +633,7 @@ analyze_HCP <- function(directory_for_subjects,subjects = c(103111,103212,105620
     {
       perm_test_mat_wass[i,j] <- permutation_test(unlisted_diagrams[c(seq(2*i-1,length(unlisted_diagrams),18),seq(2*i,length(unlisted_diagrams),18))],unlisted_diagrams[c(seq(2*j-1,length(unlisted_diagrams),18),seq(2*j,length(unlisted_diagrams),18))],p = 2,iterations = 1000)$p_values[[1]]
       perm_test_mat_wass[j,i] <- perm_test_mat_wass[i,j]
-      perm_test_mat_bottleneck[i,j] <- permutation_test(unlisted_diagrams[c(seq(2*i-1,length(unlisted_diagrams),18),seq(2*i,length(unlisted_diagrams),18))],unlisted_diagrams[c(seq(2*j-1,length(unlisted_diagrams),18),seq(2*j,length(unlisted_diagrams),18))],p = Inf,iterations = 1000,p = Inf)$p_values[[1]]
+      perm_test_mat_bottleneck[i,j] <- permutation_test(unlisted_diagrams[c(seq(2*i-1,length(unlisted_diagrams),18),seq(2*i,length(unlisted_diagrams),18))],unlisted_diagrams[c(seq(2*j-1,length(unlisted_diagrams),18),seq(2*j,length(unlisted_diagrams),18))],p = Inf,iterations = 1000)$p_values[[1]]
       perm_test_mat_bottleneck[j,i] <- perm_test_mat_bottleneck[i,j]
     }
   }
