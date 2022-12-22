@@ -5,7 +5,7 @@ output:
   rmarkdown::html_document:
     fig_caption: yes
 vignette: >
-  %\VignetteIndexEntry{inference}
+  %\VignetteIndexEntry{Introduction to TDApplied}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 bibliography: REFERENCES.bib
@@ -41,7 +41,7 @@ In order to make the power of topological data analysis more readily available t
 4. contribute tools for interpreting persistence diagrams, and
 5. provide parallelized methods for machine learning and inference for persistence diagrams.
 
-In accomplishing these goals TDApplied is a comprehensive and optimized package which permits researchers and data scientists to analyze multiple data sets using machine learning and inference via topological data analysis.
+In accomplishing these goals TDApplied is a comprehensive and optimized package which permits researchers and data scientists to analyze multiple data sets using machine learning and inference via topological data analysis. This vignette documents the theory and application of TDApplied functions, on both simulated and neuroscience data.
 
 <!-- Topological data analysis is a relatively new area of data science which can find unique, non-linear global structure in whole datasets. The main tool of topological data analysis is called *persistent homology*, which produces a "shape descriptor" (called a *persistence diagram*) of its input dataset. Two main R packages exist for computing persistence diagrams; the more flexible of the two, called TDA, stores persistence diagrams in a non-standard data structure, and the faster of the two, called TDAstats, does not provide functionality for analyzing diagrams with published techniques. Methods exist for computing distances and kernels (which are a special type of similarity functions) between pairs of persistence diagrams, but only distance calculations are currently available in the R package TDA. Several papers have used distance and kernel computations in order to perform machine learning or inferences tasks with groups of persistence diagrams, but to date no publicly available software in either python or R provides the functionality for these types of analyses. In order to make the power of topological data analysis more readily available to data and machine learning practitioners, it would be very helpful to have a single software package that can -->
 
@@ -925,11 +925,11 @@ summary(model)$coefficients
 The human brain is a complex dynamical system which encodes and processes its outside environment to drive behavioral decisions. A very popular technology for studying the function of the brain, i.e. how it encodes and processes its environment, is called functional MRI (fMRI). fMRI has the ability to image the whole brain, where the intensity of each voxel (i.e. 3D volumetric pixel) is a proxy measure of the "activity" of that small volumetric brain region, over multiple time points giving both spatial and temporal information about brain activity. A common method for analyzing fMRI data is computing correlation matrices, which can either be spatial (correlating the vectors of activity, called spatial activity patterns, at different time points) or temporal (correlating the time courses of brain regions, called temporal functional connectivity (FC)).
 
 ```{r,echo = F,eval = T,fig.height = 4,fig.width = 4,fig.align = 'center'}
-knitr::include_graphics("spatial_correlation.png")
+knitr::include_graphics("spatial_correlation.jpg")
 ```
 
 ```{r,echo = F,eval = T,fig.height = 4,fig.width = 4,fig.align = 'center'}
-knitr::include_graphics("temporal_FC.png")
+knitr::include_graphics("temporal_FC.jpg")
 ```
 
 In fMRI studies, data is collected from subjects who are either performing some task (for instance repeatedly viewing pictures from various object categories [@RSA]) or relaxing (fixating at the center of a screen, called "resting state"). This allows researchers to make inferences about which brain regions are responsible for which types of tasks or processes, making it an important tool for studying the brain. Moreover, fMRI (and other similar technologies) have become a popular venue for topological data analysis.
@@ -1062,14 +1062,14 @@ knitr::include_graphics("loop2_scatter.png")
 Since the highlighted points from the plots each represent a spatial pattern of neural activity at some time point, we then plotted these spatial patterns around the circumference of two circles (however, note that the loops did not form perfect circles in the data). Note that when the two brain hemispheres (i.e. sides) are plotted side-by-side, the left hemisphere is on the right and the right hemisphere is on the left. Prior to plotting, the fMRI data was first normalized to have temporal mean 0 and standard deviation 1 for each surface node. The spatial patterns were then smoothed by averaging spatial signal within a 5mm radius from each surface node, and the smoothed signal was thresholded by absolute value at least 0.75. We plotted the spatial patterns with boxes around areas which appeared to exhibit periodic behavior around the loops:
 
 ```{r,echo = F,eval = T,fig.align = 'center',fig.show='hold',fig.align='default',out.width="50%", out.height="50%"}
-knitr::include_graphics("loop1.png")
-knitr::include_graphics("loop2.png")
+knitr::include_graphics("loop1.jpg")
+knitr::include_graphics("loop2.jpg")
 ```
 
 Loop 1 exhibited more drastic neural activity (both high and low) compared to loop 2, which showed more localized areas of low activity. We compared the locations of periodic activity (in the boxes) to a well-known parcellation of the brain into 7 resting-state networks [@rs_networks]:
 
 ```{r,echo = F,eval = T,fig.align = 'center',out.width="80%", out.height="80%"}
-knitr::include_graphics("parcellation.png")
+knitr::include_graphics("parcellation.jpg")
 ```
 
 The periodic behavior in loop 1 appeared in the activation of the left hemisphere dorsal attention network (green box, high activity on top and bottom, lower activity on the sides) and in the deactivation of the right hemisphere default mode and ventral attention networks (red box, high activity on the right, medium on the top and bottom, low on the left). The periodic behavior in loop 2 appeared in the deactivation of the right hemisphere default mode and ventral attention networks (pink box, low activity on top and bottom, higher activity on the sides). Therefore only three of the seven resting-state networks may be sufficient to describe the group-level resting-state data.
