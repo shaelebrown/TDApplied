@@ -3,22 +3,24 @@
 # and analyzes the files with TDApplied as described in the package
 # vignette. It is currently configured to run on Windows machines,
 # but can run on other operating systems by changing the commands
-# which create directories to your desired system commands (lines 100, 399-410).
+# which create directories to your desired system commands (lines 107, 410-421).
 # If run from top to bottom (once updating the connectomedb login and desired path
-# on lines 37 and 892 respectively) this script will perform the same
+# on lines 41 and 909 respectively) this script will perform the same
 # analyses as in the vignette for the same subjects, although
 # there is the option to run the analysis for 100 randomly selected
 # subjects from HCP (see the notes in the analyze_HCP function). 
 # To analyze a different number of subjects other changes must be made to the code.
 # Note that the desired path should be a full path
 # without the ~ symbol (which can be used on Mac OS), otherwise lines
-# 511 and 514 may throw an error.
+# 528 and 531 may throw an error.
 
 # The plotting of HCP resting state 1 loops requires python to be configured
 # as well as the additional modules nibabel, nilearn, matplotlib and hcp_utils
 # to be downloaded (with reticulate::py_install("module_name"), except for hcp_utils which must be downloaded
 # with pip in the terminal: pip install hcp_utils).
-# If this is not possible or desired, simply comment lines 511 and 514 to avoid generating an error.
+# If this is not possible or desired, simply comment lines 528 and 531 to avoid generating an error.
+# Also lines 528 and 531 seem to throw an error on
+# Windows machines, but run fine on Mac OS (so comment them if need be).
 
 # Once a 'directory_for_subjects' path is defined, which should have no files in it, each subject's persistence
 # diagrams are saved in 'directory_for_subjects/subject_ID', which is created by this script.
@@ -55,6 +57,9 @@ PH_from_file <- function(f){
   # compute diagram up to dimension 1 via fast bootstrapping
   # with 30 bootstrap iterations
   diag <- bootstrap_persistence_thresholds(X = RDM,FUN = "calculate_homology",maxdim = 1,thresh = max(RDM),num_samples = 30,return_subsetted = T,return_diag = T,distance_mat = T)$subsetted_diag
+  
+  # subset for dimenion 1
+  diag <- diag[which(diag$dimension == 1),]
   
   # save results
   prefix <- strsplit(f,split = "_Atlas_MSMAll.dtseries.nii")[[1]][[1]]
@@ -467,7 +472,13 @@ analyze_HCP <- function(directory_for_subjects){
   {
     for(j in 1:18)
     {
-      unlisted_diagrams[[length(unlisted_diagrams)+1]] <- diagrams[[i]][[j]]
+      if(nrow(diagrams[[i]][[j]]) == 0)
+      {
+        unlisted_diagrams[[length(unlisted_diagrams) + 1]] <- data.frame(dimension = numeric(),birth = numeric(),death = numeric())
+      }else
+      {
+        unlisted_diagrams[[length(unlisted_diagrams)+1]] <- diagrams[[i]][[j]] 
+      }
     }
   }
   rm(diagrams)
@@ -631,9 +642,9 @@ analyze_HCP <- function(directory_for_subjects){
   {
     for(j in (i+1):9)
     {
-      perm_test_mat_wass[i,j] <- permutation_test(unlisted_diagrams[c(seq(2*i-1,length(unlisted_diagrams),18),seq(2*i,length(unlisted_diagrams),18))],unlisted_diagrams[c(seq(2*j-1,length(unlisted_diagrams),18),seq(2*j,length(unlisted_diagrams),18))],p = 2,iterations = 1000)$p_values[[1]]
+      perm_test_mat_wass[i,j] <- permutation_test(unlisted_diagrams[c(seq(2*i-1,length(unlisted_diagrams),18),seq(2*i,length(unlisted_diagrams),18))],unlisted_diagrams[c(seq(2*j-1,length(unlisted_diagrams),18),seq(2*j,length(unlisted_diagrams),18))],p = 2,iterations = 1000,dims = c(1))$p_values[[1]]
       perm_test_mat_wass[j,i] <- perm_test_mat_wass[i,j]
-      perm_test_mat_bottleneck[i,j] <- permutation_test(unlisted_diagrams[c(seq(2*i-1,length(unlisted_diagrams),18),seq(2*i,length(unlisted_diagrams),18))],unlisted_diagrams[c(seq(2*j-1,length(unlisted_diagrams),18),seq(2*j,length(unlisted_diagrams),18))],p = Inf,iterations = 1000)$p_values[[1]]
+      perm_test_mat_bottleneck[i,j] <- permutation_test(unlisted_diagrams[c(seq(2*i-1,length(unlisted_diagrams),18),seq(2*i,length(unlisted_diagrams),18))],unlisted_diagrams[c(seq(2*j-1,length(unlisted_diagrams),18),seq(2*j,length(unlisted_diagrams),18))],p = Inf,iterations = 1000,dims = c(1))$p_values[[1]]
       perm_test_mat_bottleneck[j,i] <- perm_test_mat_bottleneck[i,j]
     }
   }
@@ -648,8 +659,8 @@ analyze_HCP <- function(directory_for_subjects){
   {
     for(j in (i+1):nrow(meta_data))
     {
-      perm_test_subj_wass[i,j] <- permutation_test(unlisted_diagrams[seq(18*(i-1)+1,18*i,1)],unlisted_diagrams[seq(18*(j-1)+1,18*j,1)],p = 2,iterations = 1000)$p_values[[1]]
-      perm_test_subj_bottleneck[i,j] <- permutation_test(unlisted_diagrams[seq(18*(i-1)+1,18*i,1)],unlisted_diagrams[seq(18*(j-1)+1,18*j,1)],p = Inf,iterations = 1000)$p_values[[1]]
+      perm_test_subj_wass[i,j] <- permutation_test(unlisted_diagrams[seq(18*(i-1)+1,18*i,1)],unlisted_diagrams[seq(18*(j-1)+1,18*j,1)],p = 2,iterations = 1000,dims = c(1))$p_values[[1]]
+      perm_test_subj_bottleneck[i,j] <- permutation_test(unlisted_diagrams[seq(18*(i-1)+1,18*i,1)],unlisted_diagrams[seq(18*(j-1)+1,18*j,1)],p = Inf,iterations = 1000,dims = c(1))$p_values[[1]]
       perm_test_subj_wass[j,i] <- perm_test_subj_wass[i,j]
       perm_test_subj_bottleneck[j,i] <- perm_test_subj_bottleneck[i,j]
     }
@@ -765,8 +776,8 @@ analyze_HCP <- function(directory_for_subjects){
   write.csv(indep_subj_mat,paste0(directory_for_subjects,"/analysis_results/independence_tests/subjects/indep_subj_mat_percent.csv"))
   
   # t tests for comparing percent kernel parameter non-independence for topologically different diagrams and not
-  t.test(x = indep_subj_mat[which(perm_test_subj_bot_bin == 1,arr.ind = T)],y = indep_subj_mat[which(perm_test_subj_bot_bin == 0,arr.ind = T)],alternative = "two.sided",paired = F)
-  t.test(x = indep_subj_mat[which(perm_test_subj_wass_bin == 1,arr.ind = T)],y = indep_subj_mat[which(perm_test_subj_wass_bin == 0,arr.ind = T)],alternative = "two.sided",paired = F)
+  t.test(x = indep_subj_mat[which(perm_test_subj_bottleneck < 0.05,arr.ind = T)],y = indep_subj_mat[which(perm_test_subj_bottleneck >= 0.05,arr.ind = T)],alternative = "two.sided",paired = F)
+  t.test(x = indep_subj_mat[which(perm_test_subj_wass < 0.05,arr.ind = T)],y = indep_subj_mat[which(perm_test_subj_wass >= 0.05,arr.ind = T)],alternative = "two.sided",paired = F)
   
   # run clustering to see if tasks or subjects can be discerned
   print(paste0("Working on clustering at ",Sys.time()))
@@ -778,7 +789,7 @@ analyze_HCP <- function(directory_for_subjects){
       
       s <- tryCatch(expr = {
       
-        R.utils::withTimeout(sum(diagram_kkmeans(diagrams = unlisted_diagrams,centers = X,dim = 1,t = kernel_parameters[i,1L],sigma = kernel_parameters[i,2L])@withinss),timeout = 60)
+        R.utils::withTimeout(sum(diagram_kkmeans(diagrams = unlisted_diagrams,centers = X,dim = 1,t = kernel_parameters[i,1L],sigma = kernel_parameters[i,2L])$clustering@withinss),timeout = 60)
         },
                TimeoutException = function(ex){return(NA)},
                error = function(e){return(NA)})
@@ -808,7 +819,7 @@ analyze_HCP <- function(directory_for_subjects){
   {
     ret <- tryCatch(expr = {
       
-      R.utils::withTimeout(diagram_kkmeans(diagrams = unlisted_diagrams,dim = 1,t = kernel_parameters[X,1L],sigma = kernel_parameters[X,2L],centers = 3)@.Data,timeout = 60)
+      R.utils::withTimeout(diagram_kkmeans(diagrams = unlisted_diagrams,dim = 1,t = kernel_parameters[X,1L],sigma = kernel_parameters[X,2L],centers = 3)$clustering@.Data,timeout = 60)
     },
     TimeoutException = function(ex){return(matrix(data = 1,nrow = 0,ncol = 1800))},
     error = function(e){return(matrix(data = 1,nrow = 0,ncol = 1800))})
@@ -829,7 +840,7 @@ analyze_HCP <- function(directory_for_subjects){
   {
     ret <- tryCatch(expr = {
       
-      R.utils::withTimeout(diagram_kkmeans(diagrams = unlisted_diagrams,dim = 1,t = kernel_parameters[X,1L],sigma = kernel_parameters[X,2L],centers = 4)@.Data,timeout = 60)
+      R.utils::withTimeout(diagram_kkmeans(diagrams = unlisted_diagrams,dim = 1,t = kernel_parameters[X,1L],sigma = kernel_parameters[X,2L],centers = 4)$clustering@.Data,timeout = 60)
     },
     TimeoutException = function(ex){return(matrix(data = 1,nrow = 0,ncol = 1800))},
     error = function(e){return(matrix(data = 1,nrow = 0,ncol = 1800))})
@@ -877,8 +888,8 @@ analyze_HCP <- function(directory_for_subjects){
   
   # embed all diagrams into 2D using mds
   print(paste0("Working on MDS embeddings at ",Sys.time()))
-  mds_embedding_wass <- diagram_mds(unlisted_diagrams,k = 2)
-  mds_embedding_bottleneck <- diagram_mds(unlisted_diagrams,k = 2)
+  mds_embedding_wass <- diagram_mds(unlisted_diagrams,k = 2,dim = 1)
+  mds_embedding_bottleneck <- diagram_mds(unlisted_diagrams,k = 2,dim = 1)
   
   # add subject and task identifiers to each row
   mds_embedding_wass <- as.data.frame(mds_embedding_wass)
