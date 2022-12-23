@@ -414,7 +414,7 @@ plot_diagram(diag,title = "Circle diagram with thresholds",
 par(mfrow = c(1,1))
 ```
 
-The bootstrap procedure can be done in parallel or sequentially, depending on which function is specified to calculate the persistence diagrams. There are three possible such functions - TDAstat's `calculate_homology`, TDA's `ripsDiag` and TDApplied's `PyH` (described in later sections). Based on our simulations, the order of fastest to slowest of these functions are `PyH`, `calculate_homology` and `ripsDiag`. Moreover, both `ripsDiag` and `PyH` allow for the calculation of representative (co)cycles (i.e. the approximate location in the data of each topological feature), whereas `calculate_homology` does not. Therefore, our recommendation is to pick the function according to the following criteria: if a user can use the `PyH` function, then it should be used in all cases except for when the input data set is small, the machine has many available cores and the number of desired bootstrap iterations is large. Otherwise, use `calculate_homology` for speed or `ripsDiag` if the other two functions are not available. 
+The bootstrap procedure can be done in parallel or sequentially, depending on which function is specified to calculate the persistence diagrams. There are three possible such functions - TDAstats' `calculate_homology`, TDA's `ripsDiag` and TDApplied's `PyH` (described in later sections). Based on our simulations, the order of fastest to slowest of these functions are `PyH`, `calculate_homology` and `ripsDiag`. Moreover, both `ripsDiag` and `PyH` allow for the calculation of representative (co)cycles (i.e. the approximate location in the data of each topological feature), whereas `calculate_homology` does not. Therefore, our recommendation is to pick the function according to the following criteria: if a user can use the `PyH` function, then it should be used in all cases except for when the input data set is small, the machine has many available cores and the number of desired bootstrap iterations is large. Otherwise, use `calculate_homology` for speed or `ripsDiag` if the other two functions are not available. 
 
 ## Kernels Between Persistence Diagrams
 
@@ -720,7 +720,7 @@ Since we know that the data points in the representatives help form a loop in th
 
 In order to properly situate TDApplied in the landscape of software for topological data analysis, we will need to compare the speed of its calculations to similar calculations from other packages. In the following sections we will benchmark 
 
-(1) Persistent (co)homology calculations with TDApplied's `PyH` and TDAstat's `calculate_homology`.
+(1) Persistent (co)homology calculations with TDApplied's `PyH` and TDAstats' `calculate_homology`.
 (2) Wasserstein distances between persistence diagrams with TDApplied's `diagram_distance` and TDA's `wasserstein`.
 (3) Wasserstein distances between persistence diagrams with TDApplied's `diagram_distance` and the persim python module's `wasserstein`.
 
@@ -732,9 +732,9 @@ The script that was used to perform benchmarking (and plotting the results) is a
 
 The benchmarking results are displayed graphically in the following three subsections. On top of comparing raw run time of the various functions, we also compared the scalability of the functions by dividing the runtimes of the functions and regressing the quotients onto the number of points in the input shapes. Overall we found that TDApplied's functions are faster and scale better than R counterparts, and scale similarly to python counterparts. These results indicate that TDApplied is a powerful and efficient tool for applied topological data analysis in R.
 
-## Benchmarking `PyH` Against TDAstat's `calculate_homology` Function
+## Benchmarking `PyH` Against TDAstats' `calculate_homology` Function
 
-The long calculation time of persistence diagrams is likely a large contributing factor to the slow adoption of topological data analysis for applied data science. Much research has been carried out in order to speed up these calculations, but the current state-of-the-art is the persistent cohomology algorithm [@PHom_dualities]. In R, the TDAstat's `calculate_homology` function is the fastest option for persistence diagram calculations [@PH_benchmarking], being a wrapper for the ripser persistent cohomology engine. TDApplied's `PyH` function is a wrapper for the same engine, so we benchmarked their run time on circles, spheres and tori. The results were as follows: 
+The long calculation time of persistence diagrams is likely a large contributing factor to the slow adoption of topological data analysis for applied data science. Much research has been carried out in order to speed up these calculations, but the current state-of-the-art is the persistent cohomology algorithm [@PHom_dualities]. In R, the TDAstats' `calculate_homology` function is the fastest option for persistence diagram calculations [@PH_benchmarking], being a wrapper for the ripser persistent cohomology engine. TDApplied's `PyH` function is a wrapper for the same engine, so we benchmarked their run time on circles, spheres and tori. The results were as follows: 
 
 ```{r,echo = F,eval = T}
 summary_table_circle = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.01196892,0.01326358,0.01396093,0.05216095,0.03361042,0.12436731,0.06431270,0.22828629,0.10450339,0.35640080,0.17263622,0.54174340,0.26653392,0.76970870,0.38913472,1.06795118,0.56827831,1.57888129,0.77001960,2.02081304),sd = c(0.010148940,0.002938113,0.002576150,0.004909125,0.004535042,0.004654923,0.008832229,0.008654974,0.015860676,0.013255301,0.027655884,0.031779819,0.038884235,0.054684568,0.074091101,0.050891635,0.066695288,0.110982818,0.098805909,0.139048883),package = rep(c("TDApplied","TDAstats"),10))
@@ -828,7 +828,7 @@ arrows(summary_table_sphere$n_row[summary_table_sphere$package == "TDAstats"],
        length=0.05, angle=90, code=3,col = "black")
 ```
 
-As we can see the run time of `PyH` was significantly less than that of `calculate_homology`. We then used a linear model to analyze how the two functions scale compared to each other for all three shapes, regressing the ratio of TDAstat's runtime divided by TDApplied's runtime onto the number of points in the data set. For each of the three datasets, the model intercept was highly significant ($p < 0.001$) and the coefficient estimate for number of points was not. This suggests that the runtime of the two functions scale similarly, but there was a constant speed increase of `PyH` which differed by shape (about 3 times faster for circles, 7 times faster for tori and 8 times faster for spheres). Overall, if python is available to a TDApplied user then the `PyH` function can provide a very fast means to calculate persistence diagrams in R making analyses containing many large persistent homology calculations much more feasible.
+As we can see the run time of `PyH` was significantly less than that of `calculate_homology`. We then used a linear model to analyze how the two functions scale compared to each other for all three shapes, regressing the ratio of TDAstats' runtime divided by TDApplied's runtime onto the number of points in the data set. For each of the three datasets, the model intercept was highly significant ($p < 0.001$) and the coefficient estimate for number of points was not. This suggests that the runtime of the two functions scale similarly, but there was a constant speed increase of `PyH` which differed by shape (about 3 times faster for circles, 7 times faster for tori and 8 times faster for spheres). Overall, if python is available to a TDApplied user then the `PyH` function can provide a very fast means to calculate persistence diagrams in R making analyses containing many large persistent homology calculations much more feasible.
 
 ```{r,echo = F,eval = F}
 model_circle <- stats::lm(data = 
@@ -1217,7 +1217,7 @@ The TDApplied package aims to bridge topological data analysis with researchers 
 
 # Appendix
 
-Even though the Hungarian algorithm can be used to solve the linear sum assignment problem (LSAP), finding a minimal cost matching of two sets of points, some work needs to be done to properly apply the algorithm to calculate wasserstein or bottleneck distances. For an example we will consider the botteneck distance, although the argument still holds with a simple change for the wasserstein distance (squaring matrix entries). Let Diag1 and Diag2 be two diagrams, with $n_1$ and $n_2$ points respectively, whose projections onto the diagonal are denoted by $\pi(\mbox{Diag1})$ and $\pi(\mbox{Diag2})$ respectively. Then take $M$ to be the following $(n_1 + n_2) \times (n_1 + n_2)$ matrix: 
+Even though the Hungarian algorithm can be used to solve the linear sum assignment problem (LSAP), finding a minimal cost matching of two sets of points, some work needs to be done to properly apply the algorithm to calculate wasserstein or bottleneck distances. For an example we will consider the bottleneck distance, although the argument still holds with a simple change for the wasserstein distance (squaring matrix entries). Let Diag1 and Diag2 be two diagrams, with $n_1$ and $n_2$ points respectively, whose projections onto the diagonal are denoted by $\pi(\mbox{Diag1})$ and $\pi(\mbox{Diag2})$ respectively. Then take $M$ to be the following $(n_1 + n_2) \times (n_1 + n_2)$ matrix: 
 
 $$M =
 \left[
