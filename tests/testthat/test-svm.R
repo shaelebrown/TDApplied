@@ -19,6 +19,8 @@ test_that("diagram_ksvm detects incorrect parameters correctly",{
 
 test_that("diagram_ksvm can accept inputs from TDA, TDAstats and diagram_to_df",{
   
+  skip_on_cran()
+  
   D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
   D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)
   D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
@@ -82,6 +84,8 @@ test_that("predict_diagram_ksvm is computing correctly",{
 })
 
 test_that("diagram_ksvm can accept inputs from TDA, TDAstats and diagram_to_df",{
+  
+  skip_on_cran()
   
   D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
   D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)

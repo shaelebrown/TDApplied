@@ -70,6 +70,8 @@ test_that("predict_diagram_kpca is computing correctly",{
 
 test_that("predict_diagram_kpca can accept inputs from TDA, TDAstats and diagram_to_df",{
   
+  skip_on_cran()
+  
   D1 <- data.frame(dimension = 1,birth = 2,death = 3)
   D2 <- data.frame(dimension = 1,birth = 2,death = 3.1)
   D3 <- data.frame(dimension = 1,birth = c(2,5),death = c(3.1,6))

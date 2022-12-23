@@ -100,6 +100,8 @@ test_that("diagram_kkmeans is computing correctly",{
 
 test_that("diagram_kkmeans can accept inputs from TDA, TDAstats and diagram_to_df",{
   
+  skip_on_cran()
+  
   D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
   D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)
   D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
@@ -190,6 +192,8 @@ test_that("predict_diagram_kkmeans is computing correctly",{
 })
 
 test_that("predict_diagram_kkmeans can accept inputs from TDA, TDAstats and diagram_to_df",{
+  
+  skip_on_cran()
   
   D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
   D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)
