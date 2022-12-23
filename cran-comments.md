@@ -12,10 +12,9 @@
 
 ## NOTES
 
-* a note about how this package used to be on CRAN but was removed due to not fixing problems in time is always there
-* a 'lastMiKTeXException' was found when looking for a detritus on windows when checking on rhub, but I've read that this shouldn't be an issue (and no other detritus was found in other checks)
+* on Windows I get an error "No suitable spell-checker program found" on rhub, although the build gets marked as a success
 * some of the examples run for over 5s, however these examples have been made as small and fast as possible without throwing errors
-* on Ubuntu there was a PREP error, however in the log there were only notes (like the ones above) and the build was successful
+* on Fedora Linux when checking the rebuilding of package vignettes I got the following error: pandoc-citeproc: Error in $: Incompatible API versions: encoded with [1,20] but attempted to decode with [1,17,0,4]. But I'm not sure how/if I need to fix this
 * there are domain-specific words and author names in ML_and_Inference.Rmd which were flagged by devtools::check_spelling() but to the author's knowledge they are all spelled correctly
 
 
