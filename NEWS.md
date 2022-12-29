@@ -4,6 +4,9 @@
 [Pull Request](https://github.com/shaelebrown/TDApplied/pulls) number.
 Please see those for more details.
 
+# 2.0.2
+- set seed in vignette for reproducibility (which is reset at the end)
+
 # 2.0.1
 - increased testing coverage
 - fixed issue with th parameter in diagram_kpca
