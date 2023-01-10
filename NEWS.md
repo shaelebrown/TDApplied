@@ -6,6 +6,7 @@ Please see those for more details.
 
 # 2.0.2
 - set seed in vignette for reproducibility (which is reset at the end)
+- added more examples of TDA applications in publications
 
 # 2.0.1
 - increased testing coverage
