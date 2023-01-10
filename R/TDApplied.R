@@ -1,16 +1,17 @@
 #' Machine learning and inference for persistence diagrams
 #'
-#' This package aims to bridge topological data analysis (TDA) with data, statistical
+#' Topological data analysis is a powerful tool for finding non-linear global structure
+#' in whole datasets. 'TDApplied' aims to bridge topological data analysis with data, statistical
 #' and machine learning practitioners so that more analyses may benefit from the
-#' power of TDA. The main tool of TDA is persistent homology, which computes a 
-#' shape descriptor of a dataset, called a persistence diagram. There are five
-#' goals of this package: (1) convert the output from the persistent homology
-#' calculations in the two main R package for TDA into a data frame which can
-#' easily be used in personalized analyses, (2) provide a fast method for computing
-#' distances between persistence diagrams, (3) implement kernel machine learning and statistical
-#' methods for analyzing groups of persistence diagrams, (4) supply a fast persistent homology 
-#' calculation via python and reticulate, and (5) provide tools for interpreting persistence
-#' diagrams.
+#' power of topological data analysis. The main tool of topological data analysis is
+#' persistent homology, which computes a shape descriptor of a dataset, called
+#' a persistence diagram. There are five goals of this package: (1) deliver a fast implementation
+#' of persistent homology via a python interface, (2) convert persistence diagrams
+#' computed using the two main R packages for topological data analysis into a data frame, 
+#' (3) implement fast versions of both distance and kernel calculations
+#' for pairs of persistence diagrams, (4) contribute tools for the interpretation of
+#' persistence diagrams, and (5) provide parallelized methods for machine learning
+#' and inference for persistence diagrams.
 #'
 #' @docType package
 #' @name TDApplied
