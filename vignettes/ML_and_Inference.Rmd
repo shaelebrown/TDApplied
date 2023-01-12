@@ -53,7 +53,7 @@ Two main R packages exist for computing and comparing persistence diagrams -- TD
 In order to make the power of topological data analysis more readily available to data and machine learning practitioners, it would be very helpful to have a single software package that can
 
 1. deliver a fast engine for calculating persistence diagrams,
-2. convert persistence diagrams computed using the \texttt{R} packages \textit{TDA} and \textit{TDAstats} into a commonly-used data type for data analyses (a data frame), 
+2. convert persistence diagrams computed using the R packages TDA and TDAstats into a commonly-used data type for data analyses (a data frame), 
 3. implements fast versions of both distance and kernel calculations for pairs of persistence diagrams, 
 4. contribute tools for interpreting persistence diagrams, and
 5. provide parallelized methods for machine learning and inference for persistence diagrams.
