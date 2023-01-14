@@ -4,6 +4,9 @@
 [Pull Request](https://github.com/shaelebrown/TDApplied/pulls) number.
 Please see those for more details.
 
+# 2.0.3
+- fixed bootstrap reference in vignette
+
 # 2.0.2
 - set seed in vignette for reproducibility (which is reset at the end)
 - added more examples of TDA applications in publications
