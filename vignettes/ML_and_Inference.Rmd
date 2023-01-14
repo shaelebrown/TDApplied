@@ -157,7 +157,6 @@ In this section we will describe the various computational tools implemented in 
 
 ```{r setup}
 library("TDApplied")
-#devtools::load_all()
 ``` 
 
 Since TDApplied uses the output of TDA/TDAstats calculations (or its own persistent homology function, "PyH", discussed later) as inputs to its functions, either TDA or TDAstats should be at least installed (if not attached) when using TDApplied. All examples, except those in the subsection on bootstrapping, will analyze simple diagrams which are random deviations of three persistence diagrams called D1, D2 and D3 (each with points in dimension 0 only), which we will plot with the TDApplied function `plot_diagram`:
