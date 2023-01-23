@@ -24,6 +24,9 @@ test_that("bootstrap_persistence_thresholds can do homology calculation with all
 
 test_that("bootstrap_persistence_thresholds can detect incorrect parameters correctly",{
   
+  skip_if_not_installed("TDA")
+  skip_if_not_installed("TDAstats")
+  
   # X, FUN, maxdim, thresh, distance_mat, ripser, ignore_infinite_cluster, calculate_representatives, num_samples, alpha, return_subsetted, return_diag
   expect_error(bootstrap_persistence_thresholds(data.frame(),FUN = "calculate_homology",maxdim = 1,thresh = 2),"X")
   expect_error(bootstrap_persistence_thresholds(data.frame(x = 1),FUN = "calculate_homology",maxdim = 1,thresh = 2),"X")
