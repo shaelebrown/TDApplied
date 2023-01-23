@@ -22,26 +22,30 @@
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @examples
 #'
-#' # create a sample diagram from the unit circle
-#' df <- TDA::circleUnif(n = 50)
-#' diag <- TDAstats::calculate_homology(df,threshold = 2)
+#' if(require("TDA") & require("TDAstats"))
+#' {
+#'   # create a sample diagram from the unit circle
+#'   df <- TDA::circleUnif(n = 50)
+#'   diag <- TDAstats::calculate_homology(df,threshold = 2)
 #' 
-#' # plot without title
-#' plot_diagram(diag)
+#'   # plot without title
+#'   plot_diagram(diag)
 #' 
-#' # plot with title
-#' plot_diagram(diag,title = "Example diagram")
+#'   # plot with title
+#'   plot_diagram(diag,title = "Example diagram")
 #' 
-#' # determine persistence thresholds
-#' thresholds <- bootstrap_persistence_thresholds(X = df,maxdim = 1,
-#' thresh = 2,num_samples = 3,
-#' num_workers = 2)
+#'   # determine persistence thresholds
+#'   thresholds <- bootstrap_persistence_thresholds(X = df,maxdim = 1,
+#'   thresh = 2,num_samples = 3,
+#'   num_workers = 2)
 #' 
-#' # plot with bootstrap persistence thresholds
-#' plot_diagram(diag,title = "Example diagram with thresholds",thresholds = thresholds)
+#'   # plot with bootstrap persistence thresholds
+#'   plot_diagram(diag,title = "Example diagram with thresholds",thresholds = thresholds)
 #' 
-#' #' # plot with personalized persistence thresholds
-#' plot_diagram(diag,title = "Example diagram with personalized thresholds",thresholds = c(0.5,1))
+#'   #' # plot with personalized persistence thresholds
+#'   plot_diagram(diag,title = "Example diagram with personalized thresholds",thresholds = c(0.5,1))
+#' }
+
 plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,thresholds = NULL){
   
   # error check parameters

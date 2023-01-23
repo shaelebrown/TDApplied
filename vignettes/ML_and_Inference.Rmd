@@ -103,7 +103,7 @@ The main tool of topological data analysis is called persistent homology (see [@
 
 Persistent homology starts with data points and a distance function. It assumes that these points were sampled from some kind of shape. This shape has certain features that exist at various scales, but sampling induces noise in these features. Persistent homology aims to describe certain mathematical features of this underlying shape, by forming approximations to the shape at various distance scales. The mathematical features which are tracked are clusters (connected components), loops (ellipses), voids (spheres), etc, and the "significance" of each feature is calculated (i.e. are the feature "real" or not). The *homological dimension* of these features are 0, 1 and 2 respectively (higher dimensional features can also be calculated). What's really interesting about these particular mathematical features is that they can tell us where our data is not, which is extremely important information which other data analysis methods can't provide.
 
-```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center'}
+```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center',eval = requireNamespace("TDA")}
 circ <- TDA::circleUnif(n = 50,r = 1)
 par(mfrow = c(1,4))
 plot(x = circ[,1],y = circ[,2],main = "Approximation 1:\nindividual data points",xlab = "",ylab = "",las = 1)
@@ -389,9 +389,9 @@ The idea of the bootstrap procedure is as follows, where $X$ is the input data s
 3. We calculate the bottleneck distance of each new diagram with the original, $d_{\infty}(D_i,D)$, in each dimension separately.
 4. Finally we compute the $1-\alpha$ percentile of these values in each dimension.
 
-These thresholds form a square-shaped "confidence interval" around each point in $D$. In particular, if $t$ was the threshold found for dimension $k$ then the confidence interval around a point $(x,y) \in D$ (of dimension $k$) is the set of points $\{(x',y'):\mbox{max}(|x-x'|,|y-y'|) < t\}$. For example, if we sampled 50 points on the unit circle, calculated the bottleneck-threshold-based confidence interval around the single 1-dimensional point, we would get something like this:
+These thresholds form a square-shaped "confidence interval" around each point in $D$. In particular, if $t$ was the threshold found for dimension $k$ then the confidence interval around a point $(x,y) \in D$ (of dimension $k$) is the set of points $\{(x',y'):\mbox{max}(|x-x'|,|y-y'|) < t\}$. For example, if we sampled 50 points on the unit circle, calculated the bottleneck-threshold-based confidence interval around the single 1-dimensional point, we would get something like this (this plot will not generate without the TDA and TDAstats packages):
 
-```{r,echo = F,fig.height = 5,fig.width = 5,fig.align = 'center'}
+```{r,echo = F,fig.height = 5,fig.width = 5,fig.align = 'center',eval = requireNamespace("TDAstats") & requireNamespace("TDA")}
 par(mfrow = c(1,1))
 D <- TDAstats::calculate_homology(mat = TDA::circleUnif(n = 50),dim = 1,threshold = 2)
 pt <- as.numeric(D[which(D[,1L] == 1),])[2:3]
@@ -404,9 +404,9 @@ graphics::text(x = c(pt[[1]] + 0.3953059/2,0.4),y = c(1.83,1.55),c("t","t"))
 
 In this setup, "real" points will be those whose (open) confidence intervals do not overlap the diagonal line, where birth and death is the same. Note that the persistence threshold is twice the bottleneck distance threshold calculated above: the (Euclidean) distance from the point to the bottom right corner of the box is $\sqrt{2}t$, which must be greater than or equal to the (Euclidean) distance of the point to its diagonal projection, which is $\frac{y-x}{\sqrt{2}}$. Therefore, for the point to be considered real, $\sqrt{2}t \leq \frac{y-x}{\sqrt{2}}$, implying that the persistence of the point, $y-x$, must be no less than twice the bottleneck threshold $t$.
 
-The function `bootstrap_persistence_thresholds` can be used to determine these persistence thresholds. Here is an example for a circle dataset (which is not the same as the one from above), and the results can be plotted with the `plot_diagram` function:
+The function `bootstrap_persistence_thresholds` can be used to determine these persistence thresholds. Here is an example for a circle dataset (which is not the same as the one from above), and the results can be plotted with the `plot_diagram` function (this figure will not generate without the TDA package):
 
-```{r,fig.height = 4,fig.width = 8,fig.align = 'center'}
+```{r,fig.height = 4,fig.width = 8,fig.align = 'center',eval = requireNamespace("TDA")}
 # sample 50 points from the unit circle
 circle <- TDA::circleUnif(n = 50)
 

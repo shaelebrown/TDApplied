@@ -33,20 +33,23 @@
 #' Le T, Yamada M (2018). "Persistence fisher kernel: a riemannian manifold kernel for persistence diagrams." \url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}.
 #' @examples
 #'
-#' # create two diagrams
-#' D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
-#'                     maxdimension = 1,maxscale = 2)
-#' D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
-#'                     maxdimension = 1,maxscale = 2)
+#' if(require("TDA"))
+#' {
+#'   # create two diagrams
+#'   D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+#'                       maxdimension = 1,maxscale = 2)
+#'   D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+#'                       maxdimension = 1,maxscale = 2)
 #'
-#' # calculate 2-wasserstein distance between D1 and D2 in dimension 1
-#' diagram_distance(D1,D2,dim = 1,p = 2,distance = "wasserstein")
+#'   # calculate 2-wasserstein distance between D1 and D2 in dimension 1
+#'   diagram_distance(D1,D2,dim = 1,p = 2,distance = "wasserstein")
 #' 
-#' # calculate bottleneck distance between D1 and D2 in dimension 0
-#' diagram_distance(D1,D2,dim = 0,p = Inf,distance = "wasserstein")
+#'   # calculate bottleneck distance between D1 and D2 in dimension 0
+#'   diagram_distance(D1,D2,dim = 0,p = Inf,distance = "wasserstein")
 #' 
-#' # Fisher information metric calculation between D1 and D2 for sigma = 1 in dimension 1
-#' diagram_distance(D1,D2,dim = 1,distance = "fisher",sigma = 1)
+#'   # Fisher information metric calculation between D1 and D2 for sigma = 1 in dimension 1
+#'   diagram_distance(D1,D2,dim = 1,distance = "fisher",sigma = 1)
+#' }
 
 diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma = NULL){
 
@@ -286,21 +289,24 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
 #' @importFrom iterators iter
 #' @examples
 #'
-#' # create two diagrams
-#' D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                    dim = 0,threshold = 2)
-#' D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                    dim = 0,threshold = 2)
-#' g <- list(D1,D2)
+#' if(require("TDA") & require("TDAstats"))
+#' {
+#'   # create two diagrams
+#'   D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+#'                                      dim = 0,threshold = 2)
+#'   D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+#'                                      dim = 0,threshold = 2)
+#'   g <- list(D1,D2)
 #'
-#' # calculate their distance matrix in dimension 0 with the 2-wasserstein metric 
-#' # using 2 cores in dimension 1
-#' D <- distance_matrix(diagrams = g,dim = 0,distance = "wasserstein",p = 2,num_workers = 2)
+#'   # calculate their distance matrix in dimension 0 with the 2-wasserstein metric 
+#'   # using 2 cores in dimension 1
+#'   D <- distance_matrix(diagrams = g,dim = 0,distance = "wasserstein",p = 2,num_workers = 2)
 #' 
-#' # now do the cross distance matrix, which is the same as the original
-#' D_cross <- distance_matrix(diagrams = g,other_diagrams = g,
-#'                            dim = 0,distance = "wasserstein",
-#'                            p = 2,num_workers = 2)
+#'   # now do the cross distance matrix, which is the same as the original
+#'   D_cross <- distance_matrix(diagrams = g,other_diagrams = g,
+#'                              dim = 0,distance = "wasserstein",
+#'                              p = 2,num_workers = 2)
+#' }
 
 distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "wasserstein",p = 2,sigma = NULL,num_workers = parallelly::availableCores(omit = 1)){
   

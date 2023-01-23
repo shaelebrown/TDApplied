@@ -73,6 +73,8 @@ so care should be taken to use the desired function when using TDApplied with TD
 }
 \examples{
 
+if(require("TDA") & require("TDAstats"))
+{
 # create two groups of diagrams
 D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
                                    dim = 0,threshold = 2)
@@ -82,9 +84,10 @@ g1 <- list(D1,D2)
 g2 <- list(D1,D2)
 
 # run test in dimension 0 with 1 iteration
-perm_test <- permutation_test(g1,g2,iterations = 1,
-                              num_workers = 2,
-                              dims = c(0))
+perm_test <- TDApplied::permutation_test(g1,g2,iterations = 1,
+                                         num_workers = 2,
+                                         dims = c(0))
+}
 }
 \references{
 Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.

@@ -47,20 +47,23 @@ If the `distance` parameter is "fisher" then `sigma` must not be NULL.
 }
 \examples{
 
-# create two diagrams
-D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
-                    maxdimension = 1,maxscale = 2)
-D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
-                    maxdimension = 1,maxscale = 2)
+if(require("TDA"))
+{
+  # create two diagrams
+  D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
+                      maxdimension = 1,maxscale = 2)
+  D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
+                      maxdimension = 1,maxscale = 2)
 
-# calculate 2-wasserstein distance between D1 and D2 in dimension 1
-diagram_distance(D1,D2,dim = 1,p = 2,distance = "wasserstein")
+  # calculate 2-wasserstein distance between D1 and D2 in dimension 1
+  diagram_distance(D1,D2,dim = 1,p = 2,distance = "wasserstein")
 
-# calculate bottleneck distance between D1 and D2 in dimension 0
-diagram_distance(D1,D2,dim = 0,p = Inf,distance = "wasserstein")
+  # calculate bottleneck distance between D1 and D2 in dimension 0
+  diagram_distance(D1,D2,dim = 0,p = Inf,distance = "wasserstein")
 
-# Fisher information metric calculation between D1 and D2 for sigma = 1 in dimension 1
-diagram_distance(D1,D2,dim = 1,distance = "fisher",sigma = 1)
+  # Fisher information metric calculation between D1 and D2 for sigma = 1 in dimension 1
+  diagram_distance(D1,D2,dim = 1,distance = "fisher",sigma = 1)
+}
 }
 \references{
 Kerber M, Morozov D and Nigmetov A (2017). "Geometry Helps to Compare Persistence Diagrams." \url{http://www.geometrie.tugraz.at/kerber/kerber_papers/kmn-ghtcpd_journal.pdf}.

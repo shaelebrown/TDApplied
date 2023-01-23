@@ -51,6 +51,8 @@
 #' Abdallah H et al. (2021). "Statistical Inference for Persistent Homology applied to fMRI." \url{https://github.com/hassan-abdallah/Statistical_Inference_PH_fMRI/blob/main/Abdallah_et_al_Statistical_Inference_PH_fMRI.pdf}.
 #' @examples
 #'
+#' if(require("TDA") & require("TDAstats"))
+#' {
 #' # create two groups of diagrams
 #' D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
 #'                                    dim = 0,threshold = 2)
@@ -60,9 +62,10 @@
 #' g2 <- list(D1,D2)
 #'
 #' # run test in dimension 0 with 1 iteration
-#' perm_test <- permutation_test(g1,g2,iterations = 1,
-#'                               num_workers = 2,
-#'                               dims = c(0))
+#' perm_test <- TDApplied::permutation_test(g1,g2,iterations = 1,
+#'                                          num_workers = 2,
+#'                                          dims = c(0))
+#' }
 
 permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paired = FALSE,distance = "wasserstein",sigma = NULL,num_workers = parallelly::availableCores(omit = 1),verbose = FALSE){
 
@@ -273,17 +276,20 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
 #' Gretton A et al. (2007). "A Kernel Statistical Test of Independence." \url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf}.
 #' @examples
 #'
-#' # create two independent groups of diagrams of length 6, which
-#' # is the minimum length
-#' D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                    dim = 0,threshold = 2)
-#' D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                    dim = 0,threshold = 2)
-#' g1 <- list(D1,D2,D2,D2,D2,D2)
-#' g2 <- list(D2,D1,D1,D1,D1,D1)
+#' if(require("TDA") & require("TDAstats"))
+#' {
+#'   # create two independent groups of diagrams of length 6, which
+#'   # is the minimum length
+#'   D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+#'                                      dim = 0,threshold = 2)
+#'   D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+#'                                      dim = 0,threshold = 2)
+#'   g1 <- list(D1,D2,D2,D2,D2,D2)
+#'   g2 <- list(D2,D1,D1,D1,D1,D1)
 #' 
-#' # do independence test with sigma = t = 1 in dimension 0
-#' indep_test <- independence_test(g1,g2,dims = c(0),num_workers = 2)
+#'   # do independence test with sigma = t = 1 in dimension 0
+#'   indep_test <- independence_test(g1,g2,dims = c(0),num_workers = 2)
+#' }
 
 independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,num_workers = parallelly::availableCores(omit = 1),verbose = FALSE){
   

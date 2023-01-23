@@ -68,13 +68,16 @@ try setting `FUN` equal to 'ripsDiag'.
 }
 \examples{
 
-# create a persistence diagram from a sample of the unit circle
-df = TDA::circleUnif(n = 50)
+if(require("TDA"))
+{
+  # create a persistence diagram from a sample of the unit circle
+  df = TDA::circleUnif(n = 50)
 
-# calculate persistence thresholds for alpha = 0.05 
-# and return the calculated diagram as well as the subsetted diagram
-bootstrapped_diagram <- bootstrap_persistence_thresholds(X = df,
-FUN = "calculate_homology",maxdim = 1,thresh = 2,num_workers = 2)
+  # calculate persistence thresholds for alpha = 0.05 
+  # and return the calculated diagram as well as the subsetted diagram
+  bootstrapped_diagram <- bootstrap_persistence_thresholds(X = df,
+  FUN = "calculate_homology",maxdim = 1,thresh = 2,num_workers = 2)
+}
 }
 \references{
 Chazal F et al (2017). "Robust Topological Inference: Distance to a Measure and Kernel Distance." \url{https://www.jmlr.org/papers/volume18/15-484/15-484.pdf}.

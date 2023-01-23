@@ -1,6 +1,7 @@
 
 test_that("permutation_test detects incorrect parameters correctly",{
   
+  skip_if_not_installed("TDA")
   circle = TDA::ripsDiag(X = TDA::circleUnif(n = 20,r = 1),maxdimension = 2,maxscale = 2)
   sphere = TDA::ripsDiag(X = TDA::sphereUnif(n = 20,d = 2,r = 1),maxdimension = 2,maxscale = 2)
   expect_error(permutation_test(list(circle,2,circle),list(sphere,sphere,sphere),iterations = 5,p = 2,q = 2,dims = c(0,1),paired = F,distance = "wasserstein",sigma = NULL,verbose = F,num_workers = 2),"Diagrams must")
@@ -21,6 +22,8 @@ test_that("permutation_test detects incorrect parameters correctly",{
 
 test_that("permutation_test can accept inputs from TDA, TDAstats and diagram_to_df",{
   
+  skip_if_not_installed("TDA")
+  skip_if_not_installed("TDAstats")
   circle = TDA::ripsDiag(X = TDA::circleUnif(n = 20,r = 1),maxdimension = 1,maxscale = 2)
   sphere = TDAstats::calculate_homology(TDA::sphereUnif(n = 20,d = 2,r = 1),threshold = 2)
   expect_length(permutation_test(list(circle,circle,diagram_to_df(circle)),list(sphere,sphere,sphere),iterations = 1,dims = c(1),num_workers = 2)$permvals[[1]],1)
@@ -30,6 +33,7 @@ test_that("permutation_test can accept inputs from TDA, TDAstats and diagram_to_
 test_that("permutation_test is working",{
   
   skip_on_cran()
+  skip_if_not_installed("TDA")
   
   circle <- TDA::ripsDiag(X = TDA::circleUnif(n = 50,r = 1),maxdimension = 2,maxscale = 2)
   sphere <- TDA::ripsDiag(X = TDA::sphereUnif(n = 50,d = 2,r = 1),maxdimension = 2,maxscale = 2)
@@ -52,6 +56,7 @@ test_that("permutation_test is working",{
 
 test_that("independence_test detects incorrect parameters correctly",{
   
+  skip_if_not_installed("TDA")
   g1 <- lapply(X = 1:6,FUN = function(X){return(TDA::ripsDiag(X = TDA::circleUnif(n = 50,r = 1),maxdimension = 1,maxscale = 2))})
   g2 <- lapply(X = 1:6,FUN = function(X){return(TDA::ripsDiag(X = TDA::sphereUnif(n = 50,d = 2,r = 1),maxdimension = 1,maxscale = 2))})
   expect_error(independence_test(g1,g2,dims = c(0,1),sigma = 1,t = NA,num_workers = 2),"NA")
@@ -68,6 +73,8 @@ test_that("independence_test detects incorrect parameters correctly",{
 
 test_that("independence_test can accept inputs from TDA, TDAstats and diagram_to_df",{
   
+  skip_if_not_installed("TDA")
+  skip_if_not_installed("TDAstats")
   circle = TDA::ripsDiag(X = TDA::circleUnif(n = 20,r = 1),maxdimension = 1,maxscale = 2)
   sphere = TDAstats::calculate_homology(TDA::sphereUnif(n = 20,d = 2,r = 1),threshold = 2)
   expect_length(permutation_test(list(circle,circle,diagram_to_df(circle),circle,circle,circle),list(sphere,sphere,sphere,sphere,sphere,circle),iterations = 10,dims = c(1),num_workers = 2)$permvals[[1]],10)

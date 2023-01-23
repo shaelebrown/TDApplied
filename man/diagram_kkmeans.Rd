@@ -59,15 +59,18 @@ function.
 }
 \examples{
 
-# create two diagrams
-D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-g <- list(D1,D1,D2,D2)
+if(require("TDA") & require("TDAstats"))
+{
+  # create two diagrams
+  D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  g <- list(D1,D1,D2,D2)
 
-# calculate kmeans clusters with centers = 2, and sigma = t = 2 in dimension 0
-clust <- diagram_kkmeans(diagrams = g,centers = 2,dim = 0,t = 2,sigma = 2,num_workers = 2)
+  # calculate kmeans clusters with centers = 2, and sigma = t = 2 in dimension 0
+  clust <- diagram_kkmeans(diagrams = g,centers = 2,dim = 0,t = 2,sigma = 2,num_workers = 2)
+}
 }
 \references{
 Dhillon, I and Guan, Y and Kulis, B (2004). "A Unified View of Kernel k-means , Spectral Clustering and Graph Cuts." \url{https://people.bu.edu/bkulis/pubs/spectral_techreport.pdf}.

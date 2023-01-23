@@ -26,33 +26,36 @@ previously-computed kernel PCA embedding (from the \code{\link{diagram_kpca}} fu
 }
 \examples{
 
-# create six diagrams
-D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
-                                   dim = 1,threshold = 2)
-D2 <- TDAstats::calculate_homology(TDA::sphereUnif(n = 50,d = 2,r = 1),
-                                   dim = 1,threshold = 2)
-D3 <- TDAstats::calculate_homology(TDA::torusUnif(n = 50,a = 0.25,c = 0.75),
-                                   dim = 1,threshold = 2)
-D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
-                                   dim = 1,threshold = 2)
-D5 <- TDAstats::calculate_homology(TDA::sphereUnif(n = 50,d = 2,r = 1),
-                                   dim = 1,threshold = 2)
-D6 <- TDAstats::calculate_homology(TDA::torusUnif(n = 50,a = 0.25,c = 0.75),
-                                   dim = 1,threshold = 2)
-g <- list(D1,D2,D3,D4,D5,D6)
+if(require("TDA") & require("TDAstats"))
+{
+  # create six diagrams
+  D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
+                                     dim = 1,threshold = 2)
+  D2 <- TDAstats::calculate_homology(TDA::sphereUnif(n = 50,d = 2,r = 1),
+                                     dim = 1,threshold = 2)
+  D3 <- TDAstats::calculate_homology(TDA::torusUnif(n = 50,a = 0.25,c = 0.75),
+                                     dim = 1,threshold = 2)
+  D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
+                                     dim = 1,threshold = 2)
+  D5 <- TDAstats::calculate_homology(TDA::sphereUnif(n = 50,d = 2,r = 1),
+                                     dim = 1,threshold = 2)
+  D6 <- TDAstats::calculate_homology(TDA::torusUnif(n = 50,a = 0.25,c = 0.75),
+                                     dim = 1,threshold = 2)
+  g <- list(D1,D2,D3,D4,D5,D6)
 
-# calculate their 2D PCA embedding with sigma = t = 2 in dimension 0
-pca <- diagram_kpca(diagrams = g,dim = 1,t = 2,sigma = 2,features = 2,num_workers = 2)
+  # calculate their 2D PCA embedding with sigma = t = 2 in dimension 0
+  pca <- diagram_kpca(diagrams = g,dim = 1,t = 2,sigma = 2,features = 2,num_workers = 2)
 
-# project two new diagrams onto old model
-D7 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
-                                   dim = 0,threshold = 2)
-D8 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
-                                   dim = 0,threshold = 2)
-g_new <- list(D4,D5)
+  # project two new diagrams onto old model
+  D7 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
+                                     dim = 0,threshold = 2)
+  D8 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
+                                     dim = 0,threshold = 2)
+  g_new <- list(D4,D5)
 
-# calculate new embedding coordinates
-new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers = 2)
+  # calculate new embedding coordinates
+  new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers = 2)
+}
 }
 \seealso{
 \code{\link{diagram_kpca}} for embedding persistence diagrams into a low-dimensional space.

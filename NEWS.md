@@ -4,6 +4,9 @@
 [Pull Request](https://github.com/shaelebrown/TDApplied/pulls) number.
 Please see those for more details.
 
+# 2.0.4
+- fixed build issues related to use of suggested packages in tests, examples and vignettes
+
 # 2.0.3
 - fixed bootstrap reference in vignette
 

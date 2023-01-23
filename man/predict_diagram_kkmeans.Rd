@@ -26,25 +26,28 @@ This allows for reusing old cluster models for new tasks, or to perform cross va
 }
 \examples{
 
-# create two diagrams
-D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-g <- list(D1,D1,D2,D2)
+if(require("TDA") & require("TDAstats"))
+{
+  # create two diagrams
+  D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  g <- list(D1,D1,D2,D2)
 
-# calculate kmeans clusters with centers = 2, and sigma = t = 2 in dimension 0
-clust <- diagram_kkmeans(diagrams = g,centers = 2,dim = 0,t = 2,sigma = 2,num_workers = 2)
+  # calculate kmeans clusters with centers = 2, and sigma = t = 2 in dimension 0
+  clust <- diagram_kkmeans(diagrams = g,centers = 2,dim = 0,t = 2,sigma = 2,num_workers = 2)
 
-# create two new diagrams
-D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-D5 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-g_new <- list(D4,D5)
+  # create two new diagrams
+  D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  D5 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  g_new <- list(D4,D5)
 
-# predict cluster labels
-predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)
+  # predict cluster labels
+  predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)
+}
 }
 \seealso{
 \code{\link{diagram_kkmeans}} for clustering persistence diagrams.

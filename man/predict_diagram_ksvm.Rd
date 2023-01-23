@@ -28,34 +28,37 @@ This function is a wrapper of the kernlab \code{\link{predict}} function.
 }
 \examples{
 
-# create four diagrams
-D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-D3 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-g <- list(D1,D2,D3,D4)
+if(require("TDA") & require("TDAstats"))
+{
+  # create four diagrams
+  D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  D3 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  g <- list(D1,D2,D3,D4)
 
-# create response vector
-y <- as.factor(c("circle","sphere","circle","sphere"))
+  # create response vector
+  y <- as.factor(c("circle","sphere","circle","sphere"))
 
-# fit model without cross validation
-model_svm <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0),
-                          y = y,sigma = c(1),t = c(1),
-                          num_workers = 2)
+  # fit model without cross validation
+  model_svm <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0),
+                            y = y,sigma = c(1),t = c(1),
+                            num_workers = 2)
 
-# create two new diagrams
-D5 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-D6 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-g_new <- list(D5,D6)
+  # create two new diagrams
+  D5 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  D6 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  g_new <- list(D5,D6)
 
-# predict
-predict_diagram_ksvm(new_diagrams = g_new,model = model_svm,num_workers = 2)
+  # predict
+  predict_diagram_ksvm(new_diagrams = g_new,model = model_svm,num_workers = 2)
+}
 }
 \seealso{
 \code{\link{diagram_ksvm}} for training a SVM model on a training set of persistence diagrams.

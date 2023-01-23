@@ -93,24 +93,27 @@ a character vector for instance will throw an error.
 }
 \examples{
 
-# create four diagrams
-D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-D3 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-g <- list(D1,D2,D3,D4)
+if(require("TDA") & require("TDAstats"))
+{
+  # create four diagrams
+  D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  D3 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  g <- list(D1,D2,D3,D4)
 
-# create response vector
-y <- as.factor(c("circle","sphere","circle","sphere"))
+  # create response vector
+  y <- as.factor(c("circle","sphere","circle","sphere"))
 
-# fit model without cross validation
-model_svm <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0),
-                          y = y,sigma = c(1),t = c(1),
-                          num_workers = 2)
+  # fit model without cross validation
+  model_svm <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0),
+                            y = y,sigma = c(1),t = c(1),
+                            num_workers = 2)
+}
 }
 \references{
 Murphy, K. "Machine learning: a probabilistic perspective." MIT press (2012).

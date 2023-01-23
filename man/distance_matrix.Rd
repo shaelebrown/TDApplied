@@ -43,21 +43,24 @@ If `distance` is "fisher" then `sigma` must not be NULL.
 }
 \examples{
 
-# create two diagrams
-D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-g <- list(D1,D2)
+if(require("TDA") & require("TDAstats"))
+{
+  # create two diagrams
+  D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  g <- list(D1,D2)
 
-# calculate their distance matrix in dimension 0 with the 2-wasserstein metric 
-# using 2 cores in dimension 1
-D <- distance_matrix(diagrams = g,dim = 0,distance = "wasserstein",p = 2,num_workers = 2)
+  # calculate their distance matrix in dimension 0 with the 2-wasserstein metric 
+  # using 2 cores in dimension 1
+  D <- distance_matrix(diagrams = g,dim = 0,distance = "wasserstein",p = 2,num_workers = 2)
 
-# now do the cross distance matrix, which is the same as the original
-D_cross <- distance_matrix(diagrams = g,other_diagrams = g,
-                           dim = 0,distance = "wasserstein",
-                           p = 2,num_workers = 2)
+  # now do the cross distance matrix, which is the same as the original
+  D_cross <- distance_matrix(diagrams = g,other_diagrams = g,
+                             dim = 0,distance = "wasserstein",
+                             p = 2,num_workers = 2)
+}
 }
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}

@@ -72,15 +72,18 @@ in a particular dimension. If `distance` is "fisher" then `sigma` must not be NU
 }
 \examples{
 
-# create two diagrams
-D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-g <- list(D1,D2)
+if(require("TDA") & require("TDAstats"))
+{
+  # create two diagrams
+  D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  g <- list(D1,D2)
 
-# calculate their 1D MDS embedding in dimension 0 with the bottleneck distance
-mds <- diagram_mds(diagrams = g,k = 1,dim = 0,p = Inf,num_workers = 2)
+  # calculate their 1D MDS embedding in dimension 0 with the bottleneck distance
+  mds <- diagram_mds(diagrams = g,k = 1,dim = 0,p = Inf,num_workers = 2)
+}
 }
 \references{
 Cox M and Cox F (2008). "Multidimensional Scaling." \doi{10.1007/978-3-540-33037-0_14}.

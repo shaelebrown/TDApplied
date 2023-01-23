@@ -13,6 +13,8 @@ test_that("diagram_distance detects incorrect parameters correctly",{
 
 test_that("diagram_distance can accept inputs from either TDA/TDAstats homology output or diagram_to_df function, with or without cycle location",{
   
+  skip_if_not_installed("TDA")
+  skip_if_not_installed("TDAstats")
   D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
   D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)
   D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)

@@ -30,6 +30,9 @@ test_that("diagram_kpca is computing correctly",{
 
 test_that("diagram_kpca can accept inputs from TDA, TDAstats and diagram_to_df",{
   
+  skip_if_not_installed("TDA")
+  skip_if_not_installed("TDAstats")
+  
   D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
   D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)
   D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
@@ -71,6 +74,8 @@ test_that("predict_diagram_kpca is computing correctly",{
 test_that("predict_diagram_kpca can accept inputs from TDA, TDAstats and diagram_to_df",{
   
   skip_on_cran()
+  skip_if_not_installed("TDA")
+  skip_if_not_installed("TDAstats")
   
   D1 <- data.frame(dimension = 1,birth = 2,death = 3)
   D2 <- data.frame(dimension = 1,birth = 2,death = 3.1)
