@@ -67,17 +67,11 @@ a list containing the elements
 
 \describe{
 
-\item{models}{the cross-validation results - a matrix storing the parameters for each model in the tuning grid and its mean cross-validation error over all splits.}
+\item{cv_results}{the cross-validation results - a matrix storing the parameters for each model in the tuning grid and its mean cross-validation error over all splits.}
 
-\item{best_model}{the output of \code{\link[kernlab]{ksvm}} run on the whole dataset with the optimal model parameters found during cross-validation. See the help page for \code{\link[kernlab]{ksvm}} for more details about this object.}
+\item{best_model}{a list containing the output of \code{\link[kernlab]{ksvm}} run on the whole dataset with the optimal model parameters found during cross-validation, as well as the optimal kernel parameters for the model.}
 
-\item{diagrams}{the diagrams which were support vectors in the `best_model`. These are used for downstream prediction.}
-
-\item{dim}{the input `dim` argument.}
-
-\item{t}{the input `t` argument.}
-
-\item{sigma}{the input `sigma` argument.}
+\item{diagrams}{the diagrams which were supplied in the function call.}
 
 }
 }

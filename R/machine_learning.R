@@ -532,7 +532,7 @@ predict_diagram_kpca <- function(new_diagrams,K = NULL,embedding,num_workers = p
 #' @param sigma a vector of positive numbers representing the grid of values for the bandwidth of the Fisher information metric, default 1
 #' @param y a response vector with one label for each persistence diagram. Must be either numeric or factor.
 #' @param type a string representing the type of task to be performed.
-#' @param distance_matrices an optional list of precomputed distance matrices, corresponding to the rows in `expand.grid(dim = dim,sigma = sigma)`, default NULL.
+#' @param distance_matrices an optional list of precomputed Fisher distance matrices, corresponding to the rows in `expand.grid(dim = dim,sigma = sigma)`, default NULL.
 #' @param C a number representing the cost of constraints violation (default 1) this is the 'C'-constant of the regularization term in the Lagrange formulation.
 #' @param nu numeric parameter needed for nu-svc, one-svc and nu-svr. The `nu` parameter sets the upper bound on the training error and the lower bound on the fraction of data points to become Support Vector (default 0.2).
 #' @param epsilon epsilon in the insensitive-loss function used for eps-svr, nu-svr and eps-bsvm (default 0.1).
@@ -547,17 +547,11 @@ predict_diagram_kpca <- function(new_diagrams,K = NULL,embedding,num_workers = p
 #' 
 #' \describe{
 #' 
-#' \item{models}{the cross-validation results - a matrix storing the parameters for each model in the tuning grid and its mean cross-validation error over all splits.}
+#' \item{cv_results}{the cross-validation results - a matrix storing the parameters for each model in the tuning grid and its mean cross-validation error over all splits.}
 #' 
-#' \item{best_model}{the output of \code{\link[kernlab]{ksvm}} run on the whole dataset with the optimal model parameters found during cross-validation. See the help page for \code{\link[kernlab]{ksvm}} for more details about this object.}
+#' \item{best_model}{a list containing the output of \code{\link[kernlab]{ksvm}} run on the whole dataset with the optimal model parameters found during cross-validation, as well as the optimal kernel parameters for the model.}
 #' 
-#' \item{diagrams}{the diagrams which were support vectors in the `best_model`. These are used for downstream prediction.}
-#' 
-#' \item{dim}{the input `dim` argument.}
-#' 
-#' \item{t}{the input `t` argument.}
-#' 
-#' \item{sigma}{the input `sigma` argument.}
+#' \item{diagrams}{the diagrams which were supplied in the function call.}
 #' 
 #' }
 #' 
@@ -756,8 +750,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,dista
   tryCatch(expr = {best_model <- list(model = kernlab::ksvm(x = K,y = y,type = type,C = best_params[[4]],nu = best_params[[5]],epsilon = best_params[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking),
                                       dim = best_params[[1]],
                                       sigma = best_params[[3]],
-                                      t = best_params[[2]],
-                                      CV = params)},
+                                      t = best_params[[2]])},
            error = function(e){stop(e)},
            warning = function(w){
              
@@ -767,10 +760,8 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,dista
              }
              
            })
-  
-  best_model$diagrams <- diagrams[best_model$model@SVindex]
 
-  ret_list <- list(cv_results = params,best_model = best_model)
+  ret_list <- list(cv_results = params,best_model = best_model,diagrams = diagrams)
   class(ret_list) <- "diagram_ksvm"
   
   return(ret_list)
@@ -787,6 +778,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,dista
 #'
 #' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
 #' @param model the output of a \code{\link{diagram_ksvm}} function call.
+#' @param K an optional cross-Gram matrix of the new diagrams and the diagrams in `model`, default NULL. If not NULL then `new_diagrams` does not need to be supplied.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #' @return a vector containing the output of \code{\link[kernlab]{predict.ksvm}} on the cross Gram matrix of the new diagrams and the support vector diagrams stored in the model.
 #' @export
@@ -828,7 +820,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,dista
 #'   predict_diagram_ksvm(new_diagrams = g_new,model = model_svm,num_workers = 2)
 #' }
 
-predict_diagram_ksvm <- function(new_diagrams,model,num_workers = parallelly::availableCores(omit = 1)){
+predict_diagram_ksvm <- function(new_diagrams,model,K = NULL,num_workers = parallelly::availableCores(omit = 1)){
   
   # set internal variables to NULL to avoid build issues
   r <- NULL
@@ -844,12 +836,28 @@ predict_diagram_ksvm <- function(new_diagrams,model,num_workers = parallelly::av
     stop("model must be the output of a diagram_ksvm function call.")
   }
   
-  # error check new_diagrams argument
-  check_param("new_diagrams",new_diagrams,min_length = 1)
-  new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
-  
-  # compute kernel matrix, storing the value of each kernel computation between the new diagrams and the old ones
-  K <- gram_matrix(diagrams = new_diagrams,other_diagrams = model$best_model$diagrams,dim = model$best_model$dim,sigma = model$best_model$sigma,t = model$best_model$t,num_workers = num_workers)
+  if(is.null(K))
+  {
+    # error check new_diagrams argument
+    check_param("new_diagrams",new_diagrams,min_length = 1)
+    new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
+    
+    # compute kernel matrix, storing the value of each kernel computation between the new diagrams and the old ones
+    K <- gram_matrix(diagrams = new_diagrams,other_diagrams = model$diagrams[model$best_model$model@SVindex],dim = model$best_model$dim,sigma = model$best_model$sigma,t = model$best_model$t,num_workers = num_workers)
+  }else
+  {
+    # work with precomputed matrix
+    new_diagrams <- NULL
+    check_matrix(M = K,name = "K",symmetric = F)
+    if(ncol(K) != length(model$diagrams))
+    {
+      stop("K must have the same number of columns as the number of the diagrams used in the model.")
+    }
+    # subset by support vector indices
+    class(K) <- "matrix"
+    K <- K[,model$best_model$model@SVindex]
+    class(K) <- "kernelMatrix"
+  }
   
   # suppress unhelpful kernlab warnings when predicting
   tryCatch(expr = {predictions <- kernlab::predict(object = model$best_model$model,kernlab::as.kernelMatrix(K))},

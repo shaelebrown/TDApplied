@@ -42,8 +42,8 @@ test_that("diagram_ksvm can accept precomputed distance matrices",{
   D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
   D2 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
   D3 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
-  d0 = distance_matrix(diagrams = list(D1,D2,D3),dim = 0,num_workers = 2)
-  d1 = distance_matrix(diagrams = list(D1,D2,D3),dim = 1,num_workers = 2)
+  d0 = distance_matrix(diagrams = list(D1,D2,D3),dim = 0,num_workers = 2,distance = "fisher",sigma = 1)
+  d1 = distance_matrix(diagrams = list(D1,D2,D3),dim = 1,num_workers = 2,distance = "fisher",sigma = 1)
   expect_s3_class(diagram_ksvm(diagrams = list(D1,D2,D3),y = c(1,2,3),distance_matrices = list(d0,d1),num_workers = 2,dim = c(0,1)),"diagram_ksvm")
   
   expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),y = c(1,2,3),distance_matrices = list(d0,matrix(data = c(0,1,NA,0),nrow = 2,ncol = 2,byrow = T)),num_workers = 2,dim = c(0,1)),"missing")
@@ -118,6 +118,33 @@ test_that("predict_diagram_ksvm can accept inputs from TDA, TDAstats and diagram
   D4 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
   ksvm = diagram_ksvm(diagrams = list(D1,D2,D3,D4),y = c(1,2,3,4),num_workers = 2,dim = c(1))
   expect_length(predict_diagram_ksvm(new_diagrams = list(D1,D2,D3,D4),model = ksvm,num_workers = 2),4)
+  
+})
+
+test_that("predict_diagram_ksvm can accept pre-computed Gram matrices",{
+  
+  skip_on_cran()
+  skip_if_not_installed("TDA")
+  skip_if_not_installed("TDAstats")
+  
+  D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
+  D2 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
+  D3 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
+  d0 = distance_matrix(diagrams = list(D1,D2,D3),dim = 0,num_workers = 2,sigma = 1,distance = "fisher")
+  d1 = distance_matrix(diagrams = list(D1,D2,D3),dim = 1,num_workers = 2,sigma = 1,distance = "fisher")
+  model = diagram_ksvm(diagrams = list(D1,D2,D3),y = c(1,2,3),distance_matrices = list(d0,d1),num_workers = 2,dim = c(0,1))
+  if(model$best_model$dim == 0)
+  {
+    K = exp(-1*d0)
+  }else
+  {
+    K = exp(-1*d1)
+  }
+  K_small = K[1:2,1:2]
+  class(K) = "kernelMatrix"
+  class(K_small) = "kernelMatrix"
+  expect_error(predict_diagram_ksvm(model = model,K = K_small,num_workers = 2),"number")
+  expect_equal(predict_diagram_ksvm(model = model,K = K,num_workers = 2),predict_diagram_ksvm(new_diagrams = list(D1,D2,D3),model = model,num_workers = 2),tolerance = 1e-8)
   
 })
 

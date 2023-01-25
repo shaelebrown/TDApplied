@@ -7,6 +7,7 @@
 predict_diagram_ksvm(
   new_diagrams,
   model,
+  K = NULL,
   num_workers = parallelly::availableCores(omit = 1)
 )
 }
@@ -14,6 +15,8 @@ predict_diagram_ksvm(
 \item{new_diagrams}{a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.}
 
 \item{model}{the output of a \code{\link{diagram_ksvm}} function call.}
+
+\item{K}{an optional cross-Gram matrix of the new diagrams and the diagrams in `model`, default NULL. If not NULL then `new_diagrams` does not need to be supplied.}
 
 \item{num_workers}{the number of cores used for parallel computation, default is one less than the number of cores on the machine.}
 }
