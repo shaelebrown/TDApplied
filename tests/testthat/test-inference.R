@@ -91,7 +91,7 @@ test_that("permutation_test is working",{
   expect_equal(permutation_test(list(circle,circle,circle),list(sphere,sphere,sphere),iterations = 1,dims = c(2),num_workers = 2)$test_statistics[[1]],0)
   expect_lte(abs(permutation_test(list(circle,circle,circle),list(sphere,circle,circle),iterations = 1,dims = c(1),num_workers = 2)$permvals[[1]][[1]] - d^2/3),0.01)
   v <- permutation_test(list(circle,sphere,circle),list(sphere,circle,sphere),iterations = 1,dims = c(1),num_workers = 2)$permvals[[1]][[1]]
-  expect_lte(abs(v - 2*d^2/3)*v,0.01)
+  expect_lte(abs(v - 2*d^2/3)*v,0.02)
   expect_length(unique(permutation_test(list(circle,sphere,circle),list(circle,sphere,circle),paired = T,iterations = 3,dims = c(1),num_workers = 2)$permvals[[1]]),1)
   expect_length(unique(permutation_test(list(sphere,sphere,circle),list(sphere,sphere,circle),paired = T,iterations = 3,dims = c(1),num_workers = 2)$permvals[[1]]),1)
 

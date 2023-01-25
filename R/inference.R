@@ -56,18 +56,28 @@
 #'
 #' if(require("TDA") & require("TDAstats"))
 #' {
-#' # create two groups of diagrams
-#' D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                    dim = 0,threshold = 2)
-#' D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                    dim = 0,threshold = 2)
-#' g1 <- list(D1,D2)
-#' g2 <- list(D1,D2)
+#'   # create two groups of diagrams
+#'   D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+#'                                      dim = 0,threshold = 2)
+#'   D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+#'                                      dim = 0,threshold = 2)
+#'   g1 <- list(D1,D2)
+#'   g2 <- list(D1,D2)
 #'
-#' # run test in dimension 0 with 1 iteration
-#' perm_test <- TDApplied::permutation_test(g1,g2,iterations = 1,
-#'                                          num_workers = 2,
-#'                                          dims = c(0))
+#'   # run test in dimension 0 with 1 iteration, note that the TDA package function
+#'   # "permutation_test" can mask TDApplied's function, so we will specify explicitly
+#'   # which function we are using
+#'   perm_test <- TDApplied::permutation_test(g1,g2,iterations = 1,
+#'                                            num_workers = 2,
+#'                                            dims = c(0))
+#'                                  
+#'   # repeat with precomputed distance matrix, gives similar results
+#'   # (same but the randomness of the permutations can give small differences)
+#'   # just much faster
+#'   D <- distance_matrix(diagrams = list(D1,D2,D1,D2),dim = 0,
+#'                        num_workers = 2)
+#'   perm_test <- TDApplied::permutation_test(dist_mats = list(D),group_sizes = c(2,2),
+#'                                            dims = c(0))
 #' }
 
 permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_mats = NULL,group_sizes = NULL,paired = FALSE,distance = "wasserstein",sigma = NULL,num_workers = parallelly::availableCores(omit = 1),verbose = FALSE){
@@ -182,7 +192,7 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_
   start_time <- Sys.time()
 
   # compute loss function on observed data and update dist_mats
-  test_loss <- loss(diagram_groups = diagram_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance,sigma = sigma,num_workers = num_workers)
+  test_loss <- loss(diagram_groups = diagram_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance,sigma = sigma,num_workers = num_workers,group_sizes = group_sizes)
   dist_mats <- test_loss$dist_mats
   test_statistics <- test_loss$statistics
 
@@ -271,7 +281,7 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_
     }
     
     # compute loss function, add to permutation values and updated distance matrices
-    permuted_loss <- loss(diagram_groups = permuted_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance,sigma = sigma,num_workers = num_workers)
+    permuted_loss <- loss(diagram_groups = permuted_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance,sigma = sigma,num_workers = num_workers,group_sizes = group_sizes)
     dist_mats <- permuted_loss$dist_mats
     for(d in 1:length(dims))
     {
@@ -370,6 +380,12 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_
 #' 
 #'   # do independence test with sigma = t = 1 in dimension 0
 #'   indep_test <- independence_test(g1,g2,dims = c(0),num_workers = 2)
+#'   
+#'   # repeat with precomputed Gram matrices, gives same result just much faster
+#'   K = gram_matrix(diagrams = g1,dim = 0,t = 1,sigma = 1,num_workers = 2)
+#'   L = gram_matrix(diagrams = g2,dim = 0,t = 1,sigma = 1,num_workers = 2)
+#'   indep_test <- independence_test(Ks = list(K),Ls = list(L),dims = c(0))
+#'   
 #' }
 
 independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,num_workers = parallelly::availableCores(omit = 1),verbose = FALSE,Ks = NULL,Ls = NULL){

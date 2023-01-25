@@ -397,6 +397,7 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".
 #' @param sigma the positive bandwidth for the persistence Fisher distance.
 #' @param num_workers the number of cores used for parallel computation.
+#' @param group_sizes for when using precomputed distance matrices.
 #'
 #' @importFrom parallel makeCluster clusterEvalQ clusterExport stopCluster
 #' @importFrom doParallel registerDoParallel stopImplicitCluster
@@ -408,7 +409,7 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
 #' Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.
 #' @return the numeric value of the Turner loss function.
 
-loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,num_workers){
+loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,num_workers,group_sizes){
 
   # function to compute the F_{p,q} loss between groups of diagrams
   # diagram_groups are the (possibly permuted) groups of diagrams

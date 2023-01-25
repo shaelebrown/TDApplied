@@ -9,7 +9,7 @@
 #' Returns the output of \code{\link[stats]{cmdscale}} on the desired distance matrix of a group of persistence diagrams
 #' in a particular dimension. If `distance` is "fisher" then `sigma` must not be NULL.
 #'
-#' @param diagrams a list of n>=2 persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
+#' @param diagrams a list of n>=2 persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `diagrams` and `D` need to be supplied.
 #' @param D an optional precomputed distance matrix of persistence diagrams, default NULL. If not NULL then `diagrams` parameter does not need to be supplied.
 #' @param k the dimension of the space which the data are to be represented in; must be in {1,2,...,n-1}.
 #' @param distance a string representing the desired distance metric to be used, either 'wasserstein' (default) or 'fisher'.
@@ -60,6 +60,11 @@
 #' 
 #'   # calculate their 1D MDS embedding in dimension 0 with the bottleneck distance
 #'   mds <- diagram_mds(diagrams = g,k = 1,dim = 0,p = Inf,num_workers = 2)
+#'   
+#'   # repeat but with a precomputed distance matrix, gives same result just much faster
+#'   Dmat <- distance_matrix(diagrams = list(D1,D2),dim = 0,p = Inf,num_workers = 2)
+#'   mds <- diagram_mds(D = Dmat,k = 1)
+#'   
 #' }
 
 diagram_mds <- function(diagrams,D = NULL,k = 2,distance = "wasserstein",dim = 0,p = 2,sigma = NULL,eig = FALSE,add = FALSE,x.ret = FALSE,list. = eig || add || x.ret,num_workers = parallelly::availableCores(omit = 1)){
@@ -140,6 +145,11 @@ diagram_mds <- function(diagrams,D = NULL,k = 2,distance = "wasserstein",dim = 0
 #' 
 #'   # calculate kmeans clusters with centers = 2, and sigma = t = 2 in dimension 0
 #'   clust <- diagram_kkmeans(diagrams = g,centers = 2,dim = 0,t = 2,sigma = 2,num_workers = 2)
+#'   
+#'   # repeat with precomputed Gram matrix, gives the same result just much faster
+#'   K <- gram_matrix(diagrams = g,num_workers = 2,t = 2,sigma = 2)
+#'   cluster <- diagram_kkmeans(diagrams = g,K = K,centers = 2,dim = 0,sigma = 2,t = 2)
+#'   
 #' }
 
 diagram_kkmeans <- function(diagrams,K = NULL,centers,dim = 0,t = 1,sigma = 1,num_workers = parallelly::availableCores(omit = 1),...){
@@ -227,7 +237,7 @@ diagram_kkmeans <- function(diagrams,K = NULL,centers,dim = 0,t = 1,sigma = 1,nu
 #' Returns the nearest (highest kernel value) \code{\link[kernlab]{kkmeans}} cluster center label for new persistence diagrams.
 #' This allows for reusing old cluster models for new tasks, or to perform cross validation.
 #'
-#' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
+#' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `new_diagrams` and `K` need to be supplied.
 #' @param K an optional precomputed cross Gram matrix of the new diagrams and the diagrams used in `clustering`, default NULL. If not NULL then `new_diagrams` does not need to be supplied.
 #' @param clustering the output of a \code{\link{diagram_kkmeans}} function call.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
@@ -260,6 +270,14 @@ diagram_kkmeans <- function(diagrams,K = NULL,centers,dim = 0,t = 1,sigma = 1,nu
 #' 
 #'   # predict cluster labels
 #'   predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)
+#'   
+#'   # predict cluster labels with precomputed Gram matrix, gives same result but
+#'   # much faster
+#'   K <- gram_matrix(diagrams = g_new,other_diagrams = clust$diagrams,
+#'                    dim = clust$dim,t = clust$t,sigma = clust$sigma,
+#'                    num_workers = 2)
+#'   predict_diagram_kkmeans(K = K,clustering = clust)
+#'   
 #' }
 
 predict_diagram_kkmeans <- function(new_diagrams,K = NULL,clustering,num_workers = parallelly::availableCores(omit = 1)){
@@ -373,6 +391,11 @@ predict_diagram_kkmeans <- function(new_diagrams,K = NULL,clustering,num_workers
 #' 
 #'   # calculate their 2D PCA embedding with sigma = t = 2 in dimension 1
 #'   pca <- diagram_kpca(diagrams = g,dim = 1,t = 2,sigma = 2,features = 2,num_workers = 2)
+#'   
+#'   # repeat with precomputed Gram matrix, gives same result but much faster
+#'   K <- gram_matrix(diagrams = g,dim = 1,t = 2,sigma = 2,num_workers = 2)
+#'   pca <- diagram_kpca(diagrams = g,K = K,dim = 1,t = 2,sigma = 2,features = 2)
+#'   
 #' }
 
 diagram_kpca <- function(diagrams,K = NULL,dim = 0,t = 1,sigma = 1,features = 1,num_workers = parallelly::availableCores(omit = 1),th = 1e-4){
@@ -425,7 +448,7 @@ diagram_kpca <- function(diagrams,K = NULL,dim = 0,t = 1,sigma = 1,features = 1,
 #' Compute the location in low-dimensional space of each element of a list of new persistence diagrams using a
 #' previously-computed kernel PCA embedding (from the \code{\link{diagram_kpca}} function).
 #'
-#' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
+#' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `new_diagrams` and `K` need to be supplied.
 #' @param K an optional precomputed cross-Gram matrix of the new diagrams and the ones used in `embedding`, default NULL. If not NULL then `new_diagrams` does not need to be supplied.
 #' @param embedding the output of a \code{\link{diagram_kpca}} function call.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
@@ -466,6 +489,11 @@ diagram_kpca <- function(diagrams,K = NULL,dim = 0,t = 1,sigma = 1,features = 1,
 #' 
 #'   # calculate new embedding coordinates
 #'   new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers = 2)
+#'   
+#'   # repeat with precomputed Gram matrix, gives same result but much faster
+#'   K <- gram_matrix(diagrams = g_new,other_diagrams = pca$diagrams,dim = pca$dim,
+#'                    t = pca$t,sigma = pca$sigma,num_workers = 2)
+#'   new_pca <- predict_diagram_kpca(K = K,embedding = pca,num_workers = 2)
 #' }
 
 predict_diagram_kpca <- function(new_diagrams,K = NULL,embedding,num_workers = parallelly::availableCores(omit = 1)){
@@ -586,6 +614,12 @@ predict_diagram_kpca <- function(new_diagrams,K = NULL,embedding,num_workers = p
 #' 
 #'   # fit model without cross validation
 #'   model_svm <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0),
+#'                             y = y,sigma = c(1),t = c(1),
+#'                             num_workers = 2)
+#'                             
+#'   # repeat with precomputed distance matrix, gives same result but much faster
+#'   D <- distance_matrix(diagrams = g,sigma = 1,distance = "fisher",num_workers = 2)
+#'   model_svm <- diagram_ksvm(diagrams = g,distance_matrices = list(D),cv = 1,dim = c(0),
 #'                             y = y,sigma = c(1),t = c(1),
 #'                             num_workers = 2)
 #' }
@@ -776,7 +810,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,dista
 #' This function is a wrapper of the kernlab \code{\link{predict}} function.
 #'
 #'
-#' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
+#' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `new_diagrams` and `K` need to be supplied.
 #' @param model the output of a \code{\link{diagram_ksvm}} function call.
 #' @param K an optional cross-Gram matrix of the new diagrams and the diagrams in `model`, default NULL. If not NULL then `new_diagrams` does not need to be supplied.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
@@ -818,6 +852,12 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,dista
 #' 
 #'   # predict
 #'   predict_diagram_ksvm(new_diagrams = g_new,model = model_svm,num_workers = 2)
+#'   
+#'   # repeat with precomputed Gram matrix, gives same result just much faster
+#'   K <- gram_matrix(diagrams = g_new,other_diagrams = model_svm$diagrams,
+#'                    dim = model_svm$best_model$dim,sigma = model_svm$best_model$sigma,
+#'                    t = model_svm$best_model$t,num_workers = 2)
+#'   predict_diagram_ksvm(K = K,model = model_svm,num_workers = 2)
 #' }
 
 predict_diagram_ksvm <- function(new_diagrams,model,K = NULL,num_workers = parallelly::availableCores(omit = 1)){

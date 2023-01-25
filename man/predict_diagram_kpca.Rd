@@ -12,7 +12,7 @@ predict_diagram_kpca(
 )
 }
 \arguments{
-\item{new_diagrams}{a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.}
+\item{new_diagrams}{a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `new_diagrams` and `K` need to be supplied.}
 
 \item{K}{an optional precomputed cross-Gram matrix of the new diagrams and the ones used in `embedding`, default NULL. If not NULL then `new_diagrams` does not need to be supplied.}
 
@@ -58,6 +58,11 @@ if(require("TDA") & require("TDAstats"))
 
   # calculate new embedding coordinates
   new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers = 2)
+  
+  # repeat with precomputed Gram matrix, gives same result but much faster
+  K <- gram_matrix(diagrams = g_new,other_diagrams = pca$diagrams,dim = pca$dim,
+                   t = pca$t,sigma = pca$sigma,num_workers = 2)
+  new_pca <- predict_diagram_kpca(K = K,embedding = pca,num_workers = 2)
 }
 }
 \seealso{

@@ -81,6 +81,11 @@ if(require("TDA") & require("TDAstats"))
 
   # calculate their 2D PCA embedding with sigma = t = 2 in dimension 1
   pca <- diagram_kpca(diagrams = g,dim = 1,t = 2,sigma = 2,features = 2,num_workers = 2)
+  
+  # repeat with precomputed Gram matrix, gives same result but much faster
+  K <- gram_matrix(diagrams = g,dim = 1,t = 2,sigma = 2,num_workers = 2)
+  pca <- diagram_kpca(diagrams = g,K = K,dim = 1,t = 2,sigma = 2,features = 2)
+  
 }
 }
 \references{

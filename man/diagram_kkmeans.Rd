@@ -73,6 +73,11 @@ if(require("TDA") & require("TDAstats"))
 
   # calculate kmeans clusters with centers = 2, and sigma = t = 2 in dimension 0
   clust <- diagram_kkmeans(diagrams = g,centers = 2,dim = 0,t = 2,sigma = 2,num_workers = 2)
+  
+  # repeat with precomputed Gram matrix, gives the same result just much faster
+  K <- gram_matrix(diagrams = g,num_workers = 2,t = 2,sigma = 2)
+  cluster <- diagram_kkmeans(diagrams = g,K = K,centers = 2,dim = 0,sigma = 2,t = 2)
+  
 }
 }
 \references{

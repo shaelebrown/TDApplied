@@ -40,7 +40,7 @@ diagram_ksvm(
 
 \item{type}{a string representing the type of task to be performed.}
 
-\item{distance_matrices}{an optional list of precomputed distance matrices, corresponding to the rows in `expand.grid(dim = dim,sigma = sigma)`, default NULL.}
+\item{distance_matrices}{an optional list of precomputed Fisher distance matrices, corresponding to the rows in `expand.grid(dim = dim,sigma = sigma)`, default NULL.}
 
 \item{C}{a number representing the cost of constraints violation (default 1) this is the 'C'-constant of the regularization term in the Lagrange formulation.}
 
@@ -108,6 +108,12 @@ if(require("TDA") & require("TDAstats"))
 
   # fit model without cross validation
   model_svm <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0),
+                            y = y,sigma = c(1),t = c(1),
+                            num_workers = 2)
+                            
+  # repeat with precomputed distance matrix, gives same result but much faster
+  D <- distance_matrix(diagrams = g,sigma = 1,distance = "fisher",num_workers = 2)
+  model_svm <- diagram_ksvm(diagrams = g,distance_matrices = list(D),cv = 1,dim = c(0),
                             y = y,sigma = c(1),t = c(1),
                             num_workers = 2)
 }

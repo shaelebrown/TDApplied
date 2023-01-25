@@ -4,7 +4,17 @@
 \alias{loss}
 \title{Turner loss function for a list of groups (lists) of persistence diagrams.}
 \usage{
-loss(diagram_groups, dist_mats, dims, p, q, distance, sigma, num_workers)
+loss(
+  diagram_groups,
+  dist_mats,
+  dims,
+  p,
+  q,
+  distance,
+  sigma,
+  num_workers,
+  group_sizes
+)
 }
 \arguments{
 \item{diagram_groups}{groups (lists/vectors) of persistence diagrams, stored as lists of a data frame and
@@ -24,6 +34,8 @@ storing the current distances which have been pre-computed.}
 \item{sigma}{the positive bandwidth for the persistence Fisher distance.}
 
 \item{num_workers}{the number of cores used for parallel computation.}
+
+\item{group_sizes}{for when using precomputed distance matrices.}
 }
 \value{
 the numeric value of the Turner loss function.

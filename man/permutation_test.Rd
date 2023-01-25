@@ -82,18 +82,28 @@ then the sum of the elements of `group_sizes` must equal the number of rows and 
 
 if(require("TDA") & require("TDAstats"))
 {
-# create two groups of diagrams
-D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                   dim = 0,threshold = 2)
-g1 <- list(D1,D2)
-g2 <- list(D1,D2)
+  # create two groups of diagrams
+  D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+                                     dim = 0,threshold = 2)
+  g1 <- list(D1,D2)
+  g2 <- list(D1,D2)
 
-# run test in dimension 0 with 1 iteration
-perm_test <- TDApplied::permutation_test(g1,g2,iterations = 1,
-                                         num_workers = 2,
-                                         dims = c(0))
+  # run test in dimension 0 with 1 iteration, note that the TDA package function
+  # "permutation_test" can mask TDApplied's function, so we will specify explicitly
+  # which function we are using
+  perm_test <- TDApplied::permutation_test(g1,g2,iterations = 1,
+                                           num_workers = 2,
+                                           dims = c(0))
+                                 
+  # repeat with precomputed distance matrix, gives similar results
+  # (same but the randomness of the permutations can give small differences)
+  # just much faster
+  D <- distance_matrix(diagrams = list(D1,D2,D1,D2),dim = 0,
+                       num_workers = 2)
+  perm_test <- TDApplied::permutation_test(dist_mats = list(D),group_sizes = c(2,2),
+                                           dims = c(0))
 }
 }
 \references{

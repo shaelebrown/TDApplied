@@ -12,7 +12,7 @@ predict_diagram_ksvm(
 )
 }
 \arguments{
-\item{new_diagrams}{a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.}
+\item{new_diagrams}{a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `new_diagrams` and `K` need to be supplied.}
 
 \item{model}{the output of a \code{\link{diagram_ksvm}} function call.}
 
@@ -61,6 +61,12 @@ if(require("TDA") & require("TDAstats"))
 
   # predict
   predict_diagram_ksvm(new_diagrams = g_new,model = model_svm,num_workers = 2)
+  
+  # repeat with precomputed Gram matrix, gives same result just much faster
+  K <- gram_matrix(diagrams = g_new,other_diagrams = model_svm$diagrams,
+                   dim = model_svm$best_model$dim,sigma = model_svm$best_model$sigma,
+                   t = model_svm$best_model$t,num_workers = 2)
+  predict_diagram_ksvm(K = K,model = model_svm,num_workers = 2)
 }
 }
 \seealso{

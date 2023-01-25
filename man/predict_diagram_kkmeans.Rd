@@ -12,7 +12,7 @@ predict_diagram_kkmeans(
 )
 }
 \arguments{
-\item{new_diagrams}{a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.}
+\item{new_diagrams}{a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `new_diagrams` and `K` need to be supplied.}
 
 \item{K}{an optional precomputed cross Gram matrix of the new diagrams and the diagrams used in `clustering`, default NULL. If not NULL then `new_diagrams` does not need to be supplied.}
 
@@ -50,6 +50,14 @@ if(require("TDA") & require("TDAstats"))
 
   # predict cluster labels
   predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)
+  
+  # predict cluster labels with precomputed Gram matrix, gives same result but
+  # much faster
+  K <- gram_matrix(diagrams = g_new,other_diagrams = clust$diagrams,
+                   dim = clust$dim,t = clust$t,sigma = clust$sigma,
+                   num_workers = 2)
+  predict_diagram_kkmeans(K = K,clustering = clust)
+  
 }
 }
 \seealso{

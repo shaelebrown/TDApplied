@@ -20,7 +20,7 @@ diagram_mds(
 )
 }
 \arguments{
-\item{diagrams}{a list of n>=2 persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.}
+\item{diagrams}{a list of n>=2 persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `diagrams` and `D` need to be supplied.}
 
 \item{D}{an optional precomputed distance matrix of persistence diagrams, default NULL. If not NULL then `diagrams` parameter does not need to be supplied.}
 
@@ -86,6 +86,11 @@ if(require("TDA") & require("TDAstats"))
 
   # calculate their 1D MDS embedding in dimension 0 with the bottleneck distance
   mds <- diagram_mds(diagrams = g,k = 1,dim = 0,p = Inf,num_workers = 2)
+  
+  # repeat but with a precomputed distance matrix, gives same result just much faster
+  Dmat <- distance_matrix(diagrams = list(D1,D2),dim = 0,p = Inf,num_workers = 2)
+  mds <- diagram_mds(D = Dmat,k = 1)
+  
 }
 }
 \references{
