@@ -14,13 +14,16 @@
 #' like it was suggested in the original paper functionality is provided for an arbitrary number of groups (not just 2).
 #' A small p-value in a dimension suggests that the groups are different (separated) in that dimension.
 #' If `distance` is "fisher" then `sigma` must not be NULL. TDAstats also has a `permutation_test` function
-#' so care should be taken to use the desired function when using TDApplied with TDAstats.
+#' so care should be taken to use the desired function when using TDApplied with TDAstats. If `dist_mats` is supplied
+#' then the sum of the elements of `group_sizes` must equal the number of rows and columns of each of its elements.
 #'
 #' @param ... lists of persistence diagrams which are either the output of persistent homology calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Each list must contain at least 2 diagrams.
 #' @param iterations the number of iterations for permuting group labels, default 20.
 #' @param p a positive number representing the wasserstein power parameter, a number at least 1 (and Inf if using the bottleneck distance) and default 2.
 #' @param q  a finite number at least 1 for exponentiation in the Turner loss function, default 2.
 #' @param dims a non-negative integer vector of the homological dimensions in which the test is to be carried out, default c(0,1).
+#' @param dist_mats an optional list of precomputed distances matrices, one for each dimension, where the rows and columns would correspond to the unlisted groups of diagrams (in order), default NULL. If not NULL then no lists of diagrams need to be supplied.
+#' @param group_sizes a vector of group sizes, one for each group, when `dist_mats` is not NULL.
 #' @param paired a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups, default FALSE
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".
 #' @param sigma the positive bandwidth for the Fisher information metric, default NULL.
@@ -67,7 +70,7 @@
 #'                                          dims = c(0))
 #' }
 
-permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paired = FALSE,distance = "wasserstein",sigma = NULL,num_workers = parallelly::availableCores(omit = 1),verbose = FALSE){
+permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_mats = NULL,group_sizes = NULL,paired = FALSE,distance = "wasserstein",sigma = NULL,num_workers = parallelly::availableCores(omit = 1),verbose = FALSE){
 
   # function to test whether or not multiple groups of persistence diagrams come from the same geometric process
   # ... are the groups of diagrams, either stored as lists or vectors
@@ -81,25 +84,81 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
   # num_workers is the number of cores used for parallelization, default available number of cores minus 1.
   # verbose is either TRUE or FALSE (default), printing runtime of function call
 
-  # retrieve diagram groups
-  diagram_groups <- list(...)
-
-  # make sure there are at least two groups
-  check_param("diagram_groups",diagram_groups,min_length = 2)
-  
-  # make sure each group has at least two elements
-  lapply(X = diagram_groups,FUN = function(X){
+  if(is.null(dist_mats))
+  {
+    # retrieve diagram groups
+    diagram_groups <- list(...)
     
-    if(length(X) < 2)
+    # make sure there are at least two groups
+    check_param("diagram_groups",diagram_groups,min_length = 2)
+    
+    # make sure each group has at least two elements
+    lapply(X = diagram_groups,FUN = function(X){
+      
+      if(length(X) < 2)
+      {
+        stop("Each group of diagrams must have at least 2 elements.")
+      }
+      
+    })
+    
+    # check each diagram, converting each to a data frame and storing their indices in all the diagrams
+    diagram_groups <- all_diagrams(diagram_groups,inference = "difference") 
+    
+    # make sure that if paired == T then all groups have the same number of diagrams
+    if(paired)
     {
-      stop("Each group of diagrams must have at least 2 elements.")
+      if(length(unique(unlist(lapply(diagram_groups,FUN = length)))) != 1)
+      {
+        stop("If paired is true then all groups of diagrams must have the same number of elements.")
+      }
     }
     
-  })
-
-  # check each diagram, converting each to a data frame and storing their indices in all the diagrams
-  all_diagrams(diagram_groups,inference = "difference")
-  diagram_groups <- all_diagrams(diagram_groups,inference = "difference")
+    # make distance matrix for all diagrams for each dimension, store total number of diagrams across
+    # all groups in variable n
+    n <- sum(unlist(lapply(diagram_groups,FUN = length)))
+    dist_mats <- lapply(X = dims,FUN = function(X){return(matrix(data = -1,nrow = n,ncol = n))})
+    
+  }else
+  {
+    
+    check_param(group_sizes,param_name = "group_sizes",numeric = T,whole_numbers = T,multiple = T,finite = T,at_least_one = T)
+    
+    if(!is.list(dist_mats))
+    {
+      stop("dist_mats must be a list.")
+    }
+    if(length(dist_mats)!=length(dims))
+    {
+      stop("dist_mats must have the same length as dims.")
+    }
+    dist_mat_dims <- lapply(X = dist_mats,FUN = function(X){
+      
+      check_matrix(M = X,name = "distance matrices",type = "matrix")
+      return(nrow(X))
+      
+    })
+    if(length(unique(unlist(dist_mat_dims))) > 1)
+    {
+      stop("dist_mats must all have the same size.")
+    }
+    
+    if(unique(unlist(dist_mat_dims)) != sum(group_sizes))
+    {
+      stop("The sum of group_sizes must equal the dimenion (i.e. number of rows/columns) of all dist_mats.")
+    }
+    
+    if(paired)
+    {
+      if(length(unique(group_sizes)) != 1)
+      {
+        stop("If paired is true then all groups must have the same number of elements.")
+      }
+    }
+    
+    n <- sum(group_sizes)
+    diagram_groups <- split(x = 1:n,f = unlist(lapply(X = 1:length(group_sizes),FUN = function(X){return(rep(X,length = group_sizes[[X]]))})))
+  }
 
   # error check function parameters
   check_param("iterations",iterations,whole_numbers = T,at_least_one = T,numeric = T,finite = T)
@@ -119,22 +178,8 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
     num_workers <- parallelly::availableCores()
   }
 
-  # make sure that if paired == T then all groups have the same number of diagrams
-  if(paired)
-  {
-    if(length(unique(unlist(lapply(diagram_groups,FUN = length)))) != 1)
-    {
-      stop("If paired is true then all groups of diagrams must have the same number of elements.")
-    }
-  }
-
   # time computations
   start_time <- Sys.time()
-
-  # make distance matrix for all diagrams for each dimension, store total number of diagrams across
-  # all groups in variable n
-  n <- sum(unlist(lapply(diagram_groups,FUN = length)))
-  dist_mats <- lapply(X = dims,FUN = function(X){return(matrix(data = -1,nrow = n,ncol = n))})
 
   # compute loss function on observed data and update dist_mats
   test_loss <- loss(diagram_groups = diagram_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance,sigma = sigma,num_workers = num_workers)
@@ -151,48 +196,82 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
   for(perm in 1:iterations)
   {
 
-    if(paired == F)
+    if(is.list(diagram_groups[[1]][[1]]))
     {
-      # sample groups from their union, maintaining group sizes
-      perm <- split(x = 1:n,f = sample(unlist(lapply(X = 1:length(diagram_groups),FUN = function(X){return(rep(X,length = length(diagram_groups[[X]])))})),size = n,replace = F))
-
-      permuted_groups <- lapply(X = perm,FUN = function(X){
-
-        res <- list()
-
-        # for each index in that permuted group
-        for(ind in 1:length(X))
-        {
-          # invert diagram indices
-          g <- min(which(csum_group_sizes >= X[ind])) - 1
-
-          # append to permuted group
-          res[[length(res) + 1]] <- diagram_groups[[g]][[X[[ind]] - csum_group_sizes[g]]]
-        }
-        return(res)})
+      if(paired == F)
+      {
+        # sample groups from their union, maintaining group sizes
+        perm <- split(x = 1:n,f = sample(unlist(lapply(X = 1:length(diagram_groups),FUN = function(X){return(rep(X,length = length(diagram_groups[[X]])))})),size = n,replace = F))
+        
+        permuted_groups <- lapply(X = perm,FUN = function(X){
+          
+          res <- list()
+          
+          # for each index in that permuted group
+          for(ind in 1:length(X))
+          {
+            # invert diagram indices
+            g <- min(which(csum_group_sizes >= X[ind])) - 1
+            
+            # append to permuted group
+            res[[length(res) + 1]] <- diagram_groups[[g]][[X[[ind]] - csum_group_sizes[g]]]
+          }
+          return(res)})
+      }else
+      {
+        # permute all the 1st diagrams between the groups, 2nd diagrams between the groups etc.
+        perm <- lapply(X = 1:length(diagram_groups[[1]]),FUN = function(X){return(sample(1:length(diagram_groups),size = length(diagram_groups),replace = F))})
+        
+        permuted_groups <- lapply(X = 1:length(diagram_groups),FUN = function(X){
+          
+          # get the Xth element of each list
+          groups <- sapply(perm,"[[",X)
+          
+          res <- list()
+          
+          # for each group g in the permuted group labels
+          for(g in 1:length(groups))
+          {
+            # append correct diagram to the end of the list
+            res[[length(res) + 1]] <- diagram_groups[[groups[[g]]]][[X]]
+          }
+          return(res)})
+      }
     }else
     {
-      # permute all the 1st diagrams between the groups, 2nd diagrams between the groups etc.
-      perm <- lapply(X = 1:length(diagram_groups[[1]]),FUN = function(X){return(sample(1:length(diagram_groups),size = length(diagram_groups),replace = F))})
+      if(paired == F)
+      {
+        # sample groups from their union, maintaining group sizes
+        permuted_groups <- split(x = 1:n,f = sample(unlist(lapply(X = 1:length(group_sizes),FUN = function(X){return(rep(X,length = group_sizes[[X]]))})),size = n,replace = F))
 
-      permuted_groups <- lapply(X = 1:length(diagram_groups),FUN = function(X){
-
-        # get the Xth element of each list
-        groups <- sapply(perm,"[[",X)
-
-        res <- list()
-
-        # for each group g in the permuted group labels
-        for(g in 1:length(groups))
-        {
-          # append correct diagram to the end of the list
-          res[[length(res) + 1]] <- diagram_groups[[groups[[g]]]][[X]]
-        }
-        return(res)})
+      }else
+      {
+        # permute all the 1st diagrams between the groups, 2nd diagrams between the groups etc.
+        perm <- lapply(X = 1:group_sizes[[1]],FUN = function(X){return(sample(1:length(group_sizes),size = length(group_sizes),replace = F))})
+        
+        permuted_groups <- lapply(X = 1:length(group_sizes),FUN = function(X){
+          
+          # get the Xth element of each list
+          groups <- sapply(perm,"[[",X)
+          
+          # for each group g in the permuted group labels
+          for(g in 1:length(groups))
+          {
+            if(groups[[g]] == 1)
+            {
+              ind <- 0
+            }else
+            {
+              ind <- sum(group_sizes[1:(groups[[g]] - 1)])
+            }
+            groups[[g]] <- ind + g
+          }
+          return(groups)})
+      }
     }
-
+    
     # compute loss function, add to permutation values and updated distance matrices
-    permuted_loss <- loss(permuted_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance,sigma = sigma,num_workers = num_workers)
+    permuted_loss <- loss(diagram_groups = permuted_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance,sigma = sigma,num_workers = num_workers)
     dist_mats <- permuted_loss$dist_mats
     for(d in 1:length(dims))
     {
@@ -253,6 +332,8 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1.
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
+#' @param Ks an optional list of precomputed Gram matrices for the first group of diagrams, with one element for each dimension. If not NULL and `Ls` is not NULL then `g1` and `g2` do not need to be supplied.
+#' @param Ls an optional list of precomputed Gram matrices for the second group of diagrams, with one element for each dimension. If not NULL and `Ks` is not NULL then `g1` and `g2` do not need to be supplied.
 #' @param verbose a boolean flag for if the time duration of the function call should be printed, default FALSE
 #'
 #' @return a list with the following elements:
@@ -291,7 +372,7 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),paire
 #'   indep_test <- independence_test(g1,g2,dims = c(0),num_workers = 2)
 #' }
 
-independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,num_workers = parallelly::availableCores(omit = 1),verbose = FALSE){
+independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,num_workers = parallelly::availableCores(omit = 1),verbose = FALSE,Ks = NULL,Ls = NULL){
   
   # function to test whether or not two groups of persistence diagrams are independent
   # g1 and g2 are the groups of diagrams, either stored as lists or vectors
@@ -304,33 +385,90 @@ independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,num_workers = 
   # set internal variables to NULL to avoid build issues
   r <- NULL
   
-  # retrieve diagram groups
-  diagram_groups <- list(g1,g2)
+  if(is.null(Ks) | is.null(Ls))
+  {
+    # retrieve diagram groups
+    diagram_groups <- list(g1,g2)
+    
+    # make sure there are at least two groups
+    check_param("diagram_groups",diagram_groups,min_length = 2)
+    
+    # check each diagram, converting each to a data frame
+    all_diagrams(diagram_groups,inference = "independence")
+    diagram_groups <- all_diagrams(diagram_groups,inference = "independence") 
+    
+    # check params
+    check_param("sigma",sigma,non_negative = F,positive = T,multiple = F,finite = T,numeric = T)
+    check_param("t",t,non_negative = F,positive = T,numeric = T,multiple = F,finite = T)
+    
+    # make sure that the two groups have the same number of diagrams
+    if(length(g1) != length(g2))
+    {
+      stop("g1 and g2 must be the same length.")
+    }
+    
+    # make sure that the two groups each have at least 6 elements
+    m <- length(g1)
+    if(m < 6)
+    {
+      stop("g1 and g2 must have at least 6 elements each.")
+    }
+    
+  }else
+  {
+    if(missing(g1))
+    {
+      g1 <- NULL
+    }
+    if(missing(g2))
+    {
+      g2 <- NULL
+    }
+    
+    # error check Ks and Ls
+    if(!is.list(Ks) | !is.list(Ls))
+    {
+      stop("Ks and Ls must be lists.")
+    }
+    
+    if(length(Ks) != length(dims) | length(Ls) != length(dims))
+    {
+      stop("Ks and Ls must have the same length as dims.")
+    }
+    
+    Ks_dims <- lapply(X = Ks,FUN = function(X){
+      
+      check_matrix(M = X,name = "Gram matrices")
+      if(nrow(X) < 6)
+      {
+        stop("Gram matrices must have at least 6 rows and columns.")
+      }
+      return(nrow(X))
+      
+    })
+    
+    Ls_dims <- lapply(X = Ls,FUN = function(X){
+      
+      check_matrix(M = X,name = "Gram matrices")
+      if(nrow(X) < 6)
+      {
+        stop("Gram matrices must have at least 6 rows and columns.")
+      }
+      return(nrow(X))
+      
+    })
+    
+    if(length(unique(c(unlist(Ks_dims),unlist(Ls_dims)))) > 1)
+    {
+      stop("Gram matrices in Ks and Ls must all have the same dimensions.")
+    }
+    
+    m <- unique(c(unlist(Ks_dims),unlist(Ls_dims)))[[1]]
+    
+  }
   
-  # make sure there are at least two groups
-  check_param("diagram_groups",diagram_groups,min_length = 2)
-  
-  # check each diagram, converting each to a data frame
-  all_diagrams(diagram_groups,inference = "independence")
-  diagram_groups <- all_diagrams(diagram_groups,inference = "independence")
-  
-  # error check function parameters
+  # error check dims
   check_param("dims",dims,multiple = T,whole_numbers = T,non_negative = T,positive = F,numeric = T,finite = T)
-  check_param("sigma",sigma,non_negative = F,positive = T,multiple = F,finite = T,numeric = T)
-  check_param("t",t,non_negative = F,positive = T,numeric = T,multiple = F,finite = T)
-  
-  # make sure that the two groups have the same number of diagrams
-  if(length(g1) != length(g2))
-  {
-    stop("g1 and g2 must be the same length.")
-  }
-  
-  # make sure that the two groups each have at least 6 elements
-  m <- length(g1)
-  if(m < 6)
-  {
-    stop("g1 and g2 must have at least 6 elements each.")
-  }
   
   # time computations
   start_time <- Sys.time()
@@ -342,9 +480,16 @@ independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,num_workers = 
   for(dim in dims)
   {
     
-    # compute test statistics in parallel
-    K <- gram_matrix(diagrams = diagram_groups[[1]],dim = dim,t = t,sigma = sigma,num_workers = num_workers)
-    L <- gram_matrix(diagrams = diagram_groups[[2]],dim = dim,t = t,sigma = sigma,num_workers = num_workers)
+    # compute test statistics
+    if(is.null(g1))
+    {
+      K <- Ks[[which(dims == dim)[[1]]]]
+      L <- Ls[[which(dims == dim)[[1]]]]
+    }else
+    {
+      K <- gram_matrix(diagrams = diagram_groups[[1]],dim = dim,t = t,sigma = sigma,num_workers = num_workers)
+      L <- gram_matrix(diagrams = diagram_groups[[2]],dim = dim,t = t,sigma = sigma,num_workers = num_workers) 
+    }
 
     H <- matrix(data = -1/m,nrow = m,ncol = m)
     diag(H) <- rep((m-1)/m,nrow(H))

@@ -54,9 +54,9 @@ check_diagram <- function(d,ret){
     stop("Diagrams can't have missing values.")
   }
   
-  if(length(which(d[,3L] < d[,2L])) > 0)
+  if(length(which(d[,3L] <= d[,2L])) > 0)
   {
-    stop("Death values must always be at least as large as birth values.")
+    stop("Death values must always be larger than birth values.")
   }
   
   # if(length(which(is.infinite(d[,3L]))) > 0)
@@ -209,3 +209,71 @@ check_param <- function(param_name,param,...){
   }
   
 }
+
+#' @importFrom stats complete.cases
+#' @importFrom methods is
+
+check_matrix <- function(M,name,type = "kernel",symmetric = T){
+  
+  if(type == "kernel")
+  {
+    if(methods::is(M,"kernelMatrix") == F)
+    {
+      stop(paste0(name," must be of type kernelMatrix."))
+    }
+  }else
+  {
+    if(methods::is(M,"matrix") == F)
+    {
+      stop(paste0(name," must be of type matrix."))
+    }
+  }
+  
+  if(nrow(M)*ncol(M) == 0)
+  {
+    stop(paste0(name," must have at least one row and column."))
+  }
+
+  if(length(which(stats::complete.cases(M) == F)) > 0)
+  {
+    stop(paste0(name," must not have missing values."))
+  }
+  
+  if(symmetric == T)
+  {
+    if(type == "kernel")
+    {
+      if(length(which(diag(M) != rep(1,ncol(M)))) > 0)
+      {
+        stop(paste0(name," must have 1's on its diagonal."))
+      }
+    }else
+    {
+      if(length(which(diag(M) != rep(0,ncol(M)))) > 0)
+      {
+        stop(paste0(name," must have 0's on its diagonal."))
+      }
+    }
+    
+    if(nrow(M) != ncol(M))
+    {
+      stop(paste0(name," must have the same number of rows and columns."))
+    }
+    
+    if(type == "kernel")
+    {
+      class(M) = "matrix"
+    }
+    if(isSymmetric(M) == F)
+    {
+      stop(paste0(name," must be symmetric."))
+    }
+    if(type == "kernel")
+    {
+      class(M) = "kernelMatrix"
+    } 
+  }
+  
+}
+
+

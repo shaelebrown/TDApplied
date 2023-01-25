@@ -10,6 +10,8 @@ permutation_test(
   p = 2,
   q = 2,
   dims = c(0, 1),
+  dist_mats = NULL,
+  group_sizes = NULL,
   paired = FALSE,
   distance = "wasserstein",
   sigma = NULL,
@@ -27,6 +29,10 @@ permutation_test(
 \item{q}{a finite number at least 1 for exponentiation in the Turner loss function, default 2.}
 
 \item{dims}{a non-negative integer vector of the homological dimensions in which the test is to be carried out, default c(0,1).}
+
+\item{dist_mats}{an optional list of precomputed distances matrices, one for each dimension, where the rows and columns would correspond to the unlisted groups of diagrams (in order), default NULL. If not NULL then no lists of diagrams need to be supplied.}
+
+\item{group_sizes}{a vector of group sizes, one for each group, when `dist_mats` is not NULL.}
 
 \item{paired}{a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups, default FALSE}
 
@@ -69,7 +75,8 @@ an option is provided for pairing diagrams between groups to reduce variance (in
 like it was suggested in the original paper functionality is provided for an arbitrary number of groups (not just 2).
 A small p-value in a dimension suggests that the groups are different (separated) in that dimension.
 If `distance` is "fisher" then `sigma` must not be NULL. TDAstats also has a `permutation_test` function
-so care should be taken to use the desired function when using TDApplied with TDAstats.
+so care should be taken to use the desired function when using TDApplied with TDAstats. If `dist_mats` is supplied
+then the sum of the elements of `group_sizes` must equal the number of rows and columns of each of its elements.
 }
 \examples{
 

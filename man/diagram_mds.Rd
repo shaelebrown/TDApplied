@@ -6,6 +6,7 @@
 \usage{
 diagram_mds(
   diagrams,
+  D = NULL,
   k = 2,
   distance = "wasserstein",
   dim = 0,
@@ -20,6 +21,8 @@ diagram_mds(
 }
 \arguments{
 \item{diagrams}{a list of n>=2 persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.}
+
+\item{D}{an optional precomputed distance matrix of persistence diagrams, default NULL. If not NULL then `diagrams` parameter does not need to be supplied.}
 
 \item{k}{the dimension of the space which the data are to be represented in; must be in {1,2,...,n-1}.}
 
@@ -62,9 +65,9 @@ Otherwise, a list containing the following components.
 }
 }
 \description{
-Projects a group of persistence diagrams into a low-dimensional embedding space via metric multidimensional
-scaling. Such a projection can be used for visualization of data, or a static analysis of the embedding
-dimensions.
+Projects a group of persistence diagrams (or a precomputed distance matrix of diagrams) into a low-dimensional 
+embedding space via metric multidimensional scaling. Such a projection can be used for visualization of data, 
+or a static analysis of the embedding dimensions.
 }
 \details{
 Returns the output of \code{\link[stats]{cmdscale}} on the desired distance matrix of a group of persistence diagrams

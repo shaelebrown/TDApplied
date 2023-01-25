@@ -2,14 +2,15 @@
 #### Multidimensional scaling ####
 #' Dimension reduction of a group of persistence diagrams via metric multidimensional scaling.
 #'
-#' Projects a group of persistence diagrams into a low-dimensional embedding space via metric multidimensional
-#' scaling. Such a projection can be used for visualization of data, or a static analysis of the embedding
-#' dimensions.
+#' Projects a group of persistence diagrams (or a precomputed distance matrix of diagrams) into a low-dimensional 
+#' embedding space via metric multidimensional scaling. Such a projection can be used for visualization of data, 
+#' or a static analysis of the embedding dimensions.
 #' 
 #' Returns the output of \code{\link[stats]{cmdscale}} on the desired distance matrix of a group of persistence diagrams
 #' in a particular dimension. If `distance` is "fisher" then `sigma` must not be NULL.
 #'
 #' @param diagrams a list of n>=2 persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
+#' @param D an optional precomputed distance matrix of persistence diagrams, default NULL. If not NULL then `diagrams` parameter does not need to be supplied.
 #' @param k the dimension of the space which the data are to be represented in; must be in {1,2,...,n-1}.
 #' @param distance a string representing the desired distance metric to be used, either 'wasserstein' (default) or 'fisher'.
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
@@ -61,17 +62,25 @@
 #'   mds <- diagram_mds(diagrams = g,k = 1,dim = 0,p = Inf,num_workers = 2)
 #' }
 
-diagram_mds <- function(diagrams,k = 2,distance = "wasserstein",dim = 0,p = 2,sigma = NULL,eig = FALSE,add = FALSE,x.ret = FALSE,list. = eig || add || x.ret,num_workers = parallelly::availableCores(omit = 1)){
+diagram_mds <- function(diagrams,D = NULL,k = 2,distance = "wasserstein",dim = 0,p = 2,sigma = NULL,eig = FALSE,add = FALSE,x.ret = FALSE,list. = eig || add || x.ret,num_workers = parallelly::availableCores(omit = 1)){
   
-  # error check diagrams argument
-  check_param("diagrams",diagrams,min_length = 2)
-  diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
-
-  # compute distance matrix
-  d <- distance_matrix(diagrams = diagrams,dim = dim,distance = distance,p = p,sigma = sigma,num_workers = num_workers)
-
+  if(is.null(D))
+  {
+    # error check diagrams argument
+    check_param("diagrams",diagrams,min_length = 2)
+    diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
+    
+    # compute distance matrix
+    D <- distance_matrix(diagrams = diagrams,dim = dim,distance = distance,p = p,sigma = sigma,num_workers = num_workers)
+  }else
+  {
+    check_matrix(M = D,name = "D",type = "matrix")
+  }
+  
+  check_param("k",k,whole_numbers = T,at_least_one = T,numeric = T,finite = T,multiple = F)
+  
   # return metric multidimensional scaling with d as input
-  return(stats::cmdscale(d = d,k = k,eig = eig,add = add,x.ret = x.ret,list. = list.))
+  return(stats::cmdscale(d = D,k = k,eig = eig,add = add,x.ret = x.ret,list. = list.))
   
 }
 
@@ -88,6 +97,7 @@ diagram_mds <- function(diagrams,k = 2,distance = "wasserstein",dim = 0,p = 2,si
 #' function.
 #'
 #' @param diagrams a list of n>=2 persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or the \code{\link{diagram_to_df}} function.
+#' @param K an optional precomputed Gram matrix of persistence diagrams, default NULL.
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1
@@ -132,21 +142,39 @@ diagram_mds <- function(diagrams,k = 2,distance = "wasserstein",dim = 0,p = 2,si
 #'   clust <- diagram_kkmeans(diagrams = g,centers = 2,dim = 0,t = 2,sigma = 2,num_workers = 2)
 #' }
 
-diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers = parallelly::availableCores(omit = 1),...){
+diagram_kkmeans <- function(diagrams,K = NULL,centers,dim = 0,t = 1,sigma = 1,num_workers = parallelly::availableCores(omit = 1),...){
   
   # error check arguments
   check_param("diagrams",diagrams,min_length = 2)
   diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
   check_param("centers",centers,whole_numbers = T,at_least_one = T,numeric = T,finite = T,multiple = F)
   
-  # make sure there aren't more centers than data point - this tends to lead to kernlab errors
-  if(centers > length(diagrams))
-  {
-    stop("centers must be at most the number of diagrams, although we recommend choosing smaller values.")
-  }
   
-  # compute Gram matrix
-  K <- gram_matrix(diagrams = diagrams,dim = dim,sigma = sigma,t = t,num_workers = num_workers)
+  if(is.null(K))
+  {
+    # make sure there aren't more centers than data points - this tends to lead to kernlab errors
+    if(centers > length(diagrams))
+    {
+      stop("centers must be at most the number of diagrams, although we recommend choosing smaller values.")
+    }
+    
+    # compute Gram matrix
+    K <- gram_matrix(diagrams = diagrams,dim = dim,sigma = sigma,t = t,num_workers = num_workers) 
+  }else
+  {
+    check_matrix(M = K,name = "K")
+    # make sure there aren't more centers than data points - this tends to lead to kernlab errors
+    if(centers > ncol(K))
+    {
+      stop("centers must be at most the number of columns of K, although we recommend choosing smaller values.")
+    }
+    
+    if(ncol(K) != length(diagrams))
+    {
+      stop("K must have the same number of rows and columns as the length of diagrams.")
+    }
+    
+  }
   
   # return kernlab calculation, saving in a list of class diagram_kkmeans for later interface with prediction calculations
   max_iters <- 20
@@ -200,6 +228,7 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers
 #' This allows for reusing old cluster models for new tasks, or to perform cross validation.
 #'
 #' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
+#' @param K an optional precomputed cross Gram matrix of the new diagrams and the diagrams used in `clustering`, default NULL. If not NULL then `new_diagrams` does not need to be supplied.
 #' @param clustering the output of a \code{\link{diagram_kkmeans}} function call.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #'
@@ -233,14 +262,10 @@ diagram_kkmeans <- function(diagrams,centers,dim = 0,t = 1,sigma = 1,num_workers
 #'   predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)
 #' }
 
-predict_diagram_kkmeans <- function(new_diagrams,clustering,num_workers = parallelly::availableCores(omit = 1)){
+predict_diagram_kkmeans <- function(new_diagrams,K = NULL,clustering,num_workers = parallelly::availableCores(omit = 1)){
   
   # set internal variables to NULL to avoid build issues
   X <- NULL
-  
-  # error check diagrams argument
-  check_param("new_diagrams",new_diagrams,min_length = 1)
-  new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
   
   # error check clustering argument
   if(is.null(clustering))
@@ -252,11 +277,29 @@ predict_diagram_kkmeans <- function(new_diagrams,clustering,num_workers = parall
     stop("clustering object must be the output of a diagram_kkmeans function call.")
   }
   
-  # compute cross Gram matrix
-  K = gram_matrix(diagrams = new_diagrams,other_diagrams = clustering$diagrams,dim = clustering$dim,sigma = clustering$sigma,t = clustering$t,num_workers = num_workers)
+  if(is.null(K))
+  {
+    # error check diagrams argument
+    check_param("new_diagrams",new_diagrams,min_length = 1)
+    new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
+    
+    # compute cross Gram matrix
+    K = gram_matrix(diagrams = new_diagrams,other_diagrams = clustering$diagrams,dim = clustering$dim,sigma = clustering$sigma,t = clustering$t,num_workers = num_workers)
+  }else
+  {
+    if(missing(new_diagrams))
+    {
+      new_diagrams <- rep(0,nrow(K))
+    }
+    check_matrix(M = K,name = "K",symmetric = F)
+    if(nrow(K) != length(new_diagrams) | ncol(K) != length(clustering$diagrams))
+    {
+      stop("K must have the same number of rows as the length of new_diagrams and the same number of columns as the length of diagrams in clustering.")
+    }
+  }
   
   # return predicted class for each new diagram
-  predicted_clusters <- unlist(lapply(X = 1:length(new_diagrams),FUN = function(X){
+  predicted_clusters <- unlist(lapply(X = 1:nrow(K),FUN = function(X){
     
     return(clustering$clustering@.Data[[as.numeric(which.max(K[X,]))]])
     
@@ -279,6 +322,7 @@ predict_diagram_kkmeans <- function(new_diagrams,clustering,num_workers = parall
 #' be used for further analysis, or simply as a data visualization tool for persistence diagrams.
 #'
 #' @param diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
+#' @param K an optional precomputed Gram matrix of the persistence diagrams in `diagrams`, default NULL.
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1
@@ -331,14 +375,24 @@ predict_diagram_kkmeans <- function(new_diagrams,clustering,num_workers = parall
 #'   pca <- diagram_kpca(diagrams = g,dim = 1,t = 2,sigma = 2,features = 2,num_workers = 2)
 #' }
 
-diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_workers = parallelly::availableCores(omit = 1),th = 1e-4){
+diagram_kpca <- function(diagrams,K = NULL,dim = 0,t = 1,sigma = 1,features = 1,num_workers = parallelly::availableCores(omit = 1),th = 1e-4){
   
   # error check diagrams argument
   check_param("diagrams",diagrams,min_length = 2)
   diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
   
-  # compute Gram matrix
-  K <- gram_matrix(diagrams = diagrams,t = t,sigma = sigma,dim = dim,num_workers = num_workers)
+  if(is.null(K))
+  {
+    # compute Gram matrix
+    K <- gram_matrix(diagrams = diagrams,t = t,sigma = sigma,dim = dim,num_workers = num_workers)
+  }else
+  {
+    check_matrix(M = K,name = "K")
+    if(length(diagrams) != nrow(K))
+    {
+      stop("K must have the same number of rows and columns as the length of diagrams.")
+    }
+  }
   
   # return kernlab computation, ignore unhelpful kernlab warnings
   tryCatch(expr = {ret_list <- list(pca = kernlab::kpca(x = K,features = features,th = th),diagrams = diagrams,t = t,sigma = sigma,dim = dim)},
@@ -372,6 +426,7 @@ diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_worke
 #' previously-computed kernel PCA embedding (from the \code{\link{diagram_kpca}} function).
 #'
 #' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
+#' @param K an optional precomputed cross-Gram matrix of the new diagrams and the ones used in `embedding`, default NULL. If not NULL then `new_diagrams` does not need to be supplied.
 #' @param embedding the output of a \code{\link{diagram_kpca}} function call.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #'
@@ -413,15 +468,11 @@ diagram_kpca <- function(diagrams,dim = 0,t = 1,sigma = 1,features = 1,num_worke
 #'   new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers = 2)
 #' }
 
-predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly::availableCores(omit = 1)){
+predict_diagram_kpca <- function(new_diagrams,K = NULL,embedding,num_workers = parallelly::availableCores(omit = 1)){
   
   # set internal variables to NULL to avoid build issues
   r <- NULL
   X <- NULL
-  
-  # error check new_diagrams argument
-  check_param("new_diagrams",new_diagrams,min_length = 1)
-  new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
   
   # error check embedding argument
   if(is.null(embedding))
@@ -434,7 +485,24 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
   }
   
   # compute cross-Gram matrix and scale twice
-  K <- gram_matrix(diagrams = new_diagrams,other_diagrams = embedding$diagrams,dim = embedding$dim,sigma = embedding$sigma,t = embedding$t,num_workers = num_workers)
+  if(is.null(K))
+  {
+    # error check new_diagrams argument
+    check_param("new_diagrams",new_diagrams,min_length = 1)
+    new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
+    K <- gram_matrix(diagrams = new_diagrams,other_diagrams = embedding$diagrams,dim = embedding$dim,sigma = embedding$sigma,t = embedding$t,num_workers = num_workers)
+  }else
+  {
+   if(missing(new_diagrams))
+   {
+     new_diagrams <- rep(0,nrow(K))
+   }
+   check_matrix(M = K,name = "K",symmetric = F) 
+   if(nrow(K) != length(new_diagrams) | ncol(K) != length(embedding$diagrams))
+   {
+     stop("K must have the same number of rows as the length of new_diagrams and the same number of columns as the length of diagrams in embedding.")
+   }
+  }
   K <- scale(K,center = T,scale = F)
   K <- t(scale(t(K),center = T,scale = F))
   
@@ -464,6 +532,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
 #' @param sigma a vector of positive numbers representing the grid of values for the bandwidth of the Fisher information metric, default 1
 #' @param y a response vector with one label for each persistence diagram. Must be either numeric or factor.
 #' @param type a string representing the type of task to be performed.
+#' @param distance_matrices an optional list of precomputed distance matrices, corresponding to the rows in `expand.grid(dim = dim,sigma = sigma)`, default NULL.
 #' @param C a number representing the cost of constraints violation (default 1) this is the 'C'-constant of the regularization term in the Lagrange formulation.
 #' @param nu numeric parameter needed for nu-svc, one-svc and nu-svr. The `nu` parameter sets the upper bound on the training error and the lower bound on the fraction of data points to become Support Vector (default 0.2).
 #' @param epsilon epsilon in the insensitive-loss function used for eps-svr, nu-svr and eps-bsvm (default 0.1).
@@ -527,7 +596,7 @@ predict_diagram_kpca <- function(new_diagrams,embedding,num_workers = parallelly
 #'                             num_workers = 2)
 #' }
                           
-diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1,nu = 0.2,epsilon = 0.1,prob.model = FALSE,class.weights = NULL,fit = TRUE,cache = 40,tol = 0.001,shrinking = TRUE,num_workers = parallelly::availableCores(omit = 1)){
+diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,distance_matrices = NULL,C = 1,nu = 0.2,epsilon = 0.1,prob.model = FALSE,class.weights = NULL,fit = TRUE,cache = 40,tol = 0.001,shrinking = TRUE,num_workers = parallelly::availableCores(omit = 1)){
   
   # set internal variables to NULL to avoid build issues
   r <- NULL
@@ -587,11 +656,29 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,y,type = NULL,C = 1
   
   # for each pair of sigma and dim values compute the Fisher distance matrix to avoid recomputing Gram matrices
   dim_and_sigma <- expand.grid(dim = dim,sigma = sigma)
-  distance_matrices <- lapply(X = 1:nrow(dim_and_sigma),FUN = function(X){
-    
-    return(distance_matrix(diagrams = diagrams,dim = dim_and_sigma[X,1],distance = "fisher",sigma = dim_and_sigma[X,2],num_workers = num_workers))
-    
-  })
+  if(is.null(distance_matrices))
+  {
+    distance_matrices <- lapply(X = 1:nrow(dim_and_sigma),FUN = function(X){
+      
+      return(distance_matrix(diagrams = diagrams,dim = dim_and_sigma[X,1],distance = "fisher",sigma = dim_and_sigma[X,2],num_workers = num_workers))
+      
+    })
+  }else
+  {
+    if(!is.list(distance_matrices))
+    {
+      stop("distance_matrices must be a list.")
+    }
+    lapply(X = distance_matrices,FUN = function(X){
+      
+      check_matrix(M = X,name = "distance matrices",type = "matrix")
+      
+    })
+    if(length(distance_matrices)!=nrow(dim_and_sigma))
+    {
+      stop("distance_matrices must have one entry per row of expand.grid(dim = dim,sigma = sigma).")
+    }
+  }
   names(distance_matrices) <- paste(dim_and_sigma$dim,dim_and_sigma$sigma,sep = "_")
   
   # set up for parallel computation
@@ -747,10 +834,6 @@ predict_diagram_ksvm <- function(new_diagrams,model,num_workers = parallelly::av
   r <- NULL
   X <- NULL
   
-  # error check new_diagrams argument
-  check_param("new_diagrams",new_diagrams,min_length = 1)
-  new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
-  
   # error check model argument
   if(is.null(model))
   {
@@ -761,9 +844,13 @@ predict_diagram_ksvm <- function(new_diagrams,model,num_workers = parallelly::av
     stop("model must be the output of a diagram_ksvm function call.")
   }
   
+  # error check new_diagrams argument
+  check_param("new_diagrams",new_diagrams,min_length = 1)
+  new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
+  
   # compute kernel matrix, storing the value of each kernel computation between the new diagrams and the old ones
   K <- gram_matrix(diagrams = new_diagrams,other_diagrams = model$best_model$diagrams,dim = model$best_model$dim,sigma = model$best_model$sigma,t = model$best_model$t,num_workers = num_workers)
-
+  
   # suppress unhelpful kernlab warnings when predicting
   tryCatch(expr = {predictions <- kernlab::predict(object = model$best_model$model,kernlab::as.kernelMatrix(K))},
            error = function(e){stop(e)},

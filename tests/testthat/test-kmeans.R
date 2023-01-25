@@ -113,6 +113,24 @@ test_that("diagram_kkmeans can accept inputs from TDA, TDAstats and diagram_to_d
   
 })
 
+test_that("diagram_kkmeans can accept a precomputed Gram matrix",{
+  
+  circle <- data.frame(dimension = c(0,1),birth = c(0,0),death = c(2,2))
+  torus <- data.frame(dimension = c(0,1,1,2),birth = c(0,0,0,0),death = c(2,0.5,1.5,0.5))
+  sphere <- data.frame(dimension = c(0,2),birth = c(0,0),death = c(2,2))
+  
+  K = gram_matrix(list(circle,torus,sphere),dim = 1,num_workers = 2)
+  
+  expect_error(diagram_kkmeans(diagrams = list(circle,torus,sphere),K = K,centers = 2,dim = 1,num_workers = 2),"empty")
+  expect_error(diagram_kkmeans(diagrams = list(circle,torus,sphere),K = K,centers = 4,dim = 1,num_workers = 2),"column")
+  expect_error(diagram_kkmeans(diagrams = list(circle,torus),K = K,centers = 2,dim = 1,num_workers = 2),"length")
+  
+  K = gram_matrix(diagrams = list(circle,torus,sphere,circle,torus,sphere,circle,torus,sphere),dim = 1,num_workers = 2)
+  
+  expect_type(diagram_kkmeans(diagrams = list(circle,torus,sphere,circle,torus,sphere,circle,torus,sphere),K = K,centers = 2,dim = 1,num_workers = 2),"list")
+  
+})
+
 test_that("predict_diagram_kkmeans detects incorrect parameters correctly",{
   
   circle <- data.frame(dimension = c(0,1,2),birth = c(0,0,0),death = c(2,2,0))
@@ -147,11 +165,11 @@ test_that("predict_diagram_kkmeans detects incorrect parameters correctly",{
                    tori[[1]],tori[[2]],tori[[3]],tori[[4]],tori[[5]],
                    spheres[[1]],spheres[[2]],spheres[[3]],spheres[[4]],spheres[[5]])
   dkk <- diagram_kkmeans(diagrams = diagrams,centers = 2,dim = 1,num_workers = 2)
-  expect_error(predict_diagram_kkmeans(new_diagrams = list(),dkk,num_workers = 2),"1")
-  expect_error(predict_diagram_kkmeans(new_diagrams = "D",dkk,num_workers = 2),"list")
+  expect_error(predict_diagram_kkmeans(new_diagrams = list(),clustering = dkk,num_workers = 2),"1")
+  expect_error(predict_diagram_kkmeans(new_diagrams = "D",clustering = dkk,num_workers = 2),"list")
   # expect_error(predict_diagram_kkmeans(new_diagrams = list(diagrams[[1]],diagrams[[2]][0,]),dkk,num_workers = 2),"empty")
-  expect_error(predict_diagram_kkmeans(new_diagrams = diagrams,diagrams,num_workers = 2),"kkmeans")
-  expect_error(predict_diagram_kkmeans(new_diagrams = diagrams,NULL,num_workers = 2),"NULL")
+  expect_error(predict_diagram_kkmeans(new_diagrams = diagrams,clustering = diagrams,num_workers = 2),"kkmeans")
+  expect_error(predict_diagram_kkmeans(new_diagrams = diagrams,clustering = NULL,num_workers = 2),"NULL")
   
 })
 
@@ -189,7 +207,7 @@ test_that("predict_diagram_kkmeans is computing correctly",{
                    tori[[1]],tori[[2]],tori[[3]],tori[[4]],tori[[5]],
                    spheres[[1]],spheres[[2]],spheres[[3]],spheres[[4]],spheres[[5]])
   dkk <- diagram_kkmeans(diagrams = diagrams,centers = 2,dim = 1,num_workers = 2)
-  expect_equal(predict_diagram_kkmeans(new_diagrams = diagrams,dkk,num_workers = 2),dkk$clustering@.Data)
+  expect_equal(predict_diagram_kkmeans(new_diagrams = diagrams,clustering = dkk,num_workers = 2),dkk$clustering@.Data)
   
 })
 
@@ -204,6 +222,28 @@ test_that("predict_diagram_kkmeans can accept inputs from TDA, TDAstats and diag
   D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
   D4 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
   dkk <- diagram_kkmeans(diagrams = list(D1,D1,D1,D2,D2,D2,D3,D3,D3,D4,D4,D4),centers = 2,dim = 1,num_workers = 2)
-  expect_length(predict_diagram_kkmeans(new_diagrams = list(D1,D2,D3,D4),dkk,num_workers = 2),4)
+  expect_length(predict_diagram_kkmeans(new_diagrams = list(D1,D2,D3,D4),clustering = dkk,num_workers = 2),4)
 
+})
+
+test_that("predict_diagram_kkmeans can accept a precomputed Gram matrix",{
+  
+  skip_on_cran()
+  skip_if_not_installed("TDA")
+  skip_if_not_installed("TDAstats")
+  
+  D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
+  D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)
+  D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
+  D4 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
+  K = gram_matrix(diagrams = list(D1,D2,D3,D4),other_diagrams = list(D1,D1,D1,D2,D2,D2,D3,D3,D3,D4,D4,D4),dim = 1,num_workers = 2)
+  dkk <- diagram_kkmeans(diagrams = list(D1,D1,D1,D2,D2,D2,D3,D3,D3,D4,D4,D4),centers = 2,dim = 1,num_workers = 2)
+  expect_length(predict_diagram_kkmeans(K = K,clustering = dkk,num_workers = 2),4)
+  expect_length(predict_diagram_kkmeans(new_diagrams = list(D1),clustering = dkk,num_workers = 2),1)
+  expect_identical(predict_diagram_kkmeans(K = K,clustering = dkk,num_workers = 2),predict_diagram_kkmeans(new_diagrams = list(D1,D2,D3,D4),clustering = dkk,num_workers = 2))
+  
+  K = matrix(data = c(1,2,3),nrow = 3)
+  class(K) = "kernelMatrix"
+  expect_error(predict_diagram_kkmeans(K = K,clustering = dkk,num_workers = 2),"rows")
+  
 })

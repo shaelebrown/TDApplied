@@ -12,6 +12,7 @@ diagram_ksvm(
   sigma = 1,
   y,
   type = NULL,
+  distance_matrices = NULL,
   C = 1,
   nu = 0.2,
   epsilon = 0.1,
@@ -38,6 +39,8 @@ diagram_ksvm(
 \item{y}{a response vector with one label for each persistence diagram. Must be either numeric or factor.}
 
 \item{type}{a string representing the type of task to be performed.}
+
+\item{distance_matrices}{an optional list of precomputed distance matrices, corresponding to the rows in `expand.grid(dim = dim,sigma = sigma)`, default NULL.}
 
 \item{C}{a number representing the cost of constraints violation (default 1) this is the 'C'-constant of the regularization term in the Lagrange formulation.}
 

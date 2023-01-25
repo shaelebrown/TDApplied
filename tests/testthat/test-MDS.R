@@ -7,6 +7,7 @@ test_that("diagram_mds detects incorrect parameters correctly",{
   expect_error(diagram_mds(diagrams = list(D,D,D),distance = NaN,num_workers = 2),"distance")
   expect_error(diagram_mds(diagrams = list(D,D,D),distance = "fisher",sigma = NULL,num_workers = 2),"sigma")
   expect_error(diagram_mds(diagrams = list(D,D,D),p = NaN,num_workers = 2),"p")
+  expect_error(diagram_mds(diagrams = list(D,D,D),k = -1,num_workers = 2),"k")
   
 })
 
@@ -59,3 +60,18 @@ test_that("diagram_mds can accept inputs from TDA, TDAstats and diagram_to_df",{
   expect_error(diagram_mds(diagrams = list(D1,D2,D3,D4),dim = 0,num_workers = 2),"Inf")
   
 })
+
+test_that("diagram_mds can take distance matrix input",{
+  
+  skip_if_not_installed("TDA")
+  skip_if_not_installed("TDAstats")
+  
+  D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
+  D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)
+  D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
+  D4 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
+  D = distance_matrix(list(D1,D2,D3,D4),dim = 1,num_workers = 2)
+  expect_type(diagram_mds(D = D,dim = 1,num_workers = 2),"double")
+  
+})
+

@@ -11,7 +11,9 @@ independence_test(
   sigma = 1,
   t = 1,
   num_workers = parallelly::availableCores(omit = 1),
-  verbose = FALSE
+  verbose = FALSE,
+  Ks = NULL,
+  Ls = NULL
 )
 }
 \arguments{
@@ -28,6 +30,10 @@ independence_test(
 \item{num_workers}{the number of cores used for parallel computation, default is one less than the number of cores on the machine.}
 
 \item{verbose}{a boolean flag for if the time duration of the function call should be printed, default FALSE}
+
+\item{Ks}{an optional list of precomputed Gram matrices for the first group of diagrams, with one element for each dimension. If not NULL and `Ls` is not NULL then `g1` and `g2` do not need to be supplied.}
+
+\item{Ls}{an optional list of precomputed Gram matrices for the second group of diagrams, with one element for each dimension. If not NULL and `Ks` is not NULL then `g1` and `g2` do not need to be supplied.}
 }
 \value{
 a list with the following elements:
