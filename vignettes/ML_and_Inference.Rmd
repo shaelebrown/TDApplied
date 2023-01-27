@@ -156,7 +156,8 @@ A persistence diagram containing $n$ topological features can be represented in 
 In this section we will describe the various computational tools implemented in the package TDApplied to analyze persistence diagrams, both explaining the mathematics and providing functional examples. To run our examples we must start by loading the TDApplied package:
 
 ```{r setup}
-library("TDApplied")
+#library("TDApplied")
+devtools::load_all()
 ``` 
 
 Since TDApplied uses the output of TDA/TDAstats calculations (or its own persistent homology function, "PyH", discussed later) as inputs to its functions, either TDA or TDAstats should be at least installed (if not attached) when using TDApplied. All examples, except those in the subsection on bootstrapping, will analyze simple diagrams which are random deviations of three persistence diagrams called D1, D2 and D3 (each with points in dimension 0 only), which we will plot with the TDApplied function `plot_diagram`:
@@ -280,9 +281,9 @@ diagram_distance(D1,D2,dim = 0,p = Inf,distance = "wasserstein")
 diagram_distance(D1,D3,dim = 0,p = Inf,distance = "wasserstein")
 ```
 
-There is a generalization of the 2-wasserstein distance for any $p \geq 1$, the $p$-wasserstein distance, which can also be computed using the `diagram_distance` function by varying the parameter `p`. To see the computational details and proof of correctness for wasserstein and bottleneck distance calculations, see the appendix.
+There is a generalization of the 2-wasserstein distance for any $p \geq 1$, the $p$-wasserstein distance, which can also be computed using the `diagram_distance` function by varying the parameter `p`. To see the computational details and proof of correctness for wasserstein and bottleneck distance calculations, see Appendix A.
 
-Another distance metric between persistence diagrams, which will be useful for kernel calculations, is called the *Fisher information metric*, $d_{FIM}(D_1,D_2,\sigma)$ (details can be found in [@persistence_fisher]). The idea is to represent the two persistence diagrams as probability density functions, with a 2D-Gaussian point mass centered at each point in both diagrams (including the diagonal projections of the points in the opposite diagram), all of variance $\sigma^2 > 0$, and calculate how much those distributions agree on their pdf value at each point in the plane (called their *Fisher information metric*). 
+Another distance metric between persistence diagrams, which will be useful for kernel calculations, is called the *Fisher information metric*, $d_{FIM}(D_1,D_2,\sigma)$ (details can be found in [@persistence_fisher]). The idea is to represent the two persistence diagrams as probability density functions, with a 2D-Gaussian point mass centered at each point in both diagrams (including the diagonal projections of the points in the opposite diagram), all of variance $\sigma^2 > 0$, and calculate how much those distributions disagree on their pdf value at each point in the plane (called their *Fisher information metric*). 
 
 ```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center'}
 par(mfrow = c(1,3))
@@ -742,7 +743,7 @@ In order to properly situate TDApplied in the landscape of software for topologi
 
 Another pair of functions that we could benchmark is TDA's `bootstrapDiagram` function and TDApplied's `bootstrap_persistence_thresholds`, since they use the same bootstrap procedure. However, since both functions are built on parallelized distance calculations, comparing the runtime of TDA's `wasserstein` and TDApplied's `diagram_distance` functions should provide the same conclusion of which implementation is faster and more scalable. Nevertheless, one major advantage of the `bootstrap_persistence_thresholds` function over the `bootstrapDiagram` function is that the latter uses the function `mclapply` for parallelization, which does not work on Windows machines, whereas the parallelization of the former function is more flexible and does work on Windows machines.
 
-An important note is that the three distance functions (TDApplied's `diagram_distance`, TDA's `wasserstein` and persim's `wasserstein`) often did not agree on the distance value of certain calculations. Without knowing the exact details of the persim and TDA functions, one possible explanation is that the other two packages use alternative definitions for the wasserstein/bottleneck distances. For example, the definitions of wasserstein distance in [@Robinson_Turner] and [@ComputingPH] are different. Nevertheless, the `diagram_distance` function has been tested against examples with distances worked out by hand (these can be found in the test folder of the package), and a proof of algorithm correctness is given in the appendix.
+An important note is that the three distance functions (TDApplied's `diagram_distance`, TDA's `wasserstein` and persim's `wasserstein`) often did not agree on the distance value of certain calculations. Without knowing the exact details of the persim and TDA functions, one possible explanation is that the other two packages use alternative definitions for the wasserstein/bottleneck distances. For example, the definitions of wasserstein distance in [@Robinson_Turner] and [@ComputingPH] are different. Nevertheless, the `diagram_distance` function has been tested against examples with distances worked out by hand (these can be found in the test folder of the package), and a proof of algorithm correctness is given in Appendix A.
 
 The script that was used to perform benchmarking (and plotting the results) is available in the `exec` directory of this package, using `PyH` in certain cases and thus requiring python. A simple error check is included for the installation of the reticulate package, but the script will throw an error if reticulate is not properly connected with python. In all cases, benchmarking followed a similar procedure, involving sampling data from simple shapes (unit circles, unit spheres and tori with inner tube radius 0.25 and major radius 0.75) with various number of rows, and performing 10 benchmarking iterations at each number of rows. The mean and standard deviation of run time for the two functions were then calculated at each number of rows. All benchmarking was carried out on a Windows 10 64-bit machine, with an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM.
 
@@ -936,6 +937,52 @@ model <- stats::lm(data = data.frame(ratio =
 summary(model)$coefficients
 ```
 
+# Speeding up Analyses with Precomputed Gram/Distance Matrices
+
+Despite the various speedups implemented in TDApplied (like parallelization, a fast native distance function, etc.), it is an unavoidable issue that applied topological data analysis methods are generally slow. The runtime limiting factor is the calculation of distance/Gram matrices (especially Gram matrices..), because distance and kernel calculations can individually be slow, and these matrices are calculated in every inference and machine learning function of TDApplied. If we are performing multiple analyses of the same persistence diagrams with the same distance/kernel parameters this slow-down would compound - we would be needlessly recomputing distance/Gram matrices for the different functions. To avoid this issue TDApplied inference and machine learning functions have the capability to accept precomputed distance/Gram matrices, and we would expect runtimes of $k$ analyses using the same distance/Gram matrix to have a runtime of approximately $1/k$ times the runtime without using precomputed matrices, since we would be computing 1 out of the $k$ (redundant) matrices. We timed the analyses in this section on the same computer as in the previous section.
+
+As an example suppose we have a set of nine persistence diagrams and we want to analyze them with MDS ,kernel k-means and kernel PCA:
+
+```{r,echo = T,eval = F}
+# create noisy copies of D1, D2 and D3
+g <- generate_TDApplied_vignette_data(3,3,3)
+
+# calculate MDS embedding
+mds <- diagram_mds(diagrams = g,k = 2,dim = 0,sigma = 1.5,distance = "fisher",num_workers = 2)
+                              
+# calculate kmeans clusters with 3 centers
+clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 1.5,num_workers = 2)
+
+# calculate kpca embedding
+pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 1.5,features = 2,num_workers = 2)
+```
+
+The time taken to run the MDS, k-means and PCA lines was about Xs. Noting that the distance/Gram matrices had shared parameters (i.e. the distance matrix was calculated with the Fisher information metric and the values of t and sigma were all shared), we then repeated the analysis by pre-computing one distance (and Gram) matrix and using these in all three analyses:
+
+```{r,eval = F,echo = T}
+D <- distance_matrix(diagrams = g,dim = 0,sigma = 1.5,distance = "fisher",num_workers = 2)
+K <- exp(-2*D)
+class(K) <- "kernelMatrix"
+
+# calculate MDS embedding
+mds <- diagram_mds(D = D,k = 2,num_workers = 2)
+
+# calculate kmeans clusters with 3 centers
+clust <- diagram_kkmeans(diagrams = g,K = K,centers = 3,dim = 0,t = 2,sigma = 1.5,num_workers = 2)
+
+# calculate kpca embedding
+pca <- diagram_kpca(diagrams = g,K = K,dim = 0,t = 2,sigma = 1.5,features = 2,num_workers = 2)
+```
+
+The new runtime (including calculating the distance and Gram matrices) was Ys, much faster than the original. We then repeated the analyses using 300 persistence diagrams, i.e. with
+
+```{r,echo = T,eval = F}
+# create noisy copies of D1, D2 and D3
+g <- generate_TDApplied_vignette_data(100,100,100)
+```
+
+The timing scaled proportionally - without using precomputed matrices the time taken was Xs and with precomputed matrices the time taken was Ys. We recommend using precomputed matrices whenever performing multiple similar analyses of the same persistence diagrams, and we did exactly this in the following section where we analyzed neurological data with TDApplied.
+
 # Case Study: Human Connectome Project
 
 The human brain is a complex dynamical system which encodes and processes its outside environment to drive behavioral decisions. A very popular technology for studying the function of the brain, i.e. how it encodes and processes its environment, is called functional MRI (fMRI). fMRI has the ability to image the whole brain, where the intensity of each voxel (i.e. 3D volumetric pixel) is a proxy measure of the "activity" of that small volumetric brain region, over multiple time points giving both spatial and temporal information about brain activity. A common method for analyzing fMRI data is computing correlation matrices, which can either be spatial (correlating the vectors of activity, called spatial activity patterns, at different time points) or temporal (correlating the time courses of brain regions, called temporal functional connectivity (FC)).
@@ -956,7 +1003,7 @@ The Human Connectome Project contains extensively preprocessed neuroimaging data
 
 To answer this question we analyzed 100 HCP subject's fMRI data with TDApplied by
 
-1. calculating time-point by time-point correlation dissimilarity matrices of each fMRI dataset for each subject, 
+1. calculating time-point by time-point correlation distance matrices of each fMRI dataset for each subject (normalizing the activity vector of each time point and transforming correlations $\rho$ into distances $\sqrt{2*(1-\rho)}$, see Appendix B for an explanation),
 2. computing thresholded persistence diagrams of dimension 1 from those dissimilarity matrices (using the bootstrap method), and 
 3. using machine learning and inference functions from TDApplied to analyze the resulting collection of diagrams.
 
@@ -1225,13 +1272,13 @@ Nevertheless, important future directions of this exploratory analysis include
 
 # Limitations of TDApplied
 
-There are three main limitations of TDApplied which should be discussed for its own future improvements. The first limitation is that precomputed distance/Gram matrices can not be used as input to machine learning and inference functions. Each of these functions involves the calculation of distance/Gram functions, which can be very computationally expensive, and if one is analyzing the same dataset with multiple TDApplied functions then potentially the same distance/Gram matrices will have to be recomputed a number of times. This source of redundancy and inefficiency should be addressed in future versions of TDApplied. The second limitation is in the function `diagram_ksvm` - the only acceptable input is a dataset where the single training feature is a persistence diagram (one diagram for each training example). This may be too inflexible for some applications, where the training features may include several persistence diagrams, or a mix of persistence diagrams, numeric and categorical features. A future update to TDApplied should provide the functionality for allowing any number of training features, of various types, to the `diagram_ksvm` function via a weighted sum of kernels. The third limitation of TDApplied is the long runtime of its `diagram_distance` function compared to python's persim `wasserstein` function. Even with a potential runtime increase caused by the reticulate package, the persim `wasserstein` function was significantly faster than the TDApplied `diagram_distance` function. As such, a future version of TDApplied could attempt to speed up its distance calculations in order to be competitive with python implementations. While TDApplied has been created with flexibility and scalability at its core, there will always be room for adding more functionality and speedups.
+There are two main limitations of TDApplied which should be discussed for its own future improvements. The first limitation is in the function `diagram_ksvm` - the only acceptable input is a dataset where the single training feature is a persistence diagram (one diagram for each training example). This may be too inflexible for some applications, where the training features may include several persistence diagrams, or a mix of persistence diagrams, numeric and categorical features. A future update to TDApplied should provide the functionality for allowing any number of training features, of various types, to the `diagram_ksvm` function via a weighted sum of kernels. The second limitation of TDApplied is the long runtime of its `diagram_distance` function compared to python's persim `wasserstein` function. Even with a potential runtime increase caused by the reticulate package, the persim `wasserstein` function was significantly faster than the TDApplied `diagram_distance` function. As such, a future version of TDApplied could attempt to speed up its distance calculations in order to be competitive with python implementations. While TDApplied has been created with flexibility and scalability at its core, there will always be room for adding more functionality and speedups.
 
 # Conclusions
 
 The TDApplied package aims to bridge topological data analysis with researchers and data practitioners in the R community. Current topological data analysis packages in R and python do not provide the ability to carry out standard types of data analysis, being statistics and machine learning, with persistence diagrams - greatly limiting research and industry interest in topological data analysis. TDApplied was built with performance in mind, with fast native-R implementations of distance calculations between persistence diagrams, parallelization at every possible point, and its own fast persistent homology wrapper. Topological data analysis is an exciting and powerful new field of data analysis, and with TDApplied anyone can access its power for meaningful and creative analyses of data.
 
-# Appendix
+# Appendix A: Proof of Correctness for Distance Calculation
 
 Even though the Hungarian algorithm can be used to solve the linear sum assignment problem (LSAP), finding a minimal cost matching of two sets of points, some work needs to be done to properly apply the algorithm to calculate wasserstein or bottleneck distances. For an example we will consider the bottleneck distance, although the argument still holds with a simple change for the wasserstein distance (squaring matrix entries). Let Diag1 and Diag2 be two diagrams, with $n_1$ and $n_2$ points respectively, whose projections onto the diagonal are denoted by $\pi(\mbox{Diag1})$ and $\pi(\mbox{Diag2})$ respectively. Then take $M$ to be the following $(n_1 + n_2) \times (n_1 + n_2)$ matrix: 
 
@@ -1250,6 +1297,10 @@ Firstly, we claim that a solution to the LSAP problem on $M$ has a cost which is
 Next, we claim that a solution to the LSAP problem on $M$ has a cost which is no greater than the distance value. Now suppose, to reach a contradiction, that the solution to the LSAP on problem $M$ had cost $s$, which was larger than the real distance value, $s'$. Let $m'$ be a matching for the real distance calculation of $s'$. Then since each point in either diagram is either paired with a point in the other diagram or its own diagonal projection, there must be an equal number of unpaired points in both diagrams in $m'$. Therefore, we can augment $m'$ to a matching $m$ on $M$ in which the unpaired diagonal points are arbitrarily paired up with cost 0. Thus, $m$ has cost $s' < s$, contradicting the minimality of $s$. Therefore, a solution to the LSAP problem on $M$ has a cost which is no greater than the distance value.
 
 Therefore, a solution to the LSAP problem for $M$ has a cost which is both greater than and less than the bottleneck distance value, and hence the two values must be equal.
+
+# Appendix B: Converting Correlations to Distances
+
+In our analysis of HCP data we converted correlation values to correlation distance values using the formula $\rho \rightarrow \sqrt{2*(1-\rho)}$. To see why this transformation does produce distance values, let $X$ and $Y$ be two vectors (of the same length $n$) with 0 mean and unit variance. Then $\rho(X,Y) = \frac{Cov(E,Y)}{\sigma_{x}\sigma_{y}} = \frac{E[(X-0)(Y-0)]}{(1)(1)} = E[XY] = \frac{\sum_{i = 1}^{n}X_i Y_i}{n}$. The Euclidean distance of $X$ and $Y$ is therefore $d(X,Y) = \sqrt{\sum_{i=1}^{n}(X_i-Y_i)^2} = \sqrt{\sum_{i=1}^{n}X_i^2 + \sum_{i=1}^{n}Y_i^2 -2\sum_{i=1}^{n}X_i Y_i} = \sqrt{n + n - 2\rho(X,Y)} = \sqrt{2n(1-\rho(X,Y))} \propto \sqrt{2(1-\rho(X,Y))}$. Therefore, since a scaled distance metric (by a positive number like $\sqrt{n}$) is also a distance metric (this is very easy to verify), the transformation $\rho \rightarrow \sqrt{2*(1-\rho)}$ indeed gives distance values.
 
 ```{r,echo = F}
 # reset parameters
