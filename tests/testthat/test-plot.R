@@ -19,6 +19,13 @@ test_that("plot_diagram can detect incorrect parameters",{
   expect_error(plot_diagram(D = data.frame(dimension = c(0,1,2,3),birth = c(0,0,0,0),death = c(1,1,1,2)),thresholds = c(1,2,3,"5")),"numeric")
   expect_error(plot_diagram(D = data.frame(dimension = c(0,1,2,3),birth = c(0,0,0,0),death = c(1,1,1,2)),thresholds = list(thresholds = c(1,2,3,"5"))),"numeric")
   expect_error(plot_diagram(D = data.frame(dimension = c(0,1,2,3),birth = c(0,0,0,0),death = c(1,1,1,2)),thresholds = c(1,2,3,NA)),"NA")
-  expect_identical(plot_diagram(D = data.frame(dimension = numeric(),birth = numeric(),death = numeric())),NULL)
   
 })
+
+test_that("plot_diagram is working correctly",{
+  
+  expect_identical(plot_diagram(D = data.frame(dimension = numeric(),birth = numeric(),death = numeric())),NULL)
+  expect_identical(plot_diagram(D = data.frame(dimension = c(0),birth = c(0),death = c(1))),NULL)
+  
+})
+
