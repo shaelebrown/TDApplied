@@ -1,7 +1,7 @@
 
 # This script automatically downloads HCP fMRI data from 100 subjects
 # and analyzes the files with TDApplied as described in the package
-# vignette. It is currently configured to run on Windows machines,
+# vignette. It is currently configured to run on Windows or Mac OS machines,
 # but can run on other operating systems by changing the commands
 # which create directories to your desired system commands (lines 107, 410-421).
 # If run from top to bottom (once updating the connectomedb login and desired path
@@ -47,16 +47,18 @@ PH_from_file <- function(f){
   
   # read in fMRI data, each column is a time point and each row is a cortical surface node
   fMRI <- readNifti(f)
-  fMRI <- t(fMRI[1,1,1,1,1:dim(fMRI)[[5]],1:91282])
+  fMRI <- fMRI[1,1,1,1,1:dim(fMRI)[[5]],1:91282]
   
-  # create representational dissimilarity matrix, which is 1 - correlation between
-  # each pair of time points
-  RSM <- cor(fMRI)
-  RDM <- matrix(data = 1,nrow = nrow(RSM),ncol = ncol(RSM)) - RSM
+  # normalize each time point
+  fMRI <- t(scale(t(fMRI)))
   
-  # compute diagram up to dimension 1 via fast bootstrapping
+  # create representational dissimilarity matrix, which is equal to sqrt(2*(1 - correlation)) between
+  # each pair of normalized time points
+  RDM <- as.matrix(stats::dist(fMRI))/sqrt(ncol(fMRI))
+  
+  # compute diagram up to dimension 1 via bootstrapping
   # with 30 bootstrap iterations
-  diag <- bootstrap_persistence_thresholds(X = RDM,FUN = "calculate_homology",maxdim = 1,thresh = max(RDM),num_samples = 30,return_subsetted = T,return_diag = T,distance_mat = T)$subsetted_diag
+  diag <- bootstrap_persistence_thresholds(X = RDM,FUN = "calculate_homology",maxdim = 1,thresh = 2,num_samples = 30,return_subsetted = T,return_diag = T,distance_mat = T)$subsetted_diag
   
   # subset for dimenion 1
   diag <- diag[which(diag$dimension == 1),]
@@ -104,7 +106,7 @@ analyze_one_file <- function(f,directory_for_subjects){
 PH_subject_fMRI_data <- function(s,directory_for_subjects){
 
   # make directory for the subject
-  system(command = paste0("powershell -command mkdir ",directory_for_subjects,"/",s))
+  system(command = paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/",s))
   
   # download the subject's data and compute persistence diagrams
   
@@ -241,11 +243,18 @@ plot_smooth_timepoint <- function(f,tp,output_file,time_point,sigma,th,nib,plott
 # mainly internal function
 loop_scatterplot <- function(f,directory_for_subjects,ripser,loop_no,time_points,plot_title,output_file){
   
-  # analyze file
+  # read in fMRI data, each column is a time point and each row is a cortical surface node
   fMRI <- readNifti(f)
-  fMRI <- t(fMRI[1,1,1,1,1:dim(fMRI)[[5]],1:91282])
-  RSM <- cor(fMRI)
-  RDM <- matrix(data = 1,nrow = nrow(RSM),ncol = ncol(RSM)) - RSM
+  fMRI <- fMRI[1,1,1,1,1:dim(fMRI)[[5]],1:91282]
+  
+  # normalize each time point
+  fMRI <- t(scale(t(fMRI)))
+  
+  # create representational dissimilarity matrix, which is equal to sqrt(2*(1 - correlation)) between
+  # each pair of normalized time points
+  RDM <- as.matrix(stats::dist(fMRI))/sqrt(ncol(fMRI))
+  
+  # calculate diagram and representative
   diag <- PyH(X = RDM,maxdim = 1,distance_mat = T,ripser = ripser,thresh = max(RDM),calculate_representatives = T)
   repr <- diag$representatives[[2]][[loop_no]]
   
@@ -407,18 +416,18 @@ analyze_HCP <- function(directory_for_subjects){
   calculate_diags(directory_for_subjects = directory_for_subjects,subjects = subjects)
   
   # create directories to store results
-  system(paste0("powershell -command mkdir ",directory_for_subjects,"/analysis_results"))
-  system(paste0("powershell -command mkdir ",directory_for_subjects,"/analysis_results/permutation_tests"))
-  system(paste0("powershell -command mkdir ",directory_for_subjects,"/analysis_results/permutation_tests/tasks"))
-  system(paste0("powershell -command mkdir ",directory_for_subjects,"/analysis_results/permutation_tests/subjects"))
-  system(paste0("powershell -command mkdir ",directory_for_subjects,"/analysis_results/independence_tests"))
-  system(paste0("powershell -command mkdir ",directory_for_subjects,"/analysis_results/independence_tests/tasks"))
-  system(paste0("powershell -command mkdir ",directory_for_subjects,"/analysis_results/independence_tests/subjects"))
-  system(paste0("powershell -command mkdir ",directory_for_subjects,"/analysis_results/mds"))
-  system(paste0("powershell -command mkdir ",directory_for_subjects,"/analysis_results/kmeans"))
-  system(paste0("powershell -command mkdir ",directory_for_subjects,"/analysis_results/visualizations"))
-  system(paste0("powershell -command mkdir ",directory_for_subjects,"/analysis_results/visualizations/tasks"))
-  system(paste0("powershell -command mkdir ",directory_for_subjects,"/analysis_results/visualizations/subjects"))
+  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results"))
+  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/permutation_tests"))
+  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/permutation_tests/tasks"))
+  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/permutation_tests/subjects"))
+  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/independence_tests"))
+  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/independence_tests/tasks"))
+  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/independence_tests/subjects"))
+  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/mds"))
+  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/kmeans"))
+  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/visualizations"))
+  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/visualizations/tasks"))
+  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/visualizations/subjects"))
   
   # read in subject meta data and format
   meta_data <- data.frame(Subject = subjects)
@@ -633,6 +642,10 @@ analyze_HCP <- function(directory_for_subjects){
       
     }
   }
+  
+  # precompute other distance matrices
+  D_bot <- distance_matrix(diagrams = unlisted_diagrams,p = Inf)
+  D_wass <- distance_matrix(diagrams = unlisted_diagrams)
 
   # test if each task is different using the permutation test
   print(paste0("Working on permutation tests for tasks at ",Sys.time()))
