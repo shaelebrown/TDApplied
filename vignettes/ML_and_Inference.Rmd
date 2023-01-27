@@ -1233,7 +1233,7 @@ c("emotion" = 0.12,"gambling" = 0.11,"language" = 0.11,"motor" = 0.12,"relationa
 
 Cluster 1 had much higher percentages of resting state scans compared to the other clusters. However, it also had lower percentages of emotion, gambling and social tasks than the other clusters. Clusters 2 and 3 were moreso separated by percentages of resting state 2 and motor (more in cluster 3), and gambling and social (more in cluster 2).
 
-We then calculated 2D MDS embeddings of all the diagrams using both the wasserstein and bottleneck distances. No external factor like task, subject ID, subject gender or subject age clearly separated the embedded points, however the cluster labels did a reasonably good job:
+We then calculated 2D MDS embeddings of all the diagrams using both the wasserstein and bottleneck distances, and the cluster labels did a reasonably good job at separating the embedded points:
 
 ```{r,echo = F,eval = T,fig.height = 3,fig.width = 9,fig.align = 'center'}
 par(mfrow = c(1,3))
