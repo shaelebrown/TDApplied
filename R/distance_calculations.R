@@ -24,7 +24,7 @@
 #' @param p  a number representing the wasserstein power parameter, at least 1 and default 2.
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".
 #' @param sigma either NULL (default) or a positive number representing the bandwidth for the Fisher information metric.
-#' @param rho either NULL (default) or a positive number. If NULL then the exact calculation is returned, see details.
+#' @param rho either NULL (default) or a positive number. If NULL then the exact calculation is returned and otherwise a fast approximation, see details.
 #'
 #' @return the numeric value of the distance calculation.
 #' @importFrom rdist cdist
