@@ -15,9 +15,8 @@
 #' (\url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}).
 #' If the `distance` parameter is "fisher" then `sigma` must not be NULL. As noted in the Persistence Fisher paper,
 #' there is a fast speed-up approximation which has been implemented from \url{https://github.com/vmorariu/figtree} 
-#' and can be accessed by setting the epsilon parameter to a positive (error) tolerance value. The `rho` parameter,
-#' if provided, indicates that an approximation to the Persistence Fisher metric will be calculated. Smaller
-#' values will result in tighter approximations at the expense of longer runtime, and vice versa.
+#' and can be accessed by setting the `rho` parameter. Smaller
+#' values of `rho` will result in tighter approximations at the expense of longer runtime, and vice versa.
 #'
 #' @param D1 the first persistence diagram.
 #' @param D2 the second persistence diagram.
