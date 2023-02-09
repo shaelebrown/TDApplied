@@ -11,7 +11,7 @@ diagram_distance(
   p = 2,
   distance = "wasserstein",
   sigma = NULL,
-  epsilon = NULL
+  rho = NULL
 )
 }
 \arguments{
@@ -27,7 +27,7 @@ diagram_distance(
 
 \item{sigma}{either NULL (default) or a positive number representing the bandwidth for the Fisher information metric.}
 
-\item{epsilon}{either NULL (default) or a (small) positive number which is the tolerance of the Fisher information metric approximation. If NULL then the exact calculation is returned.}
+\item{rho}{either NULL (default) or a positive number. If NULL then the exact calculation is returned and otherwise a fast approximation, see details.}
 }
 \value{
 the numeric value of the distance calculation.
@@ -48,7 +48,8 @@ defined on the plane, and calculates a distance between the resulting two distri
 (\url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}).
 If the `distance` parameter is "fisher" then `sigma` must not be NULL. As noted in the Persistence Fisher paper,
 there is a fast speed-up approximation which has been implemented from \url{https://github.com/vmorariu/figtree} 
-and can be accessed by setting the epsilon parameter to a positive (error) tolerance value.
+and can be accessed by setting the `rho` parameter. Smaller
+values of `rho` will result in tighter approximations at the expense of longer runtime, and vice versa.
 }
 \examples{
 
@@ -68,6 +69,9 @@ if(require("TDA"))
 
   # Fisher information metric calculation between D1 and D2 for sigma = 1 in dimension 1
   diagram_distance(D1,D2,dim = 1,distance = "fisher",sigma = 1)
+  
+  # repeat but with fast approximation
+  diagram_distance(D1,D2,dim = 1,distance = "fisher",sigma = 1,rho = 0.001)
 }
 }
 \references{
