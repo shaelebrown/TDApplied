@@ -49,18 +49,14 @@ PH_from_file <- function(f){
   fMRI <- readNifti(f)
   fMRI <- fMRI[1,1,1,1,1:dim(fMRI)[[5]],1:91282]
   
-  # normalize each time point
-  fMRI <- t(scale(t(fMRI)))
-  
-  # create representational dissimilarity matrix, which is equal to sqrt(2*(1 - correlation)) between
-  # each pair of normalized time points
-  RDM <- as.matrix(stats::dist(fMRI))/sqrt(ncol(fMRI))
+  # create representational dissimilarity matrix
+  RDM <- sqrt(2*(matrix(data = 1,nrow = nrow(fMRI),ncol = nrow(fMRI)) - cor(t(fMRI))))
   
   # compute diagram up to dimension 1 via bootstrapping
   # with 30 bootstrap iterations
   diag <- bootstrap_persistence_thresholds(X = RDM,FUN = "calculate_homology",maxdim = 1,thresh = 2,num_samples = 30,return_subsetted = T,return_diag = T,distance_mat = T)$subsetted_diag
   
-  # subset for dimenion 1
+  # subset for dimension 1
   diag <- diag[which(diag$dimension == 1),]
   
   # save results
@@ -428,12 +424,9 @@ analyze_HCP <- function(directory_for_subjects){
   system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/visualizations"))
   system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/visualizations/tasks"))
   system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/visualizations/subjects"))
-  
-  # read in subject meta data and format
-  meta_data <- data.frame(Subject = subjects)
 
   # read in diagrams, order is rest1, rest2, emotion, gambling, language, motor, relational, social, wm
-  diagrams <- lapply(meta_data$Subject,FUN = function(X){
+  diagrams <- lapply(subjects,FUN = function(X){
     
     ret_list <- list()
     ret_list[[1]] <- read.csv(paste0(directory_for_subjects,"/",X,"/rfMRI_REST1_LR_diagram.csv"))
@@ -518,10 +511,10 @@ analyze_HCP <- function(directory_for_subjects){
   print(paste0("Working on visualizing diagrams at ",Sys.time()))
   for(sigma in sigma_vals)
   {
-    for(s in 1:nrow(meta_data))
+    for(s in 1:length(subjects))
     {
-      png(filename = paste0(directory_for_subjects,"/analysis_results/visualizations/subjects/",meta_data$Subject[[s]],"_",sigma,".png"),width = 400,height = 450)
-      visualize_group_of_diagrams(diagrams = unlisted_diagrams[(18*(s-1)+1):(18*s)],sigma = sigma,plot_title = paste0("Subject ",meta_data$Subject[[s]]))
+      png(filename = paste0(directory_for_subjects,"/analysis_results/visualizations/subjects/",subjects[[s]],"_",sigma,".png"),width = 400,height = 450)
+      visualize_group_of_diagrams(diagrams = unlisted_diagrams[(18*(s-1)+1):(18*s)],sigma = sigma,plot_title = paste0("Subject ",subjects[[s]]))
       dev.off()
     }
     
@@ -542,9 +535,9 @@ analyze_HCP <- function(directory_for_subjects){
   # look for statistical differences in the number of loops in the diagrams between subjects and tasks
   num_loops <- unlist(lapply(unlisted_diagrams,FUN = function(X){return(nrow(X))}))
   loop_test_subjs <- matrix(data = 0,nrow = 100,ncol = 100)
-  for(i in 1:(nrow(meta_data) - 1))
+  for(i in 1:(length(subjects) - 1))
   {
-    for(j in (i+1):nrow(meta_data))
+    for(j in (i+1):length(subjects))
     {
       v <- 0
       t <- t.test(x = num_loops[seq(18*(i-1)+1,18*i,1)],y = num_loops[seq(18*(j-1)+1,18*j,1)],paired = T,alternative = "two.sided")
@@ -598,9 +591,9 @@ analyze_HCP <- function(directory_for_subjects){
     
   }))
   persistence_test_subjs <- matrix(data = 0,nrow = 100,ncol = 100)
-  for(i in 1:(nrow(meta_data) - 1))
+  for(i in 1:(length(subjects) - 1))
   {
-    for(j in (i+1):nrow(meta_data))
+    for(j in (i+1):length(subjects))
     {
       v <- 0
       t <- t.test(x = mean_persistence[seq(18*(i-1)+1,18*i,1)],y = mean_persistence[seq(18*(j-1)+1,18*j,1)],paired = T,alternative = "two.sided")
@@ -666,11 +659,11 @@ analyze_HCP <- function(directory_for_subjects){
   
   # what about subject differences?
   print(paste0("Working on permutation tests for subjects at ",Sys.time()))
-  perm_test_subj_wass <- matrix(data = 1,nrow = nrow(meta_data),ncol = nrow(meta_data))
-  perm_test_subj_bottleneck <- matrix(data = 1,nrow = nrow(meta_data),ncol = nrow(meta_data))
-  for(i in 1:(nrow(meta_data) - 1))
+  perm_test_subj_wass <- matrix(data = 1,nrow = length(subjects),ncol = length(subjects))
+  perm_test_subj_bottleneck <- matrix(data = 1,nrow = length(subjects),ncol = length(subjects))
+  for(i in 1:(length(subjects) - 1))
   {
-    for(j in (i+1):nrow(meta_data))
+    for(j in (i+1):length(subjects))
     {
       perm_test_subj_wass[i,j] <- permutation_test(unlisted_diagrams[seq(18*(i-1)+1,18*i,1)],unlisted_diagrams[seq(18*(j-1)+1,18*j,1)],p = 2,iterations = 1000,dims = c(1))$p_values[[1]]
       perm_test_subj_bottleneck[i,j] <- permutation_test(unlisted_diagrams[seq(18*(i-1)+1,18*i,1)],unlisted_diagrams[seq(18*(j-1)+1,18*j,1)],p = Inf,iterations = 1000,dims = c(1))$p_values[[1]]
@@ -701,10 +694,10 @@ analyze_HCP <- function(directory_for_subjects){
   print(paste0("Working on independence tests for subjects at ",Sys.time()))
   for(k in 1:nrow(kernel_parameters))
   {
-    indep_mat <- matrix(data = 1,nrow = nrow(meta_data),ncol = nrow(meta_data))
-    for(i in 1:(nrow(meta_data) - 1))
+    indep_mat <- matrix(data = 1,nrow = length(subjects),ncol = length(subjects))
+    for(i in 1:(length(subjects) - 1))
     {
-      for(j in (i+1):nrow(meta_data))
+      for(j in (i+1):length(subjects))
       {
         indep_mat[i,j] <- independence_test(g1 = unlisted_diagrams[seq(18*(i-1)+1,18*i,1)],g2 = unlisted_diagrams[seq(18*(j-1)+1,18*j,1)],dims = c(1),sigma = kernel_parameters[k,2],t = kernel_parameters[k,1])$p_values[[1]]
         indep_mat[j,i] <- indep_mat[i,j]
@@ -777,10 +770,10 @@ analyze_HCP <- function(directory_for_subjects){
     return(ifelse(test = X < 0.05,yes = 1,no = 0))
     
   })
-  indep_subj_mat <- matrix(data = 0,nrow = nrow(meta_data),ncol = nrow(meta_data))
-  for(i in 1:(nrow(meta_data)-1))
+  indep_subj_mat <- matrix(data = 0,nrow = length(subjects),ncol = length(subjects))
+  for(i in 1:(length(subjects)-1))
   {
-    for(j in (i+1):nrow(meta_data))
+    for(j in (i+1):length(subjects))
     {
       indep_subj_mat[i,j] <- mean(unlist(lapply(X = 1:length(indep_subj_mats_good),FUN = function(X){return(indep_subj_mats_good[[X]][i,j])})),na.rm = T)
       indep_subj_mat[j,i] <- indep_subj_mat[i,j]
@@ -907,10 +900,10 @@ analyze_HCP <- function(directory_for_subjects){
   # add subject and task identifiers to each row
   mds_embedding_wass <- as.data.frame(mds_embedding_wass)
   mds_embedding_bottleneck <- as.data.frame(mds_embedding_bottleneck)
-  mds_embedding_wass$Subject <- rep(meta_data$Subject,each = 18)
-  mds_embedding_wass$task <- rep(rep(tasks,each = 2),nrow(meta_data))
-  mds_embedding_bottleneck$Subject <- rep(meta_data$Subject,each = 18)
-  mds_embedding_bottleneck$task <- rep(rep(tasks,each = 2),nrow(meta_data))
+  mds_embedding_wass$Subject <- rep(subjects,each = 18)
+  mds_embedding_wass$task <- rep(rep(tasks,each = 2),length(subjects))
+  mds_embedding_bottleneck$Subject <- rep(subjects,each = 18)
+  mds_embedding_bottleneck$task <- rep(rep(tasks,each = 2),length(subjects))
   
   write.csv(mds_embedding_wass,paste0(directory_for_subjects,"/analysis_results/mds/mds_wass.csv"))
   write.csv(mds_embedding_bottleneck,paste0(directory_for_subjects,"/analysis_results/mds/mds_bottleneck.csv"))

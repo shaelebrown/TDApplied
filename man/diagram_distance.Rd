@@ -10,7 +10,8 @@ diagram_distance(
   dim = 0,
   p = 2,
   distance = "wasserstein",
-  sigma = NULL
+  sigma = NULL,
+  epsilon = NULL
 )
 }
 \arguments{
@@ -24,7 +25,9 @@ diagram_distance(
 
 \item{distance}{a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".}
 
-\item{sigma}{either NULL (default) or a positive number representing the bandwidth for the Fisher information metric}
+\item{sigma}{either NULL (default) or a positive number representing the bandwidth for the Fisher information metric.}
+
+\item{epsilon}{either NULL (default) or a (small) positive number which is the tolerance of the Fisher information metric approximation. If NULL then the exact calculation is returned.}
 }
 \value{
 the numeric value of the distance calculation.
@@ -43,7 +46,9 @@ method for computing distances, the Fisher information metric,
 converts the two diagrams into distributions
 defined on the plane, and calculates a distance between the resulting two distributions
 (\url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}).
-If the `distance` parameter is "fisher" then `sigma` must not be NULL.
+If the `distance` parameter is "fisher" then `sigma` must not be NULL. As noted in the Persistence Fisher paper,
+there is a fast speed-up approximation which has been implemented from \url{https://github.com/vmorariu/figtree} 
+and can be accessed by setting the epsilon parameter to a positive (error) tolerance value.
 }
 \examples{
 

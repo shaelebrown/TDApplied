@@ -13,14 +13,19 @@
 #' converts the two diagrams into distributions
 #' defined on the plane, and calculates a distance between the resulting two distributions
 #' (\url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}).
-#' If the `distance` parameter is "fisher" then `sigma` must not be NULL.
+#' If the `distance` parameter is "fisher" then `sigma` must not be NULL. As noted in the Persistence Fisher paper,
+#' there is a fast speed-up approximation which has been implemented from \url{https://github.com/vmorariu/figtree} 
+#' and can be accessed by setting the epsilon parameter to a positive (error) tolerance value. The `rho` parameter,
+#' if provided, indicates that an approximation to the Persistence Fisher metric will be calculated. Smaller
+#' values will result in tighter approximations at the expense of longer runtime, and vice versa.
 #'
 #' @param D1 the first persistence diagram.
 #' @param D2 the second persistence diagram.
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param p  a number representing the wasserstein power parameter, at least 1 and default 2.
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".
-#' @param sigma either NULL (default) or a positive number representing the bandwidth for the Fisher information metric
+#' @param sigma either NULL (default) or a positive number representing the bandwidth for the Fisher information metric.
+#' @param rho either NULL (default) or a positive number. If NULL then the exact calculation is returned, see details.
 #'
 #' @return the numeric value of the distance calculation.
 #' @importFrom rdist cdist
@@ -31,6 +36,7 @@
 #' Kerber M, Morozov D and Nigmetov A (2017). "Geometry Helps to Compare Persistence Diagrams." \url{http://www.geometrie.tugraz.at/kerber/kerber_papers/kmn-ghtcpd_journal.pdf}.
 #' 
 #' Le T, Yamada M (2018). "Persistence fisher kernel: a riemannian manifold kernel for persistence diagrams." \url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}.
+#' 
 #' @examples
 #'
 #' if(require("TDA"))
@@ -49,9 +55,12 @@
 #' 
 #'   # Fisher information metric calculation between D1 and D2 for sigma = 1 in dimension 1
 #'   diagram_distance(D1,D2,dim = 1,distance = "fisher",sigma = 1)
+#'   
+#'   # repeat but with fast approximation
+#'   diagram_distance(D1,D2,dim = 1,distance = "fisher",sigma = 1,rho = 0.001)
 #' }
 
-diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma = NULL){
+diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma = NULL,rho = NULL){
 
   # function to compute the wasserstein/bottleneck/Fisher information metric between two diagrams
   # D1 and D2 are diagrams, possibly stored as data frames
@@ -71,6 +80,10 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
   if(distance == "fisher")
   {
     check_param("sigma",sigma,positive = T,non_negative = F,numeric = T,finite = T,multiple = F)
+    if(!is.null(rho))
+    {
+      check_param("rho",rho,positive = T,non_negative = T,numeric = T,finite = T,multiple = F)
+    }
   }
   
   # subset both diagrams by dimension dim and for birth and death columns
@@ -213,34 +226,50 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
     # get all unique points in both diagrams and their diagonal projections
     theta <- unique(rbind(D1_subset,D2_subset))
     
-    rho_1 <- unlist(lapply(X = 1:nrow(theta),FUN = function(X){
-      
-      x <- as.numeric(theta[X,])
-      sum <- 0
-      for(i in 1:nrow(D1_subset))
-      {
-        # compute mvn normal pdf values and sum up
-        u <- as.numeric(D1_subset[i,])
-        sum <- sum + exp(-1*((x[[1]]-u[[1]])^2 + (x[[2]]-u[[2]])^2)/(2*sigma^2))/(2*pi*sigma^2)
-      }
-      return(sum)
-      
-    }))
-    rho_1 <- rho_1/sum(rho_1)
+    # exact calculation, quadratic runtime
+    if(is.null(rho))
+    {
+      rho_1 <- unlist(lapply(X = 1:nrow(theta),FUN = function(X){
+        
+        x <- as.numeric(theta[X,])
+        sum <- 0
+        for(i in 1:nrow(D1_subset))
+        {
+          # compute mvn normal pdf values and sum up
+          u <- as.numeric(D1_subset[i,])
+          sum <- sum + exp(-1*((x[[1]]-u[[1]])^2 + (x[[2]]-u[[2]])^2)/(2*sigma^2))/(2*pi*sigma^2)
+        }
+        return(sum)
+        
+      }))
+      rho_2 <- unlist(lapply(X = 1:nrow(theta),FUN = function(X){
+        
+        x <- as.numeric(theta[X,])
+        sum <- 0
+        for(i in 1:nrow(D2_subset))
+        {
+          # compute mvn normal pdf values and sum up
+          u <- as.numeric(D2_subset[i,])
+          sum <- sum + exp(-1*((x[[1]]-u[[1]])^2 + (x[[2]]-u[[2]])^2)/(2*sigma^2))/(2*pi*sigma^2)
+        }
+        return(sum)
+        
+      }))
+    }else
+    {
+      # approximation, linear runtime
+      D1_subset <- as.matrix(D1_subset)
+      D2_subset <- as.matrix(D2_subset)
+      theta <- as.matrix(theta)
+      D1_subset <- as.vector(t(D1_subset))
+      D2_subset <- as.vector(t(D2_subset))
+      theta <- as.vector(t(theta))
+      G <- rep(0,length(theta)/2)
+      rho_1 <- as.numeric(figtree(X = D1_subset,h = sqrt(2)*sigma,Q = rep(1,length(D1_subset)/2)/(length(D1_subset)/2),Y = theta,epsilon = rho,G = G))
+      rho_2 <- as.numeric(figtree(X = D2_subset,h = sqrt(2)*sigma,Q = rep(1,length(D2_subset)/2)/(length(D2_subset)/2),Y = theta,epsilon = rho,G = G))
+    }
     
-    rho_2 <- unlist(lapply(X = 1:nrow(theta),FUN = function(X){
-      
-      x <- as.numeric(theta[X,])
-      sum <- 0
-      for(i in 1:nrow(D2_subset))
-      {
-        # compute mvn normal pdf values and sum up
-        u <- as.numeric(D2_subset[i,])
-        sum <- sum + exp(-1*((x[[1]]-u[[1]])^2 + (x[[2]]-u[[2]])^2)/(2*sigma^2))/(2*pi*sigma^2)
-      }
-      return(sum)
-      
-    }))
+    rho_1 <- rho_1/sum(rho_1)
     rho_2 <- rho_2/sum(rho_2)
     
     # return arc cos of dot product of elementwise square root
