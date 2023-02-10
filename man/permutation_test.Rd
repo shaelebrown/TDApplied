@@ -15,6 +15,7 @@ permutation_test(
   paired = FALSE,
   distance = "wasserstein",
   sigma = NULL,
+  rho = NULL,
   num_workers = parallelly::availableCores(omit = 1),
   verbose = FALSE
 )
@@ -39,6 +40,8 @@ permutation_test(
 \item{distance}{a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".}
 
 \item{sigma}{the positive bandwidth for the Fisher information metric, default NULL.}
+
+\item{rho}{an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL.}
 
 \item{num_workers}{the number of cores used for parallel computation, default is one less than the number of cores on the machine.}
 

@@ -12,6 +12,7 @@ diagram_mds(
   dim = 0,
   p = 2,
   sigma = NULL,
+  rho = NULL,
   eig = FALSE,
   add = FALSE,
   x.ret = FALSE,
@@ -33,6 +34,8 @@ diagram_mds(
 \item{p}{a positive number representing the wasserstein power, a number at least 1 (infinity for the bottleneck distance), default 2.}
 
 \item{sigma}{a positive number representing the bandwidth for the Fisher information metric, default NULL.}
+
+\item{rho}{an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL.}
 
 \item{eig}{a boolean indicating whether the eigenvalues should be returned.}
 

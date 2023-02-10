@@ -4,7 +4,7 @@
 \alias{diagram_kernel}
 \title{Calculate persistence Fisher kernel value between a pair of persistence diagrams.}
 \usage{
-diagram_kernel(D1, D2, dim = 0, sigma = 1, t = 1)
+diagram_kernel(D1, D2, dim = 0, sigma = 1, t = 1, rho = NULL)
 }
 \arguments{
 \item{D1}{the first persistence diagram.}
@@ -16,6 +16,8 @@ diagram_kernel(D1, D2, dim = 0, sigma = 1, t = 1)
 \item{sigma}{a positive number representing the bandwidth for the Fisher information metric, default 1.}
 
 \item{t}{a positive number representing the scale for the persistence Fisher kernel, default 1.}
+
+\item{rho}{an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL.}
 }
 \value{
 the numeric kernel value.

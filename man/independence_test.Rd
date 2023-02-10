@@ -9,6 +9,7 @@ independence_test(
   g2,
   dims = c(0, 1),
   sigma = 1,
+  rho = NULL,
   t = 1,
   num_workers = parallelly::availableCores(omit = 1),
   verbose = FALSE,
@@ -24,6 +25,8 @@ independence_test(
 \item{dims}{a non-negative integer vector of the homological dimensions in which the test is to be carried out, default c(0,1).}
 
 \item{sigma}{a positive number representing the bandwidth for the Fisher information metric, default 1.}
+
+\item{rho}{an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL.}
 
 \item{t}{a positive number representing the scale for the persistence Fisher kernel, default 1.}
 

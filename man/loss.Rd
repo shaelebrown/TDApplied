@@ -12,6 +12,7 @@ loss(
   q,
   distance,
   sigma,
+  rho,
   num_workers,
   group_sizes
 )
@@ -32,6 +33,8 @@ storing the current distances which have been pre-computed.}
 \item{distance}{a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".}
 
 \item{sigma}{the positive bandwidth for the persistence Fisher distance.}
+
+\item{rho}{the approximation heuristic for Fisher information metric.}
 
 \item{num_workers}{the number of cores used for parallel computation.}
 

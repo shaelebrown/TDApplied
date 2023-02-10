@@ -11,6 +11,7 @@ distance_matrix(
   distance = "wasserstein",
   p = 2,
   sigma = NULL,
+  rho = NULL,
   num_workers = parallelly::availableCores(omit = 1)
 )
 }
@@ -26,6 +27,8 @@ distance_matrix(
 \item{p}{a number representing the wasserstein power parameter, at least 1 and default 2.}
 
 \item{sigma}{a positive number representing the bandwidth of the Fisher information metric, default NULL.}
+
+\item{rho}{an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL.}
 
 \item{num_workers}{the number of cores used for parallel computation, default is one less than the number of cores on the machine.}
 }

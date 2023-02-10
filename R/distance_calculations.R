@@ -303,6 +303,7 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
 #' @param distance a character determining which metric to use, either "wasserstein" (default) or "fisher".
 #' @param p a number representing the wasserstein power parameter, at least 1 and default 2.
 #' @param sigma a positive number representing the bandwidth of the Fisher information metric, default NULL.
+#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. 
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #'
 #' @return the numeric distance matrix.
@@ -334,7 +335,7 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
 #'                              p = 2,num_workers = 2)
 #' }
 
-distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "wasserstein",p = 2,sigma = NULL,num_workers = parallelly::availableCores(omit = 1)){
+distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "wasserstein",p = 2,sigma = NULL,rho = NULL,num_workers = parallelly::availableCores(omit = 1)){
   
   # set internal variables to NULL to avoid build issues
   r <- NULL
@@ -356,6 +357,10 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
   if(distance == "fisher")
   {
     check_param("sigma",sigma,positive = T,numeric = T,finite = T,multiple = F)
+    if(!is.null(rho))
+    {
+      check_param("rho",rho,positive = T,non_negative = T,numeric = T,finite = T,multiple = F)
+    }
   }
   
   # error check num_workers argument
@@ -424,6 +429,7 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
 #' @param q a finite number at least 1.
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".
 #' @param sigma the positive bandwidth for the persistence Fisher distance.
+#' @param rho the approximation heuristic for Fisher information metric.
 #' @param num_workers the number of cores used for parallel computation.
 #' @param group_sizes for when using precomputed distance matrices.
 #'
@@ -437,7 +443,7 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
 #' Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.
 #' @return the numeric value of the Turner loss function.
 
-loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,num_workers,group_sizes){
+loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,rho,num_workers,group_sizes){
 
   # function to compute the F_{p,q} loss between groups of diagrams
   # diagram_groups are the (possibly permuted) groups of diagrams
@@ -466,7 +472,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,num_workers,gr
     
     # export necessary libraries and variables to cl
     parallel::clusterEvalQ(cl,c(library(clue),library(rdist)))
-    parallel::clusterExport(cl,c("check_diagram","diagram_distance","diagram_groups","dist_mats","dims","combinations","p","check_param"),envir = environment())
+    parallel::clusterExport(cl,c("check_diagram","diagram_distance","diagram_groups","dist_mats","dims","combinations","p","check_param","sigma","rho"),envir = environment())
     
     tryCatch(expr = {
       
@@ -479,7 +485,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,num_workers,gr
         
         parallel::clusterExport(cl,"dim")
         
-        d_tots <- foreach::`%dopar%`(obj = foreach::foreach(comb = 1:nrow(combinations),.combine = c),ex = {
+        d_tots <- foreach::`%dopar%`(obj = foreach::foreach(comb = 1:nrow(combinations),.combine = c,.export = "diagram_distance"),ex = {
           
           # get group and diagram indices from combinations
           g <- as.numeric(combinations[comb,1])
@@ -492,7 +498,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,num_workers,gr
           # if the distance between these two diagrams has not already been computed, compute their distance
           if(dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind] == -1)
           {
-            res <- diagram_distance(D1 = diagram_groups[[g]][[d1]]$diag,D2 = diagram_groups[[g]][[d2]]$diag,p = p,dim = dim,distance = distance,sigma = sigma)^q
+            res <- diagram_distance(D1 = diagram_groups[[g]][[d1]]$diag,D2 = diagram_groups[[g]][[d2]]$diag,p = p,dim = dim,distance = distance,sigma = sigma,rho = rho)^q
           }else
           {
             # else return the already stored distance value

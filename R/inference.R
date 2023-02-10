@@ -27,6 +27,7 @@
 #' @param paired a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups, default FALSE
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".
 #' @param sigma the positive bandwidth for the Fisher information metric, default NULL.
+#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. 
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #' @param verbose a boolean flag for if the time duration of the function call should be printed, default FALSE
 #'
@@ -80,7 +81,7 @@
 #'                                            dims = c(0))
 #' }
 
-permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_mats = NULL,group_sizes = NULL,paired = FALSE,distance = "wasserstein",sigma = NULL,num_workers = parallelly::availableCores(omit = 1),verbose = FALSE){
+permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_mats = NULL,group_sizes = NULL,paired = FALSE,distance = "wasserstein",sigma = NULL,rho = NULL,num_workers = parallelly::availableCores(omit = 1),verbose = FALSE){
 
   # function to test whether or not multiple groups of persistence diagrams come from the same geometric process
   # ... are the groups of diagrams, either stored as lists or vectors
@@ -180,6 +181,10 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_
   if(distance == "fisher")
   {
     check_param("sigma",sigma,non_negative = T,positive = F,numeric = T,finite = T,multiple = F)
+    if(!is.null(rho))
+    {
+      check_param("rho",rho,positive = T,non_negative = T,numeric = T,finite = T,multiple = F)
+    }
   }
   check_param("num_workers",num_workers,whole_numbers = T,at_least_one = T,numeric = T,multiple = F)
   if(num_workers > parallelly::availableCores())
@@ -192,7 +197,7 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_
   start_time <- Sys.time()
 
   # compute loss function on observed data and update dist_mats
-  test_loss <- loss(diagram_groups = diagram_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance,sigma = sigma,num_workers = num_workers,group_sizes = group_sizes)
+  test_loss <- loss(diagram_groups = diagram_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance,sigma = sigma,rho = rho,num_workers = num_workers,group_sizes = group_sizes)
   dist_mats <- test_loss$dist_mats
   test_statistics <- test_loss$statistics
 
@@ -281,7 +286,7 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_
     }
     
     # compute loss function, add to permutation values and updated distance matrices
-    permuted_loss <- loss(diagram_groups = permuted_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance,sigma = sigma,num_workers = num_workers,group_sizes = group_sizes)
+    permuted_loss <- loss(diagram_groups = permuted_groups,dist_mats = dist_mats,dims = dims,p = p,q = q,distance = distance,sigma = sigma,rho = rho,num_workers = num_workers,group_sizes = group_sizes)
     dist_mats <- permuted_loss$dist_mats
     for(d in 1:length(dims))
     {
@@ -340,6 +345,7 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_
 #' @param g2 the second group of persistence diagrams, where each diagram was either the output from a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
 #' @param dims a non-negative integer vector of the homological dimensions in which the test is to be carried out, default c(0,1).
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1.
+#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. 
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #' @param Ks an optional list of precomputed Gram matrices for the first group of diagrams, with one element for each dimension. If not NULL and `Ls` is not NULL then `g1` and `g2` do not need to be supplied.
@@ -388,7 +394,7 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_
 #'   
 #' }
 
-independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,num_workers = parallelly::availableCores(omit = 1),verbose = FALSE,Ks = NULL,Ls = NULL){
+independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,rho = NULL,t = 1,num_workers = parallelly::availableCores(omit = 1),verbose = FALSE,Ks = NULL,Ls = NULL){
   
   # function to test whether or not two groups of persistence diagrams are independent
   # g1 and g2 are the groups of diagrams, either stored as lists or vectors
@@ -486,6 +492,12 @@ independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,num_workers = 
   # error check dims
   check_param("dims",dims,multiple = T,whole_numbers = T,non_negative = T,positive = F,numeric = T,finite = T)
   
+  # error check rho
+  if(!is.null(rho))
+  {
+    check_param("rho",rho,positive = T,non_negative = T,numeric = T,finite = T,multiple = F)
+  }
+  
   # time computations
   start_time <- Sys.time()
   
@@ -503,8 +515,8 @@ independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,t = 1,num_workers = 
       L <- Ls[[which(dims == dim)[[1]]]]
     }else
     {
-      K <- gram_matrix(diagrams = diagram_groups[[1]],dim = dim,t = t,sigma = sigma,num_workers = num_workers)
-      L <- gram_matrix(diagrams = diagram_groups[[2]],dim = dim,t = t,sigma = sigma,num_workers = num_workers) 
+      K <- gram_matrix(diagrams = diagram_groups[[1]],dim = dim,t = t,sigma = sigma,rho = rho,num_workers = num_workers)
+      L <- gram_matrix(diagrams = diagram_groups[[2]],dim = dim,t = t,sigma = sigma,rho = rho,num_workers = num_workers) 
     }
 
     H <- matrix(data = -1/m,nrow = m,ncol = m)

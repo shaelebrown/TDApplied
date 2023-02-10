@@ -13,6 +13,7 @@
 #' @param D2 the second persistence diagram.
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1.
+#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. 
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
 #'
 #' @return the numeric kernel value.
@@ -38,13 +39,13 @@
 #'   diagram_kernel(D1,D2,dim = 0,sigma = 2,t = 2)
 #' }
 
-diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
+diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1,rho = NULL){
   
   # check kernel-specific parameter, other inputs are checked in distance calculation
   check_param("t",t,non_negative = T,positive = F,numeric = T,finite = T,multiple = F)
   
   # return kernel calculation
-  return(exp(-1*t*diagram_distance(D1 = D1,D2 = D2,dim = dim,distance = "fisher",sigma = sigma)))
+  return(exp(-1*t*diagram_distance(D1 = D1,D2 = D2,dim = dim,distance = "fisher",sigma = sigma,rho = rho)))
   
 }
 
@@ -62,6 +63,7 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1.
 #' @param t a positive number representing the scale for the kernel, default 1.
+#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. 
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #'
 #' @return the numeric (cross) Gram matrix of class 'kernelMatrix'.
@@ -86,10 +88,10 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1){
 #'                          t = 2,num_workers = 2)
 #' }
 
-gram_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,sigma = 1,t = 1,num_workers = parallelly::availableCores(omit = 1)){
+gram_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,sigma = 1,t = 1,rho = NULL,num_workers = parallelly::availableCores(omit = 1)){
   
   # compute gram matrix from distance matrix
-  K <- exp(-t*distance_matrix(diagrams = diagrams,other_diagrams = other_diagrams,dim = dim,distance = "fisher",sigma = sigma,num_workers = num_workers))
+  K <- exp(-t*distance_matrix(diagrams = diagrams,other_diagrams = other_diagrams,dim = dim,distance = "fisher",sigma = sigma,rho = rho,num_workers = num_workers))
   
   # update class for interfacing with kernlab package
   class(K) <- "kernelMatrix"
