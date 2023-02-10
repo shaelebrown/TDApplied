@@ -325,11 +325,19 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
 #'                                      dim = 0,threshold = 2)
 #'   g <- list(D1,D2)
 #'
+#'   # calculate their distance matrix in dimension 0 with the persistence Fisher metric
+#'   # using 2 cores
+#'   D <- distance_matrix(diagrams = g,dim = 0,distance = "fisher",sigma = 1,num_workers = 2)
+#'   
+#'   # calculate their distance matrix in dimension 0 with the approximate persistence Fisher metric
+#'   # using 2 cores
+#'   D <- distance_matrix(diagrams = g,dim = 0,distance = "fisher",sigma = 1,rho = 0.001,num_workers = 2)
+#'
 #'   # calculate their distance matrix in dimension 0 with the 2-wasserstein metric 
-#'   # using 2 cores in dimension 1
+#'   # using 2 cores
 #'   D <- distance_matrix(diagrams = g,dim = 0,distance = "wasserstein",p = 2,num_workers = 2)
 #' 
-#'   # now do the cross distance matrix, which is the same as the original
+#'   # now do the cross distance matrix, which is the same as the previous
 #'   D_cross <- distance_matrix(diagrams = g,other_diagrams = g,
 #'                              dim = 0,distance = "wasserstein",
 #'                              p = 2,num_workers = 2)

@@ -66,6 +66,10 @@
 #'   Dmat <- distance_matrix(diagrams = list(D1,D2),dim = 0,p = Inf,num_workers = 2)
 #'   mds <- diagram_mds(D = Dmat,k = 1)
 #'   
+#'   # calculate their 1D MDS embedding in dimension 0 with the approximated Persistence
+#'   # Fisher metric
+#'   mds <- diagram_mds(diagrams = g,k = 1,dim = 0,distance = "fisher",sigma = 1,rho = 0.001,num_workers = 2)
+#'   
 #' }
 
 diagram_mds <- function(diagrams,D = NULL,k = 2,distance = "wasserstein",dim = 0,p = 2,sigma = NULL,rho = NULL,eig = FALSE,add = FALSE,x.ret = FALSE,list. = eig || add || x.ret,num_workers = parallelly::availableCores(omit = 1)){
@@ -480,7 +484,8 @@ diagram_kpca <- function(diagrams,K = NULL,dim = 0,t = 1,sigma = 1,rho = NULL,fe
 #'   g <- list(D1,D2,D3,D4,D5,D6)
 #' 
 #'   # calculate their 2D PCA embedding with sigma = t = 2 in dimension 0
-#'   pca <- diagram_kpca(diagrams = g,dim = 1,t = 2,sigma = 2,features = 2,num_workers = 2)
+#'   # using the approximate persistence Fisher metric
+#'   pca <- diagram_kpca(diagrams = g,dim = 1,t = 2,sigma = 2,rho = 0.001,features = 2,num_workers = 2)
 #' 
 #'   # project two new diagrams onto old model
 #'   D7 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
@@ -494,7 +499,7 @@ diagram_kpca <- function(diagrams,K = NULL,dim = 0,t = 1,sigma = 1,rho = NULL,fe
 #'   
 #'   # repeat with precomputed Gram matrix, gives same result but much faster
 #'   K <- gram_matrix(diagrams = g_new,other_diagrams = pca$diagrams,dim = pca$dim,
-#'                    t = pca$t,sigma = pca$sigma,num_workers = 2)
+#'                    t = pca$t,sigma = pca$sigma,rho = pca$rho,num_workers = 2)
 #'   new_pca <- predict_diagram_kpca(K = K,embedding = pca,num_workers = 2)
 #' }
 
