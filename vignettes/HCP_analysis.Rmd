@@ -5,7 +5,7 @@ output:
   rmarkdown::html_document:
     fig_caption: yes
 vignette: >
-  %\VignetteIndexEntry{Introduction to TDApplied}
+  %\VignetteIndexEntry{Practical Example - Human Connectome Project Analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 bibliography: REFERENCES.bib

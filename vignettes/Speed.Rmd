@@ -5,7 +5,7 @@ output:
   rmarkdown::html_document:
     fig_caption: yes
 vignette: >
-  %\VignetteIndexEntry{Introduction to TDApplied}
+  %\VignetteIndexEntry{Benchmarking and Speedups}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 bibliography: REFERENCES.bib
@@ -37,7 +37,7 @@ The Fisher information metric unlocks the door to a number of TDApplied machine 
 
 To illustrate how significant this speedup can be we simulated unit spheres and tori (with inner tube radius 0.25 and major radius 0.75) with different numbers of points 100,200,...,1000 (with 10 iterations at each number of points), calculated their persistence diagrams and timed their Fisher information metric with and without approximation. The plot below shows the results (plotting the mean runtime with a 95\% confidence interval):
 
-```{r}
+```{r,eval = F}
 # generate persistence diagrams from spheres and tori with  100,200,...,1000 data points.
   runtimes_approx <- data.frame(n_row = numeric(),method = character(),time_in_sec = numeric())
   for(n_row in seq(100,1000,100)){
@@ -98,11 +98,11 @@ To illustrate how significant this speedup can be we simulated unit spheres and 
   }
 ```
 
-```{r}
+```{r,eval = F}
 summary_table_approx = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.0109694957733154,0.0594853162765503,0.0540436983108521,0.469167232513428,0.182804441452026,1.57912936210632,0.410391473770142,3.69215035438538,0.822147560119629,7.32947452068329,1.40918028354645,12.8482979059219,2.47986209392548,20.9446493387222,3.76364696025848,31.2942998409271,5.3408855676651,44.884921503067,7.59271986484528,62.6113245010376),sd = c(0.00193647497299544,0.00600547924173666,0.00563514382927968,0.0210564179408907,0.0129015865529426,0.0403660633577451,0.0218388344325696,0.077772517180065,0.0319754379649263,0.0762356686089166,0.0567664459109207,0.171412828638123,0.240398206520162,0.398396221629952,0.320522372278111,0.459994662433323,0.365647918767674,0.417413443923572,0.394211392866084,0.746903966284143),package = rep(c("TDApplied","TDAstats"),10))
 ```
 
-```{r,echo = F,warning=F,fig.height = 4,fig.width = 7,fig.align = 'center'}
+```{r,echo = F,warning=F,fig.height = 4,fig.width = 7,fig.align = 'center',eval = F}
 plot(summary_table_approx$n_row[summary_table_approx$method=="Exact"], 
      summary_table_approx$mean[summary_table_approx$method=="Exact"], 
      type="b",

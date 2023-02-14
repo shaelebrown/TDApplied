@@ -68,14 +68,20 @@
 #'   
 #'   # calculate their 1D MDS embedding in dimension 0 with the approximated Persistence
 #'   # Fisher metric
-#'   mds <- diagram_mds(diagrams = g,k = 1,dim = 0,distance = "fisher",sigma = 1,rho = 0.001,num_workers = 2)
+#'   mds <- diagram_mds(diagrams = g,k = 1,dim = 0,distance = "fisher",sigma = 1,
+#'                      rho = 0.001,num_workers = 2)
 #'   
 #' }
 
 diagram_mds <- function(diagrams,D = NULL,k = 2,distance = "wasserstein",dim = 0,p = 2,sigma = NULL,rho = NULL,eig = FALSE,add = FALSE,x.ret = FALSE,list. = eig || add || x.ret,num_workers = parallelly::availableCores(omit = 1)){
   
+  # function to embed a group of persistence diagrams in low dimensions
+  # using MDS
+  
   if(is.null(D))
   {
+    # distance matrix not supplied
+    
     # error check diagrams argument
     check_param("diagrams",diagrams,min_length = 2)
     diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
@@ -84,9 +90,11 @@ diagram_mds <- function(diagrams,D = NULL,k = 2,distance = "wasserstein",dim = 0
     D <- distance_matrix(diagrams = diagrams,dim = dim,distance = distance,p = p,sigma = sigma,rho = rho,num_workers = num_workers)
   }else
   {
+    # check supplied distance matrix
     check_matrix(M = D,name = "D",type = "matrix")
   }
   
+  # check k parameter (embedding dimension)
   check_param("k",k,whole_numbers = T,at_least_one = T,numeric = T,finite = T,multiple = F)
   
   # return metric multidimensional scaling with d as input
@@ -160,13 +168,19 @@ diagram_mds <- function(diagrams,D = NULL,k = 2,distance = "wasserstein",dim = 0
 
 diagram_kkmeans <- function(diagrams,K = NULL,centers,dim = 0,t = 1,sigma = 1,rho = NULL,num_workers = parallelly::availableCores(omit = 1),...){
   
-  # error check arguments
-  check_param("diagrams",diagrams,min_length = 2)
-  diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
+  # function to cluster a group of persistence diagrams
+  
+  # error check centers (number of clusters) parameter
   check_param("centers",centers,whole_numbers = T,at_least_one = T,numeric = T,finite = T,multiple = F)
   
   if(is.null(K))
   {
+    # Gram matrix not supplied
+    
+    # error check diagrams
+    check_param("diagrams",diagrams,min_length = 2)
+    diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
+    
     # make sure there aren't more centers than data points - this tends to lead to kernlab errors
     if(centers > length(diagrams))
     {
@@ -192,14 +206,16 @@ diagram_kkmeans <- function(diagrams,K = NULL,centers,dim = 0,t = 1,sigma = 1,rh
   }
   
   # return kernlab calculation, saving in a list of class diagram_kkmeans for later interface with prediction calculations
+  
+  # sometimes the algorithm doesn't converge by fluke (randomness), so we will
+  # run up to 20 iterations to see if we have successful convergence
+  # otherwise an error will be thrown
   max_iters <- 20
   iter <- 1
   while(T)
   {
     # there are some kernlab errors that can't always be avoided and caused by randomness
     # when certain clusters are empty or unclosed connections
-    # so we catch those errors and rerun if necessary, up to max_iters many times
-    # if a different error occurs or we rerun max_iters many times then stop with the error.
     tryCatch(expr = {clustering <- kernlab::kkmeans(x = K,centers = centers,...)},
              error = function(e){
                
@@ -228,8 +244,11 @@ diagram_kkmeans <- function(diagrams,K = NULL,centers,dim = 0,t = 1,sigma = 1,rh
     }
     
   }
+  
+  # set up return list
   ret_list <- list(clustering = clustering,diagrams = diagrams,dim = dim,sigma = sigma,t = t,rho = rho)
   
+  # set class for easy recognition in prediction method
   class(ret_list) <- "diagram_kkmeans"
   
   return(ret_list)
@@ -287,6 +306,9 @@ diagram_kkmeans <- function(diagrams,K = NULL,centers,dim = 0,t = 1,sigma = 1,rh
 
 predict_diagram_kkmeans <- function(new_diagrams,K = NULL,clustering,num_workers = parallelly::availableCores(omit = 1)){
   
+  # function to predict the cluster labels of new persistence diagrams
+  # with a pre-fit clustering model
+  
   # set internal variables to NULL to avoid build issues
   X <- NULL
   
@@ -302,6 +324,8 @@ predict_diagram_kkmeans <- function(new_diagrams,K = NULL,clustering,num_workers
   
   if(is.null(K))
   {
+    # cross Gram matrix not supplied
+    
     # error check diagrams argument
     check_param("new_diagrams",new_diagrams,min_length = 1)
     new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
@@ -310,10 +334,13 @@ predict_diagram_kkmeans <- function(new_diagrams,K = NULL,clustering,num_workers
     K = gram_matrix(diagrams = new_diagrams,other_diagrams = clustering$diagrams,dim = clustering$dim,sigma = clustering$sigma,t = clustering$t,rho = clustering$rho,num_workers = num_workers)
   }else
   {
+    # cross Gram matrix supplied
     if(missing(new_diagrams))
     {
       new_diagrams <- rep(0,nrow(K))
     }
+    
+    # error check supplied matrix
     check_matrix(M = K,name = "K",symmetric = F)
     if(nrow(K) != length(new_diagrams) | ncol(K) != length(clustering$diagrams))
     {
@@ -406,6 +433,9 @@ predict_diagram_kkmeans <- function(new_diagrams,K = NULL,clustering,num_workers
 
 diagram_kpca <- function(diagrams,K = NULL,dim = 0,t = 1,sigma = 1,rho = NULL,features = 1,num_workers = parallelly::availableCores(omit = 1),th = 1e-4){
   
+  # function to embed a group of diagrams into low dimensions
+  # using kernel PCA
+  
   # error check diagrams argument
   check_param("diagrams",diagrams,min_length = 2)
   diagrams <- all_diagrams(diagram_groups = list(diagrams),inference = "independence")[[1]]
@@ -416,6 +446,7 @@ diagram_kpca <- function(diagrams,K = NULL,dim = 0,t = 1,sigma = 1,rho = NULL,fe
     K <- gram_matrix(diagrams = diagrams,t = t,sigma = sigma,rho = rho,dim = dim,num_workers = num_workers)
   }else
   {
+    # error check Gram matrix
     check_matrix(M = K,name = "K")
     if(length(diagrams) != nrow(K))
     {
@@ -423,7 +454,7 @@ diagram_kpca <- function(diagrams,K = NULL,dim = 0,t = 1,sigma = 1,rho = NULL,fe
     }
   }
   
-  # return kernlab computation, ignore unhelpful kernlab warnings
+  # kernlab computation, ignore unhelpful kernlab warnings
   tryCatch(expr = {ret_list <- list(pca = kernlab::kpca(x = K,features = features,th = th),diagrams = diagrams,t = t,sigma = sigma,dim = dim,rho = rho)},
            error = function(e){stop(e)},
            warning = function(w){
@@ -443,6 +474,7 @@ diagram_kpca <- function(diagrams,K = NULL,dim = 0,t = 1,sigma = 1,rho = NULL,fe
              
            })
   
+  # set class for easy recognition in prediction method
   class(ret_list) <- "diagram_kpca"
   return(ret_list)
   
@@ -505,6 +537,9 @@ diagram_kpca <- function(diagrams,K = NULL,dim = 0,t = 1,sigma = 1,rho = NULL,fe
 
 predict_diagram_kpca <- function(new_diagrams,K = NULL,embedding,num_workers = parallelly::availableCores(omit = 1)){
   
+  # function to predict embedding coordinates of new diagrams
+  # given a pre-fit kPCA model
+  
   # set internal variables to NULL to avoid build issues
   r <- NULL
   X <- NULL
@@ -522,22 +557,31 @@ predict_diagram_kpca <- function(new_diagrams,K = NULL,embedding,num_workers = p
   # compute cross-Gram matrix and scale twice
   if(is.null(K))
   {
+    # cross Gram matrix not supplied
+    
     # error check new_diagrams argument
     check_param("new_diagrams",new_diagrams,min_length = 1)
     new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
+    
+    # compute cross Gram matrix
     K <- gram_matrix(diagrams = new_diagrams,other_diagrams = embedding$diagrams,dim = embedding$dim,sigma = embedding$sigma,t = embedding$t,rho = embedding$rho,num_workers = num_workers)
   }else
   {
+   # cross Gram matrix supplied
    if(missing(new_diagrams))
    {
      new_diagrams <- rep(0,nrow(K))
    }
+    
+   # check matrix
    check_matrix(M = K,name = "K",symmetric = F) 
    if(nrow(K) != length(new_diagrams) | ncol(K) != length(embedding$diagrams))
    {
      stop("K must have the same number of rows as the length of new_diagrams and the same number of columns as the length of diagrams in embedding.")
    }
   }
+  
+  # scale and double center Gram matrix
   K <- scale(K,center = T,scale = F)
   K <- t(scale(t(K),center = T,scale = F))
   
@@ -634,6 +678,8 @@ predict_diagram_kpca <- function(new_diagrams,K = NULL,embedding,num_workers = p
                           
 diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type = NULL,distance_matrices = NULL,C = 1,nu = 0.2,epsilon = 0.1,prob.model = FALSE,class.weights = NULL,fit = TRUE,cache = 40,tol = 0.001,shrinking = TRUE,num_workers = parallelly::availableCores(omit = 1)){
   
+  # fit a SVM model to a group of persistence diagrams and a set of labels
+  
   # set internal variables to NULL to avoid build issues
   r <- NULL
   s <- NULL
@@ -691,9 +737,11 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
   })
   
   # for each pair of sigma and dim values compute the Fisher distance matrix to avoid recomputing Gram matrices
+  # if these matrices have not been supplied
   dim_and_sigma <- expand.grid(dim = dim,sigma = sigma)
   if(is.null(distance_matrices))
   {
+    # distance matrices not supplied, compute them
     distance_matrices <- lapply(X = 1:nrow(dim_and_sigma),FUN = function(X){
       
       return(distance_matrix(diagrams = diagrams,dim = dim_and_sigma[X,1],distance = "fisher",sigma = dim_and_sigma[X,2],rho = rho,num_workers = num_workers))
@@ -701,6 +749,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
     })
   }else
   {
+    # error check supplied distance matrices
     if(!is.list(distance_matrices))
     {
       stop("distance_matrices must be a list.")
@@ -774,7 +823,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
   error = function(e){stop(e)},
   warning = function(w){warning(w)},
   finally = {
-    
+    # clean up
     doParallel::stopImplicitCluster()
     parallel::stopCluster(cl)
     
@@ -788,7 +837,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
   K <- exp(-1*best_params[[2]]*distance_matrices[[paste0(best_params[[1]],"_",best_params[[3]])]])
   class(K) <- "kernelMatrix"
   
-  # return kernlab calculation, suppressing unhelpful warnings
+  # kernlab calculation, suppressing unhelpful warnings
   tryCatch(expr = {best_model <- list(model = kernlab::ksvm(x = K,y = y,type = type,C = best_params[[4]],nu = best_params[[5]],epsilon = best_params[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking),
                                       dim = best_params[[1]],
                                       sigma = best_params[[3]],
@@ -805,6 +854,8 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
            })
 
   ret_list <- list(cv_results = params,best_model = best_model,diagrams = diagrams)
+  
+  # set class for easy recognition in prediction function
   class(ret_list) <- "diagram_ksvm"
   
   return(ret_list)
@@ -871,6 +922,9 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
 
 predict_diagram_ksvm <- function(new_diagrams,model,K = NULL,num_workers = parallelly::availableCores(omit = 1)){
   
+  # function to predict labels of new diagrams
+  # from pre-fit SVM model
+  
   # set internal variables to NULL to avoid build issues
   r <- NULL
   X <- NULL
@@ -887,6 +941,8 @@ predict_diagram_ksvm <- function(new_diagrams,model,K = NULL,num_workers = paral
   
   if(is.null(K))
   {
+    # cross Gram matrix not supplied
+    
     # error check new_diagrams argument
     check_param("new_diagrams",new_diagrams,min_length = 1)
     new_diagrams <- all_diagrams(diagram_groups = list(new_diagrams),inference = "independence")[[1]]
@@ -902,6 +958,7 @@ predict_diagram_ksvm <- function(new_diagrams,model,K = NULL,num_workers = paral
     {
       stop("K must have the same number of columns as the number of the diagrams used in the model.")
     }
+    
     # subset by support vector indices
     class(K) <- "matrix"
     K <- K[,model$best_model$model@SVindex]

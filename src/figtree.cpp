@@ -1112,7 +1112,7 @@ std::vector<double> figtree( std::vector<double> X, double h,
   mrows =(int) 2; //mrows
   ncols = (int) Q.size(); //ncols
   ncols = (int) ncols/2;
-  W = mrows*ncols/N;
+  W = 1; // specifically for this application in TDApplied
   double * q = &Q[0];
 
   // y
@@ -1629,6 +1629,7 @@ int figtreeKCenterClustering( int d, int N, double * x, int kMax, int * K,
 int figtreeEvaluateDirect( int d, int N, int M, double * x, double h, 
                            double * q, double * y, double * g )
 {
+  
   // check input arguments
   FIGTREE_CHECK_POS_NONZERO_INT( d, figtreeEvaluateDirect );
   FIGTREE_CHECK_POS_NONZERO_INT( N, figtreeEvaluateDirect );

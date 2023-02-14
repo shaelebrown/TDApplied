@@ -27,7 +27,7 @@ diagram_distance(
 
 \item{sigma}{either NULL (default) or a positive number representing the bandwidth for the Fisher information metric.}
 
-\item{rho}{either NULL (default) or a positive number. If NULL then the exact calculation is returned and otherwise a fast approximation, see details.}
+\item{rho}{either NULL (default) or a positive number. If NULL then the exact calculation of the Fisher information metric is returned and otherwise a fast approximation, see details.}
 }
 \value{
 the numeric value of the distance calculation.

@@ -17,6 +17,7 @@ test_that("permutation_test detects incorrect parameters correctly",{
   expect_error(permutation_test(list(circle,circle,circle),list(sphere,sphere),num_workers = NA),"num_workers")
   expect_error(permutation_test(list(circle,circle,circle),list(sphere,sphere),num_workers = NULL),"num_workers")
   expect_error(permutation_test(list(circle,circle,circle),list(sphere),num_workers = 2),"2")
+  expect_error(permutation_test(list(circle,circle,circle),list(sphere,sphere),num_workers = 2,dims = c(1),distance = "fisher",sigma = 1,rho = NaN),"rho")
   
 })
 
@@ -94,6 +95,7 @@ test_that("permutation_test is working",{
   expect_lte(abs(v - 2*d^2/3)*v,0.02)
   expect_length(unique(permutation_test(list(circle,sphere,circle),list(circle,sphere,circle),paired = T,iterations = 3,dims = c(1),num_workers = 2)$permvals[[1]]),1)
   expect_length(unique(permutation_test(list(sphere,sphere,circle),list(sphere,sphere,circle),paired = T,iterations = 3,dims = c(1),num_workers = 2)$permvals[[1]]),1)
+  expect_success(permutation_test(list(sphere,sphere,circle),list(sphere,sphere,circle),paired = T,iterations = 3,dims = c(1),num_workers = 2,distance = "fisher",sigma = 1,rho = 0.001))
 
 })
 

@@ -24,7 +24,7 @@
 #' @param p  a number representing the wasserstein power parameter, at least 1 and default 2.
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".
 #' @param sigma either NULL (default) or a positive number representing the bandwidth for the Fisher information metric.
-#' @param rho either NULL (default) or a positive number. If NULL then the exact calculation is returned and otherwise a fast approximation, see details.
+#' @param rho either NULL (default) or a positive number. If NULL then the exact calculation of the Fisher information metric is returned and otherwise a fast approximation, see details.
 #'
 #' @return the numeric value of the distance calculation.
 #' @importFrom rdist cdist
@@ -62,11 +62,6 @@
 diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma = NULL,rho = NULL){
 
   # function to compute the wasserstein/bottleneck/Fisher information metric between two diagrams
-  # D1 and D2 are diagrams, possibly stored as data frames
-  # dim is the dimension to subset
-  # p is the power of the wasserstein distance, p >= 1, default 2
-  # distance is either "wasserstein" (default) or "fisher"
-  # sigma is the positive bandwidth for the Fisher information metric, default NULL
 
   # for standalone usage force D1 and D2 to be data frames if they are the output of a homology calculation
   D1 <- check_diagram(D1,ret = T)
@@ -257,13 +252,21 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
     }else
     {
       # approximation, linear runtime
+      # must convert tables into vectors of length 2*nrow
+      # of the form c(first_row_birth,first_row_death,second_row_birth,second_row_death,...)
       D1_subset <- as.matrix(D1_subset)
       D2_subset <- as.matrix(D2_subset)
       theta <- as.matrix(theta)
+      
       D1_subset <- as.vector(t(D1_subset))
       D2_subset <- as.vector(t(D2_subset))
       theta <- as.vector(t(theta))
+      
+      # this is the results vector which will be
+      # modified and returned
       G <- rep(0,length(theta)/2)
+      
+      # use figtree c++ code to speed up calculations
       rho_1 <- as.numeric(figtree(X = D1_subset,h = sqrt(2)*sigma,Q = rep(1,length(D1_subset)/2)/(length(D1_subset)/2),Y = theta,epsilon = rho,G = G))
       rho_2 <- as.numeric(figtree(X = D2_subset,h = sqrt(2)*sigma,Q = rep(1,length(D2_subset)/2)/(length(D2_subset)/2),Y = theta,epsilon = rho,G = G))
     }
@@ -331,7 +334,8 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
 #'   
 #'   # calculate their distance matrix in dimension 0 with the approximate persistence Fisher metric
 #'   # using 2 cores
-#'   D <- distance_matrix(diagrams = g,dim = 0,distance = "fisher",sigma = 1,rho = 0.001,num_workers = 2)
+#'   D <- distance_matrix(diagrams = g,dim = 0,distance = "fisher",sigma = 1,rho = 0.001,
+#'                        num_workers = 2)
 #'
 #'   # calculate their distance matrix in dimension 0 with the 2-wasserstein metric 
 #'   # using 2 cores
@@ -344,6 +348,8 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
 #' }
 
 distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "wasserstein",p = 2,sigma = NULL,rho = NULL,num_workers = parallelly::availableCores(omit = 1)){
+  
+  # calculate a (cross) distance matrix of persistence diagrams in parallel (if desired)
   
   # set internal variables to NULL to avoid build issues
   r <- NULL
@@ -392,6 +398,8 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
     
     if(is.null(other_diagrams))
     {
+      # not cross distance matrix, only need to compute the upper diagonal
+      # since the matrix is symmetric
       d <- matrix(data = 0,nrow = m,ncol = m)
       d_off_diag <- foreach::`%dopar%`(obj = foreach::foreach(r = iterators::iter(which(upper.tri(d),arr.ind = T),by = 'row'),.combine = c),ex = {diagram_distance(D1 = diagrams[[r[[1]]]],D2 = diagrams[[r[[2]]]],dim = dim,p = p,distance = distance,sigma = sigma)})
       d[upper.tri(d)] <- d_off_diag
@@ -399,13 +407,14 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
       diag(d) <- rep(0,m)
     }else
     {
-      d <- foreach::`%dopar%`(foreach::`%:%`(foreach::foreach(r = 1:length(other_diagrams),.combine = cbind),foreach::foreach(X = 1:length(diagrams),.combine = c)),ex = {diagram_distance(D1 = other_diagrams[[r]],D2 = diagrams[[X]],dim = dim,p = p,distance = distance,sigma = sigma)})
+      # cross distance matrix, need to compute all entries
+      d <- foreach::`%dopar%`(foreach::`%:%`(foreach::foreach(r = 1:length(other_diagrams),.combine = cbind),foreach::foreach(X = 1:length(diagrams),.combine = c)),ex = {diagram_distance(D1 = other_diagrams[[r]],D2 = diagrams[[X]],dim = dim,p = p,distance = distance,sigma = sigma,rho = rho)})
     }
     
   }, warning = function(w){warning(w)},
   error = function(e){stop(e)},
   finally = {
-    
+    # close cluster
     doParallel::stopImplicitCluster()
     parallel::stopCluster(cl)
     
@@ -455,15 +464,11 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,rho,num_worker
 
   # function to compute the F_{p,q} loss between groups of diagrams
   # diagram_groups are the (possibly permuted) groups of diagrams
-  # dist mats stores the current distance matrices for the diagrams in each dimension
-  # dims are the homological dimensions of diagrams to consider
-  # p is a number >=1
-  # q is a finite number >= 1
-  # distance is the distance metric to use, either "wasserstein" or "fisher"
-  # sigma is the positive bandwidth for persistence fisher distance
 
   if(is.numeric(diagram_groups[[1]][[1]]) == F)
   {
+    # distance matrices were not precomputed
+    
     # create combination of all pairs of diagram group elements and their group indices
     combinations <- do.call(rbind,lapply(X = 1:length(diagram_groups),FUN = function(X){
       
@@ -480,7 +485,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,rho,num_worker
     
     # export necessary libraries and variables to cl
     parallel::clusterEvalQ(cl,c(library(clue),library(rdist)))
-    parallel::clusterExport(cl,c("check_diagram","diagram_distance","diagram_groups","dist_mats","dims","combinations","p","check_param","sigma","rho"),envir = environment())
+    parallel::clusterExport(cl,c("check_diagram","diagram_distance","diagram_groups","dist_mats","dims","combinations","p","check_param","sigma","rho","figtree"),envir = environment())
     
     tryCatch(expr = {
       
@@ -493,7 +498,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,rho,num_worker
         
         parallel::clusterExport(cl,"dim")
         
-        d_tots <- foreach::`%dopar%`(obj = foreach::foreach(comb = 1:nrow(combinations),.combine = c,.export = "diagram_distance"),ex = {
+        d_tots <- foreach::`%dopar%`(obj = foreach::foreach(comb = 1:nrow(combinations),.combine = c,.packages = c("Rcpp")),ex = {
           
           # get group and diagram indices from combinations
           g <- as.numeric(combinations[comb,1])
@@ -506,7 +511,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,rho,num_worker
           # if the distance between these two diagrams has not already been computed, compute their distance
           if(dist_mats[dim_ind][[1]][diagram_groups[[g]][[d1]]$ind,diagram_groups[[g]][[d2]]$ind] == -1)
           {
-            res <- diagram_distance(D1 = diagram_groups[[g]][[d1]]$diag,D2 = diagram_groups[[g]][[d2]]$diag,p = p,dim = dim,distance = distance,sigma = sigma,rho = rho)^q
+            res <- diagram_distance(D1 = diagram_groups[[g]][[d1]]$diag,D2 = diagram_groups[[g]][[d2]]$diag,p = p,dim = dim,distance = distance,rho = rho,sigma = sigma)^q
           }else
           {
             # else return the already stored distance value
@@ -558,15 +563,21 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,rho,num_worker
     # dist_mats are supplied in full
     statistics <- unlist(lapply(X = dims,FUN = function(X){
       
+      # sum starting at 0
       s <- 0
+      
+      # add to sum for each group
       for(g in 1:length(group_sizes))
       {
+        # get all pairs of indices in the group g
         inds <- diagram_groups[[g]]
         inds <- expand.grid(inds,inds)
         inds <- inds[which(as.numeric(inds[,1]) < as.numeric(inds[,2])),]
         colnames(inds) <- NULL
         rownames(inds) <- NULL
         inds <- as.matrix(inds)
+        
+        # add normalized sum of within group distances
         s <- s + (sum((dist_mats[[which(dims == X)[[1]]]][unlist(inds)])^q))/(group_sizes[[g]]*(group_sizes[[g]] - 1))
       }
       return(s)

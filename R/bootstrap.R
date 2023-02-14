@@ -53,7 +53,10 @@
 #' }
 
 bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim = 0,thresh,distance_mat = FALSE,ripser = NULL,ignore_infinite_cluster = TRUE,calculate_representatives = FALSE,num_samples = 30,alpha = 0.05,return_subsetted = FALSE,return_diag = TRUE,num_workers = parallelly::availableCores(omit = 1)){
-
+  
+  # function for thresholding the points computed in a diagram
+  # based on persistence
+  
   # error check parameters
   if(is.null(distance_mat))
   {
@@ -219,7 +222,7 @@ bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim
     diag <- diagram_to_df(diag)
   }
   
-  # compute distance matrix in parallel if FUN != "PyH"
+  # compute in parallel if FUN != "PyH"
   if(FUN != "PyH")
   {
     cl <- parallel::makeCluster(num_workers)
@@ -283,7 +286,8 @@ bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim
     }},
   error = function(e){stop(e)},
   finally = {
-             
+           
+    # make sure to close cluster  
     if(FUN != "PyH")
     {
       parallel::stopCluster(cl)
@@ -318,6 +322,7 @@ bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim
     }
     ret_list$subsetted_diag <- diag[inds,]
     
+    # deal with representatives
     if(calculate_representatives == T & FUN == "ripsDiag")
     {
       ret_list$subsetted_representatives = representatives[inds]

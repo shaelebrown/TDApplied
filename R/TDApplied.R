@@ -13,7 +13,7 @@
 #' persistence diagrams, and (5) provide parallelized methods for machine learning
 #' and inference for persistence diagrams.
 #'
-#' @useDynLib TDApplied
+#' @useDynLib TDApplied, .registration = TRUE
 #' @docType package
 #' @name TDApplied
 #' @importFrom clue solve_LSAP
@@ -28,4 +28,6 @@
 #' @importFrom utils combn
 #' @importFrom iterators iter
 #' @importFrom graphics abline legend
+#' @keywords internal
+"_PACKAGE"
 NULL

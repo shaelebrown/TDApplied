@@ -96,7 +96,8 @@ if(require("TDA") & require("TDAstats"))
   
   # calculate their 1D MDS embedding in dimension 0 with the approximated Persistence
   # Fisher metric
-  mds <- diagram_mds(diagrams = g,k = 1,dim = 0,distance = "fisher",sigma = 1,rho = 0.001,num_workers = 2)
+  mds <- diagram_mds(diagrams = g,k = 1,dim = 0,distance = "fisher",sigma = 1,
+                     rho = 0.001,num_workers = 2)
   
 }
 }

@@ -84,20 +84,10 @@
 permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_mats = NULL,group_sizes = NULL,paired = FALSE,distance = "wasserstein",sigma = NULL,rho = NULL,num_workers = parallelly::availableCores(omit = 1),verbose = FALSE){
 
   # function to test whether or not multiple groups of persistence diagrams come from the same geometric process
-  # ... are the groups of diagrams, either stored as lists or vectors
-  # iterations is the number of permutations we will calculate for group labels
-  # p is the wasserstein distance parameter, p >= 1
-  # q is the finite distance exponential, q >= 1
-  # dims is a vector of desired homological dimensions
-  # paired is a boolean which determines if dependencies exist between diagrams of the same indices in different groups
-  # distance is either "wasserstein" or "fisher" and determines how distances will be computed between diagrams
-  # sigma is the positive bandwidth for the Fisher information metric, NULL by default
-  # num_workers is the number of cores used for parallelization, default available number of cores minus 1.
-  # verbose is either TRUE or FALSE (default), printing runtime of function call
 
   if(is.null(dist_mats))
   {
-    # retrieve diagram groups
+    # dist_mats not precomputed, retrieve diagram groups
     diagram_groups <- list(...)
     
     # make sure there are at least two groups
@@ -132,7 +122,9 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_
     
   }else
   {
+    # distance matrices supplied
     
+    # error check parameters
     check_param(group_sizes,param_name = "group_sizes",numeric = T,whole_numbers = T,multiple = T,finite = T,at_least_one = T)
     
     if(!is.list(dist_mats))
@@ -167,11 +159,12 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_
       }
     }
     
+    # split the vector 1:n (i.e. diagram indices) into groups according to group_sizes
     n <- sum(group_sizes)
     diagram_groups <- split(x = 1:n,f = unlist(lapply(X = 1:length(group_sizes),FUN = function(X){return(rep(X,length = group_sizes[[X]]))})))
   }
 
-  # error check function parameters
+  # error check general parameters
   check_param("iterations",iterations,whole_numbers = T,at_least_one = T,numeric = T,finite = T)
   check_param("p",p,finite = F,at_least_one = T,numeric = T,multiple = F)
   check_param("q",q,at_least_one = T,numeric = T,multiple = F)
@@ -213,6 +206,7 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_
 
     if(is.list(diagram_groups[[1]][[1]]))
     {
+      # distance matrices not supplied, use actual diagrams when permuting
       if(paired == F)
       {
         # sample groups from their union, maintaining group sizes
@@ -254,6 +248,7 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_
       }
     }else
     {
+      # distance matrices supplied, use indices when permuting
       if(paired == F)
       {
         # sample groups from their union, maintaining group sizes
@@ -397,19 +392,13 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_
 independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,rho = NULL,t = 1,num_workers = parallelly::availableCores(omit = 1),verbose = FALSE,Ks = NULL,Ls = NULL){
   
   # function to test whether or not two groups of persistence diagrams are independent
-  # g1 and g2 are the groups of diagrams, either stored as lists or vectors
-  # dims is a vector of desired homological dimensions
-  # sigma is the positive bandwidth for the Fisher information metric, 1 by default
-  # t is the positive scale for the persistence Fisher kernel, 1 by default
-  # num_workers is the number of cores used in parallelization, maximum minus 1 by default.
-  # verbose is either TRUE or FALSE (default), printing runtime of function call
   
   # set internal variables to NULL to avoid build issues
   r <- NULL
   
   if(is.null(Ks) | is.null(Ls))
   {
-    # retrieve diagram groups
+    # Gram matrices are not supplied, retrieve diagram groups
     diagram_groups <- list(g1,g2)
     
     # make sure there are at least two groups
@@ -438,6 +427,9 @@ independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,rho = NULL,t = 1,num
     
   }else
   {
+    # Gram matrices are supplied
+    
+    # set g1 and g2 to NULL to avoid issues
     if(missing(g1))
     {
       g1 <- NULL
@@ -538,6 +530,7 @@ independence_test <- function(g1,g2,dims = c(0,1),sigma = 1,rho = NULL,t = 1,num
       B <- B * B
       diag(B) <- rep(0,m)
       var <- 2*(m-4)*(m-5)*(sum(colSums(B)))/((m-3)*(m-2)*(m-1)*m)
+      # error check var
       if(var == 0)
       {
         stop("A zero variance was calculated, please make sure that both g1 and g2 contain at least 2 distinct diagrams.")

@@ -8,6 +8,8 @@ test_that("diagram_distance detects incorrect parameters correctly",{
   expect_error(diagram_distance(D1 = D,D2 = D,dim = 1,p = "2"),"numeric")
   expect_error(diagram_distance(D1 = D,D2 = D,dim = 1,distance = "Wasserstein"),"distance must")
   expect_error(diagram_distance(D1 = D,D2 = D,dim = 1,distance = "fisher",sigma = NA),"sigma must")
+  expect_error(diagram_distance(D1 = D,D2 = D,dim = 1,distance = "fisher",sigma = 1,rho = 0),"positive")
+  expect_error(diagram_distance(D1 = D,D2 = D,dim = 1,distance = "fisher",sigma = 1,rho = NA),"NA")
   
 })
 
@@ -121,6 +123,8 @@ test_that("diagram_distance is computing correctly",{
   expect_equal(diagram_distance(phom1,phom2,p = 2),min_wass_2)
   expect_equal(diagram_distance(phom1,phom2,p = 3),min_wass_3)
   expect_equal(diagram_distance(phom1,phom2,p = Inf),min_bottleneck)
+  
+  expect_equal(diagram_distance(phom1,phom2,distance = "fisher",sigma = 1),diagram_distance(phom1,phom2,distance = "fisher",sigma = 1,rho = 0.0001),tolerance = 0.0001)
   
 })
 

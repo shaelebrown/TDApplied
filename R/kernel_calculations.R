@@ -41,6 +41,8 @@
 
 diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1,rho = NULL){
   
+  # function to compute the Persistence Fisher kernel of two persistence diagrams
+  
   # check kernel-specific parameter, other inputs are checked in distance calculation
   check_param("t",t,non_negative = T,positive = F,numeric = T,finite = T,multiple = F)
   
@@ -89,6 +91,8 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1,rho = NULL){
 #' }
 
 gram_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,sigma = 1,t = 1,rho = NULL,num_workers = parallelly::availableCores(omit = 1)){
+  
+  # function to compute (cross) Gram matrix in parallel
   
   # compute gram matrix from distance matrix
   K <- exp(-t*distance_matrix(diagrams = diagrams,other_diagrams = other_diagrams,dim = dim,distance = "fisher",sigma = sigma,rho = rho,num_workers = num_workers))

@@ -3,6 +3,7 @@
 \docType{package}
 \name{TDApplied}
 \alias{TDApplied}
+\alias{TDApplied-package}
 \title{Machine learning and inference for persistence diagrams}
 \description{
 Topological data analysis is a powerful tool for finding non-linear global structure
@@ -18,3 +19,21 @@ for pairs of persistence diagrams, (4) contribute tools for the interpretation o
 persistence diagrams, and (5) provide parallelized methods for machine learning
 and inference for persistence diagrams.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/shaelebrown/TDApplied}
+  \item Report bugs at \url{https://github.com/shaelebrown/TDApplied/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Shael Brown \email{shaelebrown@gmail.com}
+
+Authors:
+\itemize{
+  \item Dr. Reza Farivar \email{reza.farivar@mcgill.ca} [funder]
+}
+
+}
+\keyword{internal}
