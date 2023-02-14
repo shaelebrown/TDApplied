@@ -16,7 +16,7 @@
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param p a positive number representing the wasserstein power, a number at least 1 (infinity for the bottleneck distance), default 2.
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default NULL.
-#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. 
+#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If supplied, distance matrix calculation is sequential.
 #' @param eig a boolean indicating whether the eigenvalues should be returned.
 #' @param add a boolean indicating if an additive constant c* should be computed, and added to the non-diagonal dissimilarities such that the modified dissimilarities are Euclidean.
 #' @param x.ret a boolean indicating whether the doubly centered symmetric distance matrix should be returned.
@@ -119,7 +119,7 @@ diagram_mds <- function(diagrams,D = NULL,k = 2,distance = "wasserstein",dim = 0
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1.
-#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. 
+#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If supplied, Gram matrix calculation is sequential.
 #' @param centers number of clusters to initialize, no more than the number of diagrams although smaller values are recommended.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #' @param ... additional parameters for the \code{\link[kernlab]{kkmeans}} kernlab function.
@@ -376,7 +376,7 @@ predict_diagram_kkmeans <- function(new_diagrams,K = NULL,clustering,num_workers
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1.
-#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. 
+#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If supplied, Gram matrix calculation is sequential.
 #' @param features number of features (principal components) to return, default 1.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #' @param th the threshold value under which principal components are ignored (default 0.0001).
@@ -609,7 +609,7 @@ predict_diagram_kpca <- function(new_diagrams,K = NULL,embedding,num_workers = p
 #' @param dim a non-negative integer vector of homological dimensions in which the model is to be fit.
 #' @param t a vector of positive numbers representing the grid of values for the scale of the persistence Fisher kernel, default 1.
 #' @param sigma a vector of positive numbers representing the grid of values for the bandwidth of the Fisher information metric, default 1.
-#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. 
+#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If supplied, distance matrix calculations are sequential.
 #' @param y a response vector with one label for each persistence diagram. Must be either numeric or factor.
 #' @param type a string representing the type of task to be performed.
 #' @param distance_matrices an optional list of precomputed Fisher distance matrices, corresponding to the rows in `expand.grid(dim = dim,sigma = sigma)`, default NULL.

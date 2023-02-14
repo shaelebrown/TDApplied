@@ -34,7 +34,7 @@ storing the current distances which have been pre-computed.}
 
 \item{sigma}{the positive bandwidth for the persistence Fisher distance.}
 
-\item{rho}{the approximation heuristic for Fisher information metric.}
+\item{rho}{the approximation heuristic for Fisher information metric, results in sequential computation.}
 
 \item{num_workers}{the number of cores used for parallel computation.}
 

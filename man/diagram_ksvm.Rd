@@ -37,7 +37,7 @@ diagram_ksvm(
 
 \item{sigma}{a vector of positive numbers representing the grid of values for the bandwidth of the Fisher information metric, default 1.}
 
-\item{rho}{an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL.}
+\item{rho}{an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If supplied, distance matrix calculations are sequential.}
 
 \item{y}{a response vector with one label for each persistence diagram. Must be either numeric or factor.}
 

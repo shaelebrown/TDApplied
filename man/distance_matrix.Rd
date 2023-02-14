@@ -28,7 +28,7 @@ distance_matrix(
 
 \item{sigma}{a positive number representing the bandwidth of the Fisher information metric, default NULL.}
 
-\item{rho}{an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL.}
+\item{rho}{an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If not NULL then matrix is calculated sequentially.}
 
 \item{num_workers}{the number of cores used for parallel computation, default is one less than the number of cores on the machine.}
 }
@@ -42,7 +42,9 @@ or between two lists, \eqn{(D_1,D_2,\dots,D_n)} and \eqn{(D'_1,D'_2,\dots,D'_n)}
 \details{
 Distance matrices of persistence diagrams are used in downstream analyses, like in the 
 \code{\link{diagram_mds}}, \code{\link{permutation_test}} and \code{\link{diagram_ksvm}} functions. 
-If `distance` is "fisher" then `sigma` must not be NULL.
+If `distance` is "fisher" then `sigma` must not be NULL. Since the matrix is computed sequentially when
+approximating the Fisher information metric this is only recommended when the persistence diagrams
+contain many points and when the number of available cores is small.
 }
 \examples{
 

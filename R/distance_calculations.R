@@ -298,7 +298,9 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
 #'
 #' Distance matrices of persistence diagrams are used in downstream analyses, like in the 
 #' \code{\link{diagram_mds}}, \code{\link{permutation_test}} and \code{\link{diagram_ksvm}} functions. 
-#' If `distance` is "fisher" then `sigma` must not be NULL.
+#' If `distance` is "fisher" then `sigma` must not be NULL. Since the matrix is computed sequentially when
+#' approximating the Fisher information metric this is only recommended when the persistence diagrams
+#' contain many points and when the number of available cores is small.
 #'
 #' @param diagrams a list of persistence diagrams, either the output of persistent homology calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
 #' @param other_diagrams either NULL (default) or another list of persistence diagrams to compute a cross-distance matrix.
@@ -306,13 +308,13 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
 #' @param distance a character determining which metric to use, either "wasserstein" (default) or "fisher".
 #' @param p a number representing the wasserstein power parameter, at least 1 and default 2.
 #' @param sigma a positive number representing the bandwidth of the Fisher information metric, default NULL.
-#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. 
+#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If not NULL then matrix is calculated sequentially.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #'
 #' @return the numeric distance matrix.
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
-#' @importFrom foreach foreach %dopar% %:%
+#' @importFrom foreach foreach %dopar% %:% %do%
 #' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
 #' @importFrom parallelly availableCores
 #' @importFrom doParallel registerDoParallel stopImplicitCluster
@@ -385,12 +387,22 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
     num_workers <- parallelly::availableCores(omit = 1)
   }
 
-  # compute distance matrix in parallel
+  # set up cluster
   m = length(diagrams)
   cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
   parallel::clusterEvalQ(cl,c(library("clue"),library("rdist")))
-  parallel::clusterExport(cl,varlist = c("diagram_distance","check_diagram","check_param","dim","p","distance","sigma","diagrams","other_diagrams"),envir = environment())
+  parallel::clusterExport(cl,varlist = c("diagram_distance","check_diagram","check_param","dim","p","distance","sigma","diagrams","other_diagrams","figtree","rho"),envir = environment())
+  
+  # if approximation to Fisher information metric is used, run sequentially
+  # otherwise in parallel
+  if(distance == "fisher" & !is.null(rho))
+  {
+    foreach_func <- foreach::`%do%`
+  }else
+  {
+    foreach_func <- foreach::`%dopar%`
+  }
   
   # catch errors during parallel calculations to make sure
   # clusters are closed
@@ -401,14 +413,14 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
       # not cross distance matrix, only need to compute the upper diagonal
       # since the matrix is symmetric
       d <- matrix(data = 0,nrow = m,ncol = m)
-      d_off_diag <- foreach::`%dopar%`(obj = foreach::foreach(r = iterators::iter(which(upper.tri(d),arr.ind = T),by = 'row'),.combine = c),ex = {diagram_distance(D1 = diagrams[[r[[1]]]],D2 = diagrams[[r[[2]]]],dim = dim,p = p,distance = distance,sigma = sigma)})
+      d_off_diag <- foreach_func(obj = foreach::foreach(r = iterators::iter(which(upper.tri(d),arr.ind = T),by = 'row'),.combine = c),ex = {diagram_distance(D1 = diagrams[[r[[1]]]],D2 = diagrams[[r[[2]]]],dim = dim,p = p,distance = distance,sigma = sigma,rho = rho)})
       d[upper.tri(d)] <- d_off_diag
       d[which(upper.tri(d),arr.ind = T)[,c("col","row")]] <- d_off_diag
       diag(d) <- rep(0,m)
     }else
     {
       # cross distance matrix, need to compute all entries
-      d <- foreach::`%dopar%`(foreach::`%:%`(foreach::foreach(r = 1:length(other_diagrams),.combine = cbind),foreach::foreach(X = 1:length(diagrams),.combine = c)),ex = {diagram_distance(D1 = other_diagrams[[r]],D2 = diagrams[[X]],dim = dim,p = p,distance = distance,sigma = sigma,rho = rho)})
+      d <- foreach_func(foreach::`%:%`(foreach::foreach(r = 1:length(other_diagrams),.combine = cbind),foreach::foreach(X = 1:length(diagrams),.combine = c)),ex = {diagram_distance(D1 = other_diagrams[[r]],D2 = diagrams[[X]],dim = dim,p = p,distance = distance,sigma = sigma,rho = rho)})
     }
     
   }, warning = function(w){warning(w)},
@@ -446,13 +458,13 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
 #' @param q a finite number at least 1.
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".
 #' @param sigma the positive bandwidth for the persistence Fisher distance.
-#' @param rho the approximation heuristic for Fisher information metric.
+#' @param rho the approximation heuristic for Fisher information metric, results in sequential computation.
 #' @param num_workers the number of cores used for parallel computation.
 #' @param group_sizes for when using precomputed distance matrices.
 #'
 #' @importFrom parallel makeCluster clusterEvalQ clusterExport stopCluster
 #' @importFrom doParallel registerDoParallel stopImplicitCluster
-#' @importFrom foreach foreach %dopar%
+#' @importFrom foreach foreach %dopar% %do%
 #' @importFrom utils combn
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @keywords internal
@@ -464,6 +476,16 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,rho,num_worker
 
   # function to compute the F_{p,q} loss between groups of diagrams
   # diagram_groups are the (possibly permuted) groups of diagrams
+  
+  # if approximation to Fisher information metric is used, run sequentially
+  # otherwise in parallel
+  if(distance == "fisher" & !is.null(rho))
+  {
+    foreach_func <- foreach::`%do%`
+  }else
+  {
+    foreach_func <- foreach::`%dopar%`
+  }
 
   if(is.numeric(diagram_groups[[1]][[1]]) == F)
   {
@@ -498,7 +520,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,rho,num_worker
         
         parallel::clusterExport(cl,"dim")
         
-        d_tots <- foreach::`%dopar%`(obj = foreach::foreach(comb = 1:nrow(combinations),.combine = c,.packages = c("Rcpp")),ex = {
+        d_tots <- foreach_func(obj = foreach::foreach(comb = 1:nrow(combinations),.combine = c),ex = {
           
           # get group and diagram indices from combinations
           g <- as.numeric(combinations[comb,1])

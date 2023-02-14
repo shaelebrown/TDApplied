@@ -13,7 +13,7 @@ diagram_kpca(
   rho = NULL,
   features = 1,
   num_workers = parallelly::availableCores(omit = 1),
-  th = 0.0001
+  th = 1e-04
 )
 }
 \arguments{
@@ -27,7 +27,7 @@ diagram_kpca(
 
 \item{sigma}{a positive number representing the bandwidth for the Fisher information metric, default 1.}
 
-\item{rho}{an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL.}
+\item{rho}{an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If supplied, Gram matrix calculation is sequential.}
 
 \item{features}{number of features (principal components) to return, default 1.}
 

@@ -35,7 +35,7 @@ diagram_mds(
 
 \item{sigma}{a positive number representing the bandwidth for the Fisher information metric, default NULL.}
 
-\item{rho}{an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL.}
+\item{rho}{an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If supplied, distance matrix calculation is sequential.}
 
 \item{eig}{a boolean indicating whether the eigenvalues should be returned.}
 

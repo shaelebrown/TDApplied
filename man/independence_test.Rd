@@ -26,7 +26,7 @@ independence_test(
 
 \item{sigma}{a positive number representing the bandwidth for the Fisher information metric, default 1.}
 
-\item{rho}{an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL.}
+\item{rho}{an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If supplied, calculation of Gram matrices is sequential.}
 
 \item{t}{a positive number representing the scale for the persistence Fisher kernel, default 1.}
 

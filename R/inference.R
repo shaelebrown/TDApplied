@@ -27,7 +27,7 @@
 #' @param paired a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups, default FALSE
 #' @param distance a string which determines which type of distance calculation to carry out, either "wasserstein" (default) or "fisher".
 #' @param sigma the positive bandwidth for the Fisher information metric, default NULL.
-#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. 
+#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If supplied, code execution is sequential.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #' @param verbose a boolean flag for if the time duration of the function call should be printed, default FALSE
 #'
@@ -340,7 +340,7 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_
 #' @param g2 the second group of persistence diagrams, where each diagram was either the output from a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
 #' @param dims a non-negative integer vector of the homological dimensions in which the test is to be carried out, default c(0,1).
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1.
-#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. 
+#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If supplied, calculation of Gram matrices is sequential.
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #' @param Ks an optional list of precomputed Gram matrices for the first group of diagrams, with one element for each dimension. If not NULL and `Ls` is not NULL then `g1` and `g2` do not need to be supplied.
