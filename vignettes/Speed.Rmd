@@ -1,0 +1,389 @@
+---
+title: "Benchmarking and Speedups"
+author: "Shael Brown and Dr. Reza Farivar"
+output: 
+  rmarkdown::html_document:
+    fig_caption: yes
+vignette: >
+  %\VignetteIndexEntry{Introduction to TDApplied}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: REFERENCES.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+The TDApplied package provides a wide variety of tools for performing powerful applied analyses of multiple persistence diagrams, and in order to make these analyses more practical a number of computational speedups have been built-in. These speedups involve other programming languages (python and C++), parallel computing and intuitive tricks, and result in significant performance gains (against other R packages). In this vignette we will describe the methods that are used to make TDApplied a highly practical and scalable package for applied topological data analysis in R, as well as benchmarking TDApplied functions against suitable counterparts. All benchmarking was carried out on a Windows 10 64-bit machine, with an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM.
+
+# Speedups
+
+## Parallelization
+
+When performing multiple independent computations, parallelization can increase speed by performing several computations concurrently. TDApplied utilizes parallelization in three ways to achieve significant performance gains:
+
+1. Calculating distance and Gram matrices in parallel - these matrices are the backbone, and limiting runtime factor, of all TDApplied machine learning and inference methods.
+2. Carrying out the bootstrap procedure in parallel - each bootstrap iteration involves an independent distance calculation.
+3. Determining the loss-function value in the permutation test procedure - where distances are calculated between each pair of diagrams in the same (permuted) group.
+
+Parallelization is performed in an operating-system agnostic manner, ensuring that these speedups are available to all TDApplied users.
+
+## Fisher Information Metric Approximation
+
+The Fisher information metric unlocks the door to a number of TDApplied machine learning and inference functions via the persistence Fisher kernel, however its computational complexity is quadratic in the number of points in its input diagrams [@persistence_fisher] making calculations using diagrams with many points highly prohibitive. However, a fast approximation exists for the Fisher information metric using the Fast Gauss Transform [@FGT]. This approximation reduces the runtime complexity of the distance calculation to be linear - a huge performance gain with large persistence diagrams. The implementation of the Fast Gauss Transform at https://github.com/vmorariu/figtree was copied with only slight modifications to interface with Rcpp [@Rcpp], providing the approximation functionality. Note that the "epsilon" parameter in the original C++ code is called `rho` in TDApplied's implementation in order to avoid confusion about error bounds - epsilon usually denotes an error bound (like in the original code), however `rho` is not itself a bound on the approximation error of the metric itself rather for a subcalculation. We recommend using the approximation whenever dealing with large persistence diagrams.
+
+To illustrate how significant this speedup can be we simulated unit spheres and tori (with inner tube radius 0.25 and major radius 0.75) with different numbers of points 100,200,...,1000 (with 10 iterations at each number of points), calculated their persistence diagrams and timed their Fisher information metric with and without approximation. The plot below shows the results (plotting the mean runtime with a 95\% confidence interval):
+
+```{r}
+# generate persistence diagrams from spheres and tori with  100,200,...,1000 data points.
+  runtimes_approx <- data.frame(n_row = numeric(),method = character(),time_in_sec = numeric())
+  for(n_row in seq(100,1000,100)){
+    
+    for(iteration in 1:10)
+    {
+      # simulate a sphere and a torus
+      sphere <- TDA::sphereUnif(n = n_row,d = 2)
+      torus <- TDA::torusUnif(n = n_row,a = 0.25,c = 0.75)
+      
+      # compute their persistence diagrams
+      sphere_diag <- PyH(sphere,maxdim = 2,thresh = 1,ripser = ripser)
+      torus_diag <- PyH(torus,maxdim = 2,thresh = 1,ripser = ripser)
+      
+      # compute their Fisher information distances in all dimensions and benchmark
+      start_time_exact = Sys.time()
+      diagram_distance(sphere_diag,torus_diag,dim = 0,distance = "fisher",sigma = 1)
+      diagram_distance(sphere_diag,torus_diag,dim = 1,distance = "fisher",sigma = 1)
+      diagram_distance(sphere_diag,torus_diag,dim = 2,distance = "fisher",sigma = 1)
+      end_time_exact = Sys.time()
+      time_diff_exact = as.numeric(end_time_exact - start_time_exact,units = "secs")
+      
+      start_time_approximation = Sys.time()
+      diagram_distance(sphere_diag,torus_diag,dim = 0,distance = "fisher",sigma = 1,rho = 0.001)
+      diagram_distance(sphere_diag,torus_diag,dim = 1,distance = "fisher",sigma = 1,rho = 0.001)
+      diagram_distance(sphere_diag,torus_diag,dim = 2,distance = "fisher",sigma = 1,rho = 0.001)
+      end_time_approximation = Sys.time()
+      time_diff_approximation = as.numeric(end_time_approximation - start_time_approximation,units = "secs")
+      
+      runtimes_approx = rbind(runtimes_approx,data.frame(n_row = n_row,
+                                                         method = "Exact",
+                                                         time_in_sec = time_diff_exact))
+      runtimes_approx = rbind(runtimes_approx,data.frame(n_row = n_row,
+                                                         method = "Approximation",
+                                                         time_in_sec = time_diff_approximation))
+      
+    }
+    print(paste0("Done ",n_row," rows"))
+    
+  }
+  # compute means and sd's at each value of rows for both methods
+  summary_table_approx = data.frame(n_row = numeric(),mean = numeric(),sd = numeric(),
+                                    method = character())
+  for(n_row in seq(100,1000,100))
+  {
+    for(m in c("Exact","Approximation"))
+    {
+      result = data.frame(n_row = n_row,
+                          mean = mean(runtimes_approx[which(runtimes_approx$n_row == n_row
+                                                            & runtimes_approx$method == m),
+                                                      3]),
+                          sd = sd(runtimes_approx[which(runtimes_approx$n_row == n_row 
+                                                        & runtimes_approx$method == m),
+                                                  3]),
+                          method = m)
+      summary_table_approx = rbind(summary_table_approx,result)
+    }
+  }
+```
+
+```{r}
+summary_table_approx = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.0109694957733154,0.0594853162765503,0.0540436983108521,0.469167232513428,0.182804441452026,1.57912936210632,0.410391473770142,3.69215035438538,0.822147560119629,7.32947452068329,1.40918028354645,12.8482979059219,2.47986209392548,20.9446493387222,3.76364696025848,31.2942998409271,5.3408855676651,44.884921503067,7.59271986484528,62.6113245010376),sd = c(0.00193647497299544,0.00600547924173666,0.00563514382927968,0.0210564179408907,0.0129015865529426,0.0403660633577451,0.0218388344325696,0.077772517180065,0.0319754379649263,0.0762356686089166,0.0567664459109207,0.171412828638123,0.240398206520162,0.398396221629952,0.320522372278111,0.459994662433323,0.365647918767674,0.417413443923572,0.394211392866084,0.746903966284143),package = rep(c("TDApplied","TDAstats"),10))
+```
+
+```{r,echo = F,warning=F,fig.height = 4,fig.width = 7,fig.align = 'center'}
+plot(summary_table_approx$n_row[summary_table_approx$method=="Exact"], 
+     summary_table_approx$mean[summary_table_approx$method=="Exact"], 
+     type="b",
+     xlim=range(summary_table_approx$n_row),
+     ylim=range(0,summary_table_approx$mean+1.96*summary_table_approx$sd/sqrt(10)),
+     xlab = "Points in shape",ylab = "Mean execution time (sec)",
+     main = "Circles")
+lines(summary_table_approx$n_row[summary_table_approx$method=="Approximation"],
+      summary_table_approx$mean[summary_table_approx$method=="Approximation"], 
+      col=2, type="b")
+legend(x = 200,y = 1.5,legend = c("Approximation","Exact"),
+       col = c("red","black"),lty = c(1,1),cex = 0.8)
+arrows(summary_table_approx$n_row[summary_table_approx$method == "Approximation"], 
+       summary_table_approx$mean[summary_table_approx$method == "Approximation"]
+       -1.96*summary_table_approx$sd[summary_table_approx$method == "Approximation"]/sqrt(10),
+       summary_table_approx$n_row[summary_table_approx$method == "Approximation"], 
+       summary_table_approx$mean[summary_table_approx$method == "Approximation"]
+       +1.96*summary_table_approx$sd[summary_table_approx$method == "Approximation"]/sqrt(10), 
+       length=0.05, angle=90, code=3,col = "red")
+arrows(summary_table_approx$n_row[summary_table_approx$method == "Exact"], 
+       summary_table_approx$mean[summary_table_approx$method == "Exact"]
+       -1.96*summary_table_approx$sd[summary_table_approx$method == "Exact"]/sqrt(10), 
+       summary_table_approx$n_row[summary_table_approx$method == "Exact"], 
+       summary_table_approx$mean[summary_table_approx$method == "Exact"]
+       +1.96*summary_table_approx$sd[summary_table_approx$method == "Exact"]/sqrt(10), 
+       length=0.05, angle=90, code=3,col = "black")
+```
+
+
+## Using Pre-Computed Matrices
+
+Redundancy can be a huge computational strain when performing multiple related and slow calculations. Applied topological data analysis unfortunately falls victim to this problem since machine learning and inference methods are built on calculating (potentially the same) distance/Gram matrices. In order to circumvent this issue TDApplied machine learning and inference functions can accept as input precomputed distance/Gram matrices. Therefore, if a number of analyses are being carried out with the same persistence diagrams and with the same distance/kernel parameter choices (as is often desired) then the distance/Gram matrices can each be computed once and reused across functions.
+
+To illustrate how this works in practice we will use the `generate_TDApplied_vignette_data` to generate nine persistence diagrams and analyze them with MDS ,kernel k-means and kernel PCA:
+
+```{r,echo = T,eval = F}
+# create noisy copies of D1, D2 and D3
+g <- generate_TDApplied_vignette_data(3,3,3)
+
+# calculate MDS embedding
+mds <- diagram_mds(diagrams = g,k = 2,dim = 0,sigma = 1.5,distance = "fisher")
+                              
+# calculate kmeans clusters with 3 centers
+clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 1.5)
+
+# calculate kpca embedding
+pca <- diagram_kpca(diagrams = g,dim = 0,t = 2,sigma = 1.5,features = 2)
+```
+
+The time taken to run the MDS, k-means and PCA lines was about 2.53s. Noting that the distance/Gram matrices had shared parameters (i.e. the distance matrix was calculated with the Fisher information metric and the values of t and sigma were all shared), we then repeated the analysis by pre-computing one distance (and Gram) matrix and using these in all three analyses:
+
+```{r,eval = F,echo = T}
+D <- distance_matrix(diagrams = g,dim = 0,sigma = 1.5,distance = "fisher")
+K <- exp(-2*D)
+class(K) <- "kernelMatrix"
+
+# calculate MDS embedding
+mds <- diagram_mds(D = D,k = 2)
+
+# calculate kmeans clusters with 3 centers
+clust <- diagram_kkmeans(diagrams = g,K = K,centers = 3,dim = 0,t = 2,sigma = 1.5)
+
+# calculate kpca embedding
+pca <- diagram_kpca(diagrams = g,K = K,dim = 0,t = 2,sigma = 1.5,features = 2)
+```
+
+The new runtime (including calculating the distance and Gram matrices) was about 0.59s, over three times faster than the original. We then repeated the analyses using 300 persistence diagrams, i.e. with
+
+```{r,echo = T,eval = F}
+# create noisy copies of D1, D2 and D3
+g <- generate_TDApplied_vignette_data(100,100,100)
+```
+
+The timing scaled proportionally - without using precomputed matrices the time taken was about 2.03 minutes and with precomputed matrices the time taken was about 39.69s. We recommend using precomputed matrices whenever performing multiple similar analyses of the same persistence diagrams.
+
+## Storing Calculations in `permutation_test`
+
+Another significant source of redundancy can be found in the `permutation_test` function - in each calculation of the loss function a distance value is computed between each pair of diagrams in the same (possibly permuted) group, however diagrams will often appear in the same permuted group meaning distances would be needlessly recalculated. To solve this problem the `permutation_test` function creates an initially trivial distance matrix (with entries -1) between all persistence diagrams across all groups, updates its entries when new distance calculations are performed (in parallel as discussed earlier) and retrieves already computed values whenever possible. While computing a full distance matrix (also in parallel) may have been simpler, depending on the group sizes and number of permutations not every pair of diagrams may appear in some permuted group together, so the implemented method avoids redundancy without calculating unnecessary distances.
+
+# Benchmarking Against Similar Packages
+
+In order to properly situate TDApplied in the landscape of software for topological data analysis, we will compare the speed of its calculations to similar calculations from other packages. In the following sections we will benchmark 
+
+(1) Persistent (co)homology calculations with TDApplied's `PyH` and TDAstats' `calculate_homology`.
+(2) Wasserstein distances between persistence diagrams with TDApplied's `diagram_distance` and TDA's `wasserstein`.
+(3) Wasserstein distances between persistence diagrams with TDApplied's `diagram_distance` and the persim python module's `wasserstein`.
+
+Another pair of functions that we could benchmark is TDA's `bootstrapDiagram` function and TDApplied's `bootstrap_persistence_thresholds`, since they use the same bootstrap procedure. However, since both functions are built on parallelized distance calculations, comparing the runtime of TDA's `wasserstein` and TDApplied's `diagram_distance` functions should provide the same conclusion of which implementation is faster and more scalable. Nevertheless, one major advantage of the `bootstrap_persistence_thresholds` function over the `bootstrapDiagram` function is that the latter uses the function `mclapply` for parallelization, which does not work on Windows machines, whereas the parallelization of the former function is more flexible and does work on Windows machines.
+
+An important note is that the three distance functions (TDApplied's `diagram_distance`, TDA's `wasserstein` and persim's `wasserstein`) often did not agree on the distance value of certain calculations. Without knowing the exact details of the persim and TDA functions, one possible explanation is that the other two packages use alternative definitions for the wasserstein/bottleneck distances. For example, the definitions of wasserstein distance in [@Robinson_Turner] and [@ComputingPH] are different. Nevertheless, the `diagram_distance` function has been tested against examples with distances worked out by hand (these can be found in the test folder of the package), and a proof of algorithm correctness is given in the Appendix of the "Introduction to TDApplied" vignette.
+
+The script that was used to perform benchmarking (and plotting the results) is available in the `exec` directory of this package, using `PyH` in certain cases and thus requiring python. A simple error check is included for the installation of the reticulate package, but the script will throw an error if reticulate is not properly connected with python. In all cases, benchmarking followed a similar procedure, involving sampling data from simple shapes (unit circles, unit spheres and tori with inner tube radius 0.25 and major radius 0.75) with various number of rows, and performing 10 benchmarking iterations at each number of rows. The mean and standard deviation of run time for the two functions were then calculated at each number of rows.
+
+The benchmarking results are displayed graphically in the following three subsections. On top of comparing raw run time of the various functions, we also compared the scalability of the functions by dividing the runtimes of the functions and regressing the quotients onto the number of points in the input shapes. Overall we found that TDApplied's functions are faster and scale better than R counterparts, and scale similarly to python counterparts. These results indicate that TDApplied is a powerful and efficient tool for applied topological data analysis in R.
+
+## Benchmarking `PyH` Against TDAstats' `calculate_homology` Function
+
+The long calculation time of persistence diagrams is likely a large contributing factor to the slow adoption of topological data analysis for applied data science. Much research has been carried out in order to speed up these calculations, but the current state-of-the-art is the persistent cohomology algorithm [@PHom_dualities]. In R, the TDAstats' `calculate_homology` function is the fastest option for persistence diagram calculations [@PH_benchmarking], being a wrapper for the ripser persistent cohomology engine. TDApplied's `PyH` function is a wrapper for the same engine, so we benchmarked their run time on circles, spheres and tori. The results were as follows: 
+
+```{r,echo = F,eval = T}
+summary_table_circle = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.01196892,0.01326358,0.01396093,0.05216095,0.03361042,0.12436731,0.06431270,0.22828629,0.10450339,0.35640080,0.17263622,0.54174340,0.26653392,0.76970870,0.38913472,1.06795118,0.56827831,1.57888129,0.77001960,2.02081304),sd = c(0.010148940,0.002938113,0.002576150,0.004909125,0.004535042,0.004654923,0.008832229,0.008654974,0.015860676,0.013255301,0.027655884,0.031779819,0.038884235,0.054684568,0.074091101,0.050891635,0.066695288,0.110982818,0.098805909,0.139048883),package = rep(c("TDApplied","TDAstats"),10))
+
+summary_table_torus = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.0270284175872803,0.166255307197571,0.165945911407471,1.25921893119812,0.547216653823853,4.23308880329132,1.25613822937012,9.88947887420654,2.50379593372345,19.3656851053238,4.3738107919693,33.8885488033295,7.39101943969727,55.0618635654449,11.3016363143921,82.9730611801147,16.8212526082993,119.886588406563,22.7343117952347,166.021493530273),sd = c(0.00628026852286816,0.0207818797344753,0.0132287396951078,0.0617468263761529,0.0395387975829715,0.196572350595388,0.0412505644501839,0.351000536768941,0.142517673337179,0.621714418760195,0.139799366288941,0.715119581947307,0.330074208165256,3.34031068711377,0.216260497620014,1.14642158540614,0.328511302110799,2.05599729628367,0.703949594742105,3.81173452337388),package = rep(c("TDApplied","TDAstats"),10))
+
+summary_table_sphere = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.0109694957733154,0.0594853162765503,0.0540436983108521,0.469167232513428,0.182804441452026,1.57912936210632,0.410391473770142,3.69215035438538,0.822147560119629,7.32947452068329,1.40918028354645,12.8482979059219,2.47986209392548,20.9446493387222,3.76364696025848,31.2942998409271,5.3408855676651,44.884921503067,7.59271986484528,62.6113245010376),sd = c(0.00193647497299544,0.00600547924173666,0.00563514382927968,0.0210564179408907,0.0129015865529426,0.0403660633577451,0.0218388344325696,0.077772517180065,0.0319754379649263,0.0762356686089166,0.0567664459109207,0.171412828638123,0.240398206520162,0.398396221629952,0.320522372278111,0.459994662433323,0.365647918767674,0.417413443923572,0.394211392866084,0.746903966284143),package = rep(c("TDApplied","TDAstats"),10))
+```
+
+```{r,echo = F,warning=F,fig.height = 4,fig.width = 7,fig.align = 'center'}
+par(mfrow = c(1,3))
+plot(summary_table_circle$n_row[summary_table_circle$package=="TDAstats"], 
+     summary_table_circle$mean[summary_table_circle$package=="TDAstats"], 
+     type="b",
+     xlim=range(summary_table_circle$n_row),
+     ylim=range(0,summary_table_circle$mean+1.96*summary_table_circle$sd/sqrt(10)),
+     xlab = "Points in shape",ylab = "Mean execution time (sec)",
+     main = "Circles")
+lines(summary_table_circle$n_row[summary_table_circle$package=="TDApplied"],
+      summary_table_circle$mean[summary_table_circle$package=="TDApplied"], 
+      col=2, type="b")
+legend(x = 200,y = 1.5,legend = c("TDApplied","TDAstats"),
+       col = c("red","black"),lty = c(1,1),cex = 0.8)
+arrows(summary_table_circle$n_row[summary_table_circle$package == "TDApplied"], 
+       summary_table_circle$mean[summary_table_circle$package == "TDApplied"]
+       -1.96*summary_table_circle$sd[summary_table_circle$package == "TDApplied"]/sqrt(10),
+       summary_table_circle$n_row[summary_table_circle$package == "TDApplied"], 
+       summary_table_circle$mean[summary_table_circle$package == "TDApplied"]
+       +1.96*summary_table_circle$sd[summary_table_circle$package == "TDApplied"]/sqrt(10), 
+       length=0.05, angle=90, code=3,col = "red")
+arrows(summary_table_circle$n_row[summary_table_circle$package == "TDAstats"], 
+       summary_table_circle$mean[summary_table_circle$package == "TDAstats"]
+       -1.96*summary_table_circle$sd[summary_table_circle$package == "TDAstats"]/sqrt(10), 
+       summary_table_circle$n_row[summary_table_circle$package == "TDAstats"], 
+       summary_table_circle$mean[summary_table_circle$package == "TDAstats"]
+       +1.96*summary_table_circle$sd[summary_table_circle$package == "TDAstats"]/sqrt(10), 
+       length=0.05, angle=90, code=3,col = "black")
+
+plot(summary_table_torus$n_row[summary_table_torus$package=="TDAstats"], 
+     summary_table_torus$mean[summary_table_torus$package=="TDAstats"], 
+     type="b",
+     xlim=range(summary_table_torus$n_row),
+     ylim=range(0,summary_table_torus$mean+1.96*summary_table_torus$sd/sqrt(10)),
+     xlab = "Points in shape",ylab = "Mean execution time (sec)",
+     main = "Tori")
+lines(summary_table_torus$n_row[summary_table_torus$package=="TDApplied"],
+      summary_table_torus$mean[summary_table_torus$package=="TDApplied"], 
+      col=2, type="b")
+legend(x = 200,y = 120,legend = c("TDApplied","TDAstats"),
+       col = c("red","black"),lty = c(1,1),cex = 0.8)
+arrows(summary_table_torus$n_row[summary_table_torus$package == "TDApplied"], 
+       summary_table_torus$mean[summary_table_torus$package == "TDApplied"]
+       -1.96*summary_table_torus$sd[summary_table_torus$package == "TDApplied"]/sqrt(10),
+       summary_table_torus$n_row[summary_table_torus$package == "TDApplied"], 
+       summary_table_torus$mean[summary_table_torus$package == "TDApplied"]
+       +1.96*summary_table_torus$sd[summary_table_torus$package == "TDApplied"]/sqrt(10), 
+       length=0.05, angle=90, code=3,col = "red")
+arrows(summary_table_torus$n_row[summary_table_torus$package == "TDAstats"], 
+       summary_table_torus$mean[summary_table_torus$package == "TDAstats"]
+       -1.96*summary_table_torus$sd[summary_table_torus$package == "TDAstats"]/sqrt(10), 
+       summary_table_torus$n_row[summary_table_torus$package == "TDAstats"], 
+       summary_table_torus$mean[summary_table_torus$package == "TDAstats"]
+       +1.96*summary_table_torus$sd[summary_table_torus$package == "TDAstats"]/sqrt(10), 
+       length=0.05, angle=90, code=3,col = "black")
+
+plot(summary_table_sphere$n_row[summary_table_sphere$package=="TDAstats"], 
+     summary_table_sphere$mean[summary_table_sphere$package=="TDAstats"], 
+     type="b",
+     xlim=range(summary_table_sphere$n_row),
+     ylim=range(0,summary_table_sphere$mean+1.96*summary_table_sphere$sd/sqrt(10)),
+     xlab = "Points in shape",ylab = "Mean execution time (sec)",
+     main = "Spheres")
+lines(summary_table_sphere$n_row[summary_table_sphere$package=="TDApplied"],
+      summary_table_sphere$mean[summary_table_sphere$package=="TDApplied"], 
+      col=2, type="b")
+legend(x = 200,y = 45,legend = c("TDApplied","TDAstats"),
+       col = c("red","black"),lty = c(1,1),cex = 0.8)
+arrows(summary_table_sphere$n_row[summary_table_sphere$package == "TDApplied"], 
+       summary_table_sphere$mean[summary_table_sphere$package == "TDApplied"]
+       -1.96*summary_table_sphere$sd[summary_table_sphere$package == "TDApplied"]/sqrt(10),
+       summary_table_sphere$n_row[summary_table_sphere$package == "TDApplied"], 
+       summary_table_sphere$mean[summary_table_sphere$package == "TDApplied"]
+       +1.96*summary_table_sphere$sd[summary_table_sphere$package == "TDApplied"]/sqrt(10), 
+       length=0.05, angle=90, code=3,col = "red")
+arrows(summary_table_sphere$n_row[summary_table_sphere$package == "TDAstats"], 
+       summary_table_sphere$mean[summary_table_sphere$package == "TDAstats"]
+       -1.96*summary_table_sphere$sd[summary_table_sphere$package == "TDAstats"]/sqrt(10), 
+       summary_table_sphere$n_row[summary_table_sphere$package == "TDAstats"], 
+       summary_table_sphere$mean[summary_table_sphere$package == "TDAstats"]
+       +1.96*summary_table_sphere$sd[summary_table_sphere$package == "TDAstats"]/sqrt(10), 
+       length=0.05, angle=90, code=3,col = "black")
+```
+
+As we can see the run time of `PyH` was significantly less than that of `calculate_homology`. We then used a linear model to analyze how the two functions scale compared to each other for all three shapes, regressing the ratio of TDAstats' runtime divided by TDApplied's runtime onto the number of points in the data set. For each of the three datasets, the model intercept was highly significant ($p < 0.001$) and the coefficient estimate for number of points was not. This suggests that the runtime of the two functions scale similarly, but there was a constant speed increase of `PyH` which differed by shape (about 3 times faster for circles, 7 times faster for tori and 8 times faster for spheres). Overall, if python is available to a TDApplied user then the `PyH` function can provide a very fast means to calculate persistence diagrams in R making analyses containing many large persistent homology calculations much more feasible.
+
+```{r,echo = F,eval = F}
+model_circle <- stats::lm(data = 
+                            data.frame(ratio =
+                                       summary_table_circle$mean[summary_table_circle$package
+                                                                   == "TDAstats"]/
+                                       summary_table_circle$mean[summary_table_circle$package
+                                                                   == "TDApplied"],
+                                       n_row = seq(100,1000,100)),
+                   
+                   formula = ratio ~ n_row)
+summary(model_circle)$coefficients
+
+model_torus <- stats::lm(data = 
+                            data.frame(ratio =
+                                       summary_table_torus$mean[summary_table_torus$package
+                                                                   == "TDAstats"]/
+                                       summary_table_torus$mean[summary_table_torus$package
+                                                                   == "TDApplied"],
+                                       n_row = seq(100,1000,100)),
+                   
+                   formula = ratio ~ n_row)
+summary(model_torus)$coefficients
+
+model_sphere <- stats::lm(data = 
+                            data.frame(ratio =
+                                       summary_table_sphere$mean[summary_table_sphere$package
+                                                                   == "TDAstats"]/
+                                       summary_table_sphere$mean[summary_table_sphere$package
+                                                                   == "TDApplied"],
+                                       n_row = seq(100,1000,100)),
+                   
+                   formula = ratio ~ n_row)
+summary(model_sphere)$coefficients
+```
+
+## Benchmarking the TDApplied `diagram_distance` and TDA `wasserstein` Functions
+
+Computing wasserstein (or bottleneck) distances between persistence diagrams is a key feature of some of the main topological data analysis software packages in R and python. However, these calculations can be very expensive, rendering practical applications of topological data analysis nearly unfeasible. Since TDAstats has implemented an unconventional distance calculation, we will benchmark TDApplied's `diagram_distance` function against the TDA `wasserstein` function on spheres and tori, calculating their distance in dimensions 0, 1 and 2 and recording the total time. The results were as follows:
+
+```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
+summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.133,0.220,0.398,3.430,0.953,17.054,1.955,53.896,3.760,142.524,6.604,294.552,10.466,601.802,16.169,1130.289,23.458,2091.953,35.098,3518.517),sd = c(0.022,0.016,0.035,0.186,0.094,1.1889,0.130,4.501,0.211,5.924,0.772,11.244,0.623,9.064,0.989,43.385,1.989,88.432,2.747,172.684),package = rep(c("TDApplied","TDA"),10))
+
+# plot table
+plot(summary_table$n_row[summary_table$package=="TDA"], summary_table$mean[summary_table$package=="TDA"], type="b",
+     xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd/sqrt(10)),xlab = "Points in shape",ylab = "Mean execution time (sec)")
+lines(summary_table$n_row[summary_table$package=="TDApplied"], summary_table$mean[summary_table$package=="TDApplied"], col=2, type="b")
+legend(x = 200,y = 2000,legend = c("TDApplied","TDA"),col = c("red","black"),lty = c(1,1),cex = 0.8)
+arrows(summary_table$n_row[summary_table$package == "TDApplied"], summary_table$mean[summary_table$package == "TDApplied"]-1.96*summary_table$sd[summary_table$package == "TDApplied"]/sqrt(10), summary_table$n_row[summary_table$package == "TDApplied"], summary_table$mean[summary_table$package == "TDApplied"]+1.96*summary_table$sd[summary_table$package == "TDApplied"]/sqrt(10), length=0.05, angle=90, code=3,col = "red")
+arrows(summary_table$n_row[summary_table$package == "TDA"], summary_table$mean[summary_table$package == "TDA"]-1.96*summary_table$sd[summary_table$package == "TDA"]/sqrt(10), summary_table$n_row[summary_table$package == "TDA"], summary_table$mean[summary_table$package == "TDA"]+1.96*summary_table$sd[summary_table$package == "TDA"]/sqrt(10), length=0.05, angle=90, code=3,col = "black")
+```
+
+A linear model, regressing the ratio of TDA's runtime divided by TDApplied's runtime onto the number of points in the data set, found a significant positive coefficient of the number of points. This suggests that `diagram_distance` scales better than `wasserstein`, and the model estimated a 95x speed up for 1000 data points. These results suggest that distance calculations with TDApplied are faster and more scalable, making the applications of statistics and machine learning with persistence diagrams more feasible in R. This is why the TDA distance calculation was not used in the TDApplied package.
+
+```{r,echo = F,eval = F}
+model <- stats::lm(data = data.frame(ratio = 
+                                     summary_table$mean[summary_table$package == "TDA"]/summary_table$mean[summary_table$package == "TDApplied"],
+                                     n_row = seq(100,1000,100)),
+                   formula = ratio ~ n_row)
+summary(model)$coefficients
+predict(model,newdata = data.frame(n_row = 1000))[[1]]
+```
+
+## Benchmarking the TDApplied `diagram_distance` Function against persim's `wasserstein` Function
+
+While the functionality of python packages for topological data analysis packages are out of the scope for an R package, in order to fully situate TDApplied in the landscape of topological data analysis software we will benchmark the `diagram_distance` function against its counterpart from the sci-kit TDA collection of libraries, namely the `wasserstein` function from the persim python module. The R package reticulate [@R-reticulate] was used to carry out this benchmarking, via installing, importing and using the persim module. This benchmarking procedure also used spheres and tori, calculating distances in dimensions 0, 1 and 2, and the results were as follows:
+
+```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
+summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.1387,0.0068,0.3624,0.0271,0.8414,0.061,1.7132,0.148,3.6323,0.26,6.2132,0.4322,10.9508,0.6787,16.1213,1.027,23.2014,1.4571,31.6256,1.922),sd = c(0.043,0.0015,0.0166,0.0082,0.0553,0.0087,0.0549,0.019,0.1713,0.019,0.4691,0.0209,0.9173,0.0235,0.9388,0.0404,1.7964,0.0903,2.5457,0.0618),package = rep(c("TDApplied","persim"),10))
+
+# plot table
+plot(summary_table$n_row[summary_table$package=="TDApplied"], summary_table$mean[summary_table$package=="persim"], type="b",
+     xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd/sqrt(10)),xlab = "Points in shape",ylab = "Mean execution time (sec)")
+lines(summary_table$n_row[summary_table$package=="TDApplied"], summary_table$mean[summary_table$package=="TDApplied"], col="red", type="b")
+lines(summary_table$n_row[summary_table$package=="persim"], summary_table$mean[summary_table$package=="persim"], col="black", type="b")
+legend(x = 200,y = 20,legend = c("TDApplied","persim"),col = c("red","black"),lty = c(1,1),cex = 0.8)
+arrows(summary_table$n_row[summary_table$package == "TDApplied"], summary_table$mean[summary_table$package == "TDApplied"]-1.96*summary_table$sd[summary_table$package == "TDApplied"]/sqrt(10), summary_table$n_row[summary_table$package == "TDApplied"], summary_table$mean[summary_table$package == "TDApplied"]+1.96*summary_table$sd[summary_table$package == "TDApplied"]/sqrt(10), length=0.05, angle=90, code=3,col = "red")
+arrows(summary_table$n_row[summary_table$package == "persim"], summary_table$mean[summary_table$package == "persim"]-1.96*summary_table$sd[summary_table$package == "persim"]/sqrt(10), summary_table$n_row[summary_table$package == "persim"], summary_table$mean[summary_table$package == "persim"]+1.96*summary_table$sd[summary_table$package == "persim"]/sqrt(10), length=0.05, angle=90, code=3,col = "black")
+```
+
+The runtime of the persim `wasserstein` function was significantly faster than TDApplied's `diagram_distance` function. However, a linear model of the runtime ratio of TDApplied vs. persim against the number of points in the shape finds evidence that the two functions scale similarly, since the estimated coefficient for number of points was not significant but the intercept (15) was highly significant. Nevertheless, the raw speed increase in python could be the basis for a very fast python counterpart to the TDApplied package in the future.
+
+```{r,echo = F,eval = F}
+model <- stats::lm(data = data.frame(ratio = 
+                                     summary_table$mean[summary_table$package == "TDApplied"]
+                                     /summary_table$mean[summary_table$package == "persim"],
+                                     n_row = seq(100,1000,100)),
+                   formula = ratio ~ n_row)
+summary(model)$coefficients
+```
+
+## References
