@@ -4,6 +4,11 @@
 [Pull Request](https://github.com/shaelebrown/TDApplied/pulls) number.
 Please see those for more details.
 
+# 3.0.0
+- added ability to precompute distance/Gram matrices for ML and inference functions
+- added fast approximation to Fisher information metric
+- added vignettes for speedups and HCP analysis (and removed those parts from the main vignette)
+
 # 2.0.4
 - fixed build issues related to use of suggested packages in tests, examples and vignettes
 
