@@ -65,7 +65,8 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1,rho = NULL){
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1.
 #' @param t a positive number representing the scale for the kernel, default 1.
-#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If supplied, code execution is sequential.
+#' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If supplied, code execution is sequential, but functions in the "exec" directory
+#'            of the package can be loaded to calculate distance matrices in parallel with approximation.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #'
 #' @return the numeric (cross) Gram matrix of class 'kernelMatrix'.

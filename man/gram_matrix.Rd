@@ -25,7 +25,8 @@ gram_matrix(
 
 \item{t}{a positive number representing the scale for the kernel, default 1.}
 
-\item{rho}{an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If supplied, code execution is sequential.}
+\item{rho}{an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If supplied, code execution is sequential, but functions in the "exec" directory
+of the package can be loaded to calculate distance matrices in parallel with approximation.}
 
 \item{num_workers}{the number of cores used for parallel computation, default is one less than the number of cores on the machine.}
 }

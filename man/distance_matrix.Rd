@@ -28,7 +28,8 @@ distance_matrix(
 
 \item{sigma}{a positive number representing the bandwidth of the Fisher information metric, default NULL.}
 
-\item{rho}{an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If not NULL then matrix is calculated sequentially.}
+\item{rho}{an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If not NULL then matrix is calculated sequentially, but functions in the "exec" directory
+of the package can be loaded to calculate distance matrices in parallel with approximation.}
 
 \item{num_workers}{the number of cores used for parallel computation, default is one less than the number of cores on the machine.}
 }
