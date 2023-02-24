@@ -35,7 +35,7 @@ The Human Connectome Project contains extensively preprocessed neuroimaging data
 
 To answer this question we analyzed 100 HCP subject's fMRI data with TDApplied by
 
-1. calculating time-point by time-point correlation distance matrices of each fMRI dataset for each subject (normalizing the activity vector of each time point and transforming correlations $\rho$ into distances $\sqrt{2*(1-\rho)}$, see Appendix B for an explanation),
+1. calculating time-point by time-point correlation distance matrices of each fMRI dataset for each subject (normalizing the activity vector of each time point and transforming correlations $\rho$ into distances $\sqrt{2*(1-\rho)}$, see the appendix for an explanation),
 2. computing thresholded persistence diagrams of dimension 1 from those dissimilarity matrices (using the bootstrap method), and 
 3. using machine learning and inference functions from TDApplied to analyze the resulting collection of diagrams.
 
@@ -179,22 +179,22 @@ We first analyzed basic properties of the persistence diagrams - the number of l
 
 ```{r,echo = F,eval = T,fig.height = 4,fig.width = 4,fig.align = 'center'}
 par(mfrow = c(1,1))
-num_loops = c(1306,420,45,19,6,2,1,1)
-names(num_loops) = c(0,1,2,3,4,5,6,7)
+num_loops = c(1335,384,51,18,8,2,2)
+names(num_loops) = c(0,1,2,3,4,5,6)
 barplot(num_loops,xlab = "Number of significant loops in the diagram")
 ```
 
-The bootstrap thresholding was evidently very conservative, with about 73\% of the diagrams containing no loops. This is not to say that those diagrams were topologically trivial - on the contrary they may have contained non-trivial higher-dimensional topological structure, or it is possible that task-correlated loops may exist at smaller (i.e. less persistent) scales. To assess the validity of either explanation we would require significantly more computational resources than what was available at the time of writing, and we leave this to future work. 
+The bootstrap thresholding was evidently very conservative, with about 74\% of the diagrams containing no loops. This is not to say that those diagrams were topologically trivial - on the contrary they may have contained non-trivial higher-dimensional topological structure, or it is possible that task-correlated loops may exist at smaller (i.e. less persistent) scales. To assess the validity of either explanation we would require significantly more computational resources than what was available at the time of writing, and we leave this to future work. 
 
-We may draw two important conclusions from this graphic. Firstly, the fact that many diagrams did not have any loops provides evidence that topological structure was not driven by physiological sources, such as heart-rate and breathing, which is known to drive signal in fMRI data [@Denoising]. Secondly, resting-state analyses are often concerned with the activity of (about) seven major "resting-state networks" found in [@rs_networks], and task analyses often study the activity of a similar numbers of task-specific networks. However, our loop analysis found that fewer loop dimensions (perhaps up to 2 loops) were needed to describe the HCP data, suggesting high-dimensional topological features may be a useful low-dimensional representation of spatial fMRI data.
+We may draw two important conclusions from this graphic. Firstly, the fact that many diagrams did not have any loops provides evidence that topological structure was not driven by physiological sources, such as heart-rate and breathing, which is known to drive signal in fMRI data [@Denoising]. Secondly, resting-state analyses are often concerned with the activity of (about) seven major "resting-state networks" found in [@rs_networks], and task analyses often study the activity of a similar numbers of task-specific networks. However, our loop analysis found that fewer loop dimensions (perhaps up to 1 loop) were needed to describe the HCP data, suggesting high-dimensional topological features may be a useful low-dimensional representation of spatial fMRI data.
 
-We then compared the distribution of the number of loops across subjects and tasks using paired t-tests (with two-sided alternative hypotheses and at the $\alpha = 0.05$ threshold for type 1 error). About 19\% of the subject-subject pairs had statistically different numbers of loops, and about 22\% of the task-task pairs had statistically significant numbers of loops. Interestingly, most of the differences between tasks were found between resting state scans and task scans, with less loops in the resting state scans, suggesting that tasks may induce large-scale and periodic cycles of mental states which are used to accomplish the task.
+We then compared the distribution of the number of loops across subjects and tasks using paired t-tests (with two-sided alternative hypotheses and at the $\alpha = 0.05$ threshold for type 1 error). About 22\% of the subject-subject pairs had statistically different numbers of loops, and about 28\% of the task-task pairs had statistically significant numbers of loops. Interestingly, half of the differences between tasks were found between resting state scans and task scans, with more loops in the resting state scans, suggesting that tasks may induce small-scale specialized cycles of mental states which are used to accomplish the task.
 
-Next we performed the same analysis for the mean persistence of loops in the diagrams. About 12\% of the subject-subject pairs had differences in mean persistence values. We found 14\% statistically different persistence between tasks, mainly being lower persistence in resting state scans compared to task-based scans.
+Next we performed the same analysis for the mean persistence of loops in the diagrams. About 19\% of the subject-subject pairs had differences in mean persistence values. We found 31\% statistically different persistence between tasks, mainly being higher persistence in resting state scans compared to task-based scans.
 
-In order to better understand subject-subject and task-task differences we used TDApplied's permutation test to compare subjects (matched by task) and tasks (matched by subjects) with both the 2-wasserstein and bottleneck distances, again judging significance at the $\alpha = 0.05$ level. For the subjects, both bottleneck and wasserstein distances found about 20\% of the subject-subject pairs to have different topologies, with about 96\% of the differences conserved between the two metrics. For the tasks, in the bottleneck tests there were 4 pairs of different tasks: both resting state scans with the emotion task, the first resting scan with the social task and the emotional task with the relational task. For the wasserstein tests there were 8 pairs of different tasks: the first resting state scan with the emotion, gambling, motor and relational tasks, the second resting state scan with the emotion, motor and working memory tasks, and the relational task with the working memory task. Therefore, the resting state scans were more different from task scans than the task scans were with each other. 
+In order to better understand subject-subject and task-task differences we used TDApplied's permutation test to compare subjects (matched by task) and tasks with both the 2-wasserstein and bottleneck distances, again judging significance at the $\alpha = 0.05$ level. For the subjects, both bottleneck and wasserstein distances found about 24\% of the subject-subject pairs to have different topologies, with about 94\% of the differences conserved between the two metrics. For the tasks, in the bottleneck tests there were 12 pairs of different tasks, seven of which between one of the resting state scans with another task, and for the wasserstein tests there were only two pairs of different tasks (resting state 2 with emotional and relational), but the two resting state scans were not different from each other in any case. Therefore, the resting state scans were more different from task scans than the task scans were with each other. 
 
-Finally, we analyzed whether any of the subject-subject or task-task pairs were independent (again at the $\alpha = 0.05$ significance level). Only about 18% of the subject-subject pairs were significantly non-independent - an interesting future question would be to determine whether these non-independent pairs were blood-related. On the other hand, over 86\% of the task-task pairs were found to be significantly non-independent in at least half of the kernel parameter values. Therefore, task-induced mental state topology may be strongly related between tasks - i.e. computational strategies in different neural domains may be related. In order to compare the results of the two inference procedures, we removed kernel parameters which resulted in no non-independent subject-subject pairs, and then we used a two-sided t-test to compare the percentage of those kernel values which found significant non-independence between subject-subject pairs who were significantly different in the permutation tests compared to pairs of subjects who were not significantly different in the tests (for both distance metrics). The results were very similar for both distance metrics, with significantly lower percentage of non-independence in non-different subject-subject pairs.
+Finally, we analyzed whether any of the subject-subject or task-task pairs were independent (again at the $\alpha = 0.05$ significance level). Only about 27% of the subject-subject pairs were significantly non-independent in at least 50\% of kernel parameters - an interesting future question would be to determine whether these non-independent pairs were blood-related. On the other hand, over 89\% of the task-task pairs were found to be significantly non-independent in at least half of the kernel parameter values. Therefore, task-induced mental state topology may be strongly related between tasks - i.e. computational strategies in different neural domains may be related. In order to compare the results of the two inference procedures, we used two-sided t-tests to compare the percentage of those kernel values which found significant non-independence between subject-subject pairs who were significantly different in the permutation tests compared to pairs of subjects who were not significantly different in the tests (for both distance metrics). The results were very similar for both distance metrics, with significantly lower percentage of non-independence in non-different subject-subject pairs.
 
 # Machine learning
 
@@ -203,14 +203,14 @@ Our inference analyses revealed some of the underlying topological differences o
 Using all of the kernel parameters deduced earlier, we performed kernel kmeans clustering on all the persistence diagrams over a range of values of k - 2,3,4,...,18,25,50,100. These values were chosen because there were 18 scans per subject and 100 subjects. The within-cluster sum of squared (withinss) distances were calculated for each value of k and for each kernel parameter combination, and the value of k which minimized the withinss (without resulting in empty clusters) was selected as being optimal for each kernel parameter. The frequency of each number of optimal clusters was:
 
 ```{r,echo = F,fig.height = 4,fig.width = 4,fig.align = 'center'}
-num_clusters <- c(19,18,12,5)
-names(num_clusters) <- c(3,4,5,6)
-num_clusters <- c(rep(3,19),rep(4,18),rep(5,12),rep(6,5))
+num_clusters <- c(14,13,12,10,2,2,1)
+names(num_clusters) <- c(2,3,4,5,6,7,8)
+num_clusters <- c(rep(2,14),rep(3,13),rep(4,12),rep(5,10),rep(6,2),rep(7,2),rep(8,1))
 
 barplot(table(num_clusters),xlab = "Optimal number of clusters",main = "")
 ```
 
-From the graph it seemed like the optimal number of clusters was likely either 3 or 4. We therefore performed clustering with both values of k (3 and 4) for all kernel parameters, and calculated a membership percentage matrix for each value of k - for what percentage of kernel parameters was each pair of subjects in the same cluster. When k was 3 we found that about 54\% of the pairs were in the same cluster at least 90\% of the time, and that 31\% of the pairs were in the same cluster less than 5\% of the time. Similarly for four clusters, 53\% of the pairs were in the same cluster at least 90\% of the time, and 34\% percent of the pairs were in the same cluster less than 5\% of the time. These results indicate that the clusterings for k being 3 and 4 were highly consistent across all kernel parameters. We then used the kernlab function `kkmeans` to cluster the two membership matrices, and only for k = 3 was the clustering able to be resolved (potentially due to the membership matrix not being a real kernel matrix). We therefore visualized the group of diagrams in each of the three found clusters:
+From the graph it seemed like the optimal number of clusters was between 2 and 5. We therefore performed clustering with all those values of k for all kernel parameters, and calculated a membership percentage matrix for each value of k - for what percentage of kernel parameters was each pair of subjects in the same cluster. For each value of k we computed the percentage of pairs of subject who were in the same cluster at least 90\% of the time, and the percent which were in the same cluster at most 5\% of the time - when k was two these percentages were 61\% and 37\%, when k was 3 they were 55\% and 36\%, for k equals 4 55\% and 37\%, and for k equals 5 0\% and 38\% (about 55\% were in the same cluster over 50\% of the time). These results indicate that the clusterings for k being 2, 3 and 4 were highly consistent across all kernel parameters. We then used the kernlab function `kkmeans` to cluster the three membership matrices, and only for k = 2 and 3 was the clustering able to be resolved (potentially due to the membership matrix not being a real kernel matrix). However, the clustering with k = 2 just returned the empty diagrams so it was not super interesting. We therefore visualized the group of diagrams in each of the three found clusters:
 
 ```{r,echo = F,eval = T,fig.height = 3,fig.width = 9,fig.align = 'center'}
 par(mfrow = c(1,3))
@@ -220,7 +220,8 @@ cluster1$X = NULL
 cluster2 = read.csv("cluster2.csv")
 cluster2$X = NULL
 
-cluster3 = data.frame(dimension = rep(1,16),birth = c(0.00689596316765351,0.00718217434267532,0.00747126805998133,0.00690667049328719,0.00801377440791695,0.012501999351388,0.0118955686721745,0.0116045732557082,0.0121119130796986,0.0114008823051366,0.0102932163707898,0.011805169242486,0.0111706952735043,0.0177506435789866,0.0118816312183022,0.0143102557022623),death = c(0.00739886904981313,0.00768228678917449,0.0079396019724931,0.00729348257548357,0.00860666141041766,0.0130810592422529,0.0124528795327854,0.0121567625428937,0.0126406163241618,0.0118474061047327,0.0108066473651418,0.0123426182066302,0.011756334591152,0.018267917711236,0.0124081272977147,0.0147573824240477))
+cluster3 = read.csv("cluster3.csv")
+cluster3$X = NULL
 
 max_birth_clust <- max(max(cluster1$birth),max(cluster2$birth),max(cluster3$birth)) + 3*0.001
 
@@ -228,9 +229,9 @@ max_death_clust <- max(max(cluster1$death),max(cluster2$death),max(cluster3$deat
 
 lim_clust <- max(c(max_birth_clust,max_death_clust))
 
-visualize_diagram(cluster1,sigma = 0.001,plot_title = "Cluster 1",lim = lim_clust)
-visualize_diagram(cluster2,sigma = 0.001,plot_title = "Cluster 2",lim = lim_clust)
-visualize_diagram(cluster3,sigma = 0.001,plot_title = "Cluster 3",lim = lim_clust)
+visualize_diagram(cluster1,sigma = 0.01,plot_title = "Cluster 1",lim = lim_clust)
+visualize_diagram(cluster2,sigma = 0.01,plot_title = "Cluster 2",lim = lim_clust)
+visualize_diagram(cluster3,sigma = 0.01,plot_title = "Cluster 3",lim = lim_clust)
 ```
 
 The three clusters are quite distinct in terms of what topological information they likely represent. For cluster one this is mainly two loops but sometimes a small or very large loop (with mean persistence in the cluster of about 0.0018), for cluster two this is one loop of variable size (mean persistence in the cluster of about 0.0011), and cluster 3 is one main loop and sometimes one additional small loop (this group only had 16 loops in it, with mean persistence about 0.0005).
@@ -239,13 +240,13 @@ Next we analyzed the number of rows in the diagrams of each cluster. The results
 
 ```{r,echo = F}
 print("Cluster 1:")
-c("1" = 112,"2" = 38,"3" = 19,"4" = 6,"5" = 2,"6" = 1,"7" = 1)
+c("1" = 223,"2" = 51,"3" = 18,"4" = 8,"5" = 2,"6" = 2)
 
 print("Cluster 2:")
-c("1" = 292,"2" = 7)
+c("1" = 160)
 
 print("Cluster 3:")
-c("0" = 1306,"1" = 16)
+c("0" = 1335,"1" = 1)
 ```
 
 This confirmed that cluster 1 had more loops than the other clusters on average, that cluster 2 mainly had one loop, and that cluster three was only a few loops of low persistence (and all of the no loop diagrams).
@@ -254,13 +255,13 @@ Next we analyzed the task composition of clusters, and found the following perce
 
 ```{r,echo = F}
 print("Cluster 1:")
-c("emotion" = 0.05,"gambling" = 0.07,"language" = 0.12,"motor" = 0.09,"relational" = 0.11,"rest1" = 0.20,"rest2" = 0.17,"social" = 0.07,"wm" = 0.11)[c("rest1","rest2","emotion","gambling","social","motor","relational","language")]
+c("emotion" = 0.06,"gambling" = 0.12,"language" = 0.11,"motor" = 0.10,"relational" = 0.11,"rest1" = 0.16,"rest2" = 0.14,"social" = 0.11,"wm" = 0.10)[c("rest1","rest2","emotion","gambling","social","motor","relational","language")]
 
 print("Cluster 2:")
-c("emotion" = 0.12,"gambling" = 0.15,"language" = 0.11,"motor" = 0.09,"relational" = 0.12,"rest1" = 0.09,"rest2" = 0.08,"social" = 0.14,"wm" = 0.12)[c("rest1","rest2","emotion","gambling","social","motor","relational","language")]
+c("emotion" = 0.15,"gambling" = 0.18,"language" = 0.13,"motor" = 0.04,"relational" = 0.1,"rest1" = 0.04,"rest2" = 0.06,"social" = 0.14,"wm" = 0.15)[c("rest1","rest2","emotion","gambling","social","motor","relational","language")]
 
 print("Cluster 3:")
-c("emotion" = 0.12,"gambling" = 0.11,"language" = 0.11,"motor" = 0.12,"relational" = 0.10,"rest1" = 0.10,"rest2" = 0.11,"social" = 0.11,"wm" = 0.11)[c("rest1","rest2","emotion","gambling","social","motor","relational","language")]
+c("emotion" = 0.12,"gambling" = 0.10,"language" = 0.11,"motor" = 0.12,"relational" = 0.11,"rest1" = 0.11,"rest2" = 0.11,"social" = 0.11,"wm" = 0.11)[c("rest1","rest2","emotion","gambling","social","motor","relational","language")]
 ```
 
 Cluster 1 had much higher percentages of resting state scans compared to the other clusters. However, it also had lower percentages of emotion, gambling and social tasks than the other clusters. Clusters 2 and 3 were moreso separated by percentages of resting state 2 and motor (more in cluster 3), and gambling and social (more in cluster 2).
@@ -287,7 +288,7 @@ graphics::legend("top", pch=19, pt.cex=3, cex=1.5, bty='n',
 graphics::mtext("Cluster label",cex=2)
 ```
 
-Behavioral measures may correlate with the mental state topologies, and therefore may be explaining some of the variance within the plots (like the 0-dimensional topological features in [@topological_time_and_space]), and this could be an interesting future analysis. Also cluster 1 seemed to be more 2 dimensional in both embeddings whereas cluster 2 seemed to be more one dimensional, and determining what factors could explain these dimensions would also be an interesting future analysis.
+Behavioral measures may correlate with the mental state topologies, and therefore may be explaining some of the variance within the plots (like the 0-dimensional topological features in [@topological_time_and_space]), and this could be an interesting future analysis. Also cluster 1 seemed to be more 2 dimensional in the bottleneck embedding compared to the wasserstein embedding, and determining what factors could explain these dimensions would also be an interesting future analysis.
 
 # Conclusion
 
