@@ -26,7 +26,7 @@ parallel_approx_distance_matrix <- function(diagrams,other_diagrams = NULL,dim =
       d_off_diag <- foreach::`%dopar%`(obj = foreach::foreach(r = iterators::iter(which(upper.tri(d),arr.ind = T),by = 'row'),.combine = c),ex = {TDApplied::diagram_distance(D1 = diagrams[[r[[1]]]],D2 = diagrams[[r[[2]]]],dim = dim,distance = "fisher",sigma = sigma,rho = rho)})
       d[upper.tri(d)] <- d_off_diag
       d[which(upper.tri(d),arr.ind = T)[,c("col","row")]] <- d_off_diag
-      diag(d) <- rep(0,m)
+      diag(d) <- rep(0,nrow(d))
     }else
     {
       # cross distance matrix, need to compute all entries
