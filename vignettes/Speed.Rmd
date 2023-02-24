@@ -38,67 +38,6 @@ The Fisher information metric unlocks the door to a number of TDApplied machine 
 To illustrate how significant this speedup can be we simulated unit spheres and tori (with inner tube radius 0.25 and major radius 0.75) with different numbers of points 100,200,...,1000 (with 10 iterations at each number of points), calculated their persistence diagrams and timed their Fisher information metric with and without approximation. The plot below shows the results (plotting the mean runtime with a 95\% confidence interval):
 
 ```{r,eval = F}
-# generate persistence diagrams from spheres and tori with  100,200,...,1000 data points.
-  runtimes_approx <- data.frame(n_row = numeric(),method = character(),time_in_sec = numeric())
-  for(n_row in seq(100,1000,100)){
-    
-    for(iteration in 1:10)
-    {
-      # simulate a sphere and a torus
-      sphere <- TDA::sphereUnif(n = n_row,d = 2)
-      torus <- TDA::torusUnif(n = n_row,a = 0.25,c = 0.75)
-      
-      # compute their persistence diagrams
-      sphere_diag <- PyH(sphere,maxdim = 2,thresh = 1,ripser = ripser)
-      torus_diag <- PyH(torus,maxdim = 2,thresh = 1,ripser = ripser)
-      
-      # compute their Fisher information distances in all dimensions and benchmark
-      start_time_exact = Sys.time()
-      diagram_distance(sphere_diag,torus_diag,dim = 0,distance = "fisher",sigma = 1)
-      diagram_distance(sphere_diag,torus_diag,dim = 1,distance = "fisher",sigma = 1)
-      diagram_distance(sphere_diag,torus_diag,dim = 2,distance = "fisher",sigma = 1)
-      end_time_exact = Sys.time()
-      time_diff_exact = as.numeric(end_time_exact - start_time_exact,units = "secs")
-      
-      start_time_approximation = Sys.time()
-      diagram_distance(sphere_diag,torus_diag,dim = 0,distance = "fisher",sigma = 1,rho = 0.001)
-      diagram_distance(sphere_diag,torus_diag,dim = 1,distance = "fisher",sigma = 1,rho = 0.001)
-      diagram_distance(sphere_diag,torus_diag,dim = 2,distance = "fisher",sigma = 1,rho = 0.001)
-      end_time_approximation = Sys.time()
-      time_diff_approximation = as.numeric(end_time_approximation - start_time_approximation,units = "secs")
-      
-      runtimes_approx = rbind(runtimes_approx,data.frame(n_row = n_row,
-                                                         method = "Exact",
-                                                         time_in_sec = time_diff_exact))
-      runtimes_approx = rbind(runtimes_approx,data.frame(n_row = n_row,
-                                                         method = "Approximation",
-                                                         time_in_sec = time_diff_approximation))
-      
-    }
-    print(paste0("Done ",n_row," rows"))
-    
-  }
-  # compute means and sd's at each value of rows for both methods
-  summary_table_approx = data.frame(n_row = numeric(),mean = numeric(),sd = numeric(),
-                                    method = character())
-  for(n_row in seq(100,1000,100))
-  {
-    for(m in c("Exact","Approximation"))
-    {
-      result = data.frame(n_row = n_row,
-                          mean = mean(runtimes_approx[which(runtimes_approx$n_row == n_row
-                                                            & runtimes_approx$method == m),
-                                                      3]),
-                          sd = sd(runtimes_approx[which(runtimes_approx$n_row == n_row 
-                                                        & runtimes_approx$method == m),
-                                                  3]),
-                          method = m)
-      summary_table_approx = rbind(summary_table_approx,result)
-    }
-  }
-```
-
-```{r,eval = F}
 summary_table_approx = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.0109694957733154,0.0594853162765503,0.0540436983108521,0.469167232513428,0.182804441452026,1.57912936210632,0.410391473770142,3.69215035438538,0.822147560119629,7.32947452068329,1.40918028354645,12.8482979059219,2.47986209392548,20.9446493387222,3.76364696025848,31.2942998409271,5.3408855676651,44.884921503067,7.59271986484528,62.6113245010376),sd = c(0.00193647497299544,0.00600547924173666,0.00563514382927968,0.0210564179408907,0.0129015865529426,0.0403660633577451,0.0218388344325696,0.077772517180065,0.0319754379649263,0.0762356686089166,0.0567664459109207,0.171412828638123,0.240398206520162,0.398396221629952,0.320522372278111,0.459994662433323,0.365647918767674,0.417413443923572,0.394211392866084,0.746903966284143),package = rep(c("TDApplied","TDAstats"),10))
 ```
 
@@ -131,15 +70,13 @@ arrows(summary_table_approx$n_row[summary_table_approx$method == "Exact"],
        length=0.05, angle=90, code=3,col = "black")
 ```
 
-ALSO DO WITH DISTANCE MATRIX!!!
-
 Unfortunately this approximation cannot currently be run in parallel internally in TDApplied functions, so in cases where the number of points in the persistence diagrams is small or the number of available cores is large we may consider using the exact calculation instead. However, functions are provided in the "exec/parallel_with_approximation.R" script which can be loaded into your environment to compute distance and Gram matrices in parallel with approximation (and these matrices can be input into other TDApplied functions directly - see the following section).
 
-As a demonstration we will create twenty persistence diagrams from circles (100 points points sampled on each) and compute their Fisher information metric distance matrix in parallel with and without approximation:
+As a demonstration we will create ten persistence diagrams from circles (100 points points sampled on each) and compute their Fisher information metric distance matrix in parallel with and without approximation:
 
 ```{r,eval = F}
 # create 20 diagrams from circles
-g <- lapply(X = 1:20,FUN = function(X){
+g <- lapply(X = 1:10,FUN = function(X){
   
   return(TDAstats::calculate_homology(TDA::circleUnif(100),dim = 0,threshold = 2))
   
@@ -150,7 +87,7 @@ d_exact <- distance_matrix(g,distance = "fisher",sigma = 1)
 d_approx <- parallel_approx_distance_mat(g,rho = 1e-6)
 ```
 
-The timing difference was staggering - the exact distance matrix was calculated in Xs, whereas the approximate distance matrix was calculated in Ys! Moreover, the maximum percent difference between the two matrices was less than 2\%. When we repeated these calculations with forty diagrams the timing was Xs for the exact calculation compared to Ys with the approximation, and when we used twenty diagrams with each circle having 200 sampled points the timings were Xs and Ys.
+The timing difference was staggering - the exact distance matrix was calculated in about 44.8s, whereas the approximate distance matrix was calculated in 1.8s! Moreover, the maximum percent difference between the two matrices was about 0.9\%. When we repeated these calculations with twenty diagrams the timing was 180s for the exact calculation compared to 3.7s with the approximation, and when we used twenty diagrams with each circle having 200 sampled points the timings were 174s and 2.4s.
 
 These simulations indicate that the functions `parallel_approx_distance_matrix` and `parallel_approx_gram_matrix` in the exec directory can unlock exceptional performance increases in calculating distance/Gram matrices, which can be particularly useful when combined with the speedup documented in the following section.
 
