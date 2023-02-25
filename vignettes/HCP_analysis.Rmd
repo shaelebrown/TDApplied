@@ -161,25 +161,23 @@ points(x = c(mean(rest1[,2])),y = c(mean(rest1[,3])),pch = 19)
 
 This loop was from one subject's resting state 1 data, but note that topologically similar loops (in terms of birth and death values) may lie in different parts of the data (i.e. represent different loops of spatial activity patterns). We calculated the representative cycle of this loops, used `cmdscale` to project the representative into 2D and selected a top, bottom, left and right points along the loops (in red): 
 
-```{r,echo = F,eval = T,fig.align = 'center',fig.show='hold',fig.align='default',out.width="50%", out.height="50%"}
-knitr::include_graphics("loop1_scatter.png")
-knitr::include_graphics("loop2_scatter.png")
+```{r,echo = F,eval = T,fig.height = 4,fig.width = 4,fig.align = 'center'}
+knitr::include_graphics("loop_scatter.jpg")
 ```
 
-Since the highlighted points from the plots each represent a spatial pattern of neural activity at some time point, we then plotted these spatial patterns around the circumference of two circles (however, note that the loops did not form perfect circles in the data). Note that when the two brain hemispheres (i.e. sides) are plotted side-by-side, the left hemisphere is on the right and the right hemisphere is on the left. Prior to plotting, the fMRI data was first normalized to have temporal mean 0 and standard deviation 1 for each surface node. The spatial patterns were then smoothed by averaging spatial signal within a 5mm radius from each surface node, and the smoothed signal was thresholded by absolute value at least 0.75. We plotted the spatial patterns with boxes around areas which appeared to exhibit periodic behavior around the loops:
+Since the highlighted points from the plot each represent a spatial pattern of neural activity at some time point, we then plotted these spatial patterns around the circumference of a circle (however, the loop did not form a perfect circle in the data). Note that when the two brain hemispheres (i.e. sides) are plotted side-by-side, the left hemisphere is on the right and the right hemisphere is on the left. Prior to plotting, the fMRI data was first normalized to have temporal mean 0 and standard deviation 1 for each surface node. The spatial patterns were then smoothed by averaging spatial signal within a 5mm radius from each surface node, and the smoothed signal was thresholded by absolute value at least 0.75. We plotted the spatial patterns with boxes around areas which appeared to exhibit periodic behavior around the loop:
 
-```{r,echo = F,eval = T,fig.align = 'center',fig.show='hold',fig.align='default',out.width="50%", out.height="50%"}
-knitr::include_graphics("loop1.jpg")
-knitr::include_graphics("loop2.jpg")
+```{r,echo = F,eval = T,fig.height = 4,fig.width = 4,fig.align = 'center'}
+knitr::include_graphics("loop.jpg")
 ```
 
-Loop 1 exhibited more drastic neural activity (both high and low) compared to loop 2, which showed more localized areas of low activity. We compared the locations of periodic activity (in the boxes) to a well-known parcellation of the brain into 7 resting-state networks [@rs_networks]:
+We compared the locations of periodic activity (in the boxes) to a well-known parcellation of the brain into 7 resting-state networks [@rs_networks]:
 
 ```{r,echo = F,eval = T,fig.align = 'center',out.width="80%", out.height="80%"}
 knitr::include_graphics("parcellation.jpg")
 ```
 
-The periodic behavior in loop 1 appeared in the activation of the left hemisphere dorsal attention network (green box, high activity on top and bottom, lower activity on the sides) and in the deactivation of the right hemisphere default mode and ventral attention networks (red box, high activity on the right, medium on the top and bottom, low on the left). The periodic behavior in loop 2 appeared in the deactivation of the right hemisphere default mode and ventral attention networks (pink box, low activity on top and bottom, higher activity on the sides). Therefore only three of the seven resting-state networks may be sufficient to describe the group-level resting-state data.
+The periodic behavior in the boxes appeared mainly in the activation of the ventral attention network (high activity on top and right, lower activity on bottom and left), and thus one resting-state network could be used to represent the structure of this subject's data. Therefore, it is possible that not all of the seven resting-state networks may be needed to describe the group-level resting-state data.
 
 Coming up with techniques for determining what the one circular dimension of one such loop represents in terms of neural activity, and determining if this dimension is correlated with time/study design (i.e. the temporal sequence of events in the task) for resting-state/task-based fMRI is left to future work.
 
