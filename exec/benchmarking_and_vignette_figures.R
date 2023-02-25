@@ -1,6 +1,94 @@
 
 # benchmarking script for generating vignette figures
-# uses library bench
+
+#### diagram_distance vs. fast approximation ####
+ripser <- import_ripser()
+
+# generate persistence diagrams from spheres and tori with  100,200,...,1000 data points.
+runtimes_approx <- data.frame(n_row = numeric(),method = character(),time_in_sec = numeric())
+for(n_row in seq(100,1000,100)){
+  
+  for(iteration in 1:10)
+  {
+    # simulate a sphere and a torus
+    sphere <- TDA::sphereUnif(n = n_row,d = 2)
+    torus <- TDA::torusUnif(n = n_row,a = 0.25,c = 0.75)
+    
+    # compute their persistence diagrams
+    sphere_diag <- PyH(sphere,maxdim = 2,thresh = 1,ripser = ripser)
+    torus_diag <- PyH(torus,maxdim = 2,thresh = 1,ripser = ripser)
+    
+    # compute their Fisher information distances in all dimensions and benchmark
+    start_time_exact = Sys.time()
+    diagram_distance(sphere_diag,torus_diag,dim = 0,distance = "fisher",sigma = 1)
+    diagram_distance(sphere_diag,torus_diag,dim = 1,distance = "fisher",sigma = 1)
+    diagram_distance(sphere_diag,torus_diag,dim = 2,distance = "fisher",sigma = 1)
+    end_time_exact = Sys.time()
+    time_diff_exact = as.numeric(end_time_exact - start_time_exact,units = "secs")
+    
+    start_time_approximation = Sys.time()
+    diagram_distance(sphere_diag,torus_diag,dim = 0,distance = "fisher",sigma = 1,rho = 0.001)
+    diagram_distance(sphere_diag,torus_diag,dim = 1,distance = "fisher",sigma = 1,rho = 0.001)
+    diagram_distance(sphere_diag,torus_diag,dim = 2,distance = "fisher",sigma = 1,rho = 0.001)
+    end_time_approximation = Sys.time()
+    time_diff_approximation = as.numeric(end_time_approximation - start_time_approximation,units = "secs")
+    
+    runtimes_approx = rbind(runtimes_approx,data.frame(n_row = n_row,
+                                                       method = "Exact",
+                                                       time_in_sec = time_diff_exact))
+    runtimes_approx = rbind(runtimes_approx,data.frame(n_row = n_row,
+                                                       method = "Approximation",
+                                                       time_in_sec = time_diff_approximation))
+    
+  }
+  print(paste0("Done ",n_row," rows"))
+  
+}
+# compute means and sd's at each value of rows for both methods
+summary_table_approx = data.frame(n_row = numeric(),mean = numeric(),sd = numeric(),
+                                  method = character())
+for(n_row in seq(100,1000,100))
+{
+  for(m in c("Exact","Approximation"))
+  {
+    result = data.frame(n_row = n_row,
+                        mean = mean(runtimes_approx[which(runtimes_approx$n_row == n_row
+                                                          & runtimes_approx$method == m),
+                                                    3]),
+                        sd = sd(runtimes_approx[which(runtimes_approx$n_row == n_row
+                                                      & runtimes_approx$method == m),
+                                                3]),
+                        method = m)
+    summary_table_approx = rbind(summary_table_approx,result)
+  }
+}
+
+plot(summary_table_approx$n_row[summary_table_approx$method=="Exact"],
+     summary_table_approx$mean[summary_table_approx$method=="Exact"],
+     type="b",
+     xlim=range(summary_table_approx$n_row),
+     ylim=range(0,summary_table_approx$mean+1.96*summary_table_approx$sd/sqrt(10)),
+     xlab = "Points in shape",ylab = "Mean execution time (sec)",
+     main = "Approximation Benchmarking")
+lines(summary_table_approx$n_row[summary_table_approx$method=="Approximation"],
+      summary_table_approx$mean[summary_table_approx$method=="Approximation"],
+      col=2, type="b")
+legend(x = 200,y = 350,legend = c("Approximation","Exact"),
+       col = c("red","black"),lty = c(1,1),cex = 0.8)
+arrows(summary_table_approx$n_row[summary_table_approx$method == "Approximation"],
+       summary_table_approx$mean[summary_table_approx$method == "Approximation"]
+       -1.96*summary_table_approx$sd[summary_table_approx$method == "Approximation"]/sqrt(10),
+       summary_table_approx$n_row[summary_table_approx$method == "Approximation"],
+       summary_table_approx$mean[summary_table_approx$method == "Approximation"]
+       +1.96*summary_table_approx$sd[summary_table_approx$method == "Approximation"]/sqrt(10),
+       length=0.05, angle=90, code=3,col = "red")
+arrows(summary_table_approx$n_row[summary_table_approx$method == "Exact"],
+       summary_table_approx$mean[summary_table_approx$method == "Exact"]
+       -1.96*summary_table_approx$sd[summary_table_approx$method == "Exact"]/sqrt(10),
+       summary_table_approx$n_row[summary_table_approx$method == "Exact"],
+       summary_table_approx$mean[summary_table_approx$method == "Exact"]
+       +1.96*summary_table_approx$sd[summary_table_approx$method == "Exact"]/sqrt(10),
+       length=0.05, angle=90, code=3,col = "black")
 
 #### diagram_distance vs. TDA's wasserstein ####
 
