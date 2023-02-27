@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Introduction
 
-The TDApplied package provides a wide variety of tools for performing powerful applied analyses of multiple persistence diagrams, and in order to make these analyses more practical a number of computational speedups have been built-in. These speedups involve other programming languages (python and C++), parallel computing and intuitive tricks, and result in significant performance gains (against other R packages). In this vignette we will describe the methods that are used to make TDApplied a highly practical and scalable package for applied topological data analysis in R, as well as benchmarking TDApplied functions against suitable counterparts. All benchmarking was carried out on a Windows 10 64-bit machine, with an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM.
+The TDApplied package provides a wide variety of tools for performing powerful applied analyses of multiple persistence diagrams, and in order to make these analyses more practical a number of computational speedups have been built-in. These speedups involve other programming languages (python and C++), parallel computing and intuitive tricks, and result in significant performance gains (compared to other R packages). In this vignette we will describe the methods that are used to make TDApplied a highly practical and scalable package for applied topological data analysis in R, as well as benchmarking TDApplied functions against suitable counterparts. All benchmarking was carried out on a Windows 10 64-bit machine, with an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz 3.60 GHz processor with 8 cores and 64GB of RAM.
 
 # Speedups
 
@@ -33,9 +33,9 @@ Parallelization is performed in an operating-system agnostic manner, ensuring th
 
 ## Fisher Information Metric Approximation
 
-The Fisher information metric unlocks the door to a number of TDApplied machine learning and inference functions via the persistence Fisher kernel, however its computational complexity is quadratic in the number of points in its input diagrams [@persistence_fisher] making calculations using diagrams with many points highly prohibitive. However, a fast approximation exists for the Fisher information metric using the Fast Gauss Transform [@FGT]. This approximation reduces the runtime complexity of the distance calculation to be linear - a huge performance gain with large persistence diagrams. The implementation of the Fast Gauss Transform at https://github.com/vmorariu/figtree was copied with only slight modifications to interface with Rcpp [@Rcpp], providing the approximation functionality. Note that the "epsilon" parameter in the original C++ code is called `rho` in TDApplied's implementation in order to avoid confusion about error bounds - epsilon usually denotes an error bound (like in the original code), however `rho` is not itself a bound on the approximation error of the metric itself rather for a subcalculation.
+The Fisher information metric unlocks the door to a number of TDApplied machine learning and inference functions via the persistence Fisher kernel. However, its computational complexity is quadratic in the number of points in its input diagrams [@persistence_fisher] making calculations using diagrams with many points highly prohibitive. To solve this issue, a fast approximation has been described for the Fisher information metric using the Fast Gauss Transform [@FGT]. This approximation reduces the runtime complexity of the distance calculation to be linear - a huge performance gain with large persistence diagrams. The implementation of the Fast Gauss Transform at https://github.com/vmorariu/figtree was copied with only slight modifications to interface with Rcpp [@Rcpp], providing the approximation functionality. Note that the "epsilon" parameter in the original C++ code is called `rho` in TDApplied's implementation in order to avoid confusion about error bounds - epsilon usually denotes an error bound (like in the original code), however `rho` is not itself a bound on the approximation error of the metric itself rather for some subcalculations.
 
-To illustrate how significant this speedup can be we simulated unit spheres and tori (with inner tube radius 0.25 and major radius 0.75) with different numbers of points 100,200,...,1000 (with 10 iterations at each number of points), calculated their persistence diagrams and timed their Fisher information metric with and without approximation. The plot below shows the results (plotting the mean runtime with a 95\% confidence interval):
+To illustrate how significant this speedup can be we simulated unit spheres and tori (with inner tube radius 0.25 and major radius 0.75) with different numbers of points 100,200,...,1000 (with 10 iterations at each number of points), calculated their persistence diagrams and benchmarked calculating their Fisher information metric in dimensions 0, 1 and 2, with and without approximation. The plot below shows the results (plotting the mean runtime with a 95\% confidence interval):
 
 ```{r,echo = F}
 summary_table_approx = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(4.48064579963684,0.0763566970825195,17.6674932003021,0.158217072486877,39.6661910772324,0.233239436149597,70.411101102829,0.312848711013794,110.796008181572,0.385414099693298,160.19043545723,0.471218752861023,217.045732426643,0.545907402038574,281.503244686127,0.619925212860107,354.64315507412,0.700030016899109,431.781597065926,0.760770702362061),sd = c(0.179846190861649,0.00403598155739429,0.233420419722357,0.00428043758708594,0.264231438627147,0.00795119513963388,0.888634398129357,0.00748616624765675,0.596708850996989,0.010836296230238,1.46664969337454,0.0129923342156653,1.75630863537414,0.010559974689952,1.85564970425653,0.010979028911925,1.91770673210479,0.0126778338886785,1.85627025308762,0.0119982175150673),method = rep(c("Exact","Approximation"),10))
@@ -70,6 +70,21 @@ arrows(summary_table_approx$n_row[summary_table_approx$method == "Exact"],
        length=0.05, angle=90, code=3,col = "black")
 ```
 
+```{r,eval = F,echo = F}
+model_approx <- stats::lm(data = 
+                            data.frame(ratio =
+                                       summary_table_approx$mean[summary_table_approx$method
+                                                                   == "Exact"]/
+                                       summary_table_approx$mean[summary_table_approx$method
+                                                                   == "Approximation"],
+                                       n_row = seq(100,1000,100)),
+                   
+                   formula = ratio ~ n_row)
+summary(model_approx)$coefficients
+```
+
+A linear model of the runtime ratio (division of the exact vs. approximation mean runtimes) regressed onto the number of points in the shapes found a highly significant positive slope of about 0.57. This means that for every additional 100 points in the shapes the runtime ratio increases by about 57 - more points leads to greater runtime savings.  
+
 Unfortunately this approximation cannot currently be run in parallel internally in TDApplied functions, so in cases where the number of points in the persistence diagrams is small or the number of available cores is large we may consider using the exact calculation instead. However, functions are provided in the "exec/parallel_with_approximation.R" script which can be loaded into your environment to compute distance and Gram matrices in parallel with approximation (and these matrices can be input into other TDApplied functions directly - see the following section).
 
 As a demonstration we will create ten persistence diagrams from circles (100 points points sampled on each) and compute their Fisher information metric distance matrix in parallel with and without approximation:
@@ -87,7 +102,7 @@ d_exact <- distance_matrix(g,distance = "fisher",sigma = 1)
 d_approx <- parallel_approx_distance_mat(g,rho = 1e-6)
 ```
 
-The timing difference was staggering - the exact distance matrix was calculated in about 44.8s, whereas the approximate distance matrix was calculated in 1.8s! Moreover, the maximum percent difference between the two matrices was about 0.9\%. When we repeated these calculations with twenty diagrams the timing was 180s for the exact calculation compared to 3.7s with the approximation, and when we used twenty diagrams with each circle having 200 sampled points the timings were 174s and 2.4s.
+The timing difference was staggering - the exact distance matrix was calculated in about 44.8s, whereas the approximate distance matrix was calculated in 1.8s! Moreover, the maximum percent difference between the two matrices was only about 0.9\%. When we repeated these calculations with twenty diagrams the timing was 180s for the exact calculation compared to 3.7s with the approximation, and when we used twenty diagrams with each circle having 200 sampled points the timings were 174s and 2.4s.
 
 These simulations indicate that the functions `parallel_approx_distance_matrix` and `parallel_approx_gram_matrix` in the exec directory can unlock exceptional performance increases in calculating distance/Gram matrices, which can be particularly useful when combined with the speedup documented in the following section.
 
@@ -185,11 +200,11 @@ The new runtime (including calculating the distance and Gram matrices) was about
 g <- generate_TDApplied_vignette_data(100,100,100)
 ```
 
-The timing scaled proportionally - without using precomputed matrices the time taken was about 2.03 minutes and with precomputed matrices the time taken was about 39.69s. We recommend using precomputed matrices whenever performing multiple similar analyses of the same persistence diagrams.
+The timing scaled proportionally - without using precomputed matrices the time taken was about 121.8s and with precomputed matrices the time taken was about 39.69s. We recommend using precomputed matrices whenever performing multiple analyses of the same persistence diagrams with shared distance/kernel parameters.
 
 ## Storing Calculations in `permutation_test`
 
-Another significant source of redundancy can be found in the `permutation_test` function - in each calculation of the loss function a distance value is computed between each pair of diagrams in the same (possibly permuted) group, however diagrams will often appear in the same permuted group meaning distances would be needlessly recalculated. To solve this problem the `permutation_test` function creates an initially trivial distance matrix (with entries -1) between all persistence diagrams across all groups, updates its entries when new distance calculations are performed (in parallel as discussed earlier) and retrieves already computed values whenever possible. While computing a full distance matrix (also in parallel) may have been simpler, depending on the group sizes and number of permutations not every pair of diagrams may appear in some permuted group together, so the implemented method avoids redundancy without calculating unnecessary distances.
+Another significant source of redundancy can be found in the `permutation_test` function - in each calculation of the loss function a distance value is computed between each pair of diagrams in the same (possibly permuted) group, however diagrams will often appear in the same permuted group meaning distances would be needlessly recalculated. To solve this problem the `permutation_test` function creates an initially trivial distance matrix (with entries -1) between all persistence diagrams across all groups, updates its entries when new distance calculations are performed (in parallel as discussed earlier) and retrieves already computed values whenever possible. It is possible to input precomputed distance matrices to this function, however for standalone usage depending on the group sizes and number of permutations not every pair of diagrams may appear in some permuted group together, so the implemented speedup avoids redundancy without calculating unnecessary distances.
 
 # Benchmarking Against Similar Packages
 
@@ -397,6 +412,6 @@ summary(model)$coefficients
 
 # Conclusions
 
-TDApplied includes a wide variety of functions for machine learning and inference with persistence diagrams, however these methods can have prohibitively long runtimes. In order to make TDApplied functions more practical a number of speedups have been implemented, resulting in substantial performance gains, including parallelization, fast approximation to the Fisher information metric and allowing precomputed distance/Gram matrices to be input to the functions. Benchmarking TDApplied functions against suitable counterparts in R situates TDApplied as the state-of-the-art in speed for topological data analysis calculations in R, however comparisons against python functions indicate that further speedups may be possible. With all its optimizations, TDApplied makes applied topological data analysis possible and practical like never before.
+TDApplied includes a wide variety of functions for machine learning and inference with persistence diagrams, however these methods can have prohibitively long runtimes. In order to make TDApplied functions more practical a number of speedups have been implemented resulting in substantial performance gains, including parallelization, fast approximation to the Fisher information metric and allowing precomputed distance/Gram matrices to be input to the functions. Benchmarking TDApplied functions against suitable counterparts in R situates TDApplied as the state-of-the-art in speed for topological data analysis calculations in R, however comparisons against python functions indicate that further speedups may be possible. With all its optimizations, TDApplied makes applied topological data analysis possible and practical like never before.
 
 ## References

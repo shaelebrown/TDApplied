@@ -1,11 +1,11 @@
 ---
-title: "Pratical Example - Human Connectome Project Analysis"
+title: "Human Connectome Project Analysis"
 author: "Shael Brown and Dr. Reza Farivar"
 output: 
   rmarkdown::html_document:
     fig_caption: yes
 vignette: >
-  %\VignetteIndexEntry{Practical Example - Human Connectome Project Analysis}
+  %\VignetteIndexEntry{Human Connectome Project Analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 bibliography: REFERENCES.bib
@@ -29,13 +29,13 @@ knitr::include_graphics("temporal_FC.jpg")
 
 In fMRI studies, data is collected from subjects who are either performing some task (for instance repeatedly viewing pictures from various object categories [@RSA]) or relaxing (fixating at the center of a screen, called "resting state"). This allows researchers to make inferences about which brain regions are responsible for which types of tasks or processes, making it an important tool for studying the brain. Moreover, fMRI (and other similar technologies) have become a popular venue for topological data analysis.
 
-Topological data analysis has become a powerful tool for analyzing fMRI data due to persistent homology's ability to detect topological signal in fMRI data [@topological_feasibility;@cohomology_feasability] and model high-dimensional communication between multiple brain regions, all without needing to choose an arbitrary threshold for "significant" correlations in FC [@importance_of_the_whole;@twos_company;@persistent_hom_brain_networks;@TDA_ADHD]. In these kinds of studies, persistent homology (or closely related tools) has mainly been used to find the topology of temporal FC. However, such approaches can remove much temporal information in the data, and another topological data analysis tool called mapper [@mapper] has analyzed spatial correlation matrices to find structure in fMRI spatial activity patterns [@BrainOrganizationMapper]. However, unlike persistent homology, mapper is not designed to find periodic structures in data, which in fMRI data may encode essential periodic patterns in temporal brain activity. Therefore, we will use persistent homology and TDApplied to perform an **exploratory** topological analysis of the **loops** found in spatial correlation matrices in data from one of the most important sources of high-quality neuroimaging data - the Human Connectome Project [@HCP]. 
+Topological data analysis has become a powerful tool for analyzing fMRI data due to persistent homology's ability to detect topological signal in fMRI data [@topological_feasibility;@cohomology_feasability] and model high-dimensional communication between multiple brain regions, all without needing to choose an arbitrary threshold for "significant" correlations in FC [@importance_of_the_whole;@twos_company;@persistent_hom_brain_networks;@TDA_ADHD]. In these kinds of studies, persistent homology (or closely related tools) has mainly been used to find the topology of temporal FC. However, such approaches can remove much temporal information in the data, and another topological data analysis tool called mapper [@mapper] has analyzed spatial correlation matrices to find structure in fMRI spatial activity patterns [@BrainOrganizationMapper]. However, unlike persistent homology, mapper is not designed to find periodic structures in data, which in fMRI data may encode essential periodic patterns in temporal brain activity. Therefore, we will use persistent homology and **TDApplied** to perform an **exploratory** topological analysis of the **loops** found in spatial correlation matrices in data from one of the most important sources of high-quality neuroimaging data - the Human Connectome Project [@HCP]. 
 
 The Human Connectome Project contains extensively preprocessed neuroimaging data from about 1200 subjects, allowing researchers to make powerful inferences about the function of the human brain. Of the data collected, fMRI was used to record brain activity over time while participants completed 9 tasks. The tasks were two resting-state scans, an emotion, gambling, language, working memory, relational, social and motor task, and for each task there were two scans (resulting in 18 scans per subject). The HCP fMRI data was also processed to convert voxels into surface nodes - points, on a mesh of the brain's surface geometry, which are comparable across subjects. The resting state scans were longer than the other task scans, which normally necessitates the use of analysis methods which abstract out temporal information (like temporal FC). However, by using topology we can interrogate the geometry of the spatial activity patterns, which we call *mental state topology*, without losing potentially task-related temporal information. It was found that that mental state topologies in the HCP dataset contained robust 0-dimensional topological features which correlated with various measures of personality and behavior [@topological_time_and_space]. On the other hand, temporal FC can act as a "fingerprint" for identifying subjects in the HCP dataset [@functional_fingerprinting]. So what role can loops of mental-state topology play in distinguishing between subjects and tasks in the HCP dataset?
 
 To answer this question we analyzed 100 HCP subject's fMRI data with TDApplied by
 
-1. calculating time-point by time-point correlation distance matrices of each fMRI dataset for each subject (normalizing the activity vector of each time point and transforming correlations $\rho$ into distances $\sqrt{2*(1-\rho)}$, see the appendix for an explanation),
+1. calculating time-point by time-point correlation distance matrices of each fMRI dataset for each subject (transforming correlations $\rho$ into distances $\sqrt{2*(1-\rho)}$, see the appendix for an explanation),
 2. computing thresholded persistence diagrams of dimension 1 from those dissimilarity matrices (using the bootstrap method), and 
 3. using machine learning and inference functions from TDApplied to analyze the resulting collection of diagrams.
 
@@ -45,7 +45,7 @@ The script used to generate these results, as well as the subject ID's used, can
 
 What does a mental state topology, or a collection of them, represent? Loops in a mental state topology are sets of spatially periodic patterns of spatial activity, and these sets vary along one neurological dimension of activity. Collections of mental state topologies, like combining all of the persistence diagrams from the resting state 1 task across all 100 subjects, could encode both a characteristic number and representative neurological dimensions of loops across the whole collection. In this section we visualize combined diagrams across subjects and tasks, and construct representative loops from all the resting state 1 mental state topologies.
 
-We visualized the persistence diagrams of subjects and tasks by combining all the diagrams for that subjects/task and plotting a probability distribution induced by adding a Gaussian point mass centered at each point (like in the Fisher information metric) with $\sigma$ values 0.001, 0.01 and 0.1. Plots with $\sigma = 0.1$ and $\sigma = 0.001$ were least informative because $\sigma$ was comparable to the scale of the data or too fine scale respectively. Here are the distribution plots for three subjects with $\sigma = 0.001$:
+We visualized the persistence diagrams of subjects and tasks by combining all the diagrams for that subjects/task and plotting a probability distribution induced by adding a Gaussian point mass centered at each point (like in the Fisher information metric) with $\sigma$ values 0.001, 0.01 and 0.1. Plots with $\sigma = 0.1$ and $\sigma = 0.001$ were least informative because $\sigma$ was comparable to the scale of the data or too fine scale respectively. Here are the distribution plots for three subjects with $\sigma = 0.01$:
 
 ```{r,echo = F,eval = T,fig.height = 3,fig.width = 9,fig.align = 'center'}
 par(mfrow = c(1,3))
@@ -149,7 +149,7 @@ visualize_diagram(social,sigma = 0.01,plot_title = "Social",lim = lim_task)
 visualize_diagram(wm,sigma = 0.01,plot_title = "Working memory",lim = lim_task)
 ```
 
-Again we found that the tasks had visually different distributions, although the two resting state scans are fairly similar, as we would expect, with two nearby clusters of loops. 
+Again we found that the tasks had visually different distributions, although the two resting state scans are fairly similar, as we would expect, with one main cluster of loops of birth and death just under 0.2.
 
 But what do these mental state loops represent in terms of brain activity? As an illustration we considered the resting state 1 persistence diagram and used kmeans clustering to find two "basis" resting state 1 loops which described all of the loops well:
 
@@ -165,7 +165,7 @@ This loop was from one subject's resting state 1 data, but note that topological
 knitr::include_graphics("loop_scatter.jpg")
 ```
 
-Since the highlighted points from the plot each represent a spatial pattern of neural activity at some time point, we then plotted these spatial patterns around the circumference of a circle (however, the loop did not form a perfect circle in the data). Note that when the two brain hemispheres (i.e. sides) are plotted side-by-side, the left hemisphere is on the right and the right hemisphere is on the left. Prior to plotting, the fMRI data was first normalized to have temporal mean 0 and standard deviation 1 for each surface node. The spatial patterns were then smoothed by averaging spatial signal within a 5mm radius from each surface node, and the smoothed signal was thresholded by absolute value at least 0.75. We plotted the spatial patterns with boxes around areas which appeared to exhibit periodic behavior around the loop:
+Since the highlighted points from the plot each represent a spatial pattern of neural activity at some time point, we then plotted these spatial patterns around the circumference of a circle (however, the loop did not form a perfect circle in the data). Note that when the two brain hemispheres (i.e. sides) are plotted side-by-side, the left hemisphere is on the right and the right hemisphere is on the left. Prior to plotting, the fMRI data was first normalized to have temporal mean 0 and standard deviation 1 for each surface node. The spatial patterns were then smoothed by averaging spatial signal within a 5mm radius from each surface node, and the smoothed signal was thresholded by absolute value at least 0.75. We plotted the spatial patterns with boxes around regions which appeared to exhibit periodic behavior around the loop:
 
 ```{r,echo = F,eval = T,fig.height = 4,fig.width = 4,fig.align = 'center'}
 knitr::include_graphics("loop.jpg")
@@ -202,7 +202,7 @@ We then compared the distribution of the number of loops across subjects and tas
 
 Next we performed the same analysis for the mean persistence of loops in the diagrams. About 19\% of the subject-subject pairs had differences in mean persistence values. We found 31\% statistically different persistence between tasks, mainly being higher persistence in resting state scans compared to task-based scans.
 
-In order to better understand subject-subject and task-task differences we used TDApplied's permutation test to compare subjects (matched by task) and tasks with both the 2-wasserstein and bottleneck distances, again judging significance at the $\alpha = 0.05$ level. For the subjects, both bottleneck and wasserstein distances found about 24\% of the subject-subject pairs to have different topologies, with about 94\% of the differences conserved between the two metrics. For the tasks, in the bottleneck tests there were 12 pairs of different tasks, seven of which between one of the resting state scans with another task, and for the wasserstein tests there were only two pairs of different tasks (resting state 2 with emotional and relational), but the two resting state scans were not different from each other in any case. Therefore, the resting state scans were more different from task scans than the task scans were with each other. 
+In order to better understand subject-subject and task-task differences we used TDApplied's permutation test to compare subjects (matched by task) and tasks with both the 2-wasserstein and bottleneck distances, again judging significance at the $\alpha = 0.05$ level. For the subjects, both bottleneck and wasserstein distances found about 24\% of the subject-subject pairs to have different topologies, with about 94\% of the differences conserved between the two metrics. For the tasks, in the bottleneck tests there were 12 pairs of different tasks, seven of which were between one of the resting state scans with another task, and for the wasserstein tests there were only two pairs of different tasks (resting state 2 with emotional and relational), but the two resting state scans were not different from each other in either case. Therefore, the resting state scans were more different from task scans than the task scans were with each other. 
 
 Finally, we analyzed whether any of the subject-subject or task-task pairs were independent (again at the $\alpha = 0.05$ significance level). Only about 27% of the subject-subject pairs were significantly non-independent in at least 50\% of kernel parameters - an interesting future question would be to determine whether these non-independent pairs were blood-related. On the other hand, over 89\% of the task-task pairs were found to be significantly non-independent in at least half of the kernel parameter values. Therefore, task-induced mental state topology may be strongly related between tasks - i.e. computational strategies in different neural domains may be related. In order to compare the results of the two inference procedures, we used two-sided t-tests to compare the percentage of those kernel values which found significant non-independence between subject-subject pairs who were significantly different in the permutation tests compared to pairs of subjects who were not significantly different in the tests (for both distance metrics). The results were very similar for both distance metrics, with significantly lower percentage of non-independence in non-different subject-subject pairs.
 
@@ -220,7 +220,7 @@ num_clusters <- c(rep(2,14),rep(3,13),rep(4,12),rep(5,10),rep(6,2),rep(7,2),rep(
 barplot(table(num_clusters),xlab = "Optimal number of clusters",main = "")
 ```
 
-From the graph it seemed like the optimal number of clusters was between 2 and 5. We therefore performed clustering with all those values of k for all kernel parameters, and calculated a membership percentage matrix for each value of k - for what percentage of kernel parameters was each pair of subjects in the same cluster. For each value of k we computed the percentage of pairs of subject who were in the same cluster at least 90\% of the time, and the percent which were in the same cluster at most 5\% of the time - when k was two these percentages were 61\% and 37\%, when k was 3 they were 55\% and 36\%, for k equals 4 55\% and 37\%, and for k equals 5 0\% and 38\% (about 55\% were in the same cluster over 50\% of the time). These results indicate that the clusterings for k being 2, 3 and 4 were highly consistent across all kernel parameters. We then used the kernlab function `kkmeans` to cluster the three membership matrices, and only for k = 2 and 3 was the clustering able to be resolved (potentially due to the membership matrix not being a real kernel matrix). However, the clustering with k = 2 just returned the empty diagrams so it was not super interesting. We therefore visualized the group of diagrams in each of the three found clusters:
+From the graph it seemed like the optimal number of clusters was between 2 and 5. We therefore performed clustering with all those values of k for all kernel parameters, and calculated a membership percentage matrix for each value of k - for what percentage of kernel parameters was each pair of subjects in the same cluster. For each value of k we computed the percentage of pairs of subject who were in the same cluster at least 90\% of the time, and the percent which were in the same cluster at most 5\% of the time - when k was two these percentages were 61\% and 37\%, when k was 3 they were 55\% and 36\%, when k was 4 they were 55\% and 37\%, and when k was 5 they were 0\% and 38\% (about 55\% were in the same cluster over 50\% of the time). These results indicate that the clusterings for k being 2, 3 and 4 were highly consistent across all kernel parameters. We then used the kernlab function `kkmeans` to cluster the three membership matrices, and only for k = 2 and 3 was the clustering able to be resolved (potentially due to the membership matrix not being a real kernel matrix). However, the clustering with k = 2 just returned the partition of diagrams into non-empty vs. empty, so it was not super interesting. We therefore visualized the group of diagrams in each of the three found clusters:
 
 ```{r,echo = F,eval = T,fig.height = 3,fig.width = 9,fig.align = 'center'}
 par(mfrow = c(1,3))
@@ -244,7 +244,7 @@ visualize_diagram(cluster2,sigma = 0.01,plot_title = "Cluster 2",lim = lim_clust
 visualize_diagram(cluster3,sigma = 0.01,plot_title = "Cluster 3",lim = lim_clust)
 ```
 
-The three clusters are quite distinct in terms of what topological information they likely represent. For cluster one this is mainly two loops but sometimes a small or very large loop (with mean persistence in the cluster of about 0.0018), for cluster two this is one loop of variable size (mean persistence in the cluster of about 0.0011), and cluster 3 is one main loop and sometimes one additional small loop (this group only had 16 loops in it, with mean persistence about 0.0005).
+The three clusters are quite distinct in terms of what topological information they likely represent. For cluster one this is mainly one large loop-type (with mean persistence in the cluster of about 0.007), for cluster two this is two loop-types of variable size (mean persistence in the cluster of about 0.005), and cluster 3 is comprised of a single low-persistence (0.002) loop.
 
 Next we analyzed the number of rows in the diagrams of each cluster. The results were as follows:
 
@@ -259,9 +259,9 @@ print("Cluster 3:")
 c("0" = 1335,"1" = 1)
 ```
 
-This confirmed that cluster 1 had more loops than the other clusters on average, that cluster 2 mainly had one loop, and that cluster three was only a few loops of low persistence (and all of the no loop diagrams).
+Cluster 1 had more loops than the other clusters on average, cluster 2 diagrams had only one loop, and that cluster mainly retrieved the empty diagrams.
 
-Next we analyzed the task composition of clusters, and found the following percentages (rounded to the hundredths position and ordered by most to least rounded variance):
+Next we analyzed the task composition of clusters, and found the following percentages (rounded to the hundredths position and ordered by most to least rounded variance across the clusters):
 
 ```{r,echo = F}
 print("Cluster 1:")
@@ -274,7 +274,7 @@ print("Cluster 3:")
 c("emotion" = 0.12,"gambling" = 0.10,"language" = 0.11,"motor" = 0.12,"relational" = 0.11,"rest1" = 0.11,"rest2" = 0.11,"social" = 0.11,"wm" = 0.11)[c("rest1","rest2","emotion","gambling","social","motor","relational","language")]
 ```
 
-Cluster 1 had much higher percentages of resting state scans compared to the other clusters. However, it also had lower percentages of emotion, gambling and social tasks than the other clusters. Clusters 2 and 3 were moreso separated by percentages of resting state 2 and motor (more in cluster 3), and gambling and social (more in cluster 2).
+Cluster 1 had higher percentages of resting state scans compared to the other clusters. However, compared to cluster 2 it also had lower percentages of emotion, gambling and social tasks, and a higher percent of motor tasks. Clusters 2 and 3 were moreso separated by percentages of resting state 2 and motor (more in cluster 3), and gambling (more in cluster 2).
 
 We then calculated 2D MDS embeddings of all the diagrams using both the wasserstein and bottleneck distances, and the cluster labels did a reasonably good job at separating the embedded points:
 
@@ -298,7 +298,7 @@ graphics::legend("top", pch=19, pt.cex=3, cex=1.5, bty='n',
 graphics::mtext("Cluster label",cex=2)
 ```
 
-Behavioral measures may correlate with the mental state topologies, and therefore may be explaining some of the variance within the plots (like the 0-dimensional topological features in [@topological_time_and_space]), and this could be an interesting future analysis. Also cluster 1 seemed to be more 2 dimensional in the bottleneck embedding compared to the wasserstein embedding, and determining what factors could explain these dimensions would also be an interesting future analysis.
+Behavioral measures may correlate with the mental state topologies, and therefore may be explaining some of the variance within the plots (like the 0-dimensional topological features in [@topological_time_and_space]), and this could be an interesting future analysis. Also cluster 1 seemed to be more 2 dimensional in the bottleneck embedding compared to being more 1 dimensional in the wasserstein embedding, and determining what factors could explain these dimensions would also be an interesting future analysis.
 
 # Conclusion
 
@@ -312,6 +312,8 @@ Nevertheless, important future directions of this exploratory analysis include
 4. creating methods for finding the neurological dimension which varies periodically across a loop, and determining if temporal patterns exist in this dimension,
 5. determining if HCP subjects whose mental state topologies were non-independent are blood related, and
 6. correlating HCP behavioral measures with the MDS embedding coordinates of the mental state topologies to see if behavior can explain variance in mental state topologies.
+
+Using TDApplied we were able to analyze fMRI data spatially without summarizing (i.e. removing) temporal information. We identified meaningful topological features of fMRI datasets which varied across tasks and subjects in structured patterns, and found that fewer neurological dimensions may be needed to summarize fMRI data than previously thought. Applied topological data analysis unlocks new and exciting ways for analyzing (neuroimaging) data which was not previously possible.
 
 # Appendix: Converting Correlations to Distances
 

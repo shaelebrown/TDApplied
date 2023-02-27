@@ -10,7 +10,7 @@
 #' computed using the two main R packages for topological data analysis into a data frame, 
 #' (3) implement fast versions of both distance and kernel calculations
 #' for pairs of persistence diagrams, (4) contribute tools for the interpretation of
-#' persistence diagrams, and (5) provide parallelized methods for machine learning
+#' persistence diagrams, and (5) provide scalable methods for machine learning
 #' and inference for persistence diagrams.
 #'
 #' @useDynLib TDApplied, .registration = TRUE
