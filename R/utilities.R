@@ -276,4 +276,18 @@ check_matrix <- function(M,name,type = "kernel",symmetric = T){
   
 }
 
+# function for cv in diagram_ksvm
+# copied from kernlab package v0.9-29
+.classAgreement <- function (tab) {
+  n <- sum(tab)
+  if (!is.null(dimnames(tab))) {
+    lev <- intersect(colnames(tab), rownames(tab))
+    p0 <- sum(diag(tab[lev, lev])) / n
+  } else {
+    m <- min(dim(tab))
+    p0 <- sum(diag(tab[1:m, 1:m])) / n
+  }
+  return(p0)
+}
+
 

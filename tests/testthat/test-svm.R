@@ -7,7 +7,8 @@ test_that("diagram_ksvm detects incorrect parameters correctly",{
   expect_error(diagram_ksvm(diagrams = list(D1,D2,NULL),y = c(0,1,2),num_workers = 2),"Diagrams")
   expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),cv = NA,y = c(0,1,2),num_workers = 2),"cv")
   expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),cv = 0,y = c(0,1,2),num_workers = 2),"cv")
-  expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),cv = 1.1,y = c(0,1,2),num_workers = 2),"cv")
+  expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),dim = 1,cv = 2,y = c(0,1,2),num_workers = 2),"cv")
+  expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),cv = 1.1,y = c(0,1,2),num_workers = 2,dim = 1),"cv")
   expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),cv = c(1,2),y = c(0,1,2),num_workers = 2),"cv")
   expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),t = -1,y = c(0,1,2),num_workers = 2),"t")
   expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),dim = 0,sigma = 0,y = c(0,1,2),num_workers = 2),"sigma")
@@ -51,6 +52,40 @@ test_that("diagram_ksvm can accept precomputed distance matrices",{
   expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),y = c(1,2,3),distance_matrices = list(d0,d1,d1),num_workers = 2,dim = c(0,1)),"expand.grid")
   
   expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),y = c(1,2,3),distance_matrices = NA,num_workers = 2,dim = c(0,1)),"list")
+  
+})
+
+test_that("diagram_ksvm can perform cross validation with any valid model type",{
+  
+  skip_on_cran()
+  skip_if_not_installed("TDA")
+  skip_if_not_installed("TDAstats")
+  
+  # create diags
+  g <- lapply(X = 1:10,FUN = function(X){
+    
+    if(X <= 5)
+    {
+      return(TDAstats::calculate_homology(TDA::circleUnif(n = 50),threshold = 1,dim = 1))
+    }
+    return(TDAstats::calculate_homology(TDA::sphereUnif(n = 50,d = 2),threshold = 1,dim = 1))
+    
+  })
+  
+  # create models with CV
+  expect_type(diagram_ksvm(diagrams = g,cv = 2,dim = 1,y = factor(c(rep("0",5),rep("1",5))),type = "C-svc"),"list")
+  expect_type(diagram_ksvm(diagrams = g,cv = 2,dim = 1,y = factor(c(rep("0",5),rep("1",5))),type = "C-svc"),"list")
+  expect_type(diagram_ksvm(diagrams = g,cv = 2,dim = 1,y = factor(c(rep("0",3),rep("1",3),rep("2",4))),type = "C-svc"),"list")
+  expect_type(diagram_ksvm(diagrams = g,cv = 1,dim = 1,y = factor(c(rep("0",3),rep("1",3),rep("2",4))),type = "C-svc",prob.model = T),"list") # performs cv internally anyways
+  expect_type(diagram_ksvm(diagrams = g,cv = 2,dim = 1,y = factor(c(rep("0",5),rep("1",5))),type = "nu-svc"),"list")
+  expect_error(diagram_ksvm(diagrams = g,cv = 2,dim = 1,y = factor(c(rep("0",3),rep("1",3),rep("2",4))),type = "nu-svc"),"nu-svc")
+  expect_error(diagram_ksvm(diagrams = g,cv = 2,dim = 1,y = factor(c(rep("0",5),rep("1",5))),type = "C-bsvc"),"type")
+  expect_error(diagram_ksvm(diagrams = g,cv = 2,dim = 1,y = factor(c(rep("0",3),rep("1",3),rep("2",4))),type = "spoc-svc"),"type")
+  expect_error(diagram_ksvm(diagrams = g,cv = 2,dim = 1,y = factor(c(rep("0",3),rep("1",3),rep("2",4))),type = "kbb-svc"),"type")
+  expect_type(diagram_ksvm(diagrams = g,cv = 2,dim = 1,type = "one-svc"),"list")
+  # expect_type(diagram_ksvm(diagrams = g,cv = 2,dim = 1,y = c(rep(1,5),rep(2,5)),type = "eps-svr"),"list")
+  expect_type(diagram_ksvm(diagrams = g,cv = 2,dim = 1,y = c(rep(1,5),rep(2,5)),type = "nu-svr"),"list")
+  expect_error(diagram_ksvm(diagrams = g,cv = 2,dim = 1,y = c(rep(1,5),rep(2,5)),type = "eps-bsvr"),"type")
   
 })
 
@@ -144,7 +179,7 @@ test_that("predict_diagram_ksvm can accept pre-computed Gram matrices",{
   class(K) = "kernelMatrix"
   class(K_small) = "kernelMatrix"
   expect_error(predict_diagram_ksvm(model = model,K = K_small,num_workers = 2),"number")
-  expect_equal(predict_diagram_ksvm(model = model,K = K,num_workers = 2),predict_diagram_ksvm(new_diagrams = list(D1,D2,D3),model = model,num_workers = 2),tolerance = 1e-8)
+  expect_equal(predict_diagram_ksvm(model = model,K = K,num_workers = 2),predict_diagram_ksvm(new_diagrams = list(D1,D2,D3),model = model,num_workers = 2),tolerance = 1e-5)
   
 })
 

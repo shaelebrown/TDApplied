@@ -29,7 +29,7 @@ diagram_ksvm(
 \arguments{
 \item{diagrams}{a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.}
 
-\item{cv}{a positive number at most the length of `diagrams` which determines the number of cross validation splits to be performed (default 1, aka no cross-validation).}
+\item{cv}{a positive number at most the length of `diagrams` which determines the number of cross validation splits to be performed (default 1, aka no cross-validation). If `prob.model` is TRUE then cv is set to 1 since kernlab performs 3-fold CV internally in this case.}
 
 \item{dim}{a non-negative integer vector of homological dimensions in which the model is to be fit.}
 
@@ -39,9 +39,9 @@ diagram_ksvm(
 
 \item{rho}{an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If supplied, distance matrix calculations are sequential.}
 
-\item{y}{a response vector with one label for each persistence diagram. Must be either numeric or factor.}
+\item{y}{a response vector with one label for each persistence diagram. Must be either numeric or factor, but doesn't need to be supplied when `type` is "one-svc".}
 
-\item{type}{a string representing the type of task to be performed.}
+\item{type}{a string representing the type of task to be performed. Can be any one of "C-svc","nu-svc","one-svc","eps-svr","nu-svr" - default for regression is "eps-svr" and for classification is "C-svc". See \code{\link[kernlab]{ksvm}} for details.}
 
 \item{distance_matrices}{an optional list of precomputed Fisher distance matrices, corresponding to the rows in `expand.grid(dim = dim,sigma = sigma)`, default NULL.}
 

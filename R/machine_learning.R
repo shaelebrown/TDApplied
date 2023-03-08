@@ -605,13 +605,13 @@ predict_diagram_kpca <- function(new_diagrams,K = NULL,embedding,num_workers = p
 #' a character vector for instance will throw an error.
 #'
 #' @param diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
-#' @param cv a positive number at most the length of `diagrams` which determines the number of cross validation splits to be performed (default 1, aka no cross-validation).
+#' @param cv a positive number at most the length of `diagrams` which determines the number of cross validation splits to be performed (default 1, aka no cross-validation). If `prob.model` is TRUE then cv is set to 1 since kernlab performs 3-fold CV internally in this case.
 #' @param dim a non-negative integer vector of homological dimensions in which the model is to be fit.
 #' @param t a vector of positive numbers representing the grid of values for the scale of the persistence Fisher kernel, default 1.
 #' @param sigma a vector of positive numbers representing the grid of values for the bandwidth of the Fisher information metric, default 1.
 #' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If supplied, distance matrix calculations are sequential.
-#' @param y a response vector with one label for each persistence diagram. Must be either numeric or factor.
-#' @param type a string representing the type of task to be performed.
+#' @param y a response vector with one label for each persistence diagram. Must be either numeric or factor, but doesn't need to be supplied when `type` is "one-svc".
+#' @param type a string representing the type of task to be performed. Can be any one of "C-svc","nu-svc","one-svc","eps-svr","nu-svr" - default for regression is "eps-svr" and for classification is "C-svc". See \code{\link[kernlab]{ksvm}} for details.
 #' @param distance_matrices an optional list of precomputed Fisher distance matrices, corresponding to the rows in `expand.grid(dim = dim,sigma = sigma)`, default NULL.
 #' @param C a number representing the cost of constraints violation (default 1) this is the 'C'-constant of the regularization term in the Lagrange formulation.
 #' @param nu numeric parameter needed for nu-svc, one-svc and nu-svr. The `nu` parameter sets the upper bound on the training error and the lower bound on the fraction of data points to become Support Vector (default 0.2).
@@ -697,6 +697,22 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
   }
   
   # basic error checks for y
+  if(missing(y))
+  {
+    if(!is.null(type))
+    {
+      if(type == "one-svc")
+      {
+        y <- rep(0,length(diagrams))
+      }else
+      {
+        stop("y must be supplied.")
+      }
+    }else
+    {
+      stop("y must be supplied.")
+    }
+  }
   if(length(y) != length(diagrams))
   {
     stop("y must be a vector with the same number of elements as diagrams.")
@@ -704,7 +720,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
   if(class(y) %in% c("numeric","factor") == F)
   {
     stop("y should be either a numeric or factor vector.")
-  }
+  } 
   
   # set defaults for type argument
   if(is.null(type))
@@ -716,18 +732,45 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
     {
       type <- "eps-svr"
     }
+  }else
+  {
+    if(type %in% c("C-svc","nu-svc","one-svc","eps-svr","nu-svr") == F)
+    {
+      stop("type must be one of \'C-svc\', \'nu-svc\', \'one-svc\', \'eps-svr\' or \'nu-svr\'.")
+    }
+  }
+  
+  if(type == "nu-svc" & is.factor(y) & length(levels(y)) > 2)
+  {
+    stop("Currently there are errors for multiclass classification with nu-svc. Try using C-svc instead.")
+  }
+  
+  # if prob.model is TRUE set cv = 1
+  if(prob.model == T)
+  {
+    cv <- 1
   }
   
   # expand parameter grid
   params <- expand.grid(dim = dim,t = t,sigma = sigma,C = C,nu = nu,epsilon = epsilon)
   
-  # make vector of row memberships
+  # make vector of row memberships for cv
   v <- rep(1:cv,floor(length(diagrams)/cv))
   if(length(v) != length(diagrams))
   {
-    v <- c(v,1:(length(diagrams) %% floor(length(diagrams)/cv)))
+    if(length(diagrams) - length(v) == 1)
+    {
+      v <- c(v,1)
+    }else
+    {
+      v <- c(v,1:(length(diagrams) %% floor(length(diagrams)/cv))) 
+    }
   }
   v <- sample(v,size = length(v),replace = F)
+  if(cv > 1 & sum(as.numeric(table(v)) == 1) > 0)
+  {
+    stop(paste0("Too few training examples to perform cv with ",cv," folds. Try decreasing cv parameter or fitting the model without cv."))
+  }
   
   # split diagrams by membership vector
   diagrams_split <- lapply(X = 1:cv,FUN = function(X){
@@ -770,7 +813,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
   cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
   parallel::clusterEvalQ(cl,c(library(clue),library(rdist),library(foreach),library(iterators),library(kernlab)))
-  parallel::clusterExport(cl,c("y","predict_diagram_ksvm","all_diagrams","check_diagram","gram_matrix","diagram_distance","diagram_kernel","check_param","diagram_to_df","cv","distance_matrices","diagrams_split","prob.model","class.weights","fit","cache","tol","shrinking"),envir = environment())
+  parallel::clusterExport(cl,c("y","all_diagrams","check_diagram","gram_matrix","diagram_distance","diagram_kernel","check_param","diagram_to_df","cv","distance_matrices","diagrams_split","prob.model","class.weights","fit","cache","tol","shrinking",".classAgreement"),envir = environment())
   
   # for each model (combination of parameters), train the model on each subset and get the
   # prediction error on the hold out set, wrapped in tryCatch to ensure cluster is stopped
@@ -785,40 +828,37 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
       training_indices <- unlist(diagrams_split[setdiff(1:cv,s)])
       training_indices <- training_indices[order(training_indices)]
       test_indices <- setdiff(1:length(diagrams),training_indices)
-      m <- length(test_indices)
+      
+      # fit model on training folds
       K_subset <- K[training_indices,training_indices]
       class(K_subset) <- "kernelMatrix"
-      # suppress unhelpful kernlab warnings when fitting model
-      tryCatch(expr = {model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)},
-               error = function(e){stop(e)},
-               warning = function(w){
-                 
-                 if(grepl(pattern = "closing unused connection",w) == F)
-                 {
-                   warning(w)
-                 }
-                 
-               })
+      model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)
+      
+      # predict model on single test fold
+      K_cross <- K[test_indices,training_indices[model@SVindex]]
+      class(K_cross) <- "kernelMatrix"
+      predictions <- kernlab::predict(model,K_cross)
+      
+      # calculate error depending on model type
+      if(type %in% c("C-svc","nu-svc"))
+      {
+        return((1 - .classAgreement(table(y[test_indices],as.character(predictions)))))
+      }
+      if(type == "one-svc")
+      {
+        return((1 - sum(predictions)/length(predictions)))
+      }
+      if(type %in% c("eps-svr","nu-svr"))
+      {
+        return(drop(crossprod(predictions - y[test_indices])/nrow(K)))
+      }
       
     }else
     {
       class(K) <- "kernelMatrix"
-      # suppress unhelpful kernlab warnings when fitting model
-      tryCatch(expr = {model <- kernlab::ksvm(x = K,y = y,type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)},
-               error = function(e){stop(e)},
-               warning = function(w){
-                 
-                 if(grepl(pattern = "closing unused connection",w) == F)
-                 {
-                   warning(w)
-                 }
-                 
-               })
-      
+      model <- kernlab::ksvm(x = K,y = y,type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)
+      return(model@error)
     }
-    
-    model@error
-    
   })/cv},
   error = function(e){stop(e)},
   warning = function(w){warning(w)},
