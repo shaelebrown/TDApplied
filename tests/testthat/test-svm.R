@@ -89,6 +89,31 @@ test_that("diagram_ksvm can perform cross validation with any valid model type",
   
 })
 
+test_that("diagram_ksvm can handle missing t",{
+  
+  skip_on_cran()
+  skip_if_not_installed("TDA")
+  skip_if_not_installed("TDAstats")
+  
+  # create diags
+  g <- lapply(X = 1:10,FUN = function(X){
+    
+    if(X <= 5)
+    {
+      return(TDAstats::calculate_homology(TDA::circleUnif(n = 50),threshold = 1,dim = 1))
+    }
+    return(TDAstats::calculate_homology(TDA::sphereUnif(n = 50,d = 2),threshold = 1,dim = 1))
+    
+  })
+  
+  expect_error(diagram_ksvm(diagrams = g,cv = 1,dim = 1,y = factor(c(rep("0",5),rep("1",5))),t = NA),"t")
+  # create models
+  expect_type(diagram_ksvm(diagrams = g,cv = 1,dim = 1,y = factor(c(rep("0",5),rep("1",5))),t = NULL),"list")
+  expect_type(diagram_ksvm(diagrams = g,cv = 2,dim = 1,y = factor(c(rep("0",5),rep("1",5))),t = NULL),"list")
+  
+})
+
+
 test_that("predict_diagram_ksvm detects incorrect parameters correctly",{
   
   D1 <- data.frame(dimension = 0,birth = 2,death = 3)

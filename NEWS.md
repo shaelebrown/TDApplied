@@ -8,6 +8,8 @@ Please see those for more details.
 - added ability to precompute distance/Gram matrices for ML and inference functions
 - added fast approximation to Fisher information metric
 - added vignettes for speedups and HCP analysis (and removed those parts from the main vignette)
+- fixed issues with cv model fitting in diagram_ksvm
+- added automatic calculation of t parameters in diagram_ksvm
 
 # 2.0.4
 - fixed build issues related to use of suggested packages in tests, examples and vignettes

@@ -602,12 +602,17 @@ predict_diagram_kpca <- function(new_diagrams,K = NULL,embedding,num_workers = p
 #' store the Fisher information metric distance matrix for each sigma value in the parameter grid to avoid
 #' recomputing distances, and cross validation is therefore performed in parallel. 
 #' Note that the response parameter `y` must be a factor for classification - 
-#' a character vector for instance will throw an error.
+#' a character vector for instance will throw an error. If `t` is NULL then 1/`t` is selected as
+#' the 1,2,5,10,20,50 percentiles of the upper triangle of the distance matrix of its training sample (per fold in the case of cross-validation). If
+#' any of these values would divide by 0 (i.e. if the training set is small) then the minimum non-zero element
+#' is taken as the denominator (and hence the returned parameters may have duplicate rows except for differing error values). If
+#' cross-validation is performed then the mean error across folds is still recorded, but the best `t` parameter
+#' across all folds is recorded in the cv results table.
 #'
 #' @param diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
 #' @param cv a positive number at most the length of `diagrams` which determines the number of cross validation splits to be performed (default 1, aka no cross-validation). If `prob.model` is TRUE then cv is set to 1 since kernlab performs 3-fold CV internally in this case.
 #' @param dim a non-negative integer vector of homological dimensions in which the model is to be fit.
-#' @param t a vector of positive numbers representing the grid of values for the scale of the persistence Fisher kernel, default 1.
+#' @param t either a vector of positive numbers representing the grid of values for the scale of the persistence Fisher kernel or NULL, default 1. If NULL then t is selected automatically, see details.
 #' @param sigma a vector of positive numbers representing the grid of values for the bandwidth of the Fisher information metric, default 1.
 #' @param rho an optional positive number representing the heuristic for Fisher information metric approximation, see \code{\link{diagram_distance}}. Default NULL. If supplied, distance matrix calculations are sequential.
 #' @param y a response vector with one label for each persistence diagram. Must be either numeric or factor, but doesn't need to be supplied when `type` is "one-svc".
@@ -751,8 +756,22 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
     cv <- 1
   }
   
+  # error check t
+  if(!is.null(t))
+  {
+    check_param(param_name = "t",param = t,finite = T,numeric = T,multiple = T,positive = T) 
+  }
+  
   # expand parameter grid
-  params <- expand.grid(dim = dim,t = t,sigma = sigma,C = C,nu = nu,epsilon = epsilon)
+  if(!is.null(t))
+  {
+    params <- expand.grid(dim = dim,t = t,sigma = sigma,C = C,nu = nu,epsilon = epsilon)
+    estimate_t <- F
+  }else
+  {
+    params <- expand.grid(dim = dim,t = 0.01*c(1,2,5,10,20,50),sigma = sigma,C = C,nu = nu,epsilon = epsilon)
+    estimate_t <- T
+  }
   
   # make vector of row memberships for cv
   v <- rep(1:cv,floor(length(diagrams)/cv))
@@ -812,62 +831,148 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
   # set up for parallel computation
   cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
-  parallel::clusterEvalQ(cl,c(library(clue),library(rdist),library(foreach),library(iterators),library(kernlab)))
+  parallel::clusterEvalQ(cl,c(library(clue),library(rdist),library(foreach),library(iterators),library(kernlab),library(stats)))
   parallel::clusterExport(cl,c("y","all_diagrams","check_diagram","gram_matrix","diagram_distance","diagram_kernel","check_param","diagram_to_df","cv","distance_matrices","diagrams_split","prob.model","class.weights","fit","cache","tol","shrinking",".classAgreement"),envir = environment())
   
   # for each model (combination of parameters), train the model on each subset and get the
   # prediction error on the hold out set, wrapped in tryCatch to ensure cluster is stopped
-  tryCatch(expr = {model_errors <- foreach::`%dopar%`(foreach::`%:%`(foreach::foreach(r = iter(params,by = "row"),.combine = c),foreach::foreach(s = 1:cv,.combine = "+")),ex = {
-    
-    # use precomputed distance matrices to calculate Gram matrix from parameters
-    K <- exp(-1*r[[2]]*distance_matrices[[paste0(r[[1]],"_",r[[3]])]])
+  if(!estimate_t)
+  {
+    tryCatch(expr = {model_errors <- foreach::`%dopar%`(foreach::`%:%`(foreach::foreach(r = iter(params,by = "row"),.combine = c),foreach::foreach(s = 1:cv,.combine = "+")),ex = {
+      
+      # use precomputed distance matrices to calculate Gram matrix from parameters
+      K <- exp(-1*r[[2]]*distance_matrices[[paste0(r[[1]],"_",r[[3]])]])
+      
+      if(cv > 1)
+      {
+        # split into training and test set based on cv parameter
+        training_indices <- unlist(diagrams_split[setdiff(1:cv,s)])
+        training_indices <- training_indices[order(training_indices)]
+        test_indices <- setdiff(1:length(diagrams),training_indices)
+        
+        # fit model on training folds
+        K_subset <- K[training_indices,training_indices]
+        class(K_subset) <- "kernelMatrix"
+        model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)
+        
+        # predict model on single test fold
+        K_cross <- K[test_indices,training_indices[model@SVindex]]
+        class(K_cross) <- "kernelMatrix"
+        predictions <- kernlab::predict(model,K_cross)
+        
+        # calculate error depending on model type
+        if(type %in% c("C-svc","nu-svc"))
+        {
+          return((1 - .classAgreement(table(y[test_indices],as.character(predictions)))))
+        }
+        if(type == "one-svc")
+        {
+          return((1 - sum(predictions)/length(predictions)))
+        }
+        if(type %in% c("eps-svr","nu-svr"))
+        {
+          return(drop(crossprod(predictions - y[test_indices])/nrow(K)))
+        }
+        
+      }else
+      {
+        class(K) <- "kernelMatrix"
+        model <- kernlab::ksvm(x = K,y = y,type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)
+        return(model@error)
+      }
+    })/cv},
+    error = function(e){stop(e)},
+    warning = function(w){warning(w)},
+    finally = {
+      # clean up
+      doParallel::stopImplicitCluster()
+      parallel::stopCluster(cl)
+      
+    }) 
+  }else
+  {
+    tryCatch(expr = {model_errors <- foreach::`%dopar%`(foreach::`%:%`(foreach::foreach(r = iter(params,by = "row")),foreach::foreach(s = 1:cv)),ex = {
+      
+      # use precomputed distance matrices to calculate Gram matrix from parameters
+      D <- distance_matrices[[paste0(r[[1]],"_",r[[3]])]]
+      
+      if(cv > 1)
+      {
+        # split into training and test set based on cv parameter
+        training_indices <- unlist(diagrams_split[setdiff(1:cv,s)])
+        training_indices <- training_indices[order(training_indices)]
+        test_indices <- setdiff(1:length(diagrams),training_indices)
+        
+        # fit model on training folds
+        D_subset <- D[training_indices,training_indices]
+        t <- as.numeric(stats::quantile(as.vector(D_subset[upper.tri(D_subset)]),probs = c(r[[2]])))
+        if(t == 0)
+        {
+          t <- min(D_subset[which(D_subset != 0,arr.ind = T)])
+        }
+        t <- 1/t
+        K_subset <- exp(-1*t*D_subset)
+        class(K_subset) <- "kernelMatrix"
+        model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)
+        
+        # predict model on single test fold
+        K_cross <- exp(-1*t*D[test_indices,training_indices[model@SVindex]])
+        class(K_cross) <- "kernelMatrix"
+        predictions <- kernlab::predict(model,K_cross)
+        
+        # calculate error depending on model type
+        if(type %in% c("C-svc","nu-svc"))
+        {
+          return(list((1 - .classAgreement(table(y[test_indices],as.character(predictions)))),t))
+        }
+        if(type == "one-svc")
+        {
+          return(list((1 - sum(predictions)/length(predictions)),t))
+        }
+        if(type %in% c("eps-svr","nu-svr"))
+        {
+          return(list(drop(crossprod(predictions - y[test_indices])/nrow(K)),t))
+        }
+        
+      }else
+      {
+        t <- as.numeric(stats::quantile(as.vector(D[upper.tri(D)]),probs = c(r[[2]])))
+        if(t == 0)
+        {
+          t <- min(D[which(D != 0,arr.ind = T)])
+        }
+        t <- 1/t
+        K <- exp(-1*t*D)
+        class(K) <- "kernelMatrix"
+        model <- kernlab::ksvm(x = K,y = y,type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)
+        return(list(model@error,t))
+      }
+    })},
+    error = function(e){stop(e)},
+    warning = function(w){warning(w)},
+    finally = {
+      # clean up
+      doParallel::stopImplicitCluster()
+      parallel::stopCluster(cl)
+      
+    })
     
     if(cv > 1)
     {
-      # split into training and test set based on cv parameter
-      training_indices <- unlist(diagrams_split[setdiff(1:cv,s)])
-      training_indices <- training_indices[order(training_indices)]
-      test_indices <- setdiff(1:length(diagrams),training_indices)
-      
-      # fit model on training folds
-      K_subset <- K[training_indices,training_indices]
-      class(K_subset) <- "kernelMatrix"
-      model = kernlab::ksvm(x = K_subset,y = y[training_indices],type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)
-      
-      # predict model on single test fold
-      K_cross <- K[test_indices,training_indices[model@SVindex]]
-      class(K_cross) <- "kernelMatrix"
-      predictions <- kernlab::predict(model,K_cross)
-      
-      # calculate error depending on model type
-      if(type %in% c("C-svc","nu-svc"))
-      {
-        return((1 - .classAgreement(table(y[test_indices],as.character(predictions)))))
-      }
-      if(type == "one-svc")
-      {
-        return((1 - sum(predictions)/length(predictions)))
-      }
-      if(type %in% c("eps-svr","nu-svr"))
-      {
-        return(drop(crossprod(predictions - y[test_indices])/nrow(K)))
-      }
-      
-    }else
-    {
-      class(K) <- "kernelMatrix"
-      model <- kernlab::ksvm(x = K,y = y,type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)
-      return(model@error)
+      model_errors <- lapply(X = model_errors,FUN = function(X){
+        
+        errors <- unlist(lapply(X,"[[",1))
+        return(list(list(mean(errors),X[[which.min(errors)]][[2]])))
+        
+      })
     }
-  })/cv},
-  error = function(e){stop(e)},
-  warning = function(w){warning(w)},
-  finally = {
-    # clean up
-    doParallel::stopImplicitCluster()
-    parallel::stopCluster(cl)
     
-  })
+    # retrieve used t values and update parameters
+    params$t <- unlist(lapply(lapply(model_errors,"[[",1),"[[",2))
+    
+    # set model errors
+    model_errors <- unlist(lapply(lapply(model_errors,"[[",1),"[[",1))
+  }
   
   # get best parameters
   params$error <- model_errors
