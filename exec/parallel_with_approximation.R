@@ -11,7 +11,7 @@ parallel_approx_distance_matrix <- function(diagrams,other_diagrams = NULL,dim =
   doParallel::registerDoParallel(cl)
   
   # export TDApplied, and input parameters, to all cluster workers
-  parallel::clusterEvalQ(cl,library("TDApplied"))
+  parallel::clusterEvalQ(cl,c(library(TDApplied),library(foreach),library(iterators)))
   parallel::clusterExport(cl,varlist = c("diagrams","dim","sigma","rho"),envir = environment())
   
   # calculate distances in parallel
