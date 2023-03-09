@@ -603,7 +603,8 @@ predict_diagram_kpca <- function(new_diagrams,K = NULL,embedding,num_workers = p
 #' recomputing distances, and cross validation is therefore performed in parallel. 
 #' Note that the response parameter `y` must be a factor for classification - 
 #' a character vector for instance will throw an error. If `t` is NULL then 1/`t` is selected as
-#' the 1,2,5,10,20,50 percentiles of the upper triangle of the distance matrix of its training sample (per fold in the case of cross-validation). If
+#' the 1,2,5,10,20,50 percentiles of the upper triangle of the distance matrix of its training sample (per fold in the case of cross-validation). 
+#' This is the process suggested in the persistence Fisher kernel paper. If
 #' any of these values would divide by 0 (i.e. if the training set is small) then the minimum non-zero element
 #' is taken as the denominator (and hence the returned parameters may have duplicate rows except for differing error values). If
 #' cross-validation is performed then the mean error across folds is still recorded, but the best `t` parameter
