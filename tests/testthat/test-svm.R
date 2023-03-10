@@ -15,6 +15,7 @@ test_that("diagram_ksvm detects incorrect parameters correctly",{
   expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),dim = NaN,y = c(0,1,2),num_workers = 2),"dim")
   expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),dim = 1,y = c(0,1),num_workers = 2),"number of elements")
   expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),dim = 1,y = c("0","1","2"),num_workers = 2),"factor")
+  expect_error(diagram_ksvm(diagrams = list(D1,D2,D3),dim = 1,y = as.factor(c("0","1","2")),cv = 2,num_workers = 2),"One class")
   
 })
 
@@ -86,7 +87,7 @@ test_that("diagram_ksvm can perform cross validation with any valid model type",
   # expect_type(diagram_ksvm(diagrams = g,cv = 2,dim = 1,y = c(rep(1,5),rep(2,5)),type = "eps-svr"),"list")
   expect_type(diagram_ksvm(diagrams = g,cv = 2,dim = 1,y = c(rep(1,5),rep(2,5)),type = "nu-svr"),"list")
   expect_error(diagram_ksvm(diagrams = g,cv = 2,dim = 1,y = c(rep(1,5),rep(2,5)),type = "eps-bsvr"),"type")
-  
+  expect_type(diagram_ksvm(diagrams = g,cv = 2,dim = 1,y = factor(c(rep("0",3),rep("1",3),rep("2",4))),type = "C-svc"),"list")
 })
 
 test_that("diagram_ksvm can handle missing t",{

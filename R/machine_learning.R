@@ -775,22 +775,46 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
   }
   
   # make vector of row memberships for cv
-  v <- rep(1:cv,floor(length(diagrams)/cv))
-  if(length(v) != length(diagrams))
+  # balanced by class for C-svc and nu-svc
+  if(type %in% c("C-svc","nu-svc") == F)
   {
-    if(length(diagrams) - length(v) == 1)
+    v <- rep(1:cv,floor(length(diagrams)/cv))
+    if(length(v) != length(diagrams))
     {
-      v <- c(v,1)
-    }else
+      if(length(diagrams) - length(v) == 1)
+      {
+        v <- c(v,1)
+      }else
+      {
+        v <- c(v,sample(1:cv,size = length(diagrams) - length(v))) 
+      }
+    }
+    v <- sample(v,size = length(v),replace = F)
+  }else
+  {
+    v <- rep(1,length(diagrams))
+    classes <- levels(y)
+    for(cl in classes)
     {
-      v <- c(v,1:(length(diagrams) %% floor(length(diagrams)/cv))) 
+      class_inds <- which(y == cl)
+      if(length(class_inds) < cv)
+      {
+        stop("One class of y has fewer training examples than the number of cv folds - try decreasing cv parameter.")
+      }
+      v_class <- rep(1:cv,floor(length(class_inds)/cv))
+      if(length(v_class) != length(class_inds))
+      {
+        v_class <- c(v_class,sample(1:cv,size = length(class_inds) - length(v_class))) 
+      }
+      v_class <- sample(v_class,size = length(v_class),replace = F)
+      v[class_inds] <- v_class
     }
   }
-  v <- sample(v,size = length(v),replace = F)
+  
   if(cv > 1 & sum(as.numeric(table(v)) == 1) > 0)
   {
     stop(paste0("Too few training examples to perform cv with ",cv," folds. Try decreasing cv parameter or fitting the model without cv."))
-  }
+  } 
   
   # split diagrams by membership vector
   diagrams_split <- lapply(X = 1:cv,FUN = function(X){
