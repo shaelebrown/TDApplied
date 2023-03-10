@@ -29,7 +29,7 @@ diagram_ksvm(
 \arguments{
 \item{diagrams}{a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.}
 
-\item{cv}{a positive number at most the length of `diagrams` which determines the number of cross validation splits to be performed (default 1, aka no cross-validation). If `prob.model` is TRUE then cv is set to 1 since kernlab performs 3-fold CV internally in this case.}
+\item{cv}{a positive number at most the length of `diagrams` which determines the number of cross validation splits to be performed (default 1, aka no cross-validation). If `prob.model` is TRUE then cv is set to 1 since kernlab performs 3-fold CV internally in this case. When performing classification, classes are balanced within each cv fold.}
 
 \item{dim}{a non-negative integer vector of homological dimensions in which the model is to be fit.}
 

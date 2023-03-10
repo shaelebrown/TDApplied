@@ -611,7 +611,7 @@ predict_diagram_kpca <- function(new_diagrams,K = NULL,embedding,num_workers = p
 #' across all folds is recorded in the cv results table.
 #'
 #' @param diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
-#' @param cv a positive number at most the length of `diagrams` which determines the number of cross validation splits to be performed (default 1, aka no cross-validation). If `prob.model` is TRUE then cv is set to 1 since kernlab performs 3-fold CV internally in this case.
+#' @param cv a positive number at most the length of `diagrams` which determines the number of cross validation splits to be performed (default 1, aka no cross-validation). If `prob.model` is TRUE then cv is set to 1 since kernlab performs 3-fold CV internally in this case. When performing classification, classes are balanced within each cv fold.
 #' @param dim a non-negative integer vector of homological dimensions in which the model is to be fit.
 #' @param t either a vector of positive numbers representing the grid of values for the scale of the persistence Fisher kernel or NULL, default 1. If NULL then t is selected automatically, see details.
 #' @param sigma a vector of positive numbers representing the grid of values for the bandwidth of the Fisher information metric, default 1.
