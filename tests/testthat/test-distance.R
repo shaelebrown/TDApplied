@@ -147,7 +147,6 @@ test_that("distance_matrix is computing correctly",{
   m1 <- matrix(data = c(0,diagram_distance(D1,D2,dim = 0,p = 2,distance = "wasserstein"),diagram_distance(D1,D2,dim = 0,p = 2,distance = "wasserstein"),0),byrow = T,nrow = 2,ncol = 2)
   m2 <- matrix(data = c(0,diagram_distance(D1,D2,dim = 0,p = 3,distance = "wasserstein"),diagram_distance(D1,D3,dim = 0,p = 3,distance = "wasserstein"),diagram_distance(D1,D2,dim = 0,p = 3,distance = "wasserstein"),0,diagram_distance(D2,D3,dim = 0,p = 3,distance = "wasserstein"),diagram_distance(D1,D3,dim = 0,p = 3,distance = "wasserstein"),diagram_distance(D3,D2,dim = 0,p = 3,distance = "wasserstein"),0),byrow = T,nrow = 3,ncol = 3)
   m3 <- matrix(data = c(0,diagram_distance(D1,D3,dim = 0,distance = "fisher",sigma = 1),diagram_distance(D1,D2,dim = 0,distance = "fisher",sigma = 1),diagram_distance(D3,D2,dim = 0,distance = "fisher",sigma = 1)),byrow = T,nrow = 2,ncol = 2)
-  colnames(m3) <- c("result.1","result.2")
   expect_identical(distance_matrix(diagrams = list(D1,D2),dim = 0,distance = "wasserstein",p = 2,num_workers = 2),m1)
   expect_equal(distance_matrix(diagrams = list(D1,D2,D3),dim = 0,distance = "wasserstein",p = 3,num_workers = 2),m2)
   expect_equal(distance_matrix(diagrams = list(D1,D2),other_diagrams = list(D1,D3),dim = 0,distance = "fisher",sigma = 1,num_workers = 2),m3)

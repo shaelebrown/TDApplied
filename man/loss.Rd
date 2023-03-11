@@ -46,7 +46,8 @@ the numeric value of the Turner loss function.
 \description{
 An internal function to calculate the normalized sum of within-group exponentiated distances 
 between pairs of persistence diagrams (stored as data frames)
-for an arbitrary number of groups in parallel.
+for an arbitrary number of groups in parallel. Note that this function may run
+into memory issues for large numbers of diagrams.
 }
 \details{
 The Turner loss function is described in Robinson and Turner 2017

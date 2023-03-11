@@ -315,8 +315,8 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
 #' @return the numeric distance matrix.
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
-#' @importFrom foreach foreach %dopar% %:% %do%
-#' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
+#' @importFrom foreach foreach %dopar% %do%
+#' @importFrom parallel makeCluster stopCluster clusterExport
 #' @importFrom parallelly availableCores
 #' @importFrom doParallel registerDoParallel stopImplicitCluster
 #' @importFrom iterators iter
@@ -392,8 +392,7 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
   m = length(diagrams)
   cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
-  parallel::clusterEvalQ(cl,c(library("clue"),library("rdist")))
-  parallel::clusterExport(cl,varlist = c("diagram_distance","check_diagram","check_param","dim","p","distance","sigma","diagrams","other_diagrams","figtree","rho"),envir = environment())
+  parallel::clusterExport(cl,varlist = c("diagram_distance","check_diagram","check_param","figtree"),envir = environment())
   
   # if approximation to Fisher information metric is used, run sequentially
   # otherwise in parallel
@@ -411,17 +410,46 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
     
     if(is.null(other_diagrams))
     {
+      
       # not cross distance matrix, only need to compute the upper diagonal
       # since the matrix is symmetric
-      d <- matrix(data = 0,nrow = m,ncol = m)
-      d_off_diag <- foreach_func(obj = foreach::foreach(r = iterators::iter(which(upper.tri(d),arr.ind = T),by = 'row'),.combine = c),ex = {diagram_distance(D1 = diagrams[[r[[1]]]],D2 = diagrams[[r[[2]]]],dim = dim,p = p,distance = distance,sigma = sigma,rho = rho)})
+      d <- matrix(data = 0,nrow = length(diagrams),ncol = length(diagrams))
+      u <- which(upper.tri(d),arr.ind = T)
+      R <- lapply(X = 1:nrow(u),FUN = function(X){
+        
+        return(list(diagrams[[u[[X,1]]]],diagrams[[u[[X,2]]]]))
+        
+      })
+      
+      # remove diagrams to preserve memory
+      rm(diagrams)
+      
+      # calculate distances in parallel, export TDApplied to nodes
+      d_off_diag <- foreach_func(obj = foreach::foreach(r = R,.combine = c,.packages = c("clue","rdist")),ex = {diagram_distance(D1 = r[[1]],D2 = r[[2]],dim = dim,distance = distance,p = p,sigma = sigma,rho = rho)})
+      
+      # store results in matrix
       d[upper.tri(d)] <- d_off_diag
       d[which(upper.tri(d),arr.ind = T)[,c("col","row")]] <- d_off_diag
-      diag(d) <- rep(0,m)
+      diag(d) <- rep(0,nrow(d))
+      
     }else
     {
+
       # cross distance matrix, need to compute all entries
-      d <- foreach_func(foreach::`%:%`(foreach::foreach(r = 1:length(other_diagrams),.combine = cbind),foreach::foreach(X = 1:length(diagrams),.combine = c)),ex = {diagram_distance(D1 = other_diagrams[[r]],D2 = diagrams[[X]],dim = dim,p = p,distance = distance,sigma = sigma,rho = rho)})
+      d <- matrix(data = 0,nrow = length(diagrams),ncol = length(other_diagrams))
+      u <- expand.grid(1:length(diagrams),1:length(other_diagrams))
+      R <- lapply(X = 1:nrow(u),FUN = function(X){
+        
+        return(list(diagrams[[u[X,1]]],other_diagrams[[u[X,2]]]))
+        
+      })
+      
+      # remove diagrams and other_diagrams to preserve memory
+      rm(list = c("diagrams","other_diagrams"))
+      
+      # store distance calculations in matrix
+      d[as.matrix(u)] <- foreach_func(foreach::foreach(r = R,.combine = cbind,.export = c("diagram_distance","check_diagram","check_param","figtree"),.packages = c("clue","rdist")),ex = {diagram_distance(D1 = r[[1]],D2 = r[[2]],dim = dim,distance = distance,p = p,sigma = sigma,rho = rho)})
+      
     }
     
   }, warning = function(w){warning(w)},
@@ -442,7 +470,8 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
 #'
 #' An internal function to calculate the normalized sum of within-group exponentiated distances 
 #' between pairs of persistence diagrams (stored as data frames)
-#' for an arbitrary number of groups in parallel. 
+#' for an arbitrary number of groups in parallel. Note that this function may run
+#' into memory issues for large numbers of diagrams.
 #' 
 #' The Turner loss function is described in Robinson and Turner 2017
 #' (\url{https://link.springer.com/article/10.1007/s41468-017-0008-7}), and is used
@@ -463,7 +492,7 @@ distance_matrix <- function(diagrams,other_diagrams = NULL,dim = 0,distance = "w
 #' @param num_workers the number of cores used for parallel computation.
 #' @param group_sizes for when using precomputed distance matrices.
 #'
-#' @importFrom parallel makeCluster clusterEvalQ clusterExport stopCluster
+#' @importFrom parallel makeCluster clusterExport stopCluster
 #' @importFrom doParallel registerDoParallel stopImplicitCluster
 #' @importFrom foreach foreach %dopar% %do%
 #' @importFrom utils combn
@@ -494,21 +523,20 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,rho,num_worker
     
     # create combination of all pairs of diagram group elements and their group indices
     combinations <- do.call(rbind,lapply(X = 1:length(diagram_groups),FUN = function(X){
-      
+
       distance_pairs <- as.data.frame(t(as.data.frame(utils::combn(x = length(diagram_groups[[X]]),m = 2,simplify = F))))
       distance_pairs$group <- X
       rownames(distance_pairs) <- NULL
       return(distance_pairs[,c(3,1,2)])
-      
+
     }))
     
     # initialize a cluster cl for computing distances between diagrams in parallel
     cl <- parallel::makeCluster(num_workers)
     doParallel::registerDoParallel(cl)
     
-    # export necessary libraries and variables to cl
-    parallel::clusterEvalQ(cl,c(library(clue),library(rdist)))
-    parallel::clusterExport(cl,c("check_diagram","diagram_distance","diagram_groups","dist_mats","dims","combinations","p","check_param","sigma","rho","figtree"),envir = environment())
+    # export necessary functions to cl
+    parallel::clusterExport(cl,c("check_diagram","diagram_distance","check_param","figtree"),envir = environment())
     
     tryCatch(expr = {
       
@@ -519,9 +547,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,rho,num_worker
       for(dim in dims)
       {
         
-        parallel::clusterExport(cl,"dim")
-        
-        d_tots <- foreach_func(obj = foreach::foreach(comb = 1:nrow(combinations),.combine = c),ex = {
+        d_tots <- foreach_func(obj = foreach::foreach(comb = 1:nrow(combinations),.combine = c,.packages = c("clue","rdist")),ex = {
           
           # get group and diagram indices from combinations
           g <- as.numeric(combinations[comb,1])

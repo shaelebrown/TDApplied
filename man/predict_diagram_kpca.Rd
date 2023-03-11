@@ -48,7 +48,9 @@ if(require("TDA") & require("TDAstats"))
 
   # calculate their 2D PCA embedding with sigma = t = 2 in dimension 0
   # using the approximate persistence Fisher metric
-  pca <- diagram_kpca(diagrams = g,dim = 1,t = 2,sigma = 2,rho = 0.001,features = 2,num_workers = 2)
+  pca <- diagram_kpca(diagrams = g,dim = 1,t = 2,sigma = 2,
+                      rho = 0.001,features = 2,num_workers = 2,
+                      th = 1e-6)
 
   # project two new diagrams onto old model
   D7 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),

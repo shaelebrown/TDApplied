@@ -517,7 +517,9 @@ diagram_kpca <- function(diagrams,K = NULL,dim = 0,t = 1,sigma = 1,rho = NULL,fe
 #' 
 #'   # calculate their 2D PCA embedding with sigma = t = 2 in dimension 0
 #'   # using the approximate persistence Fisher metric
-#'   pca <- diagram_kpca(diagrams = g,dim = 1,t = 2,sigma = 2,rho = 0.001,features = 2,num_workers = 2)
+#'   pca <- diagram_kpca(diagrams = g,dim = 1,t = 2,sigma = 2,
+#'                       rho = 0.001,features = 2,num_workers = 2,
+#'                       th = 1e-6)
 #' 
 #'   # project two new diagrams onto old model
 #'   D7 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
@@ -646,7 +648,7 @@ predict_diagram_kpca <- function(new_diagrams,K = NULL,embedding,num_workers = p
 #' @seealso \code{\link{predict_diagram_ksvm}} for predicting labels of new diagrams.
 #' @importFrom kernlab ksvm
 #' @importFrom foreach foreach %dopar% %:%
-#' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
+#' @importFrom parallel makeCluster stopCluster clusterExport
 #' @importFrom parallelly availableCores
 #' @importFrom doParallel registerDoParallel stopImplicitCluster
 #' @importFrom iterators iter
@@ -856,14 +858,13 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
   # set up for parallel computation
   cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
-  parallel::clusterEvalQ(cl,c(library(clue),library(rdist),library(foreach),library(iterators),library(kernlab),library(stats)))
-  parallel::clusterExport(cl,c("y","all_diagrams","check_diagram","gram_matrix","diagram_distance","diagram_kernel","check_param","diagram_to_df","cv","distance_matrices","diagrams_split","prob.model","class.weights","fit","cache","tol","shrinking",".classAgreement"),envir = environment())
+  parallel::clusterExport(cl,c("all_diagrams","check_diagram","gram_matrix","diagram_distance","diagram_kernel","check_param","diagram_to_df",".classAgreement"),envir = environment())
   
   # for each model (combination of parameters), train the model on each subset and get the
   # prediction error on the hold out set, wrapped in tryCatch to ensure cluster is stopped
   if(!estimate_t)
   {
-    tryCatch(expr = {model_errors <- foreach::`%dopar%`(foreach::`%:%`(foreach::foreach(r = iter(params,by = "row"),.combine = c),foreach::foreach(s = 1:cv,.combine = "+")),ex = {
+    tryCatch(expr = {model_errors <- foreach::`%dopar%`(foreach::`%:%`(foreach::foreach(r = iter(params,by = "row"),.combine = c,.noexport = c("diagrams")),foreach::foreach(s = 1:cv,.combine = "+",.packages = c("clue","rdist","kernlab","stats"),.noexport = c("diagrams"))),ex = {
       
       # use precomputed distance matrices to calculate Gram matrix from parameters
       K <- exp(-1*r[[2]]*distance_matrices[[paste0(r[[1]],"_",r[[3]])]])
@@ -873,7 +874,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
         # split into training and test set based on cv parameter
         training_indices <- unlist(diagrams_split[setdiff(1:cv,s)])
         training_indices <- training_indices[order(training_indices)]
-        test_indices <- setdiff(1:length(diagrams),training_indices)
+        test_indices <- setdiff(1:nrow(K),training_indices)
         
         # fit model on training folds
         K_subset <- K[training_indices,training_indices]
@@ -916,7 +917,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
     }) 
   }else
   {
-    tryCatch(expr = {model_errors <- foreach::`%dopar%`(foreach::`%:%`(foreach::foreach(r = iter(params,by = "row")),foreach::foreach(s = 1:cv)),ex = {
+    tryCatch(expr = {model_errors <- foreach::`%dopar%`(foreach::`%:%`(foreach::foreach(r = iter(params,by = "row"),.noexport = c("diagrams")),foreach::foreach(s = 1:cv,.noexport = c("diagrams"))),ex = {
       
       # use precomputed distance matrices to calculate Gram matrix from parameters
       D <- distance_matrices[[paste0(r[[1]],"_",r[[3]])]]
@@ -926,7 +927,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
         # split into training and test set based on cv parameter
         training_indices <- unlist(diagrams_split[setdiff(1:cv,s)])
         training_indices <- training_indices[order(training_indices)]
-        test_indices <- setdiff(1:length(diagrams),training_indices)
+        test_indices <- setdiff(1:nrow(D),training_indices)
         
         # fit model on training folds
         D_subset <- D[training_indices,training_indices]
@@ -948,15 +949,15 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
         # calculate error depending on model type
         if(type %in% c("C-svc","nu-svc"))
         {
-          return(list((1 - .classAgreement(table(y[test_indices],as.character(predictions)))),t))
+          return((1 - .classAgreement(table(y[test_indices],as.character(predictions)))))
         }
         if(type == "one-svc")
         {
-          return(list((1 - sum(predictions)/length(predictions)),t))
+          return((1 - sum(predictions)/length(predictions)))
         }
         if(type %in% c("eps-svr","nu-svr"))
         {
-          return(list(drop(crossprod(predictions - y[test_indices])/nrow(K)),t))
+          return(drop(crossprod(predictions - y[test_indices])/nrow(K)))
         }
         
       }else
@@ -970,7 +971,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
         K <- exp(-1*t*D)
         class(K) <- "kernelMatrix"
         model <- kernlab::ksvm(x = K,y = y,type = type,C = r[[4]],nu = r[[5]],epsilon = r[[6]],prob.model = prob.model,class.weights = class.weights,fit = fit,cache = cache,tol = tol,shrinking = shrinking)
-        return(list(model@error,t))
+        return(model@error)
       }
     })},
     error = function(e){stop(e)},
@@ -987,16 +988,13 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
       model_errors <- lapply(X = model_errors,FUN = function(X){
         
         errors <- unlist(lapply(X,"[[",1))
-        return(list(list(mean(errors),X[[which.min(errors)]][[2]])))
+        return(list(mean(unlist(X))))
         
       })
     }
     
-    # retrieve used t values and update parameters
-    params$t <- unlist(lapply(lapply(model_errors,"[[",1),"[[",2))
-    
-    # set model errors
-    model_errors <- unlist(lapply(lapply(model_errors,"[[",1),"[[",1))
+    # get mean model errors
+    model_errors <- unlist(lapply(model_errors,"[[",1))
   }
   
   # get best parameters

@@ -100,7 +100,6 @@ test_that("gram_matrix is computing correctly",{
   class(m2) <- "kernelMatrix"
   m3 <- matrix(data = c(1,diagram_kernel(D1,D3,dim = 0,sigma = 1,t = 1),diagram_kernel(D1,D2,dim = 0,sigma = 1,t = 1),diagram_kernel(D2,D3,dim = 0,sigma = 1,t = 1)),byrow = T,nrow = 2,ncol = 2)
   class(m3) <- "kernelMatrix"
-  colnames(m3) <- c("result.1","result.2")
   expect_identical(gram_matrix(diagrams = list(D1,D2),dim = 0,sigma = 1,t = 1,num_workers = 2),m1)
   expect_equal(gram_matrix(diagrams = list(D1,D2,D3),dim = 0,sigma = 1,t = 1,num_workers = 2),m2)
   expect_equal(gram_matrix(diagrams = list(D1,D2),other_diagrams = list(D1,D3),dim = 0,sigma = 1,t = 1,num_workers = 2),m3)
