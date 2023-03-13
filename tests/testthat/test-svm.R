@@ -108,6 +108,8 @@ test_that("diagram_ksvm can handle missing t",{
   })
   
   expect_error(diagram_ksvm(diagrams = g,cv = 1,dim = 1,y = factor(c(rep("0",5),rep("1",5))),t = NA),"t")
+  expect_error(diagram_ksvm(diagrams = g,cv = 1,dim = 1,y = factor(c(rep("0",5),rep("1",5))),distance_matrices = list(matrix(data = 0,nrow = 10,ncol = 10)),t = NULL),"variance")
+  expect_error(diagram_ksvm(diagrams = g,cv = 2,dim = 1,y = factor(c(rep("0",5),rep("1",5))),distance_matrices = list(matrix(data = 0,nrow = 10,ncol = 10)),t = NULL),"variance")
   # create models
   expect_type(diagram_ksvm(diagrams = g,cv = 1,dim = 1,y = factor(c(rep("0",5),rep("1",5))),t = NULL),"list")
   expect_type(diagram_ksvm(diagrams = g,cv = 2,dim = 1,y = factor(c(rep("0",5),rep("1",5))),t = NULL),"list")

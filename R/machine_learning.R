@@ -934,7 +934,14 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
         t <- as.numeric(stats::quantile(as.vector(D_subset[upper.tri(D_subset)]),probs = c(r[[2]])))
         if(t == 0)
         {
-          t <- min(D_subset[which(D_subset != 0,arr.ind = T)])
+          non_zero_inds <- which(D_subset != 0,arr.ind = T)
+          if(nrow(non_zero_inds) > 0)
+          {
+            t <- min(D_subset[non_zero_inds])
+          }else
+          {
+            stop("Zero variance found in a cv-fold. Try decreasing the cv parameter or specifying values for t.") 
+          }
         }
         t <- 1/t
         K_subset <- exp(-1*t*D_subset)
@@ -965,7 +972,14 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
         t <- as.numeric(stats::quantile(as.vector(D[upper.tri(D)]),probs = c(r[[2]])))
         if(t == 0)
         {
-          t <- min(D[which(D != 0,arr.ind = T)])
+          non_zero_inds <- which(D != 0,arr.ind = T)
+          if(nrow(non_zero_inds) > 0)
+          {
+            t <- min(D_subset[non_zero_inds])
+          }else
+          {
+            stop("Zero variance found in a cv-fold. Try decreasing the cv parameter or specifying values for t.") 
+          }
         }
         t <- 1/t
         K <- exp(-1*t*D)
@@ -1000,6 +1014,18 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
   # get best parameters
   params$error <- model_errors
   best_params <- params[which.min(model_errors),c("dim","t","sigma","C","nu","epsilon")]
+  # if t estimated then get estimate from whole dataset (for predictions)
+  if(estimate_t)
+  {
+    D <- distance_matrices[[paste0(best_params$dim,"_",best_params$sigma)]]^2
+    t <- as.numeric(stats::quantile(as.vector(D[upper.tri(D)]),probs = c(best_params$t)))
+    if(t == 0)
+    {
+      t <- min(D[which(D != 0,arr.ind = T)])
+    }
+    t <- 1/t
+    best_params$t <- t
+  }
   
   # fit full model using those parameters
   K <- exp(-1*best_params[[2]]*distance_matrices[[paste0(best_params[[1]],"_",best_params[[3]])]])
