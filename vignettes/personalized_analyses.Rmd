@@ -27,14 +27,7 @@ In this vignette we will focus on supervised machine learning analyses (i.e. cla
 4. We column bind $G$ and $NT$ to get a new $n \times (kn + f - k)$ feature matrix $F$.
 5. We train the model using the feature matrix $F$ and the original labels.
 
-Once we have built our model we may want to make predictions for $n'$ new data points. In order to make predictions we need to convert this new data into a feature matrix resembling $F$, and this can be done as follows:
-
-1. We first separate the features into the topological features $T'_1,\dots,T'_k$ and non-topological features denoted by $NT'$.
-2. For each topological feature $T'_i = \{D'_{i,1},\dots,D'_{i,n'}\}$ we compute its (approximate) $n' \times n$ cross Gram matrix with the original $T_i$, $G'_i$.
-3. We column bind all $G'_i$ together into a $n' \times (kn')$ feature matrix $G'$.
-4. We column bind $G'$ and $NT'$ to get a new $n' \times (kn' + f - k)$ feature matrix $F'$.
-5. Set the column names of $F'$ to have the same column names of $F$.
-6. We predict the labels for the rows of $F'$ using the model we trained.
+Once we have built our model we may want to make predictions for $n'$ new data points. In order to make predictions we need to convert this new data into a feature matrix resembling $F$, and this can be done using the same pipeline as above except in step 2 we compute the **cross** Gram matrix of each $T'_i$ with its corresponding $T_i$.
 
 The following section provides an example of these two pipelines.
 
@@ -42,7 +35,7 @@ The following section provides an example of these two pipelines.
 
 XGBoost is currently one of the most popular machine learning models for classification and regression in industry, achieving extremely high performance with low training time compared to neural networks CITATIONS (method and industry performance). So how could we access this prediction performance from TDApplied? 
 
-Let's start by loading the xgboost package CITE:
+Let's start by loading the xgboost package [@R-xgboost]:
 
 ```{r,eval = F}
 library(xgboost)
