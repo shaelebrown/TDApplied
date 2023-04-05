@@ -1,0 +1,131 @@
+---
+title: "Comparing Distance Calculations"
+author: "Shael Brown and Dr. Reza Farivar"
+output: 
+  rmarkdown::html_document:
+    fig_caption: yes
+vignette: >
+  %\VignetteIndexEntry{Comparing Distance Calculations}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: REFERENCES.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# get original graphic parameters to be able to
+# revert back at the end of the vignette
+original_mfrow <- par()$mfrow
+original_xpd <- par()$xpd
+original_mar <- par()$mar
+original_scipen <- options()$scipen
+if(exists(".Random.seed", .GlobalEnv) == F)
+{
+  runif(1)
+}
+oldseed <- get(".Random.seed", .GlobalEnv)
+oldRNGkind <- RNGkind()
+
+# set some new parameters for viewing and reproducibility
+options(scipen = 999)
+set.seed(123)
+```
+
+# Introduction
+
+A number of R packages exist for computing distances between pairs of persistence diagrams (here we will focus on the bottleneck, 2-wasserstein (herein denoted "wasserstein" for brevity) and Fisher information metric), including TDA [@R-TDA], TDAstats [@R-TDAstats], rgudhi [@rgudhi] and TDApplied. Comparing the speed of these calculations was performed in the "Benchmarking and Speed" package vignette, but here we treat the more foundational question of "are these distance calculations the same across packages?" Through reproducible examples we show that the answer is unfortunately no, but through exploration we attempt to reconcile these differences and provide guidelines for using the different packages. Moreover, we include a proof of algorithm correctness for TDApplied's distance function, as well as describing why TDAstats' distance function may be considered "non-standard" as has been stated in TDApplied's documentation.
+
+# Reproducible Examples
+
+In order to compare the distance calculations we will specify three simple diagrams (the same D1, D2 and D3 from the package vignette "Introduction to TDApplied") and consider distances between each of the three possible pairs. The three diagrams are:
+
+```{r,echo = F,include = F}
+#library(TDApplied)
+devtools::load_all()
+```
+
+```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center'}
+D1 = data.frame(dimension = c(0),birth = c(2),death = c(3))
+D2 = data.frame(dimension = c(0),birth = c(2,0),death = c(3.3,0.5))
+D3 = data.frame(dimension = c(0),birth = c(0),death = c(0.5))
+par(mfrow = c(1,3))
+plot_diagram(D1,title = "D1",max_radius = 4,legend = F)
+plot_diagram(D2,title = "D2",max_radius = 4,legend = F)
+plot_diagram(D3,title = "D3",max_radius = 4,legend = F)
+```
+
+```{r,echo = F}
+par(mfrow = c(1,1))
+```
+
+All three diagrams have points only in dimension 0, with D1's point being $(2,3)$, D2's points being $\{(2,3.3),(0,0.5)\}$, and D3's point being $(0,0.5)$.
+
+In order to compare the distance calculations of the packages we need to have the ground truth of the distances. Using the infinity-norm distance for calculating matchings in the bottleneck and wasserstein distances as in [@distance_calc], we get the following optimal matchings and distance values:
+
+1. Between D1 and D2 we match D1's $(2,3)$ with D2's $(2,3.3)$, and D2's $(0,0.5)$ with its diagonal projection $(0.25,0.25)$. Therefore, the bottleneck distance is 0.3 and the wasserstein distance is $\sqrt{0.3^2+0.25^2}=\sqrt{0.1525}\approx 0.3905125$.
+2. Between D1 and D3 we match D1's $(2,3)$ with its diagonal projection $(2.5,2.5)$, and D3's $(0,0.5)$ with its diagonal projection $(0.25,0.25)$. Therefore, the bottleneck distance is 0.5 and the wasserstein distance is $\sqrt{0.5^2+0.25^2}=\sqrt{0.3125}\approx 0.559017$.
+3. Between D2 and D3 we match D2's $(0,0.5)$ with D3's $(0,0.5)$, and D2's $(2,3.3)$ with its diagonal projection $(2.65,2.65)$. Therefore, the bottleneck distance is 0.65 and the wasserstein distance is $\sqrt{0.65^2}=0.65$.
+
+For the Fisher information metric we will use the parameter $\sigma = 1$ for simplicity. See [@persistence_fisher] for computational details.
+
+1. Between D1 and D2 we augment D1 to contain D2's projection points and vice versa, obtaining diagrams $D'_1 = \{(2,3),(2.65,2.65),(0.25,0.25)\}$ and $D'_2 = \{(2,3.3),(0,0.5),(2.5,2.5)\}$. We compute $\rho_1$ and $\rho_2$ as $\rho_1 = \{\mbox{exp}(0) + \mbox{exp}(-0.545/2) + \mbox{exp}(-10.625/2),\mbox{exp}(-0.545/2) + \mbox{exp}(0) + \mbox{exp}(-11.52/2),\mbox{exp}(-10.625/2) + \mbox{exp}(-11.52/2) + \mbox{exp}(0),\mbox{exp}(-0.09/2) + \mbox{exp}(-0.845/2) + \mbox{exp}(-12.365/2),\mbox{exp}(-10.25/2) + \mbox{exp}(-11.645/2) + \mbox{exp}(-0.125/2),\mbox{exp}(-0.5/2) + \mbox{exp}(-0.045/2) + \mbox{exp}(-10.125/2)\}/(2*\pi)$ and $\rho_2 = \{\mbox{exp}(-0.09/2) + \mbox{exp}(-10.25/2) + \mbox{exp}(-0.5/2),\mbox{exp}(-0.845/2) + \mbox{exp}(-11.645/2) + \mbox{exp}(-0.045/2),\mbox{exp}(-12.365/2) + \mbox{exp}(-0.125/2) + \mbox{exp}(-10.125/2),\mbox{exp}(0) + \mbox{exp}(-11.84/2) + \mbox{exp}(-0.89/2),\mbox{exp}(-11.84/2) + \mbox{exp}(0) + \mbox{exp}(-10.25/2),\mbox{exp}(-0.89/2) + \mbox{exp}(-10.25/2) + \mbox{exp}(0)\}/(2*\pi)$. Therefore the arccos of the dot product of the square root of the sum-normalized vectors is approximately 0.02354624.
+2. Between D1 and D3 we augment D1 to contain D3's projection point and vice versa, obtaining diagrams $D'_1 = \{(2,3),(0.25,0.25)\}$ and $D'_3 = \{(0,0.5),(2.5,2.5)\}$. We compute $\rho_1$ and $\rho_2$ as $\rho_1 = \{\mbox{exp}(0) + \mbox{exp}(-10.625/2),\mbox{exp}(-10.625/2) + \mbox{exp}(0),\mbox{exp}(-10.25/2) + \mbox{exp}(-0.125/2),\mbox{exp}(-0.5/2) + \mbox{exp}(-10.125/2)\}/(2*\pi)$ and $\rho_2 = \{\mbox{exp}(-10.25/2) + \mbox{exp}(-0.5/2),\mbox{exp}(-0.125/2) + \mbox{exp}(-10.125/2),\mbox{exp}(0) + \mbox{exp}(-10.25/2),\mbox{exp}(-10.25/2) + \mbox{exp}(0)\}/(2*\pi)$. Therefore the arccos of the dot product of the square root of the sum-normalized vectors is approximately 0.08821907.
+3. Between D2 and D3 we augment D2 to contain D3's projection point and vice versa, obtaining diagrams $D'_2 = \{(2,3.3),(0,0.5),(0.25,0.25)\}$ and $D'_3 = \{(0,0.5),(2.65,2.65),(0.25,0.25)\}$. We compute $\rho_1$ and $\rho_2$ as $\rho_1 = \{\mbox{exp}(0) + \mbox{exp}(-11.84/2) + \mbox{exp}(-12.365/2),\mbox{exp}(-11.84/2) + \mbox{exp}(0) + \mbox{exp}(-0.125/2),\mbox{exp}(-12.365/2) + \mbox{exp}(-0.125/2) + \mbox{exp}(0),\mbox{exp}(-0.845/2) + \mbox{exp}(-11.645/2) + \mbox{exp}(-11.52/2)\}/(2*\pi)$ and $\rho_2 = \{\mbox{exp}(-11.84/2) + \mbox{exp}(-0.845/2) + \mbox{exp}(-12.365/2),\mbox{exp}(0) + \mbox{exp}(-11.645/2) + \mbox{exp}(-0.125/2),\mbox{exp}(-0.125/2) + \mbox{exp}(-11.52/2) + \mbox{exp}(0),\mbox{exp}(-11.645/2) + \mbox{exp}(0) + \mbox{exp}(-11.52/2)\}/(2*\pi)$. Therefore the arccos of the dot product of the square root of the sum-normalized vectors is approximately 0.1139891.
+
+# Comparisons
+
+All of the packages TDA, TDAstats, rgudhi and TDApplied provide functions for the bottleneck and wasserstein calculations, with TDA wrapping the C++ library dionysus [@Dionysus] and rgudhi wrapping the C++ library GUDHI [@GUDHI]. On the other hand, only rgudhi has the functionality of calculating the Fisher information metric. Here were the results of the distance calculations across all packages and all three pairs of diagrams:
+
+FIX THESE CALCS AND GROUND TRUTHS
+
+```{r}
+D1_TDA <- as.matrix(D1)
+colnames(D1_TDA) <- NULL
+D2_TDA <- as.matrix(D2)
+colnames(D2_TDA) <- NULL
+D3_TDA <- as.matrix(D3)
+colnames(D3_TDA) <- NULL
+dis_bot <- rgudhi::BottleneckDistance$new()
+dis_wass <- rgudhi::WassersteinDistance$new()
+
+bottleneck_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.3,0.5,0.65),TDApplied = c(diagram_distance(D1,D2,p = Inf),diagram_distance(D1,D3,p = Inf),diagram_distance(D2,D3,p = Inf)),TDA = c(TDA::bottleneck(D1_TDA,D2_TDA,dimension = 0),TDA::bottleneck(D1_TDA,D3_TDA,dimension = 0),TDA::bottleneck(D2_TDA,D3_TDA,dimension = 0)),TDAstats = c(TDAstats::phom.dist(D1_TDA,D2_TDA,limit.num = 0)[[1]],TDAstats::phom.dist(D1_TDA,D3_TDA,limit.num = 0)[[1]],TDAstats::phom.dist(D2_TDA,D3_TDA,limit.num = 0)[[1]]),rgudhi = c(dis_bot$apply(D1[,2:3],D2[,2:3]),dis_bot$apply(D1[,2:3],D3[,2:3]),dis_bot$apply(D2[,2:3],D3[,2:3])))
+
+wasserstein_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.3,0.5,0.65),TDApplied = c(diagram_distance(D1,D2),diagram_distance(D1,D3),diagram_distance(D2,D3)),TDA = c(TDA::wasserstein(D1_TDA,D2_TDA,dimension = 0),TDA::wasserstein(D1_TDA,D3_TDA,dimension = 0),TDA::wasserstein(D2_TDA,D3_TDA,dimension = 0)),TDAstats = c(TDAstats::phom.dist(D1_TDA,D2_TDA,limit.num = 0)[[1]],TDAstats::phom.dist(D1_TDA,D3_TDA,limit.num = 0)[[1]],TDAstats::phom.dist(D2_TDA,D3_TDA,limit.num = 0)[[1]]),rgudhi = c(dis_wass$apply(D1[,2:3],D2[,2:3]),dis_wass$apply(D1[,2:3],D3[,2:3]),dis_wass$apply(D2[,2:3],D3[,2:3])))
+```
+
+# Fisher Information Metric
+
+The Fisher information metric is the distance function used to calculate the persistence Fisher kernel, and is therefore a basis for kernel machine learning with persistence diagrams. 
+
+# Proof of Correctness for TDApplied's diagram_distance Function
+
+Even though the Hungarian algorithm can be used to solve the linear sum assignment problem (LSAP) [@R-clue], finding a minimal cost matching of two sets of points, some work needs to be done to properly apply the algorithm to calculate wasserstein or bottleneck distances. For an example we will consider the bottleneck distance, although the argument still holds with a simple change for the wasserstein distance (squaring matrix entries). Let Diag1 and Diag2 be two diagrams, with $n_1$ and $n_2$ points respectively, whose projections onto the diagonal are denoted by $\pi(\mbox{Diag1})$ and $\pi(\mbox{Diag2})$ respectively. Then take $M$ to be the following $(n_1 + n_2) \times (n_1 + n_2)$ matrix: 
+
+$$M =
+\left[
+  \begin{array}{c|c}
+  d_{\infty}(\mbox{Diag1},\mbox{Diag2}) & d_{\infty}(\mbox{Diag1},\pi(\mbox{Diag2})) \\
+  \hline
+  d_{\infty}(\pi(\mbox{Diag1}),\mbox{Diag2}) & 0
+\end{array} \right]$$
+
+Each row corresponds to the $n_1$ points in Diag1 followed by the $n_2$ projections $\pi(\mbox{Diag2})$, and vice versa for the columns. Then we claim that the solution of the LSAP problem on $M$ has the same cost as the real bottleneck distance value between Diag1 and Diag2.
+
+Firstly, we claim that a solution to the LSAP problem on $M$ has a cost which is no less than the distance value. Let the distance value be $s$. Now suppose, to reach a contradiction, that there existed a lower-cost matching for the LSAP problem for $M$, $m$,of cost $s' < s$. Since projection points are matched together with cost 0 in $M$, let $m'$ contain all the matches in $m$ which are not between two projection points. Then $m'$ would be matching for the distance calculation which has lower cost than $s$, contradicting the minimality of $s$. Therefore, a solution to the LSAP problem on $M$ has a cost which is no less than the distance value.
+
+Next, we claim that a solution to the LSAP problem on $M$ has a cost which is no greater than the distance value. Now suppose, to reach a contradiction, that the solution to the LSAP on problem $M$ had cost $s$, which was larger than the real distance value, $s'$. Let $m'$ be a matching for the real distance calculation of $s'$. Then since each point in either diagram is either paired with a point in the other diagram or its own diagonal projection, there must be an equal number of unpaired points in both diagrams in $m'$. Therefore, we can augment $m'$ to a matching $m$ on $M$ in which the unpaired diagonal points are arbitrarily paired up with cost 0. Thus, $m$ has cost $s' < s$, contradicting the minimality of $s$. Therefore, a solution to the LSAP problem on $M$ has a cost which is no greater than the distance value.
+
+Therefore, a solution to the LSAP problem for $M$ has a cost which is both greater than and less than the bottleneck distance value, and hence the two values must be equal.
+
+```{r,echo = F}
+# reset parameters
+par(mfrow = original_mfrow,xpd = original_xpd,mar = original_mar)
+options(scipen = original_scipen)
+do.call("RNGkind",as.list(oldRNGkind))
+assign(".Random.seed", oldseed, .GlobalEnv)
+```
+
+# Conclusion
+
+## References
