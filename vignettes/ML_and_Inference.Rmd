@@ -436,7 +436,7 @@ diagram_distance(D1,D2,dim = 0,p = Inf,distance = "wasserstein")
 diagram_distance(D1,D3,dim = 0,p = Inf,distance = "wasserstein")
 ```
 
-There is a generalization of the 2-wasserstein distance for any $p \geq 1$, the $p$-wasserstein distance, which can also be computed using the `diagram_distance` function by varying the parameter `p`. To see the computational details and proof of correctness for wasserstein and bottleneck distance calculations, see the Appendix.
+There is a generalization of the 2-wasserstein distance for any $p \geq 1$, the $p$-wasserstein distance, which can also be computed using the `diagram_distance` function by varying the parameter `p`.
 
 Another distance metric between persistence diagrams, which will be useful for kernel calculations, is called the *Fisher information metric*, $d_{FIM}(D_1,D_2,\sigma)$ (details can be found in [@persistence_fisher]). The idea is to represent the two persistence diagrams as probability density functions, with a 2D-Gaussian point mass centered at each point in both diagrams (including the diagonal projections of the points in the opposite diagram), all of variance $\sigma^2 > 0$, and calculate how much those distributions disagree on their pdf value at each point in the plane (called their *Fisher information metric*). 
 
@@ -763,26 +763,6 @@ There are two main limitations of TDApplied which should be discussed for its ow
 # Conclusion
 
 The TDApplied package aims to bridge topological data analysis with researchers and data practitioners in the R community. Current topological data analysis packages in R and python do not provide the ability to carry out standard types of data analysis, being statistics and machine learning, with persistence diagrams - greatly limiting research and industry interest in topological data analysis. TDApplied was built with performance in mind, with its own fast persistent (co)homology wrapper,  quick native-R implementations of distance calculations between persistence diagrams, C++ approximate kernel calculations and parallelization at a number of points. Topological data analysis is an exciting and powerful new field of data analysis, and with TDApplied anyone can access its power for meaningful and creative analyses of data.
-
-# Appendix: Proof of Correctness for Distance Calculation
-
-Even though the Hungarian algorithm can be used to solve the linear sum assignment problem (LSAP), finding a minimal cost matching of two sets of points, some work needs to be done to properly apply the algorithm to calculate wasserstein or bottleneck distances. For an example we will consider the bottleneck distance, although the argument still holds with a simple change for the wasserstein distance (squaring matrix entries). Let Diag1 and Diag2 be two diagrams, with $n_1$ and $n_2$ points respectively, whose projections onto the diagonal are denoted by $\pi(\mbox{Diag1})$ and $\pi(\mbox{Diag2})$ respectively. Then take $M$ to be the following $(n_1 + n_2) \times (n_1 + n_2)$ matrix: 
-
-$$M =
-\left[
-  \begin{array}{c|c}
-  d_{\infty}(\mbox{Diag1},\mbox{Diag2}) & d_{\infty}(\mbox{Diag1},\pi(\mbox{Diag2})) \\
-  \hline
-  d_{\infty}(\pi(\mbox{Diag1}),\mbox{Diag2}) & 0
-\end{array} \right]$$
-
-Each row corresponds to the $n_1$ points in Diag1 followed by the $n_2$ projections $\pi(\mbox{Diag2})$, and vice versa for the columns. Then we claim that the solution of the LSAP problem on $M$ has the same cost as the real bottleneck distance value between Diag1 and Diag2.
-
-Firstly, we claim that a solution to the LSAP problem on $M$ has a cost which is no less than the distance value. Let the distance value be $s$. Now suppose, to reach a contradiction, that there existed a lower-cost matching for the LSAP problem for $M$, $m$,of cost $s' < s$. Since projection points are matched together with cost 0 in $M$, let $m'$ contain all the matches in $m$ which are not between two projection points. Then $m'$ would be matching for the distance calculation which has lower cost than $s$, contradicting the minimality of $s$. Therefore, a solution to the LSAP problem on $M$ has a cost which is no less than the distance value.
-
-Next, we claim that a solution to the LSAP problem on $M$ has a cost which is no greater than the distance value. Now suppose, to reach a contradiction, that the solution to the LSAP on problem $M$ had cost $s$, which was larger than the real distance value, $s'$. Let $m'$ be a matching for the real distance calculation of $s'$. Then since each point in either diagram is either paired with a point in the other diagram or its own diagonal projection, there must be an equal number of unpaired points in both diagrams in $m'$. Therefore, we can augment $m'$ to a matching $m$ on $M$ in which the unpaired diagonal points are arbitrarily paired up with cost 0. Thus, $m$ has cost $s' < s$, contradicting the minimality of $s$. Therefore, a solution to the LSAP problem on $M$ has a cost which is no greater than the distance value.
-
-Therefore, a solution to the LSAP problem for $M$ has a cost which is both greater than and less than the bottleneck distance value, and hence the two values must be equal.
 
 ```{r,echo = F}
 # reset parameters
