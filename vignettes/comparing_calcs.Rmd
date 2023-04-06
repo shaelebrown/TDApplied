@@ -34,7 +34,11 @@ set.seed(123)
 
 # Introduction
 
-A number of R packages exist for computing distances between pairs of persistence diagrams (here we will focus on the bottleneck, 2-wasserstein (herein denoted "wasserstein" for brevity) and Fisher information metric), including TDA [@R-TDA], TDAstats [@R-TDAstats], rgudhi [@rgudhi] and TDApplied. Comparing the speed of these calculations was performed in the "Benchmarking and Speed" package vignette, but here we treat the more foundational question of "are these distance calculations the same across packages?" Through reproducible examples we show that the answer is unfortunately no, but through exploration we attempt to reconcile these differences and provide guidelines for using the different packages. Moreover, we include a proof of algorithm correctness for TDApplied's distance function, as well as describing why TDAstats' distance function may be considered "non-standard" as has been stated in TDApplied's documentation.
+A number of R packages exist for computing distances between pairs of persistence diagrams (here we will focus on the bottleneck, 2-wasserstein (herein denoted "wasserstein" for brevity) and Fisher information metric), including TDA [@R-TDA], rgudhi [@rgudhi] and TDApplied. Comparing the speed of these calculations was performed in the "Benchmarking and Speed" package vignette, but here we treat the more foundational question of "are these distance calculations the same across packages?" Through reproducible examples we show that the answer is unfortunately no, but through exploration we attempt to reconcile these differences and provide guidelines for using the different packages. Moreover, we include a proof of algorithm correctness for TDApplied's distance function and in the following section we describe why the distance calculation of the TDAstats package [@R-TDAstats] is not compared against.
+
+# TDAstats' `phom.dist` Function
+
+TDAstats' `phom.dist` function is described in its package documentation as being "not meaningful without a null distribution". But why is this the case? We examined the source code for TDAstats, i.e. its R/inference.R file, and found that the internal function `wass_workhorse` on lines 77-103 is the actual distance calculation. In this function, the persistence values (i.e. death - birth) for topological features of two diagrams (and their projections appended to the opposite diagram) are ordered from largest to smallest and the absolute differences of these ordered persistence values are exponentiated and summed. This algorithm is not guaranteed to produce an optimal matching of the topological features (in the sense of the usual wasserstein cost function), and is missing the traditional final exponentiation (in the case of the 2-wasserstein metric we take the square root of the sum of squared distances). This was clear to the authors of TDAstats, and while their `phom.dist` function is not exactly a wasserstein metric it is still a comparison statistic of two persistence diagrams which can be studied with inference techniques. Nevertheless, this is why in TDApplied documentation we refer to TDAstats' distance calculation as being "non-standard" and why comparisons (of calculations and benchmarking) are not made against it.
 
 # Reproducible Examples
 
@@ -75,11 +79,9 @@ For the Fisher information metric we will use the parameter $\sigma = 1$ for sim
 
 # Comparisons
 
-All of the packages TDA, TDAstats, rgudhi and TDApplied provide functions for the bottleneck and wasserstein calculations, with TDA wrapping the C++ library dionysus [@Dionysus] and rgudhi wrapping the C++ library GUDHI [@GUDHI]. On the other hand, only rgudhi has the functionality of calculating the Fisher information metric. Here were the results of the distance calculations across all packages and all three pairs of diagrams:
+All of the packages TDA, TDAstats, rgudhi and TDApplied provide functions for the bottleneck and wasserstein calculations, with TDA wrapping the C++ library dionysus [@Dionysus] and rgudhi wrapping the C++ library GUDHI [@GUDHI]. On the other hand, only TDApplied and rgudhi have the functionality of calculating the Fisher information metric. Here were the results of the distance calculations across all packages and all three pairs of diagrams:
 
-FIX THESE CALCS AND GROUND TRUTHS
-
-```{r}
+```{r,eval = F,include = F}
 D1_TDA <- as.matrix(D1)
 colnames(D1_TDA) <- NULL
 D2_TDA <- as.matrix(D2)
@@ -88,15 +90,43 @@ D3_TDA <- as.matrix(D3)
 colnames(D3_TDA) <- NULL
 dis_bot <- rgudhi::BottleneckDistance$new()
 dis_wass <- rgudhi::WassersteinDistance$new()
+dis_fish <- rgudhi::PersistenceFisherDistance$new() # default sigma is 1
 
 bottleneck_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.3,0.5,0.65),TDApplied = c(diagram_distance(D1,D2,p = Inf),diagram_distance(D1,D3,p = Inf),diagram_distance(D2,D3,p = Inf)),TDA = c(TDA::bottleneck(D1_TDA,D2_TDA,dimension = 0),TDA::bottleneck(D1_TDA,D3_TDA,dimension = 0),TDA::bottleneck(D2_TDA,D3_TDA,dimension = 0)),TDAstats = c(TDAstats::phom.dist(D1_TDA,D2_TDA,limit.num = 0)[[1]],TDAstats::phom.dist(D1_TDA,D3_TDA,limit.num = 0)[[1]],TDAstats::phom.dist(D2_TDA,D3_TDA,limit.num = 0)[[1]]),rgudhi = c(dis_bot$apply(D1[,2:3],D2[,2:3]),dis_bot$apply(D1[,2:3],D3[,2:3]),dis_bot$apply(D2[,2:3],D3[,2:3])))
 
 wasserstein_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.3,0.5,0.65),TDApplied = c(diagram_distance(D1,D2),diagram_distance(D1,D3),diagram_distance(D2,D3)),TDA = c(TDA::wasserstein(D1_TDA,D2_TDA,dimension = 0),TDA::wasserstein(D1_TDA,D3_TDA,dimension = 0),TDA::wasserstein(D2_TDA,D3_TDA,dimension = 0)),TDAstats = c(TDAstats::phom.dist(D1_TDA,D2_TDA,limit.num = 0)[[1]],TDAstats::phom.dist(D1_TDA,D3_TDA,limit.num = 0)[[1]],TDAstats::phom.dist(D2_TDA,D3_TDA,limit.num = 0)[[1]]),rgudhi = c(dis_wass$apply(D1[,2:3],D2[,2:3]),dis_wass$apply(D1[,2:3],D3[,2:3]),dis_wass$apply(D2[,2:3],D3[,2:3])))
+
+fisher_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.02354624,0.08821907,0.1139891),TDApplied = c(diagram_distance(D1,D2,distance = "fisher",sigma = 1),diagram_distance(D1,D3,distance = "fisher",sigma = 1),diagram_distance(D2,D3,distance = "fisher",sigma = 1)),rgudhi = c(dis_fish$apply(D1[,2:3],D2[,2:3]),dis_fish$apply(D1[,2:3],D3[,2:3]),dis_fish$apply(D2[,2:3],D3[,2:3])))
+
+bottleneck_comparison
+
+wasserstein_comparison
+
+fisher_comparison
 ```
 
-# Fisher Information Metric
+Bottleneck comparison:
 
-The Fisher information metric is the distance function used to calculate the persistence Fisher kernel, and is therefore a basis for kernel machine learning with persistence diagrams. 
+```{r,echo = F}
+bottleneck_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.3,0.5,0.65),TDApplied = c(0.3,0.5,0.65),TDA = c(0.3,0.5,0.65),TDAstats = c(0.8,0.5,1.3),rgudhi = c(0.3,0.5,0.65))
+bottleneck_comparison
+```
+
+Wasserstein comparison:
+
+```{r,echo = F}
+wasserstein_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.3905125 ,0.559017 ,0.65),TDApplied = c(0.3905125,0.559017,0.65),TDA = c(0.55,0.75,0.65),TDAstats = c(0.8,0.5,1.3),rgudhi = c(0.55,0.75,0.65))
+wasserstein_comparison
+```
+
+Fisher information metric comparison:
+
+```{r,echo = F}
+fisher_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.02354624 ,0.08821907 ,0.11398910),TDApplied = c(0.02354624 ,0.08821907 ,0.11398910),rgudhi = c(0.02354624 ,0.08821907 ,0.08741134))
+fisher_comparison
+```
+
+ANALYZE
 
 # Proof of Correctness for TDApplied's diagram_distance Function
 

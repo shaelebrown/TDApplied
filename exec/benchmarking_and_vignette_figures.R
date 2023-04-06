@@ -1,5 +1,5 @@
 
-# benchmarking script for generating vignette figures
+# benchmarking
 
 #### diagram_distance vs. fast approximation ####
 ripser <- import_ripser()
@@ -518,3 +518,32 @@ if(requireNamespace("reticulate",quietly = T) == T)
          length=0.05, angle=90, code=3,col = "black")
   
 }
+
+
+# comparing distance calcs
+# requires additional package rgudhi with python!
+
+# create diagrams
+D1 = data.frame(dimension = c(0),birth = c(2),death = c(3))
+D2 = data.frame(dimension = c(0),birth = c(2,0),death = c(3.3,0.5))
+D3 = data.frame(dimension = c(0),birth = c(0),death = c(0.5))
+
+# format
+D1_TDA <- as.matrix(D1)
+colnames(D1_TDA) <- NULL
+D2_TDA <- as.matrix(D2)
+colnames(D2_TDA) <- NULL
+D3_TDA <- as.matrix(D3)
+colnames(D3_TDA) <- NULL
+
+# create rgudhi distance objects
+dis_bot <- rgudhi::BottleneckDistance$new()
+dis_wass <- rgudhi::WassersteinDistance$new()
+dis_fish <- rgudhi::PersistenceFisherDistance$new() # default sigma is 1
+
+# calculate tables
+bottleneck_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.3,0.5,0.65),TDApplied = c(diagram_distance(D1,D2,p = Inf),diagram_distance(D1,D3,p = Inf),diagram_distance(D2,D3,p = Inf)),TDA = c(TDA::bottleneck(D1_TDA,D2_TDA,dimension = 0),TDA::bottleneck(D1_TDA,D3_TDA,dimension = 0),TDA::bottleneck(D2_TDA,D3_TDA,dimension = 0)),TDAstats = c(TDAstats::phom.dist(D1_TDA,D2_TDA,limit.num = 0)[[1]],TDAstats::phom.dist(D1_TDA,D3_TDA,limit.num = 0)[[1]],TDAstats::phom.dist(D2_TDA,D3_TDA,limit.num = 0)[[1]]),rgudhi = c(dis_bot$apply(D1[,2:3],D2[,2:3]),dis_bot$apply(D1[,2:3],D3[,2:3]),dis_bot$apply(D2[,2:3],D3[,2:3])))
+
+wasserstein_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.3,0.5,0.65),TDApplied = c(diagram_distance(D1,D2),diagram_distance(D1,D3),diagram_distance(D2,D3)),TDA = c(TDA::wasserstein(D1_TDA,D2_TDA,dimension = 0),TDA::wasserstein(D1_TDA,D3_TDA,dimension = 0),TDA::wasserstein(D2_TDA,D3_TDA,dimension = 0)),TDAstats = c(TDAstats::phom.dist(D1_TDA,D2_TDA,limit.num = 0)[[1]],TDAstats::phom.dist(D1_TDA,D3_TDA,limit.num = 0)[[1]],TDAstats::phom.dist(D2_TDA,D3_TDA,limit.num = 0)[[1]]),rgudhi = c(dis_wass$apply(D1[,2:3],D2[,2:3]),dis_wass$apply(D1[,2:3],D3[,2:3]),dis_wass$apply(D2[,2:3],D3[,2:3])))
+
+fisher_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.02354624,0.08821907,0.1139891),TDApplied = c(diagram_distance(D1,D2,distance = "fisher",sigma = 1),diagram_distance(D1,D3,distance = "fisher",sigma = 1),diagram_distance(D2,D3,distance = "fisher",sigma = 1)),rgudhi = c(dis_fish$apply(D1[,2:3],D2[,2:3]),dis_fish$apply(D1[,2:3],D3[,2:3]),dis_fish$apply(D2[,2:3],D3[,2:3])))
