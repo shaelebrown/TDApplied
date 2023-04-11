@@ -975,7 +975,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
           non_zero_inds <- which(D != 0,arr.ind = T)
           if(nrow(non_zero_inds) > 0)
           {
-            t <- min(D_subset[non_zero_inds])
+            t <- min(D[non_zero_inds])
           }else
           {
             stop("Zero variance found in a cv-fold. Try decreasing the cv parameter or specifying values for t.") 

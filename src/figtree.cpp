@@ -354,7 +354,7 @@ void figtreeReleaseData( FigtreeData * data )
   }
   data->r = 0;
   data->rx = 0;
-  
+
 #ifndef FIGTREE_NO_ANN
   if( data->annClusters != NULL )
   {
@@ -366,7 +366,7 @@ void figtreeReleaseData( FigtreeData * data )
     delete data->annClustersKdTree;  
     data->annClustersKdTree = NULL;
   }
-  
+
   if( data->annSources != NULL )
   {
     annDeallocPts(data->annSources);
@@ -1114,7 +1114,7 @@ std::vector<double> figtree( std::vector<double> X, double h,
   ncols = (int) ncols/2;
   W = 1; // specifically for this application in TDApplied
   double * q = &Q[0];
-
+  
   // y
   mrows = 2; //mrows
   ncols = (int) Y.size(); //ncols
@@ -1124,7 +1124,7 @@ std::vector<double> figtree( std::vector<double> X, double h,
   
   // g
   double * g = &G[0];
-
+  
   int ret = 0;
   
   FigtreeData data = figtreeCreateData();
@@ -1145,8 +1145,9 @@ std::vector<double> figtree( std::vector<double> X, double h,
   
   if( evalMethod == FIGTREE_EVAL_DIRECT_TREE )
   {
-    for( int i = 0; i < W; i++ )
+    for( int i = 0; i < W; i++ ){
       ret = figtreeEvaluateDirectTree( d, N, M, x, h, q+i*N, y, epsilon, g+i*M );
+    }
   }
   
   // for FIGTREE_EVAL_IFGT and FIGTREE_EVAL_IFGT_TREE, we must first compute
@@ -1186,12 +1187,12 @@ std::vector<double> figtree( std::vector<double> X, double h,
       if( ret < 0 )
       {
         Rprintf("figtree: figtreeChooseParameters%sUniform() failed.\n", 
-               ((ifgtParamMethod == FIGTREE_PARAM_NON_UNIFORM) ? "Non" : ""));
+                ((ifgtParamMethod == FIGTREE_PARAM_NON_UNIFORM) ? "Non" : ""));
         return std::vector<double>{0};
       }
       
       //verbose && Rprintf("figtreeChooseParameters%sUniform() chose p=%i, k=%i.\n", 
-        //                ((ifgtParamMethod == FIGTREE_PARAM_NON_UNIFORM) ? "Non" : ""), data.pMax, kMax );
+      //                ((ifgtParamMethod == FIGTREE_PARAM_NON_UNIFORM) ? "Non" : ""), data.pMax, kMax );
       
       //
       // do k-center clustering
@@ -1210,6 +1211,7 @@ std::vector<double> figtree( std::vector<double> X, double h,
     double errorBound = epsilon + 1;
     if( ret >= 0 && !alreadyHaveClustering )
     {
+      
       // choose truncation number again now that clustering is done
       ret = figtreeChooseTruncationNumber( d, h, epsilon, data.rx, maxRange, &data.pMax, &errorBound );
       if( ret < 0 )
@@ -1225,7 +1227,7 @@ std::vector<double> figtree( std::vector<double> X, double h,
     {
       // evaluate IFGT
       //verbose && Rprintf( "Eval IFGT(h= %3.2e, pMax= %i, K= %i, r= %3.2e, rx= %3.2e, eps= %3.2e)\n", 
-        //                 h, data.pMax, data.K, data.r, data.rx, epsilon);
+      //                 h, data.pMax, data.K, data.r, data.rx, epsilon);
       
       // if maximum truncation is 1, then nothing can be gained by doing individual truncations
       if( data.pMax == 1 && (ifgtTruncMethod != FIGTREE_TRUNC_MAX) )
@@ -1289,7 +1291,7 @@ std::vector<double> figtree( std::vector<double> X, double h,
       if( ret < 0 )
       {
         Rprintf("figtree: figtreeEvaluateIfgt%s*() failed.\n", 
-               ((evalMethod == FIGTREE_EVAL_IFGT_TREE) ? "Tree" : ""));
+                ((evalMethod == FIGTREE_EVAL_IFGT_TREE) ? "Tree" : ""));
       }
     }
   } // if we are doing IFGT
@@ -2242,7 +2244,7 @@ int figtreeEvaluateDirectTree( int d, int N, int M, double * x, double h,
   delete [] dists;
   delete kdTree;
   annClose();   
-  
+
   return 0;
 #endif
 }
