@@ -42,7 +42,7 @@ TDAstats' `phom.dist` function is described in its package documentation as bein
 
 # Reproducible Examples
 
-In order to compare the distance calculations we will specify three simple diagrams (the same D1, D2 and D3 from the package vignette "Introduction to TDApplied") and consider distances between each of the three possible pairs. The three diagrams are:
+In order to compare the distance calculations we will specify three simple diagrams (the same D1, D2 and D3 from the package vignette "TDApplied Theory and Practice") and consider distances between each of the three possible pairs. The three diagrams are:
 
 ```{r,echo = F,include = F}
 #library(TDApplied)
@@ -75,7 +75,7 @@ For the Fisher information metric we will use the parameter $\sigma = 1$ for sim
 
 1. Between D1 and D2 we augment D1 to contain D2's projection points and vice versa, obtaining diagrams $D'_1 = \{(2,3),(2.65,2.65),(0.25,0.25)\}$ and $D'_2 = \{(2,3.3),(0,0.5),(2.5,2.5)\}$. We compute $\rho_1$ and $\rho_2$ as $\rho_1 = \{\mbox{exp}(0) + \mbox{exp}(-0.545/2) + \mbox{exp}(-10.625/2),\mbox{exp}(-0.545/2) + \mbox{exp}(0) + \mbox{exp}(-11.52/2),\mbox{exp}(-10.625/2) + \mbox{exp}(-11.52/2) + \mbox{exp}(0),\mbox{exp}(-0.09/2) + \mbox{exp}(-0.845/2) + \mbox{exp}(-12.365/2),\mbox{exp}(-10.25/2) + \mbox{exp}(-11.645/2) + \mbox{exp}(-0.125/2),\mbox{exp}(-0.5/2) + \mbox{exp}(-0.045/2) + \mbox{exp}(-10.125/2)\}/(2*\pi)$ and $\rho_2 = \{\mbox{exp}(-0.09/2) + \mbox{exp}(-10.25/2) + \mbox{exp}(-0.5/2),\mbox{exp}(-0.845/2) + \mbox{exp}(-11.645/2) + \mbox{exp}(-0.045/2),\mbox{exp}(-12.365/2) + \mbox{exp}(-0.125/2) + \mbox{exp}(-10.125/2),\mbox{exp}(0) + \mbox{exp}(-11.84/2) + \mbox{exp}(-0.89/2),\mbox{exp}(-11.84/2) + \mbox{exp}(0) + \mbox{exp}(-10.25/2),\mbox{exp}(-0.89/2) + \mbox{exp}(-10.25/2) + \mbox{exp}(0)\}/(2*\pi)$. Therefore the arccos of the dot product of the square root of the sum-normalized vectors is approximately 0.02354624.
 2. Between D1 and D3 we augment D1 to contain D3's projection point and vice versa, obtaining diagrams $D'_1 = \{(2,3),(0.25,0.25)\}$ and $D'_3 = \{(0,0.5),(2.5,2.5)\}$. We compute $\rho_1$ and $\rho_2$ as $\rho_1 = \{\mbox{exp}(0) + \mbox{exp}(-10.625/2),\mbox{exp}(-10.625/2) + \mbox{exp}(0),\mbox{exp}(-10.25/2) + \mbox{exp}(-0.125/2),\mbox{exp}(-0.5/2) + \mbox{exp}(-10.125/2)\}/(2*\pi)$ and $\rho_2 = \{\mbox{exp}(-10.25/2) + \mbox{exp}(-0.5/2),\mbox{exp}(-0.125/2) + \mbox{exp}(-10.125/2),\mbox{exp}(0) + \mbox{exp}(-10.25/2),\mbox{exp}(-10.25/2) + \mbox{exp}(0)\}/(2*\pi)$. Therefore the arccos of the dot product of the square root of the sum-normalized vectors is approximately 0.08821907.
-3. Between D2 and D3 we augment D2 to contain D3's projection point and vice versa, obtaining diagrams $D'_2 = \{(2,3.3),(0,0.5),(0.25,0.25)\}$ and $D'_3 = \{(0,0.5),(2.65,2.65),(0.25,0.25)\}$. We compute $\rho_1$ and $\rho_2$ as $\rho_1 = \{\mbox{exp}(0) + \mbox{exp}(-11.84/2) + \mbox{exp}(-12.365/2),\mbox{exp}(-11.84/2) + \mbox{exp}(0) + \mbox{exp}(-0.125/2),\mbox{exp}(-12.365/2) + \mbox{exp}(-0.125/2) + \mbox{exp}(0),\mbox{exp}(-0.845/2) + \mbox{exp}(-11.645/2) + \mbox{exp}(-11.52/2)\}/(2*\pi)$ and $\rho_2 = \{\mbox{exp}(-11.84/2) + \mbox{exp}(-0.845/2) + \mbox{exp}(-12.365/2),\mbox{exp}(0) + \mbox{exp}(-11.645/2) + \mbox{exp}(-0.125/2),\mbox{exp}(-0.125/2) + \mbox{exp}(-11.52/2) + \mbox{exp}(0),\mbox{exp}(-11.645/2) + \mbox{exp}(0) + \mbox{exp}(-11.52/2)\}/(2*\pi)$. Therefore the arccos of the dot product of the square root of the sum-normalized vectors is approximately 0.1139891.
+3. Between D2 and D3 we augment D2 to contain D3's projection point and vice versa, obtaining diagrams $D'_2 = \{(2,3.3),(0,0.5),(0.25,0.25)\}$ and $D'_3 = \{(0,0.5),(2.65,2.65),(0.25,0.25)\}$. We compute $\rho_1$ and $\rho_2$ as $\rho_1 = \{\mbox{exp}(0) + \mbox{exp}(-11.84/2) + \mbox{exp}(-12.365/2),\mbox{exp}(-11.84/2) + \mbox{exp}(0) + \mbox{exp}(-0.125/2),\mbox{exp}(-12.365/2) + \mbox{exp}(-0.125/2) + \mbox{exp}(0),\mbox{exp}(-11.84/2) + \mbox{exp}(0) + \mbox{exp}(-0.125/2),\mbox{exp}(-0.845/2) + \mbox{exp}(-11.645/2) + \mbox{exp}(-11.52/2),\mbox{exp}(-12.365/2) + \mbox{exp}(-0.125/2) + \mbox{exp}(0)\}/\sqrt{2*\pi}$ and $\rho_2 = \{\mbox{exp}(-11.84/2) + \mbox{exp}(-0.845/2) + \mbox{exp}(-12.365/2),\mbox{exp}(0) + \mbox{exp}(-11.645/2) + \mbox{exp}(-0.125/2),\mbox{exp}(-0.125/2) + \mbox{exp}(-11.52/2) + \mbox{exp}(0),\mbox{exp}(0) + \mbox{exp}(-11.645/2) + \mbox{exp}(-0.125/2),\mbox{exp}(-11.645/2) + \mbox{exp}(0) + \mbox{exp}(-11.52/2),\mbox{exp}(-0.125/2) + \mbox{exp}(-11.52/2) + \mbox{exp}(0)\}/\sqrt{2*\pi}$. Therefore the arccos of the dot product of the square root of the sum-normalized vectors is approximately 0.08741134.
 
 # Comparisons
 
@@ -92,41 +92,38 @@ dis_bot <- rgudhi::BottleneckDistance$new()
 dis_wass <- rgudhi::WassersteinDistance$new()
 dis_fish <- rgudhi::PersistenceFisherDistance$new() # default sigma is 1
 
-bottleneck_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.3,0.5,0.65),TDApplied = c(diagram_distance(D1,D2,p = Inf),diagram_distance(D1,D3,p = Inf),diagram_distance(D2,D3,p = Inf)),TDA = c(TDA::bottleneck(D1_TDA,D2_TDA,dimension = 0),TDA::bottleneck(D1_TDA,D3_TDA,dimension = 0),TDA::bottleneck(D2_TDA,D3_TDA,dimension = 0)),TDAstats = c(TDAstats::phom.dist(D1_TDA,D2_TDA,limit.num = 0)[[1]],TDAstats::phom.dist(D1_TDA,D3_TDA,limit.num = 0)[[1]],TDAstats::phom.dist(D2_TDA,D3_TDA,limit.num = 0)[[1]]),rgudhi = c(dis_bot$apply(D1[,2:3],D2[,2:3]),dis_bot$apply(D1[,2:3],D3[,2:3]),dis_bot$apply(D2[,2:3],D3[,2:3])))
+bottleneck_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.3,0.5,0.65),TDApplied = c(diagram_distance(D1,D2,p = Inf),diagram_distance(D1,D3,p = Inf),diagram_distance(D2,D3,p = Inf)),TDA = c(TDA::bottleneck(D1_TDA,D2_TDA,dimension = 0),TDA::bottleneck(D1_TDA,D3_TDA,dimension = 0),TDA::bottleneck(D2_TDA,D3_TDA,dimension = 0)),rgudhi = c(dis_bot$apply(D1[,2:3],D2[,2:3]),dis_bot$apply(D1[,2:3],D3[,2:3]),dis_bot$apply(D2[,2:3],D3[,2:3])))
 
-wasserstein_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.3,0.5,0.65),TDApplied = c(diagram_distance(D1,D2),diagram_distance(D1,D3),diagram_distance(D2,D3)),TDA = c(TDA::wasserstein(D1_TDA,D2_TDA,dimension = 0),TDA::wasserstein(D1_TDA,D3_TDA,dimension = 0),TDA::wasserstein(D2_TDA,D3_TDA,dimension = 0)),TDAstats = c(TDAstats::phom.dist(D1_TDA,D2_TDA,limit.num = 0)[[1]],TDAstats::phom.dist(D1_TDA,D3_TDA,limit.num = 0)[[1]],TDAstats::phom.dist(D2_TDA,D3_TDA,limit.num = 0)[[1]]),rgudhi = c(dis_wass$apply(D1[,2:3],D2[,2:3]),dis_wass$apply(D1[,2:3],D3[,2:3]),dis_wass$apply(D2[,2:3],D3[,2:3])))
+wasserstein_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.3905125, 0.559017, 0.65),TDApplied = c(diagram_distance(D1,D2),diagram_distance(D1,D3),diagram_distance(D2,D3)),TDA = c(TDA::wasserstein(D1_TDA,D2_TDA,dimension = 0),TDA::wasserstein(D1_TDA,D3_TDA,dimension = 0),TDA::wasserstein(D2_TDA,D3_TDA,dimension = 0)),rgudhi = c(dis_wass$apply(D1[,2:3],D2[,2:3]),dis_wass$apply(D1[,2:3],D3[,2:3]),dis_wass$apply(D2[,2:3],D3[,2:3])))
 
 fisher_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.02354624,0.08821907,0.1139891),TDApplied = c(diagram_distance(D1,D2,distance = "fisher",sigma = 1),diagram_distance(D1,D3,distance = "fisher",sigma = 1),diagram_distance(D2,D3,distance = "fisher",sigma = 1)),rgudhi = c(dis_fish$apply(D1[,2:3],D2[,2:3]),dis_fish$apply(D1[,2:3],D3[,2:3]),dis_fish$apply(D2[,2:3],D3[,2:3])))
+```
 
-bottleneck_comparison
-
-wasserstein_comparison
-
-fisher_comparison
+```{r,echo = F}
+bottleneck_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.3,0.5,0.65),TDApplied = c(0.3,0.5,0.65),TDA = c(0.3,0.5,0.65),rgudhi = c(0.3,0.5,0.65))
+wasserstein_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.3905125 ,0.559017 ,0.65),TDApplied = c(0.3905125,0.559017,0.65),TDA = c(0.55,0.75,0.65),rgudhi = c(0.55,0.75,0.65))
+fisher_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.02354624 ,0.08821907 ,0.08741134),TDApplied = c(0.02354624 ,0.08821907 ,0.08741134),rgudhi = c(0.02354624 ,0.08821907 ,0.08741134))
 ```
 
 Bottleneck comparison:
 
 ```{r,echo = F}
-bottleneck_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.3,0.5,0.65),TDApplied = c(0.3,0.5,0.65),TDA = c(0.3,0.5,0.65),TDAstats = c(0.8,0.5,1.3),rgudhi = c(0.3,0.5,0.65))
 bottleneck_comparison
 ```
 
 Wasserstein comparison:
 
 ```{r,echo = F}
-wasserstein_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.3905125 ,0.559017 ,0.65),TDApplied = c(0.3905125,0.559017,0.65),TDA = c(0.55,0.75,0.65),TDAstats = c(0.8,0.5,1.3),rgudhi = c(0.55,0.75,0.65))
 wasserstein_comparison
 ```
 
 Fisher information metric comparison:
 
 ```{r,echo = F}
-fisher_comparison <- data.frame(pair = c("D1 and D2","D1 and D3","D2 and D3"),ground_truth = c(0.02354624 ,0.08821907 ,0.11398910),TDApplied = c(0.02354624 ,0.08821907 ,0.11398910),rgudhi = c(0.02354624 ,0.08821907 ,0.08741134))
 fisher_comparison
 ```
 
-ANALYZE
+All three packages agreed on the value of the three bottleneck calculations, and both TDApplied and rgudhi agreed on all Fisher information metric calculations. However, while TDA and TDAstats agreed on the three wasserstein calculations, two of these differed from TDApplied's output. This occurred because TDA and rgudhi use a slightly different formula for computing wasserstein distances - where the distance between matched pairs of persistence diagram points is Euclidean rather than an infinity-norm distance. This is a perfectly suitable distance metric and matches the formula in [@Robinson_Turner], however it is different from the published formulas in important works like [@distance_calc] and [@comp_geom] (which is what TDApplied uses).
 
 # Proof of Correctness for TDApplied's diagram_distance Function
 

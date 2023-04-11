@@ -1,11 +1,11 @@
 ---
-title: "Introduction to the R Package TDApplied"
+title: "TDApplied Theory and Practice"
 author: "Shael Brown and Dr. Reza Farivar"
 output: 
   rmarkdown::html_document:
     fig_caption: yes
 vignette: >
-  %\VignetteIndexEntry{Introduction to TDApplied}
+  %\VignetteIndexEntry{TDApplied Theory and Practice}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 bibliography: REFERENCES.bib
@@ -400,7 +400,7 @@ As the persistence diagram is a descriptor of the underlying shape structure of 
 
 ### Distance Functions
 
-There are several ways to compute distances between persistence diagrams in the same homological dimension (like dimension 0 for clusters, dimension 1 for loops, etc.). The most common two are called the *2-wasserstein* and *bottleneck distances* [@distance_calc]. These techniques find an optimal matching of the 2D points in their input two diagrams, and compute a cost of that optimal matching. A point from one diagram is allowed either to be paired (matched) with a point in the other diagram or its diagonal projection, i.e. the nearest point on the diagonal line $y=x$ (matching a point to its diagonal projection is essentially saying that feature is likely topological noise because it died very soon after it was born).
+There are several ways to compute distances between persistence diagrams in the same homological dimension (like dimension 0 for clusters, dimension 1 for loops, etc.). The most common two are called the *2-wasserstein* and *bottleneck distances* [@distance_calc,@comp_geom]. These techniques find an optimal matching of the 2D points in their input two diagrams, and compute a cost of that optimal matching. A point from one diagram is allowed either to be paired (matched) with a point in the other diagram or its diagonal projection, i.e. the nearest point on the diagonal line $y=x$ (matching a point to its diagonal projection is essentially saying that feature is likely topological noise because it died very soon after it was born).
 
 Allowing points to be paired with their diagonal projections both allows for matchings of persistence diagrams with different numbers of points (which is almost always the case in practice) and also formalizes the idea that some points in a persistence diagram represent noise. The "cost" value associated with a matching is given by either (i) the maximum of infinity-norm distances between paired points, or (ii) the square-root of the sum of squared infinity-norm between matched points. The cost of the optimal matching under loss (i) is called the bottleneck distance of persistence diagrams, and the cost of the optimal matching of cost (ii) is called the 2-wasserstein metric of persistence diagrams. Both distance metrics have been used in a number of applications, but the 2-wasserstein metric is able to find more fine-scale differences in persistence diagrams compared to the bottleneck distance. The problem of finding an optimal matching can be solved with the Hungarian algorithm, which is implemented in the R package clue [@R-clue].
 
