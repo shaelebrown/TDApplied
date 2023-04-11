@@ -284,6 +284,129 @@ if(requireNamespace("reticulate",quietly = T) == T)
          length=0.05, angle=90, code=3,col = "black") 
 }
 
+#### diagram_distance vs rgudhi's PersistenceFisherDistance ####
+
+# generate persistence diagrams from Tori and spheres with  100,200,...,1000 data points.
+runtimes_rgudhi <- data.frame(n_row = numeric(),package = character(),approx = logical(),time_in_sec = numeric())
+dis_fish <- rgudhi::PersistenceFisherDistance$new() # default sigma is 1
+# approx = reticulate::import("sklearn.kernel_approximation") # these lines are not working
+# dis_fish_approx <- rgudhi::PersistenceFisherDistance$new(kernel_approx = approx$RBFSampler)
+for(n_row in seq(100,1000,100)){
+  for(iteration in 1:10)
+  {
+    # simulate pair of diagrams from the desired shapes
+    diagram_torus = PyH(X = TDA::torusUnif(n = n_row,a = 1,c = 2),
+                        maxdim = 2,thresh = 2,ripser = ripser)
+    diagram_sphere = PyH(X = TDA::sphereUnif(n = n_row,d = 2,r = 1),
+                         maxdim = 2,thresh = 2,ripser = ripser)
+    # compute their wasserstein distances in all dimensions and benchmark
+    start_time_TDApplied = Sys.time()
+    diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 0,
+                     distance = "fisher",sigma = 1)
+    diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 1,
+                     distance = "fisher",sigma = 1)
+    diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 2,
+                     distance = "fisher",sigma = 1)
+    end_time_TDApplied = Sys.time()
+    time_diff_TDApplied = as.numeric(end_time_TDApplied - start_time_TDApplied,units = "secs")
+    
+    start_time_TDApplied_approx = Sys.time()
+    diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 0,
+                     distance = "fisher",sigma = 1,rho = 0.001)
+    diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 1,
+                     distance = "fisher",sigma = 1,rho = 0.001)
+    diagram_distance(D1 = diagram_torus,D2 = diagram_sphere,dim = 2,
+                     distance = "fisher",sigma = 1,rho = 0.001)
+    end_time_TDApplied_approx = Sys.time()
+    time_diff_TDApplied_approx = as.numeric(end_time_TDApplied_approx - start_time_TDApplied_approx,units = "secs")
+    
+    start_time_rgudhi = Sys.time()
+    dis_fish$apply(diagram_torus[which(diagram_torus[,1] == 0),2:3],diagram_sphere[which(diagram_sphere[,1] == 0),2:3])
+    dis_fish$apply(diagram_torus[which(diagram_torus[,1] == 1),2:3],diagram_sphere[which(diagram_sphere[,1] == 1),2:3])
+    dis_fish$apply(diagram_torus[which(diagram_torus[,1] == 2),2:3],diagram_sphere[which(diagram_sphere[,1] == 2),2:3])
+    end_time_rgudhi = Sys.time()
+    time_diff_rgudhi = as.numeric(end_time_rgudhi - start_time_rgudhi,units = "secs")
+    
+    # start_time_rgudhi_approx = Sys.time()
+    # dis_fish_approx$apply(diagram_torus[which(diagram_torus[,1] == 0),2:3],diagram_sphere[which(diagram_sphere[,1] == 0),2:3])
+    # dis_fish_approx$apply(diagram_torus[which(diagram_torus[,1] == 1),2:3],diagram_sphere[which(diagram_sphere[,1] == 1),2:3])
+    # dis_fish_approx$apply(diagram_torus[which(diagram_torus[,1] == 2),2:3],diagram_sphere[which(diagram_sphere[,1] == 2),2:3])
+    # end_time_rgudhi_approx = Sys.time()
+    # time_diff_rgudhi_approx = as.numeric(end_time_rgudhi_approx - start_time_rgudhi_approx,units = "secs")
+    
+    runtimes_rgudhi = rbind(runtimes_rgudhi,data.frame(n_row = n_row,
+                                                       package = "TDApplied",
+                                                       approx = F,
+                                                       time_in_sec = time_diff_TDApplied))
+    runtimes_rgudhi = rbind(runtimes_rgudhi,data.frame(n_row = n_row,
+                                                       package = "TDApplied",
+                                                       approx = T,
+                                                       time_in_sec = time_diff_TDApplied_approx))
+    runtimes_rgudhi = rbind(runtimes_rgudhi,data.frame(n_row = n_row,
+                                                       package = "rgudhi",
+                                                       approx = F,
+                                                       time_in_sec = time_diff_rgudhi))
+    # runtimes_rgudhi = rbind(runtimes_rgudhi,data.frame(n_row = n_row,
+    #                                                    package = "rgudhi",
+    #                                                    approx = T,
+    #                                                    time_in_sec = time_diff_rgudhi_approx))
+  }
+  print(paste0("Done ",n_row," rows"))
+}
+# compute means and sd's at each value of rows for both packages
+summary_table_rgudhi = data.frame(n_row = numeric(),mean = numeric(),sd = numeric(),
+                                    package = character(),approx = logical())
+for(n_row in seq(100,1000,100))
+{
+  for(p in c("TDApplied","rgudhi"))
+  {
+    approx_vec <- list(FALSE)
+    if(p == "TDApplied")
+    {
+      approx_vec <- list(TRUE,FALSE)
+    }
+    for(a in approx_vec)
+    {
+      result = data.frame(n_row = n_row,
+                          mean = mean(runtimes_rgudhi[which(runtimes_rgudhi$n_row == n_row
+                                                            & runtimes_rgudhi$package == p
+                                                            & runtimes_rgudhi$approx == a),
+                                                      4]),
+                          sd = sd(runtimes_rgudhi[which(runtimes_rgudhi$n_row == n_row 
+                                                        & runtimes_rgudhi$package == p
+                                                        & runtimes_rgudhi$approx == a),
+                                                  4]),
+                          package = p)
+      summary_table_rgudhi = rbind(summary_table_rgudhi,result) 
+    }
+  }
+}
+# plot table
+plot(summary_table_distance$n_row[summary_table_distance$package=="TDA"], 
+     summary_table_distance$mean[summary_table_distance$package=="TDA"], 
+     type="b",
+     xlim=range(summary_table_distance$n_row),
+     ylim=range(0,summary_table_distance$mean+1.96*summary_table_distance$sd/sqrt(10)),
+     xlab = "Points in shape",ylab = "Mean execution time (sec)")
+lines(summary_table_distance$n_row[summary_table_distance$package=="TDApplied"],
+      summary_table_distance$mean[summary_table_distance$package=="TDApplied"], 
+      col=2, type="b")
+legend(x = 200,y = 2000,legend = c("TDApplied","TDA"),
+       col = c("red","black"),lty = c(1,1),cex = 0.8)
+arrows(summary_table_distance$n_row[summary_table_distance$package == "TDApplied"], 
+       summary_table_distance$mean[summary_table_distance$package == "TDApplied"]
+       -1.96*summary_table_distance$sd[summary_table_distance$package == "TDApplied"]/sqrt(10),
+       summary_table_distance$n_row[summary_table_distance$package == "TDApplied"], 
+       summary_table_distance$mean[summary_table_distance$package == "TDApplied"]
+       +1.96*summary_table_distance$sd[summary_table_distance$package == "TDApplied"]/sqrt(10), 
+       length=0.05, angle=90, code=3,col = "red")
+arrows(summary_table_distance$n_row[summary_table_distance$package == "TDA"], 
+       summary_table_distance$mean[summary_table_distance$package == "TDA"]
+       -1.96*summary_table_distance$sd[summary_table_distance$package == "TDA"]/sqrt(10), 
+       summary_table_distance$n_row[summary_table_distance$package == "TDA"], 
+       summary_table_distance$mean[summary_table_distance$package == "TDA"]
+       +1.96*summary_table_distance$sd[summary_table_distance$package == "TDA"]/sqrt(10), 
+       length=0.05, angle=90, code=3,col = "black")
 #### PyH vs. calculate_homology ####
 
 if(requireNamespace("reticulate",quietly = T) == T)
