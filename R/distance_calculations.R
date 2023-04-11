@@ -220,7 +220,7 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
     # compute the persistence Fisher distance
     
     # get all unique points in both diagrams and their diagonal projections
-    theta <- unique(rbind(D1_subset,D2_subset))
+    theta <- rbind(D1_subset,D2_subset)
     
     # exact calculation, quadratic runtime
     if(is.null(rho))
@@ -233,7 +233,7 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
         {
           # compute mvn normal pdf values and sum up
           u <- as.numeric(D1_subset[i,])
-          sum <- sum + exp(-1*((x[[1]]-u[[1]])^2 + (x[[2]]-u[[2]])^2)/(2*sigma^2))/(2*pi*sigma^2)
+          sum <- sum + exp(-1*((x[[1]]-u[[1]])^2 + (x[[2]]-u[[2]])^2)/(2*sigma^2))/(sqrt(2*pi)*sigma)
         }
         return(sum)
         
@@ -246,7 +246,7 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
         {
           # compute mvn normal pdf values and sum up
           u <- as.numeric(D2_subset[i,])
-          sum <- sum + exp(-1*((x[[1]]-u[[1]])^2 + (x[[2]]-u[[2]])^2)/(2*sigma^2))/(2*pi*sigma^2)
+          sum <- sum + exp(-1*((x[[1]]-u[[1]])^2 + (x[[2]]-u[[2]])^2)/(2*sigma^2))/(sqrt(2*pi)*sigma)
         }
         return(sum)
         
