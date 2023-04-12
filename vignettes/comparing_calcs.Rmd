@@ -125,6 +125,56 @@ fisher_comparison
 
 All three packages agreed on the value of the three bottleneck calculations, and both TDApplied and rgudhi agreed on all Fisher information metric calculations. However, while TDA and TDAstats agreed on the three wasserstein calculations, two of these differed from TDApplied's output. This occurred because TDA and rgudhi use a slightly different formula for computing wasserstein distances - where the distance between matched pairs of persistence diagram points is Euclidean rather than an infinity-norm distance. This is a perfectly suitable distance metric and matches the formula in [@Robinson_Turner], however it is different from the published formulas in important works like [@distance_calc] and [@comp_geom] (which is what TDApplied uses).
 
+A quick last note of comparison is between the kernel calculations in TDApplied and rgudhi. Even though their Fisher information metric calculations appear to be the same (perhaps up to small differences in algorithm precision), it turns out that rgudhi and TDApplied return drastically different kernel values. For example, the Fisher information metric between D2 and D3 was (correctly) 0.08741134 for both packages. Therefore, when $t = 2$ the persistence Fisher kernel value should be $\mbox{exp}(-2*0.08741134) \approx 0.8396059$ (when $t = 1$), which is the exact value of the TDApplied calculation `diagram_kernel(D2,D3,dim = 0)`. However, the code
+
+```{r,eval = F}
+gudhi_kern <- rgudhi::PersistenceFisherKernel$new(bandwidth = 0.5)
+gudhi_kern$apply(D2[,2:3],D3[,2:3])
+```
+
+, where the `bandwidth` parameter serves the role of $1/t$, returns the value 0.7550683. Even more perplexing is that the following code
+
+```{r,eval = F}
+gudhi_kern <- rgudhi::PersistenceFisherKernel$new(bandwidth_fisher = 0.5)
+gudhi_kern$apply(D2[,2:3],D3[,2:3])
+```
+
+returns the value 1.8326, which should not be possible for the function $\mbox{exp(-t*d_{FIM})}$ as $t$ and $d_{FIM}$ are positive and non-negative respectively (so the maximum value should be 1). Unfortunately we were not able to identify the source of this confusion by examining the source code of rgudhi (and GUDHI), but it is still possible to calculate kernel values as follows:
+
+```{r,eval = F}
+d <- rgudhi::PersistenceFisherDistance$new() # sigma = 1
+t <- 2 # or whatever desired parameter
+exp(-t*d$apply(D2[,2:3],D3[,2:3]))
+```
+
+And a Gram matrix can be calculated using a function like:
+
+```{r,eval = F}
+# create rgudhi distance object
+gudhi_dist <- rgudhi::PersistenceFisherDistance$new(bandwidth = 0.01,n_jobs = 1L) # sigma = 0.01
+
+# create list of diagrams, only birth and death values in dimension 1
+g <- lapply(X = 1:10,FUN = function(X){
+  
+  df <- diagram_to_df(TDA::ripsDiag(X = TDA::circleUnif(n = 50),maxdimension = 1,maxscale = 2))
+  return(df[which(df[,1] == 1),2:3])
+  
+})
+
+# Gram matrix function
+# l is list of diagrams (only birth and death columns)
+# t is the t parameter like in diagram_kernel
+# gudhi_dist is the rgudhi distance object
+gudhi_gram_matrix <- function(l,t,gudhi_dist){
+  
+  return(exp(-t*gudhi_dist$fit_transform(l)))
+  
+}
+
+# calculate the Gram matrix
+G <- gudhi_gram_matrix(l = g,t = 1,gudhi_dist = gudhi_dist)
+```
+
 # Proof of Correctness for TDApplied's diagram_distance Function
 
 Even though the Hungarian algorithm can be used to solve the linear sum assignment problem (LSAP) [@R-clue], finding a minimal cost matching of two sets of points, some work needs to be done to properly apply the algorithm to calculate wasserstein or bottleneck distances. For an example we will consider the bottleneck distance, although the argument still holds with a simple change for the wasserstein distance (squaring matrix entries). Let Diag1 and Diag2 be two diagrams, with $n_1$ and $n_2$ points respectively, whose projections onto the diagonal are denoted by $\pi(\mbox{Diag1})$ and $\pi(\mbox{Diag2})$ respectively. Then take $M$ to be the following $(n_1 + n_2) \times (n_1 + n_2)$ matrix: 
