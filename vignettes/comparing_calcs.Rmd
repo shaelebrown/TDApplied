@@ -164,7 +164,7 @@ g <- lapply(X = 1:10,FUN = function(X){
 # distance matrix function
 # diagrams is a list of diagrams (only birth and death columns)
 # gudhi_dist is the rgudhi distance object
-gudhi_dist_mat <- function(diagrams,dist){
+gudhi_distance_matrix <- function(diagrams,gudhi_dist){
   
   # get number of rows of each diagram since rgudhi can't calculate
   # distances with empty diagrams
@@ -172,7 +172,10 @@ gudhi_dist_mat <- function(diagrams,dist){
   inds <- which(rows > 0)
   
   # calculate distance matrix for non-zero-row diagrams
-  d_non_zero <- dist$fit_transform(diagrams[inds])
+  d_non_zero <- gudhi_dist$fit_transform(diagrams[inds])
+  
+  # fix diagonal which can sometimes have non-zero entries
+  diag(d_non_zero) <- rep(0,nrow(d_non_zero))
   
   # if all diagrams had at least one row, return
   if(length(inds) == length(diagrams))
@@ -216,6 +219,29 @@ gudhi_gram_matrix <- function(diagrams,t,gudhi_dist){
 
 # calculate the Gram matrix
 G <- gudhi_gram_matrix(diagrams = g,t = 1,gudhi_dist = gudhi_dist)
+```
+
+Another issue with rgudhi calculations can be reproduced as follows:
+
+```{r,eval = F}
+# create data frame
+D = data.frame(dimension = c(0,0),birth = c(0,0),death = c(1.089866,1.098640))
+
+# create rgudhi distance object
+gudhi_dist <- rgudhi::PersistenceFisherDistance$new(bandwidth = 0.01,n_jobs = 1L)
+
+# compute distance
+gudhi_dist$apply(D[,2:3],D[,2:3])
+```
+
+This calculation returns a non-zero number for the distance value of D with itself. This is likely due to numerical rounding issues, and its discovery in rgudhi has led to an update in TDApplied's `diagram_distance` function which now returns 0 for this calculation:
+
+```{r,echo = F}
+D = data.frame(dimension = c(0,0),birth = c(0,0),death = c(1.089866,1.098640))
+```
+
+```{r}
+diagram_distance(D,D,distance = "fisher",sigma = 0.001)
 ```
 
 # Proof of Correctness for TDApplied's diagram_distance Function

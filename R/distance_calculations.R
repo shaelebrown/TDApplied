@@ -273,6 +273,11 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
       rho_2 <- as.numeric(figtree(X = D2_subset,h = sqrt(2)*sigma,Q = rep(1,length(D2_subset)/2)/(length(D2_subset)/2),Y = theta,epsilon = rho,G = G))
     }
     
+    if(length(which(rho_1 == rho_2)) == length(rho_1)) # same diagrams
+    {
+      return(0)
+    }
+    
     rho_1 <- rho_1/sum(rho_1)
     rho_2 <- rho_2/sum(rho_2)
     
