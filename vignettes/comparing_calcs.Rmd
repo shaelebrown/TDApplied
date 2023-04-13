@@ -177,6 +177,9 @@ gudhi_distance_matrix <- function(diagrams,gudhi_dist){
   # fix diagonal which can sometimes have non-zero entries
   diag(d_non_zero) <- rep(0,nrow(d_non_zero))
   
+  # symmetrize (necessary due to numeric rounding issues)
+  d_non_zero[which(upper.tri(d_non_zero),arr.ind = T)[,c("col","row")]] <- d_non_zero[upper.tri(d_non_zero)]
+  
   # if all diagrams had at least one row, return
   if(length(inds) == length(diagrams))
   {
