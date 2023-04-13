@@ -454,6 +454,8 @@ model <- stats::lm(data = data.frame(ratio =
 summary(model)$coefficients
 ```
 
+An important consequence of these results are that for some analyses we can compute faster distance/Gram matrices with rgudhi compared to with TDApplied, and these matrices can feed directly into TDApplied's machine learning and inference methods. An example of how to do so can be found in the "Comparing Distance Calculations" package vignette, with functions that can be copied and ran.
+
 # Conclusions
 
 TDApplied includes a wide variety of functions for machine learning and inference with persistence diagrams, however these methods can have prohibitively long runtimes. In order to make TDApplied functions more practical a number of speedups have been implemented resulting in substantial performance gains, including parallelization, fast approximation to the Fisher information metric and allowing precomputed distance/Gram matrices to be input to the functions. Benchmarking TDApplied functions against suitable counterparts in R situates TDApplied as the state-of-the-art in speed for topological data analysis calculations in R, however comparisons against python functions (including the rgudhi package) indicate that further speedups may be possible. With all its optimizations, TDApplied makes applied topological data analysis possible and practical like never before.

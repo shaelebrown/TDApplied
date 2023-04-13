@@ -161,18 +161,61 @@ g <- lapply(X = 1:10,FUN = function(X){
   
 })
 
+# distance matrix function
+# diagrams is a list of diagrams (only birth and death columns)
+# gudhi_dist is the rgudhi distance object
+gudhi_dist_mat <- function(diagrams,dist){
+  
+  # get number of rows of each diagram since rgudhi can't calculate
+  # distances with empty diagrams
+  rows <- unlist(lapply(diagrams,FUN = nrow))
+  inds <- which(rows > 0)
+  
+  # calculate distance matrix for non-zero-row diagrams
+  d_non_zero <- dist$fit_transform(diagrams[inds])
+  
+  # if all diagrams had at least one row, return
+  if(length(inds) == length(diagrams))
+  {
+    return(d_non_zero)
+  }
+  
+  # create empty distance matrix d
+  d <- matrix(data = 0,nrow = length(diagrams),ncol = length(diagrams))
+  
+  # update entries of d
+  e <- as.matrix(expand.grid(inds,inds))
+  e <- e[which(e[,1] < e[,2]),]
+  if(!is.matrix(e))
+  {
+    e <- t(as.matrix(e))
+  }
+  d[e] <- d_non_zero[which(upper.tri(d_non_zero),arr.ind = T)]
+  e <- e[,2:1]
+  if(!is.matrix(e))
+  {
+    e <- t(as.matrix(e))
+  }
+  d[e] <- d_non_zero[which(upper.tri(d_non_zero),arr.ind = T)]
+  
+  return(d)
+  
+}
+
 # Gram matrix function
-# l is list of diagrams (only birth and death columns)
+# diagrams is a list of diagrams (only birth and death columns)
 # t is the t parameter like in diagram_kernel
 # gudhi_dist is the rgudhi distance object
-gudhi_gram_matrix <- function(l,t,gudhi_dist){
+gudhi_gram_matrix <- function(diagrams,t,gudhi_dist){
   
-  return(exp(-t*gudhi_dist$fit_transform(l)))
+  # calculate distance matrix
+  D <- gudhi_distance_matrix(diagrams = diagrams,gudhi_dist = gudhi_dist)
+  return(exp(-t*D))
   
 }
 
 # calculate the Gram matrix
-G <- gudhi_gram_matrix(l = g,t = 1,gudhi_dist = gudhi_dist)
+G <- gudhi_gram_matrix(diagrams = g,t = 1,gudhi_dist = gudhi_dist)
 ```
 
 # Proof of Correctness for TDApplied's diagram_distance Function
