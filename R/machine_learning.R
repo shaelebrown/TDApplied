@@ -884,12 +884,23 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
   }
   
   # remove "zero variance parameters" from model fitting
-  zero_var_params <- params[zero_var_inds,]
-  if(nrow(zero_var_params) > 0)
+  if(length(zero_var_inds) > 0)
   {
+    zero_var_names <- names(zero_var_inds)
+    zero_var_inds <- unlist(lapply(X = zero_var_names,FUN = function(X){
+      
+      # split name to get dim and sigma
+      s <- strsplit(X,split = "_")[[1]]
+      d <- s[[1]]
+      sig <- s[[2]]
+      return(which(params$dim == d & params$sigma == sig))
+      
+    }))
+    zero_var_params <- params[zero_var_inds,]
     zero_var_params$error <- NA
   }else
   {
+    zero_var_params <- params[0,]
     zero_var_params$error <- numeric()
   }
   params <- params[setdiff(1:nrow(params),zero_var_inds),]
