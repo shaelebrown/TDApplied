@@ -48,25 +48,16 @@ For a broad introduction to the mathematical background and main tools of topolo
 
 Distance and kernel functions are used to quantify differences and similarities respectively between objects in complicated spaces, and are the foundation of many machine learning algorithms which are used in traditional data science [@murphyML]. Several papers have used distance and kernel computations tailored to persistence diagrams [@distance_calc;@persistence_fisher] in order to perform machine learning or inference tasks with groups of persistence diagrams, but to date no publicly available software in either R or python provides the functionality for these types of analyses.
 
-Two main R packages exist for computing and comparing persistence diagrams -- TDA [@R-TDA] and TDAstats [@R-TDAstats]. The paper [@PH_benchmarking] compared the runtimes of the homology calculations in the R packages TDA and TDAstats, and concluded that certain persistent homology calculations are faster with TDAstats, however calculating persistence diagram remains a major bottleneck for topological data analyses. Importantly, neither package supports machine learning with groups of persistence diagrams because both lack a kernel function (between R and python only the python package scikit-TDA [@scikittda2019] supports kernel calculations). TDAstats has an inference method; however, it is based on a non-standard distance function (making inferences drawn from this function unsubstantiated). TDA has a standard distance function but no inference function (and also stores persistence diagrams in a non-standard data structure, which requires additional preprocessing steps for further analysis).  Several other packages exist in R and python for vectorizing persistence diagrams and analyzing the resulting vectors (TDAvec [@TDAvec], TDAkit [@TDAkit] and giotto-tda [@tauzin2020giottotda]), but such processes remove some of the information in the diagrams. 
+Two main R packages exist for computing and comparing persistence diagrams -- TDA [@R-TDA] and TDAstats [@R-TDAstats]. The paper [@PH_benchmarking] compared the runtimes of the homology calculations in the R packages TDA and TDAstats, and concluded that certain persistent homology calculations are faster with TDAstats, however calculating persistence diagram remains a major bottleneck for topological data analyses. Importantly, neither package supports machine learning with groups of persistence diagrams because both lack a kernel function (between R and python only the python package scikit-TDA [@scikittda2019] supports kernel calculations). TDAstats has an inference method; however, it is based on a non-standard distance function (making inferences drawn from this function unsubstantiated). TDA has a standard distance function but no inference function (and also stores persistence diagrams in a non-standard data structure, which requires additional preprocessing steps for further analysis). The more recent package rgudhi [@rgudhi] wraps the c++ engine GUDHI [@GUDHI] and provides both persistence diagrams calculation and distance/kernel function capabilities, however it requires a python configuration which complicates its usage. Several other packages exist in R and python for vectorizing persistence diagrams and analyzing the resulting vectors (TDAvec [@TDAvec], TDAkit [@TDAkit] and giotto-tda [@tauzin2020giottotda]), but such processes remove some of the information in the diagrams. 
 
-In order to make the power of topological data analysis more readily available to data and machine learning practitioners, it would be very helpful to have a single software package that can
+In order to make the power of topological data analysis more readily available to data and machine learning practitioners in R, TDApplied is the first package which provides applied analysis implementations of published methods for analyzing persistence diagrams using machine learning and statistical inference. Its functions 
 
-1. deliver a fast engine for calculating persistence diagrams,
-2. convert persistence diagrams computed using the R packages TDA and TDAstats into a commonly-used data type for data analyses (a data frame), 
-3. quantify differences and similarities between pairs of persistence diagrams with high speed, 
-4. contribute tools for interpreting persistence diagrams, and
-5. provide scalable methods for machine learning and inference for persistence diagrams.
+(1) contain highly optimized and scalable code (see the package vignette "Benchmarking and Speedups"),
+(2) can interface with other data science packages (see the package vignette "Personalized Analyses with TDApplied"),
+(3) have been tested and validated (see the package vignette "Comparing Distance Calculations"), and
+(4) have been used to analyze real neurological data from the Human Connectome Project [@HCP].
 
-In order to achieve these goals TDApplied includes the following functions:
-
-1. `PyH` connects with python creating a fast persistent (co)homology engine compared to alternatives.
-2. `diagram_to_df` converts the output of persistent homology calculations from TDA and TDAstats to a data frame.
-3. `diagram_distance` and `diagram_kernel` allow for fast distance and kernel calculations respectively.
-4. `plot_diagram` and `bootstrap_persistence_thresholds` can be used to plot and threshold persistence diagrams (for "significant" features).
-5. `diagram_mds`, `diagram_kpca`, `diagram_kkmeans` and `diagram_ksvm` perform machine learning with persistence diagrams (multidimensional scaling, kernel principal components analysis, kernel k-means clustering and support vector machines respectively) and `permutation_test` and `independence_test` perform inference on groups of diagrams (a permutation test for group differences and a two-sample independence test respectively). All of these methods contain multiple speedups for scalability - see the "Benchmarking and Speedups" vignette for more details.
-
-In accomplishing the five goals TDApplied is a comprehensive and optimized package which permits researchers and data scientists to analyze multiple data sets using machine learning and inference via topological data analysis. This vignette documents the background, theory and limitations of TDApplied functions on simulated data.
+This vignette documents the background, theory and limitations of TDApplied functions on simulated data.
 
 # Background: Persistent Homology
 
