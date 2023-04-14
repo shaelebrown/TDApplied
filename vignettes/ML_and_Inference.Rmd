@@ -127,7 +127,8 @@ A persistence diagram containing $n$ topological features can be represented in 
 In this section we will describe the various computational tools implemented in the package TDApplied to analyze persistence diagrams. While we will discuss certain "fast" functions in the package, benchmarking and details of computational speedups are documented in another vignette. To start we must load the TDApplied package:
 
 ```{r setup}
-library("TDApplied")
+#library("TDApplied")
+devtools::load_all()
 ``` 
 
 Examples will either analyze pre-computed data frames, TDA/TDAstats calculated persistence diagrams, or simple diagrams which are random deviations of three persistence diagrams called D1, D2 and D3 (each with points in dimension 0 only):

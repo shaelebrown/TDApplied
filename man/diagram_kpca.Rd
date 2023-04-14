@@ -13,7 +13,7 @@ diagram_kpca(
   rho = NULL,
   features = 1,
   num_workers = parallelly::availableCores(omit = 1),
-  th = 0.0001
+  th = 1e-04
 )
 }
 \arguments{

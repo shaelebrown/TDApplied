@@ -116,6 +116,50 @@ test_that("diagram_ksvm can handle missing t",{
   
 })
 
+test_that("diagram_ksvm can handle zero variance distances matrices",{
+  
+  skip_on_cran()
+  skip_if_not_installed("TDA")
+  skip_if_not_installed("TDAstats")
+  
+  # create diags and distance mats
+  g <- lapply(X = 1:10,FUN = function(X){
+    
+    if(X <= 5)
+    {
+      return(TDAstats::calculate_homology(TDA::circleUnif(n = 20),threshold = 1,dim = 1))
+    }
+    return(TDAstats::calculate_homology(TDA::sphereUnif(n = 20,d = 2),threshold = 1,dim = 1))
+    
+  })
+  D0 <- distance_matrix(diagrams = g,dim = 0,distance = "fisher",sigma = 1)
+  D1 <- distance_matrix(diagrams = g,dim = 1,distance = "fisher",sigma = 1)
+  D2 <- distance_matrix(diagrams = g,dim = 2,distance = "fisher",sigma = 1)
+  D3 <- D2
+  D3[1,2] <- 1
+  D3[2,1] <- 1
+  
+  expect_error(diagram_ksvm(diagrams = g,cv = 1,dim = c(0,1,2),y = factor(c(rep("0",5),rep("1",5))),t = 1,distance_matrices = list(D2,D2,D2)),"0 variance")
+  expect_error(diagram_ksvm(diagrams = g,cv = 2,dim = c(0,1,2),y = factor(c(rep("0",5),rep("1",5))),t = 1,distance_matrices = list(D2,D2,D2)),"one cv fold")
+  expect_error(diagram_ksvm(diagrams = g,cv = 2,dim = c(0,1,2),y = factor(c(rep("0",5),rep("1",5))),t = 1,distance_matrices = list(D3,D2,D2)),"one cv fold")
+  
+  res <- diagram_ksvm(diagrams = g,cv = 2,dim = c(0,1,2),y = factor(c(rep("0",5),rep("1",5))),t = 1,distance_matrices = list(D0,D1,D2))
+  expect_true(is.na(res$cv_results[3,7]))
+  res <- diagram_ksvm(diagrams = g,cv = 2,dim = c(0,1,2),y = factor(c(rep("0",5),rep("1",5))),distance_matrices = list(D0,D1,D2))
+  expect_true(is.na(res$cv_results[3,7]))
+  res <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0,1,2),y = factor(c(rep("0",5),rep("1",5))),distance_matrices = list(D0,D2,D1))
+  expect_true(is.na(res$cv_results[3,7]))
+  expect_true(res$cv_results[2,1] == 2)
+  
+  res <- diagram_ksvm(diagrams = g,cv = 2,dim = c(0,1,2),y = factor(c(rep("0",5),rep("1",5))),t = 1)
+  expect_true(is.na(res$cv_results[3,7]))
+  res <- diagram_ksvm(diagrams = g,cv = 2,dim = c(0,1,2),y = factor(c(rep("0",5),rep("1",5))))
+  expect_true(is.na(res$cv_results[3,7]))
+  res <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0,1,2),y = factor(c(rep("0",5),rep("1",5))))
+  expect_true(is.na(res$cv_results[3,7]))
+  
+})
+
 
 test_that("predict_diagram_ksvm detects incorrect parameters correctly",{
   

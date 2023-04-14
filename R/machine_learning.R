@@ -855,6 +855,45 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
   }
   names(distance_matrices) <- paste(dim_and_sigma$dim,dim_and_sigma$sigma,sep = "_")
   
+  # check if distance matrices (within cv folds) have 0 variance
+  zero_var_inds <- which(unlist(lapply(X = distance_matrices,FUN = function(X){
+    
+    X_temp <- X
+    prod_vars <- unlist(lapply(X = 1:cv,FUN = function(X){
+      
+      cv_inds <- which(v == X)
+      return(var(as.vector(X_temp[cv_inds,cv_inds])))
+      
+    }))
+    prod_vars <- prod(prod_vars)
+    
+    return(prod_vars == 0)
+    
+  })))
+  
+  # throw error if all distance matrices have 0 variances
+  if(length(zero_var_inds) == length(distance_matrices))
+  {
+    if(cv == 1)
+    {
+      stop("All distance matrices have 0 variance.")
+    }else
+    {
+      stop("All distance matrices have 0 variance in at least one cv fold.")
+    }
+  }
+  
+  # remove "zero variance parameters" from model fitting
+  zero_var_params <- params[zero_var_inds,]
+  if(nrow(zero_var_params) > 0)
+  {
+    zero_var_params$error <- NA
+  }else
+  {
+    zero_var_params$error <- numeric()
+  }
+  params <- params[setdiff(1:nrow(params),zero_var_inds),]
+  
   # set up for parallel computation
   cl <- parallel::makeCluster(num_workers)
   doParallel::registerDoParallel(cl)
@@ -1014,6 +1053,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
   # get best parameters
   params$error <- model_errors
   best_params <- params[which.min(model_errors),c("dim","t","sigma","C","nu","epsilon")]
+  params <- rbind(params,zero_var_params)
   # if t estimated then get estimate from whole dataset (for predictions)
   if(estimate_t)
   {
