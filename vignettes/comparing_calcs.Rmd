@@ -171,6 +171,12 @@ gudhi_distance_matrix <- function(diagrams,gudhi_dist){
   rows <- unlist(lapply(diagrams,FUN = nrow))
   inds <- which(rows > 0)
   
+  # if inds is empty then return 0 matrix
+  if(length(inds) == 0)
+  {
+    return(matrix(data = 0,nrow = length(diagrams),ncol = length(diagrams)))
+  }
+  
   # calculate distance matrix for non-zero-row diagrams
   d_non_zero <- gudhi_dist$fit_transform(diagrams[inds])
   
