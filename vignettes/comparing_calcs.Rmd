@@ -34,15 +34,15 @@ set.seed(123)
 
 # Introduction
 
-A number of R packages exist for computing distances between pairs of persistence diagrams (here we will focus on the bottleneck, 2-wasserstein (herein denoted "wasserstein" for brevity) and Fisher information metric), including TDA [@R-TDA], rgudhi [@rgudhi] and TDApplied. Comparing the speed of these calculations was performed in the "Benchmarking and Speed" package vignette, but here we treat the more foundational question of "are these distance calculations the same across packages?" Through reproducible examples we show that the answer is unfortunately no, but through exploration we attempt to reconcile these differences and provide guidelines for using the different packages. Moreover, we include a proof of algorithm correctness for TDApplied's distance function and in the following section we describe why the distance calculation of the TDAstats package [@R-TDAstats] is not compared against.
+A number of R packages exist for computing distances between pairs of persistence diagrams, including **TDA** [@R-TDA], **rgudhi** [@rgudhi] and **TDApplied**. Comparing the speed of these calculations was performed in the "Benchmarking and Speed" package vignette, but here we treat the more basic question of "are these distance calculations the same across packages?" Through examples we show that the answer is unfortunately no, but through exploration we attempt to reconcile these differences and provide guidelines for using the different packages. Moreover, we include a proof of algorithm correctness for **TDApplied**'s distance function and in the following section we describe why we do not compare **TDApplied**'s distance function against that of the **TDAstats** package [@R-TDAstats].
 
-# TDAstats' `phom.dist` Function
+# **TDAstats**' `phom.dist` Function
 
-TDAstats' `phom.dist` function is described in its package documentation as being "not meaningful without a null distribution". But why is this the case? We examined the source code for TDAstats, i.e. its R/inference.R file, and found that the internal function `wass_workhorse` on lines 77-103 is the actual distance calculation. In this function, the persistence values (i.e. death - birth) for topological features of two diagrams (and their projections appended to the opposite diagram) are ordered from largest to smallest and the absolute differences of these ordered persistence values are exponentiated and summed. This algorithm is not guaranteed to produce an optimal matching of the topological features (in the sense of the usual wasserstein cost function), and is missing the traditional final exponentiation (in the case of the 2-wasserstein metric we take the square root of the sum of squared distances). This was clear to the authors of TDAstats, and while their `phom.dist` function is not exactly a wasserstein metric it is still a comparison statistic of two persistence diagrams which can be studied with inference techniques. Nevertheless, this is why in TDApplied documentation we refer to TDAstats' distance calculation as being "non-standard" and why comparisons (of calculations and benchmarking) are not made against it.
+The **TDAstats** package has a (wasserstein) distance function, `phom.dist`, which is described in its package documentation as being "not meaningful without a null distribution". But what does this mean? We examined the source code for **TDAstats**, i.e. its R/inference.R file, and found that the internal function `wass_workhorse` on lines 77-103 is the actual distance calculation. In this function, the persistence values (i.e. death - birth) for topological features of two diagrams (and their diagonal projections appended to the opposite diagram) are ordered from largest to smallest.  The persistence values are then paired between the two diagrams according to their orderings, and the absolute differences of these ordered persistence values are exponentiated and summed. This algorithm is not guaranteed to produce an optimal matching of the topological features (in the sense of the usual wasserstein cost function), and is missing the final exponentiation (in the case of the 2-wasserstein metric we take the square root of the sum of squared distances). These differences to the standard wasserstein formulation were clear to the authors of **TDAstats**, and while their `phom.dist` function is not exactly a wasserstein metric it is still a comparison statistic of two persistence diagrams which can be studied with inference techniques. Nevertheless, these differences are the reason why in **TDApplied** documentation we refer to **TDAstats**' distance calculation as being "non-standard" and why comparisons (of calculations and benchmarking) are not made against it.
 
-# Reproducible Examples
+# Examples
 
-In order to compare the distance calculations we will specify three simple diagrams (the same D1, D2 and D3 from the package vignette "TDApplied Theory and Practice") and consider distances between each of the three possible pairs. The three diagrams are:
+In order to compare the distance calculations of **TDA**, **rgudhi** and **TDApplied**, we will specify three simple diagrams (the same D1, D2 and D3 from the package vignette "TDApplied Theory and Practice") and consider distances between each of the three possible pairs. The three diagrams are as follows.
 
 ```{r,echo = F,include = F}
 #library(TDApplied)
@@ -63,23 +63,75 @@ plot_diagram(D3,title = "D3",max_radius = 4,legend = F)
 par(mfrow = c(1,1))
 ```
 
-All three diagrams have points only in dimension 0, with D1's point being $(2,3)$, D2's points being $\{(2,3.3),(0,0.5)\}$, and D3's point being $(0,0.5)$.
+D1's point is $(2,3)$, D2's points are $\{(2,3.3),(0,0.5)\}$, and D3's point is $(0,0.5)$.
 
-In order to compare the distance calculations of the packages we need to have the ground truth of the distances. Using the infinity-norm distance for calculating matchings in the bottleneck and wasserstein distances as in [@distance_calc], we get the following optimal matchings and distance values:
+In order to compare the distance calculations of the packages we need to have the correct values of the distances. Using the infinity-norm distance for calculating matchings in the bottleneck and wasserstein distances as in [@distance_calc;@comp_geom], we get the following optimal matchings and distance values:
 
 1. Between D1 and D2 we match D1's $(2,3)$ with D2's $(2,3.3)$, and D2's $(0,0.5)$ with its diagonal projection $(0.25,0.25)$. Therefore, the bottleneck distance is 0.3 and the wasserstein distance is $\sqrt{0.3^2+0.25^2}=\sqrt{0.1525}\approx 0.3905125$.
 2. Between D1 and D3 we match D1's $(2,3)$ with its diagonal projection $(2.5,2.5)$, and D3's $(0,0.5)$ with its diagonal projection $(0.25,0.25)$. Therefore, the bottleneck distance is 0.5 and the wasserstein distance is $\sqrt{0.5^2+0.25^2}=\sqrt{0.3125}\approx 0.559017$.
 3. Between D2 and D3 we match D2's $(0,0.5)$ with D3's $(0,0.5)$, and D2's $(2,3.3)$ with its diagonal projection $(2.65,2.65)$. Therefore, the bottleneck distance is 0.65 and the wasserstein distance is $\sqrt{0.65^2}=0.65$.
 
-For the Fisher information metric we will use the parameter $\sigma = 1$ for simplicity. See [@persistence_fisher] for computational details.
+For the Fisher information metric [@persistence_fisher] we will use the parameter $\sigma = 1$ for simplicity. We must first calculate vectors $\rho_1$ and $\rho_2$, normalize them by dividing by the sum of their respective elements, then compute $\mbox{cos}^{-1}(\sqrt{\rho_1} \cdot \sqrt{\rho_2})$ (where $\mbox{cos}^{-1}$ is the arccos function). See [@persistence_fisher] for computational details.
 
-1. Between D1 and D2 we augment D1 to contain D2's projection points and vice versa, obtaining diagrams $D'_1 = \{(2,3),(2.65,2.65),(0.25,0.25)\}$ and $D'_2 = \{(2,3.3),(0,0.5),(2.5,2.5)\}$. We compute $\rho_1$ and $\rho_2$ as $\rho_1 = \{\mbox{exp}(0) + \mbox{exp}(-0.545/2) + \mbox{exp}(-10.625/2),\mbox{exp}(-0.545/2) + \mbox{exp}(0) + \mbox{exp}(-11.52/2),\mbox{exp}(-10.625/2) + \mbox{exp}(-11.52/2) + \mbox{exp}(0),\mbox{exp}(-0.09/2) + \mbox{exp}(-0.845/2) + \mbox{exp}(-12.365/2),\mbox{exp}(-10.25/2) + \mbox{exp}(-11.645/2) + \mbox{exp}(-0.125/2),\mbox{exp}(-0.5/2) + \mbox{exp}(-0.045/2) + \mbox{exp}(-10.125/2)\}/(2*\pi)$ and $\rho_2 = \{\mbox{exp}(-0.09/2) + \mbox{exp}(-10.25/2) + \mbox{exp}(-0.5/2),\mbox{exp}(-0.845/2) + \mbox{exp}(-11.645/2) + \mbox{exp}(-0.045/2),\mbox{exp}(-12.365/2) + \mbox{exp}(-0.125/2) + \mbox{exp}(-10.125/2),\mbox{exp}(0) + \mbox{exp}(-11.84/2) + \mbox{exp}(-0.89/2),\mbox{exp}(-11.84/2) + \mbox{exp}(0) + \mbox{exp}(-10.25/2),\mbox{exp}(-0.89/2) + \mbox{exp}(-10.25/2) + \mbox{exp}(0)\}/(2*\pi)$. Therefore the arccos of the dot product of the square root of the sum-normalized vectors is approximately 0.02354624.
-2. Between D1 and D3 we augment D1 to contain D3's projection point and vice versa, obtaining diagrams $D'_1 = \{(2,3),(0.25,0.25)\}$ and $D'_3 = \{(0,0.5),(2.5,2.5)\}$. We compute $\rho_1$ and $\rho_2$ as $\rho_1 = \{\mbox{exp}(0) + \mbox{exp}(-10.625/2),\mbox{exp}(-10.625/2) + \mbox{exp}(0),\mbox{exp}(-10.25/2) + \mbox{exp}(-0.125/2),\mbox{exp}(-0.5/2) + \mbox{exp}(-10.125/2)\}/(2*\pi)$ and $\rho_2 = \{\mbox{exp}(-10.25/2) + \mbox{exp}(-0.5/2),\mbox{exp}(-0.125/2) + \mbox{exp}(-10.125/2),\mbox{exp}(0) + \mbox{exp}(-10.25/2),\mbox{exp}(-10.25/2) + \mbox{exp}(0)\}/(2*\pi)$. Therefore the arccos of the dot product of the square root of the sum-normalized vectors is approximately 0.08821907.
-3. Between D2 and D3 we augment D2 to contain D3's projection point and vice versa, obtaining diagrams $D'_2 = \{(2,3.3),(0,0.5),(0.25,0.25)\}$ and $D'_3 = \{(0,0.5),(2.65,2.65),(0.25,0.25)\}$. We compute $\rho_1$ and $\rho_2$ as $\rho_1 = \{\mbox{exp}(0) + \mbox{exp}(-11.84/2) + \mbox{exp}(-12.365/2),\mbox{exp}(-11.84/2) + \mbox{exp}(0) + \mbox{exp}(-0.125/2),\mbox{exp}(-12.365/2) + \mbox{exp}(-0.125/2) + \mbox{exp}(0),\mbox{exp}(-11.84/2) + \mbox{exp}(0) + \mbox{exp}(-0.125/2),\mbox{exp}(-0.845/2) + \mbox{exp}(-11.645/2) + \mbox{exp}(-11.52/2),\mbox{exp}(-12.365/2) + \mbox{exp}(-0.125/2) + \mbox{exp}(0)\}/\sqrt{2*\pi}$ and $\rho_2 = \{\mbox{exp}(-11.84/2) + \mbox{exp}(-0.845/2) + \mbox{exp}(-12.365/2),\mbox{exp}(0) + \mbox{exp}(-11.645/2) + \mbox{exp}(-0.125/2),\mbox{exp}(-0.125/2) + \mbox{exp}(-11.52/2) + \mbox{exp}(0),\mbox{exp}(0) + \mbox{exp}(-11.645/2) + \mbox{exp}(-0.125/2),\mbox{exp}(-11.645/2) + \mbox{exp}(0) + \mbox{exp}(-11.52/2),\mbox{exp}(-0.125/2) + \mbox{exp}(-11.52/2) + \mbox{exp}(0)\}/\sqrt{2*\pi}$. Therefore the arccos of the dot product of the square root of the sum-normalized vectors is approximately 0.08741134.
+1. Between D1 and D2 we augment D1 to contain D2's projection points and vice versa, obtaining diagrams $D'_1 = \{(2,3),(2.65,2.65),(0.25,0.25)\}$ and $D'_2 = \{(2,3.3),(0,0.5),(2.5,2.5)\}$. We compute $\rho_1$ and $\rho_2$ as 
+
+$$\begin{align}
+\rho_1 = & \{\mbox{exp}(0) + \mbox{exp}(-0.545/2) + \mbox{exp}(-10.625/2),\\ 
+& \mbox{exp}(-0.545/2) + \mbox{exp}(0) + \mbox{exp}(-11.52/2),\\ 
+& \mbox{exp}(-10.625/2) + \mbox{exp}(-11.52/2) + \mbox{exp}(0),\\
+& \mbox{exp}(-0.09/2) + \mbox{exp}(-0.845/2) + \mbox{exp}(-12.365/2),\\
+& \mbox{exp}(-10.25/2) + \mbox{exp}(-11.645/2) + \mbox{exp}(-0.125/2),\\
+& \mbox{exp}(-0.5/2) + \mbox{exp}(-0.045/2) + \mbox{exp}(-10.125/2)\}/(2\pi)\end{align}$$
+
+$$\begin{align}
+\rho_2 = & \{\mbox{exp}(-0.09/2) + \mbox{exp}(-10.25/2) + \mbox{exp}(-0.5/2),\\ 
+& \mbox{exp}(-0.845/2) + \mbox{exp}(-11.645/2) + \mbox{exp}(-0.045/2),\\ 
+& \mbox{exp}(-12.365/2) + \mbox{exp}(-0.125/2) + \mbox{exp}(-10.125/2),\\
+& \mbox{exp}(0) + \mbox{exp}(-11.84/2) + \mbox{exp}(-0.89/2),\\
+& \mbox{exp}(-11.84/2) + \mbox{exp}(0) + \mbox{exp}(-10.25/2),\\
+& \mbox{exp}(-0.89/2) + \mbox{exp}(-10.25/2) + \mbox{exp}(0)\}/(2\pi)\end{align}$$
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Therefore the arccos of the dot product of the square root of the sum-normalized vectors is approximately 0.02354624.
+
+2. Between D1 and D3 we augment D1 to contain D3's projection point and vice versa, obtaining diagrams $D'_1 = \{(2,3),(0.25,0.25)\}$ and $D'_3 = \{(0,0.5),(2.5,2.5)\}$. We compute $\rho_1$ and $\rho_2$ as 
+
+$$\begin{align}
+\rho_1 = & \{\mbox{exp}(0) + \mbox{exp}(-10.625/2),\\
+& \mbox{exp}(-10.625/2) + \mbox{exp}(0),\\ 
+& \mbox{exp}(-10.25/2) + \mbox{exp}(-0.125/2),\\ 
+& \mbox{exp}(-0.5/2) + \mbox{exp}(-10.125/2)\}/(2\pi)\end{align}$$
+
+$$\begin{align}
+\rho_2 = & \{\mbox{exp}(-10.25/2) + \mbox{exp}(-0.5/2),\\ 
+& \mbox{exp}(-0.125/2) + \mbox{exp}(-10.125/2),\\ 
+& \mbox{exp}(0) + \mbox{exp}(-10.25/2),\\
+& \mbox{exp}(-10.25/2) + \mbox{exp}(0)\}/(2\pi)\end{align}$$
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Therefore the arccos of the dot product of the square root of the sum-normalized vectors is approximately 0.08821907.
+
+3. Between D2 and D3 we augment D2 to contain D3's projection point and vice versa, obtaining diagrams $D'_2 = \{(2,3.3),(0,0.5),(0.25,0.25)\}$ and $D'_3 = \{(0,0.5),(2.65,2.65),(0.25,0.25)\}$. We compute $\rho_1$ and $\rho_2$ as 
+
+$$\begin{align}
+\rho_1 = & \{\mbox{exp}(0) + \mbox{exp}(-11.84/2) + \mbox{exp}(-12.365/2),\\ 
+& \mbox{exp}(-11.84/2) + \mbox{exp}(0) + \mbox{exp}(-0.125/2),\\ 
+& \mbox{exp}(-12.365/2) + \mbox{exp}(-0.125/2) + \mbox{exp}(0),\\
+& \mbox{exp}(-11.84/2) + \mbox{exp}(0) + \mbox{exp}(-0.125/2),\\
+& \mbox{exp}(-0.845/2) + \mbox{exp}(-11.645/2) + \mbox{exp}(-11.52/2),\\
+& \mbox{exp}(-12.365/2) + \mbox{exp}(-0.125/2) + \mbox{exp}(0)\}/\sqrt{2\pi}\end{align}$$
+
+$$\begin{align}
+\rho_2 = & \{\mbox{exp}(-11.84/2) + \mbox{exp}(-0.845/2) + \mbox{exp}(-12.365/2),\\ 
+& \mbox{exp}(0) + \mbox{exp}(-11.645/2) + \mbox{exp}(-0.125/2),\\ 
+& \mbox{exp}(-0.125/2) + \mbox{exp}(-11.52/2) + \mbox{exp}(0),\\
+& \mbox{exp}(0) + \mbox{exp}(-11.645/2) + \mbox{exp}(-0.125/2),\\
+& \mbox{exp}(-11.645/2) + \mbox{exp}(0) + \mbox{exp}(-11.52/2),\\
+& \mbox{exp}(-0.125/2) + \mbox{exp}(-11.52/2) + \mbox{exp}(0)\}/\sqrt{2\pi}\end{align}$$
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Therefore the arccos of the dot product of the square root of the sum-normalized vectors is approximately 0.08741134.
 
 # Comparisons
 
-All of the packages TDA, TDAstats, rgudhi and TDApplied provide functions for the bottleneck and wasserstein calculations, with TDA wrapping the C++ library dionysus [@Dionysus] and rgudhi wrapping the C++ library GUDHI [@GUDHI]. On the other hand, only TDApplied and rgudhi have the functionality of calculating the Fisher information metric. Here were the results of the distance calculations across all packages and all three pairs of diagrams:
+While all three of **TDA**, **rgudhi** and **TDApplied** provide functions for the bottleneck and wasserstein calculations, only **TDApplied** and **rgudhi** have the functionality to calculate the Fisher information metric. We calculated the results of each distance calculation, for each pair of $D_i$ and $D_j$ ($i \neq j$) and each package, and stored the results in tables according to the three distance metrics under comparison:
 
 ```{r,eval = F,include = F}
 D1_TDA <- as.matrix(D1)
@@ -123,23 +175,23 @@ Fisher information metric comparison:
 fisher_comparison
 ```
 
-All three packages agreed on the value of the three bottleneck calculations, and both TDApplied and rgudhi agreed on all Fisher information metric calculations. However, while TDA and TDAstats agreed on the three wasserstein calculations, two of these differed from TDApplied's output. This occurred because TDA and rgudhi use a slightly different formula for computing wasserstein distances - where the distance between matched pairs of persistence diagram points is Euclidean rather than an infinity-norm distance. This is a perfectly suitable distance metric and matches the formula in [@Robinson_Turner], however it is different from the published formulas in important works like [@distance_calc] and [@comp_geom] (which is what TDApplied uses).
+All three packages agreed on the value of the three bottleneck calculations, and both **TDApplied** and **rgudhi** agreed on all Fisher information metric calculations. However, while **TDA** and **TDAstats** agreed on the three wasserstein calculations, two of these differed from **TDApplied**'s output. This occurred because **TDA** and **rgudhi** use a slightly different formula for computing wasserstein distances -- where the distance between matched pairs of persistence diagram points is Euclidean rather than an infinity-norm distance. This is a perfectly suitable distance metric and matches the formula in [@Robinson_Turner]. However, it is different from the published formulas in important works like [@distance_calc] and [@comp_geom] (which are the formulas that **TDApplied** implements).
 
-A quick last note of comparison is between the kernel calculations in TDApplied and rgudhi. Even though their Fisher information metric calculations appear to be the same (perhaps up to small differences in algorithm precision), it turns out that rgudhi and TDApplied return drastically different kernel values. For example, the Fisher information metric between D2 and D3 was (correctly) 0.08741134 for both packages. Therefore, when $t = 2$ the persistence Fisher kernel value should be $\mbox{exp}(-2*0.08741134) \approx 0.8396059$ (when $t = 1$), which is the exact value of the TDApplied calculation `diagram_kernel(D2,D3,dim = 0)`. However, the code
+We state a quick last note of comparison between the kernel calculations in **TDApplied** and **rgudhi**. Even though their Fisher information metric calculations appear to be the same (perhaps up to small differences in algorithm precision), it turns out that **rgudhi** and **TDApplied** return drastically different kernel values. For example, the Fisher information metric between D2 and D3 was (correctly) stated as 0.08741134 for both packages. It follows that when $t = 2$ the persistence Fisher kernel value should be $\mbox{exp}(-2*0.08741134) \approx 0.8396059$, which is the exact value of the **TDApplied** calculation `diagram_kernel(D2,D3,dim = 0,t = 2)`. However, the code
 
 ```{r,eval = F}
 gudhi_kern <- rgudhi::PersistenceFisherKernel$new(bandwidth = 0.5)
 gudhi_kern$apply(D2[,2:3],D3[,2:3])
 ```
 
-, where the `bandwidth` parameter serves the role of $1/t$, returns the value 0.7550683. Even more perplexing is that the following code
+returns the value 0.7550683 (note that the `bandwidth` parameter is $1/t$). Even more perplexing is that the following code
 
 ```{r,eval = F}
 gudhi_kern <- rgudhi::PersistenceFisherKernel$new(bandwidth_fisher = 0.5)
 gudhi_kern$apply(D2[,2:3],D3[,2:3])
 ```
 
-returns the value 1.8326, which should not be possible for the function $\mbox{exp(-t*d_{FIM})}$ as $t$ and $d_{FIM}$ are positive and non-negative respectively (so the maximum value should be 1). Unfortunately we were not able to identify the source of this confusion by examining the source code of rgudhi (and GUDHI), but it is still possible to calculate kernel values as follows:
+returns the value 1.8326, which should not be possible for the function $\mbox{exp}(-t*d_{FIM})$ as $t$ and $d_{FIM}$ are always positive and non-negative respectively (so the maximum value should be 1). Unfortunately we were not able to identify the source of this confusion by examining the source code of **rgudhi** (and GUDHI), but it is still possible to calculate correct kernel values as follows:
 
 ```{r,eval = F}
 d <- rgudhi::PersistenceFisherDistance$new() # sigma = 1
@@ -147,16 +199,18 @@ t <- 2 # or whatever desired parameter
 exp(-t*d$apply(D2[,2:3],D3[,2:3]))
 ```
 
-And a Gram matrix can be calculated using a function like:
+Since distance calculations are much faster with **rgudhi** than with **TDApplied** (see the package vignette "Benchmarking and Speedups"), and because distance and Gram matrices can be precomputed and reused across multiple analyses (again see "Benchmarking and Speedups") it would be desirable to have a (correct) **rgudhi** Gram matrix function. An example of such a function is the following:
 
 ```{r,eval = F}
 # create rgudhi distance object
-gudhi_dist <- rgudhi::PersistenceFisherDistance$new(bandwidth = 0.01,n_jobs = 1L) # sigma = 0.01
+# sigma = 0.01
+gudhi_dist <- rgudhi::PersistenceFisherDistance$new(bandwidth = 0.01,n_jobs = 1L)
 
 # create list of diagrams, only birth and death values in dimension 1
 g <- lapply(X = 1:10,FUN = function(X){
   
-  df <- diagram_to_df(TDA::ripsDiag(X = TDA::circleUnif(n = 50),maxdimension = 1,maxscale = 2))
+  df <- diagram_to_df(TDA::ripsDiag(X = TDA::circleUnif(n = 50),
+                                    maxdimension = 1,maxscale = 2))
   return(df[which(df[,1] == 1),2:3])
   
 })
@@ -184,7 +238,8 @@ gudhi_distance_matrix <- function(diagrams,gudhi_dist){
   diag(d_non_zero) <- rep(0,nrow(d_non_zero))
   
   # symmetrize (necessary due to numeric rounding issues)
-  d_non_zero[which(upper.tri(d_non_zero),arr.ind = T)[,c("col","row")]] <- d_non_zero[upper.tri(d_non_zero)]
+  d_non_zero[which(upper.tri(d_non_zero),arr.ind = T)[,c("col","row")]] <-
+    d_non_zero[upper.tri(d_non_zero)]
   
   # if all diagrams had at least one row, return
   if(length(inds) == length(diagrams))
@@ -230,7 +285,7 @@ gudhi_gram_matrix <- function(diagrams,t,gudhi_dist){
 G <- gudhi_gram_matrix(diagrams = g,t = 1,gudhi_dist = gudhi_dist)
 ```
 
-Another issue with rgudhi calculations can be reproduced as follows:
+Another issue with **rgudhi** calculations can be reproduced as follows:
 
 ```{r,eval = F}
 # create data frame
@@ -243,7 +298,11 @@ gudhi_dist <- rgudhi::PersistenceFisherDistance$new(bandwidth = 0.01,n_jobs = 1L
 gudhi_dist$apply(D[,2:3],D[,2:3])
 ```
 
-This calculation returns a non-zero number for the distance value of D with itself. This is likely due to numerical rounding issues, and its discovery in rgudhi has led to an update in TDApplied's `diagram_distance` function which now returns 0 for this calculation:
+```{r,eval = T,echo = F}
+0.00000001490116
+```
+
+This calculation returns a non-zero number for the distance value of D with itself. This is likely due to numerical rounding issues, and its discovery in **rgudhi** has led to an update in **TDApplied**'s `diagram_distance` function which now returns 0 for this calculation:
 
 ```{r,echo = F}
 D = data.frame(dimension = c(0,0),birth = c(0,0),death = c(1.089866,1.098640))
@@ -253,7 +312,7 @@ D = data.frame(dimension = c(0,0),birth = c(0,0),death = c(1.089866,1.098640))
 diagram_distance(D,D,distance = "fisher",sigma = 0.001)
 ```
 
-# Proof of Correctness for TDApplied's diagram_distance Function
+# Proof of Correctness for **TDApplied**'s diagram_distance Function
 
 Even though the Hungarian algorithm can be used to solve the linear sum assignment problem (LSAP) [@R-clue], finding a minimal cost matching of two sets of points, some work needs to be done to properly apply the algorithm to calculate wasserstein or bottleneck distances. For an example we will consider the bottleneck distance, although the argument still holds with a simple change for the wasserstein distance (squaring matrix entries). Let Diag1 and Diag2 be two diagrams, with $n_1$ and $n_2$ points respectively, whose projections onto the diagonal are denoted by $\pi(\mbox{Diag1})$ and $\pi(\mbox{Diag2})$ respectively. Then take $M$ to be the following $(n_1 + n_2) \times (n_1 + n_2)$ matrix: 
 
@@ -265,11 +324,11 @@ $$M =
   d_{\infty}(\pi(\mbox{Diag1}),\mbox{Diag2}) & 0
 \end{array} \right]$$
 
-Each row corresponds to the $n_1$ points in Diag1 followed by the $n_2$ projections $\pi(\mbox{Diag2})$, and vice versa for the columns. Then we claim that the solution of the LSAP problem on $M$ has the same cost as the real bottleneck distance value between Diag1 and Diag2.
+Each row corresponds to the $n_1$ points in Diag1 followed by the $n_2$ projections $\pi(\mbox{Diag2})$, and vice versa for the columns. Then we claim that the solution of the LSAP problem on $M$ has the same cost as the bottleneck distance value between Diag1 and Diag2.
 
 Firstly, we claim that a solution to the LSAP problem on $M$ has a cost which is no less than the distance value. Let the distance value be $s$. Now suppose, to reach a contradiction, that there existed a lower-cost matching for the LSAP problem for $M$, $m$,of cost $s' < s$. Since projection points are matched together with cost 0 in $M$, let $m'$ contain all the matches in $m$ which are not between two projection points. Then $m'$ would be matching for the distance calculation which has lower cost than $s$, contradicting the minimality of $s$. Therefore, a solution to the LSAP problem on $M$ has a cost which is no less than the distance value.
 
-Next, we claim that a solution to the LSAP problem on $M$ has a cost which is no greater than the distance value. Now suppose, to reach a contradiction, that the solution to the LSAP on problem $M$ had cost $s$, which was larger than the real distance value, $s'$. Let $m'$ be a matching for the real distance calculation of $s'$. Then since each point in either diagram is either paired with a point in the other diagram or its own diagonal projection, there must be an equal number of unpaired points in both diagrams in $m'$. Therefore, we can augment $m'$ to a matching $m$ on $M$ in which the unpaired diagonal points are arbitrarily paired up with cost 0. Thus, $m$ has cost $s' < s$, contradicting the minimality of $s$. Therefore, a solution to the LSAP problem on $M$ has a cost which is no greater than the distance value.
+Next, we claim that a solution to the LSAP problem on $M$ has a cost which is no greater than the distance value. Now suppose, to reach a contradiction, that the solution to the LSAP on problem $M$ had cost $s$, which was larger than the real distance value, $s'$. Let $m'$ be a matching for the distance calculation of $s'$. Then since each point in either diagram is either paired with a point in the other diagram or its own diagonal projection, there must be an equal number of unpaired points in both diagrams in $m'$. Therefore, we can augment $m'$ to a matching $m$ on $M$ in which the unpaired diagonal points are arbitrarily paired up with cost 0. Thus, $m$ has cost $s' < s$, contradicting the minimality of $s$. Therefore, a solution to the LSAP problem on $M$ has a cost which is no greater than the distance value.
 
 Therefore, a solution to the LSAP problem for $M$ has a cost which is both greater than and less than the bottleneck distance value, and hence the two values must be equal.
 
