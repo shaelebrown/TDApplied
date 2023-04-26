@@ -154,12 +154,12 @@ plot(summary_table_distance$n_row[summary_table_distance$package=="TDA"],
      type="b",
      xlim=range(summary_table_distance$n_row),
      ylim=range(0,summary_table_distance$mean+1.96*summary_table_distance$sd/sqrt(10)),
-     xlab = "Points in shape",ylab = "Mean execution time (sec)")
+     xlab = "Points in shape",ylab = "Mean execution time (sec)",col = "darkgreen")
 lines(summary_table_distance$n_row[summary_table_distance$package=="TDApplied"],
       summary_table_distance$mean[summary_table_distance$package=="TDApplied"], 
       col=2, type="b")
 legend(x = 200,y = 2000,legend = c("TDApplied","TDA"),
-       col = c("red","black"),lty = c(1,1),cex = 0.8)
+       col = c("red","darkgreen"),lty = c(1,1),cex = 0.8)
 arrows(summary_table_distance$n_row[summary_table_distance$package == "TDApplied"], 
        summary_table_distance$mean[summary_table_distance$package == "TDApplied"]
        -1.96*summary_table_distance$sd[summary_table_distance$package == "TDApplied"]/sqrt(10),
@@ -173,7 +173,7 @@ arrows(summary_table_distance$n_row[summary_table_distance$package == "TDA"],
        summary_table_distance$n_row[summary_table_distance$package == "TDA"], 
        summary_table_distance$mean[summary_table_distance$package == "TDA"]
        +1.96*summary_table_distance$sd[summary_table_distance$package == "TDA"]/sqrt(10), 
-       length=0.05, angle=90, code=3,col = "black")
+       length=0.05, angle=90, code=3,col = "darkgreen")
 
 #### diagram_distance vs persim's wasserstein ####
 
@@ -265,9 +265,9 @@ if(requireNamespace("reticulate",quietly = T) == T)
         col="red", type="b")
   lines(summary_table_language$n_row[summary_table_language$package=="persim"],
         summary_table_language$mean[summary_table_language$package=="persim"], 
-        col="black", type="b")
+        col="darkorange", type="b")
   legend(x = 200,y = 20,legend = c("TDApplied","persim"),
-         col = c("red","black"),lty = c(1,1),cex = 0.8)
+         col = c("red","darkorange"),lty = c(1,1),cex = 0.8)
   arrows(summary_table_language$n_row[summary_table_language$package == "TDApplied"], 
          summary_table_language$mean[summary_table_language$package == "TDApplied"]
          -1.96*summary_table_language$sd[summary_table_language$package == "TDApplied"]/sqrt(10),
@@ -281,7 +281,7 @@ if(requireNamespace("reticulate",quietly = T) == T)
          summary_table_language$n_row[summary_table_language$package == "persim"], 
          summary_table_language$mean[summary_table_language$package == "persim"]
          +1.96*summary_table_language$sd[summary_table_language$package == "persim"]/sqrt(10), 
-         length=0.05, angle=90, code=3,col = "black") 
+         length=0.05, angle=90, code=3,col = "darkorange") 
 }
 
 #### diagram_distance vs rgudhi's PersistenceFisherDistance ####
@@ -388,12 +388,12 @@ plot(summary_table_rgudhi$n_row[summary_table_rgudhi$package=="rgudhi"],
      type="b",
      xlim=range(summary_table_rgudhi$n_row),
      ylim=range(0,summary_table_rgudhi$mean+1.96*summary_table_rgudhi$sd/sqrt(10)),
-     xlab = "Points in shape",ylab = "Mean execution time (sec)")
+     xlab = "Points in shape",ylab = "Mean execution time (sec)",col = "blue")
 lines(summary_table_rgudhi$n_row[summary_table_rgudhi$package=="TDApplied"],
       summary_table_rgudhi$mean[summary_table_rgudhi$package=="TDApplied"], 
       col=2, type="b")
 legend(x = 200,y = 0.7,legend = c("TDApplied","rgudhi"),
-       col = c("red","black"),lty = c(1,1),cex = 0.8)
+       col = c("red","blue"),lty = c(1,1),cex = 0.8)
 arrows(summary_table_rgudhi$n_row[summary_table_rgudhi$package == "TDApplied"], 
        summary_table_rgudhi$mean[summary_table_rgudhi$package == "TDApplied"]
        -1.96*summary_table_rgudhi$sd[summary_table_rgudhi$package == "TDApplied"]/sqrt(10),
@@ -407,7 +407,7 @@ arrows(summary_table_rgudhi$n_row[summary_table_rgudhi$package == "rgudhi"],
        summary_table_rgudhi$n_row[summary_table_rgudhi$package == "rgudhi"], 
        summary_table_rgudhi$mean[summary_table_rgudhi$package == "rgudhi"]
        +1.96*summary_table_rgudhi$sd[summary_table_rgudhi$package == "rgudhi"]/sqrt(10), 
-       length=0.05, angle=90, code=3,col = "black")
+       length=0.05, angle=90, code=3,col = "blue")
 
 #### PyH vs. calculate_homology vs. compute_homology ####
 

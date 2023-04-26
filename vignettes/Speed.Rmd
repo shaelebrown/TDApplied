@@ -361,11 +361,11 @@ summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.13
 
 # plot table
 plot(summary_table$n_row[summary_table$package=="TDA"], summary_table$mean[summary_table$package=="TDA"], type="b",
-     xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd/sqrt(10)),xlab = "Points in shape",ylab = "Mean execution time (sec)")
+     xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd/sqrt(10)),xlab = "Points in shape",ylab = "Mean execution time (sec)",col = "darkgreen")
 lines(summary_table$n_row[summary_table$package=="TDApplied"], summary_table$mean[summary_table$package=="TDApplied"], col=2, type="b")
-legend(x = 200,y = 2000,legend = c("TDApplied","TDA"),col = c("red","black"),lty = c(1,1),cex = 0.8)
+legend(x = 200,y = 2000,legend = c("TDApplied","TDA"),col = c("red","darkgreen"),lty = c(1,1),cex = 0.8)
 arrows(summary_table$n_row[summary_table$package == "TDApplied"], summary_table$mean[summary_table$package == "TDApplied"]-1.96*summary_table$sd[summary_table$package == "TDApplied"]/sqrt(10), summary_table$n_row[summary_table$package == "TDApplied"], summary_table$mean[summary_table$package == "TDApplied"]+1.96*summary_table$sd[summary_table$package == "TDApplied"]/sqrt(10), length=0.05, angle=90, code=3,col = "red")
-arrows(summary_table$n_row[summary_table$package == "TDA"], summary_table$mean[summary_table$package == "TDA"]-1.96*summary_table$sd[summary_table$package == "TDA"]/sqrt(10), summary_table$n_row[summary_table$package == "TDA"], summary_table$mean[summary_table$package == "TDA"]+1.96*summary_table$sd[summary_table$package == "TDA"]/sqrt(10), length=0.05, angle=90, code=3,col = "black")
+arrows(summary_table$n_row[summary_table$package == "TDA"], summary_table$mean[summary_table$package == "TDA"]-1.96*summary_table$sd[summary_table$package == "TDA"]/sqrt(10), summary_table$n_row[summary_table$package == "TDA"], summary_table$mean[summary_table$package == "TDA"]+1.96*summary_table$sd[summary_table$package == "TDA"]/sqrt(10), length=0.05, angle=90, code=3,col = "darkgreen")
 ```
 
 A linear model, regressing the ratio of **TDA**'s runtime divided by **TDApplied**'s runtime onto the number of points in the data set, found a significant positive coefficient of the number of points. This suggests that `diagram_distance` scales better than `wasserstein`, and the model estimated a 95x speed up for 1000 data points. These results suggest that distance calculations with **TDApplied** are faster and more scalable, making the applications of statistics and machine learning with persistence diagrams more feasible in R. This is why the **TDA** distance calculation was not used in the **TDApplied** package.
@@ -390,10 +390,10 @@ summary_table = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.13
 plot(summary_table$n_row[summary_table$package=="TDApplied"], summary_table$mean[summary_table$package=="persim"], type="b",
      xlim=range(summary_table$n_row), ylim=range(0,summary_table$mean+1.96*summary_table$sd/sqrt(10)),xlab = "Points in shape",ylab = "Mean execution time (sec)")
 lines(summary_table$n_row[summary_table$package=="TDApplied"], summary_table$mean[summary_table$package=="TDApplied"], col="red", type="b")
-lines(summary_table$n_row[summary_table$package=="persim"], summary_table$mean[summary_table$package=="persim"], col="black", type="b")
-legend(x = 200,y = 20,legend = c("TDApplied","persim"),col = c("red","black"),lty = c(1,1),cex = 0.8)
+lines(summary_table$n_row[summary_table$package=="persim"], summary_table$mean[summary_table$package=="persim"], col="darkorange", type="b")
+legend(x = 200,y = 20,legend = c("TDApplied","persim"),col = c("red","darkorange"),lty = c(1,1),cex = 0.8)
 arrows(summary_table$n_row[summary_table$package == "TDApplied"], summary_table$mean[summary_table$package == "TDApplied"]-1.96*summary_table$sd[summary_table$package == "TDApplied"]/sqrt(10), summary_table$n_row[summary_table$package == "TDApplied"], summary_table$mean[summary_table$package == "TDApplied"]+1.96*summary_table$sd[summary_table$package == "TDApplied"]/sqrt(10), length=0.05, angle=90, code=3,col = "red")
-arrows(summary_table$n_row[summary_table$package == "persim"], summary_table$mean[summary_table$package == "persim"]-1.96*summary_table$sd[summary_table$package == "persim"]/sqrt(10), summary_table$n_row[summary_table$package == "persim"], summary_table$mean[summary_table$package == "persim"]+1.96*summary_table$sd[summary_table$package == "persim"]/sqrt(10), length=0.05, angle=90, code=3,col = "black")
+arrows(summary_table$n_row[summary_table$package == "persim"], summary_table$mean[summary_table$package == "persim"]-1.96*summary_table$sd[summary_table$package == "persim"]/sqrt(10), summary_table$n_row[summary_table$package == "persim"], summary_table$mean[summary_table$package == "persim"]+1.96*summary_table$sd[summary_table$package == "persim"]/sqrt(10), length=0.05, angle=90, code=3,col = "darkorange")
 ```
 
 The runtime of the **persim** `wasserstein` function was significantly faster than **TDApplied**'s `diagram_distance` function. However, a linear model of the runtime ratio of **TDApplied** vs. **persim** against the number of points in the shape finds evidence that the two functions scale similarly, since the estimated coefficient for number of points was not significant but the intercept (15) was highly significant. Nevertheless, the raw speed increase in Python could be the basis for a very fast Python counterpart to the **TDApplied** package in the future.
@@ -425,7 +425,7 @@ lines(summary_table_rgudhi$n_row[summary_table_rgudhi$package=="TDApplied"],
       summary_table_rgudhi$mean[summary_table_rgudhi$package=="TDApplied"], 
       col=2, type="b")
 legend(x = 200,y = 0.7,legend = c("TDApplied","rgudhi"),
-       col = c("red","black"),lty = c(1,1),cex = 0.8)
+       col = c("red","blue"),lty = c(1,1),cex = 0.8)
 arrows(summary_table_rgudhi$n_row[summary_table_rgudhi$package == "TDApplied"], 
        summary_table_rgudhi$mean[summary_table_rgudhi$package == "TDApplied"]
        -1.96*summary_table_rgudhi$sd[summary_table_rgudhi$package == "TDApplied"]/sqrt(10),
@@ -439,7 +439,7 @@ arrows(summary_table_rgudhi$n_row[summary_table_rgudhi$package == "rgudhi"],
        summary_table_rgudhi$n_row[summary_table_rgudhi$package == "rgudhi"], 
        summary_table_rgudhi$mean[summary_table_rgudhi$package == "rgudhi"]
        +1.96*summary_table_rgudhi$sd[summary_table_rgudhi$package == "rgudhi"]/sqrt(10), 
-       length=0.05, angle=90, code=3,col = "black")
+       length=0.05, angle=90, code=3,col = "blue")
 ```
 
 The **rgudhi** exact calculations were clearly faster than **TDApplied**'s approximate ones. However, a linear model regressing the ratio of **TDApplied**'s runtime divided by **rgudhi**'s runtime onto the number of points in the data set found a significant negative coefficient of the number of points. This suggests that `diagram_distance` scales better than `PersistenceFisherDistance`, and with enough data points there would be performance gains using the **TDApplied** function. However, if Python configuration for the **rgudhi** package is possible then the **rgudhi** function should be preferred for Fisher information metric calculations for diagrams with not too many points.
