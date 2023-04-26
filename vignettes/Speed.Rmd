@@ -221,14 +221,14 @@ The benchmarking results are displayed graphically in the following three subsec
 
 ## Benchmarking `PyH` Against **TDAstats**' `calculate_homology` Function and **rgudhi**'s `compute_persistence` Function
 
-The long calculation time of persistence diagrams is likely a large contributing factor to the slow adoption of topological data analysis for applied data science. Much research has been carried out in order to speed up these calculations, but the current state-of-the-art is the persistent cohomology algorithm [@PHom_dualities]. In R, the **TDAstats**' `calculate_homology` function is the fastest option for persistence diagram calculations [@PH_benchmarking], being a wrapper for the **ripser** [@ripser] persistent cohomology engine. **TDApplied**'s `PyH` function is a Python wrapper for the same engine, and **rgudhi** also provides a Python cohomology engine via the C++ library **GUDHI** [@GUDHI]. We benchmarked all three function's run time on circles, spheres and tori. The results were as follows: 
+The long calculation time of persistence diagrams is likely a large contributing factor to the slow adoption of topological data analysis for applied data science. Much research has been carried out in order to speed up these calculations, but the current state-of-the-art is the persistent cohomology algorithm [@PHom_dualities]. In R, the **TDAstats**' `calculate_homology` function is the fastest option for persistence diagram calculations [@PH_benchmarking], being a wrapper for the **ripser** [@Ripser] persistent cohomology engine. **TDApplied**'s `PyH` function is a Python wrapper for the same engine, and **rgudhi** also provides a Python cohomology engine via the C++ library **GUDHI** [@GUDHI] with its `compute_persistence` function. Note that **rgudhi**'s function required a number of lines of code to use (i.e. to calculate a persistence diagram across all desired dimensions from a dataset) and we benchmarked all of these lines (see the benchmarking script in the exec directory for details). We benchmarked all three function's run time on circles, spheres and tori. The results were as follows: 
 
 ```{r,echo = F,eval = T}
-summary_table_circle = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.01196892,0.01326358,0.01396093,0.05216095,0.03361042,0.12436731,0.06431270,0.22828629,0.10450339,0.35640080,0.17263622,0.54174340,0.26653392,0.76970870,0.38913472,1.06795118,0.56827831,1.57888129,0.77001960,2.02081304),sd = c(0.010148940,0.002938113,0.002576150,0.004909125,0.004535042,0.004654923,0.008832229,0.008654974,0.015860676,0.013255301,0.027655884,0.031779819,0.038884235,0.054684568,0.074091101,0.050891635,0.066695288,0.110982818,0.098805909,0.139048883),package = rep(c("TDApplied","TDAstats"),10))
+summary_table_circle = data.frame(n_row = rep(seq(100,1000,100),each = 3),mean = c(0.00714747905731201,0.00719361305236816,0.00659072399139404,0.0120942831039429,0.0141546249389648,0.00679831504821777,0.0296238899230957,0.031975269317627,0.0120187282562256,0.0591738700866699,0.0736477851867676,0.013093113899231,0.0975550413131714,0.123826575279236,0.0270460844039917,0.174877691268921,0.190020537376404,0.0269159555435181,0.274690747261047,0.308429479598999,0.0326911926269531,0.375274395942688,0.429068613052368,0.0455755949020386,0.537416911125183,0.704735016822815,0.0602942943572998,0.714264035224915,0.934514427185059,0.0701823949813843),sd = c(0.00416409439817576,0.00103939428867545,0.00283514396310527,0.00330519413830816,0.0037098560689518,0.00487599995258418,0.00757202630969173,0.00655484172785339,0.00354816975542627,0.008634257921095,0.0111978902915261,0.00520196790797061,0.0163927418801066,0.0137217256776886,0.0189863689324652,0.0300851306771754,0.0251022408417127,0.00415049572015015,0.0476454379154694,0.0530950605958673,0.0027232003574667,0.0780886114819416,0.0625740498353545,0.00409270764445647,0.0798528960800227,0.0994870782527882,0.00734032492372556,0.125211131073649,0.150414931033262,0.0047393610211507),package = rep(c("TDApplied","TDAstats","rgudhi"),10))
 
-summary_table_torus = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.0270284175872803,0.166255307197571,0.165945911407471,1.25921893119812,0.547216653823853,4.23308880329132,1.25613822937012,9.88947887420654,2.50379593372345,19.3656851053238,4.3738107919693,33.8885488033295,7.39101943969727,55.0618635654449,11.3016363143921,82.9730611801147,16.8212526082993,119.886588406563,22.7343117952347,166.021493530273),sd = c(0.00628026852286816,0.0207818797344753,0.0132287396951078,0.0617468263761529,0.0395387975829715,0.196572350595388,0.0412505644501839,0.351000536768941,0.142517673337179,0.621714418760195,0.139799366288941,0.715119581947307,0.330074208165256,3.34031068711377,0.216260497620014,1.14642158540614,0.328511302110799,2.05599729628367,0.703949594742105,3.81173452337388),package = rep(c("TDApplied","TDAstats"),10))
+summary_table_torus = data.frame(n_row = rep(seq(100,1000,100),each = 3),mean = c(0.0214290380477905,0.0361514568328857,0.0185693025588989,0.173486971855164,0.287985873222351,0.095064377784729,0.558014988899231,1.09399700164795,0.355920004844666,1.33284955024719,2.61763973236084,0.919509029388428,2.60778844356537,5.22925355434418,1.9862869977951,4.54079780578613,9.26885311603546,3.71534910202026,7.87146556377411,15.3612549304962,6.46634261608124,13.3764961957932,29.6161998748779,11.3355693340302,19.8860220432281,40.2391008138657,16.1777965307236,27.4777059316635,52.6725327730179,21.4953773736954),sd = c(0.00590719416332605,0.00435006457434934,0.00486331744259044,0.0163448033840174,0.0115563007835601,0.0154961115263816,0.0461848374322575,0.0640576197650689,0.0318588746495076,0.0926083026409299,0.111401912343372,0.0313178301226755,0.179409653051677,0.238560041022202,0.155636782475823,0.171232657410583,0.232484417148248,0.112126851006963,0.368501000186268,0.768291023396156,0.796058101972749,0.956629401963294,0.890320670107488,0.364811036989422,1.6083132055632,4.20347766266123,1.12898384866778,2.27807806543504,1.04152618265644,0.458315680861488),package = rep(c("TDApplied","TDAstats","rgudhi"),10))
 
-summary_table_sphere = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.0109694957733154,0.0594853162765503,0.0540436983108521,0.469167232513428,0.182804441452026,1.57912936210632,0.410391473770142,3.69215035438538,0.822147560119629,7.32947452068329,1.40918028354645,12.8482979059219,2.47986209392548,20.9446493387222,3.76364696025848,31.2942998409271,5.3408855676651,44.884921503067,7.59271986484528,62.6113245010376),sd = c(0.00193647497299544,0.00600547924173666,0.00563514382927968,0.0210564179408907,0.0129015865529426,0.0403660633577451,0.0218388344325696,0.077772517180065,0.0319754379649263,0.0762356686089166,0.0567664459109207,0.171412828638123,0.240398206520162,0.398396221629952,0.320522372278111,0.459994662433323,0.365647918767674,0.417413443923572,0.394211392866084,0.746903966284143),package = rep(c("TDApplied","TDAstats"),10))
+summary_table_sphere = data.frame(n_row = rep(seq(100,1000,100),each = 3),mean = c(0.0109351873397827,0.0236736059188843,0.950725102424622,0.0561362266540527,0.186890292167664,0.0332694053649902,0.183296179771423,0.596820592880249,0.094449782371521,0.398182415962219,1.48544068336487,0.236253690719605,0.78551504611969,3.08689987659454,0.518527007102966,1.45327532291412,5.52202281951904,0.96248767375946,2.35780429840088,9.03737523555756,1.65125238895416,3.65333969593048,13.5423310518265,2.59944121837616,5.90856101512909,20.433601975441,3.91825902462006,8.94339470863342,29.2576765298843,5.58954420089722),sd = c(0.00381840566885969,0.00556572514553152,2.9610221027017,0.00493067843793022,0.0080879363741825,0.00391292209005512,0.0139272694879288,0.0101076637970659,0.00581921320251676,0.0228565950838192,0.0140904392678963,0.0111634038034156,0.0355001128716911,0.0512718584523393,0.0325010757187493,0.082096411565011,0.102444302459406,0.0203312515495755,0.187843608691578,0.233844190883059,0.0252998825243228,0.132835007447204,0.195363501741675,0.046906966025953,0.455113957164321,0.610849085688629,0.0928097915558342,0.626890440215277,0.763083525901216,0.181292076918064),package = rep(c("TDApplied","TDAstats","rgudhi"),10))
 ```
 
 ```{r,echo = F,warning=F,fig.height = 4,fig.width = 7,fig.align = 'center'}
@@ -243,8 +243,11 @@ plot(summary_table_circle$n_row[summary_table_circle$package=="TDAstats"],
 lines(summary_table_circle$n_row[summary_table_circle$package=="TDApplied"],
       summary_table_circle$mean[summary_table_circle$package=="TDApplied"], 
       col=2, type="b")
-legend(x = 200,y = 1.5,legend = c("TDApplied","TDAstats"),
-       col = c("red","black"),lty = c(1,1),cex = 0.8)
+lines(summary_table_circle$n_row[summary_table_circle$package=="rgudhi"],
+      summary_table_circle$mean[summary_table_circle$package=="rgudhi"], 
+      col=4, type="b")
+legend(x = 200,y = 0.8,legend = c("TDApplied","TDAstats","rgudhi"),
+       col = c("red","black","blue"),lty = c(1,1),cex = 0.8)
 arrows(summary_table_circle$n_row[summary_table_circle$package == "TDApplied"], 
        summary_table_circle$mean[summary_table_circle$package == "TDApplied"]
        -1.96*summary_table_circle$sd[summary_table_circle$package == "TDApplied"]/sqrt(10),
@@ -259,6 +262,13 @@ arrows(summary_table_circle$n_row[summary_table_circle$package == "TDAstats"],
        summary_table_circle$mean[summary_table_circle$package == "TDAstats"]
        +1.96*summary_table_circle$sd[summary_table_circle$package == "TDAstats"]/sqrt(10), 
        length=0.05, angle=90, code=3,col = "black")
+arrows(summary_table_circle$n_row[summary_table_circle$package == "rgudhi"], 
+       summary_table_circle$mean[summary_table_circle$package == "rgudhi"]
+       -1.96*summary_table_circle$sd[summary_table_circle$package == "rgudhi"]/sqrt(10), 
+       summary_table_circle$n_row[summary_table_circle$package == "rgudhi"], 
+       summary_table_circle$mean[summary_table_circle$package == "rgudhi"]
+       +1.96*summary_table_circle$sd[summary_table_circle$package == "rgudhi"]/sqrt(10), 
+       length=0.05, angle=90, code=3,col = "blue")
 
 plot(summary_table_torus$n_row[summary_table_torus$package=="TDAstats"], 
      summary_table_torus$mean[summary_table_torus$package=="TDAstats"], 
@@ -270,8 +280,11 @@ plot(summary_table_torus$n_row[summary_table_torus$package=="TDAstats"],
 lines(summary_table_torus$n_row[summary_table_torus$package=="TDApplied"],
       summary_table_torus$mean[summary_table_torus$package=="TDApplied"], 
       col=2, type="b")
-legend(x = 200,y = 120,legend = c("TDApplied","TDAstats"),
-       col = c("red","black"),lty = c(1,1),cex = 0.8)
+lines(summary_table_torus$n_row[summary_table_torus$package=="rgudhi"],
+      summary_table_torus$mean[summary_table_torus$package=="rgudhi"], 
+      col=4, type="b")
+legend(x = 200,y = 42,legend = c("TDApplied","TDAstats","rgudhi"),
+       col = c("red","black","blue"),lty = c(1,1),cex = 0.8)
 arrows(summary_table_torus$n_row[summary_table_torus$package == "TDApplied"], 
        summary_table_torus$mean[summary_table_torus$package == "TDApplied"]
        -1.96*summary_table_torus$sd[summary_table_torus$package == "TDApplied"]/sqrt(10),
@@ -286,6 +299,13 @@ arrows(summary_table_torus$n_row[summary_table_torus$package == "TDAstats"],
        summary_table_torus$mean[summary_table_torus$package == "TDAstats"]
        +1.96*summary_table_torus$sd[summary_table_torus$package == "TDAstats"]/sqrt(10), 
        length=0.05, angle=90, code=3,col = "black")
+arrows(summary_table_torus$n_row[summary_table_torus$package == "rgudhi"], 
+       summary_table_torus$mean[summary_table_torus$package == "rgudhi"]
+       -1.96*summary_table_torus$sd[summary_table_torus$package == "rgudhi"]/sqrt(10), 
+       summary_table_torus$n_row[summary_table_torus$package == "rgudhi"], 
+       summary_table_torus$mean[summary_table_torus$package == "rgudhi"]
+       +1.96*summary_table_torus$sd[summary_table_torus$package == "rgudhi"]/sqrt(10), 
+       length=0.05, angle=90, code=3,col = "blue")
 
 plot(summary_table_sphere$n_row[summary_table_sphere$package=="TDAstats"], 
      summary_table_sphere$mean[summary_table_sphere$package=="TDAstats"], 
@@ -297,8 +317,11 @@ plot(summary_table_sphere$n_row[summary_table_sphere$package=="TDAstats"],
 lines(summary_table_sphere$n_row[summary_table_sphere$package=="TDApplied"],
       summary_table_sphere$mean[summary_table_sphere$package=="TDApplied"], 
       col=2, type="b")
-legend(x = 200,y = 45,legend = c("TDApplied","TDAstats"),
-       col = c("red","black"),lty = c(1,1),cex = 0.8)
+lines(summary_table_sphere$n_row[summary_table_sphere$package=="rgudhi"],
+      summary_table_sphere$mean[summary_table_sphere$package=="rgudhi"], 
+      col=4, type="b")
+legend(x = 200,y = 23,legend = c("TDApplied","TDAstats","rgudhi"),
+       col = c("red","black","blue"),lty = c(1,1),cex = 0.8)
 arrows(summary_table_sphere$n_row[summary_table_sphere$package == "TDApplied"], 
        summary_table_sphere$mean[summary_table_sphere$package == "TDApplied"]
        -1.96*summary_table_sphere$sd[summary_table_sphere$package == "TDApplied"]/sqrt(10),
@@ -313,9 +336,16 @@ arrows(summary_table_sphere$n_row[summary_table_sphere$package == "TDAstats"],
        summary_table_sphere$mean[summary_table_sphere$package == "TDAstats"]
        +1.96*summary_table_sphere$sd[summary_table_sphere$package == "TDAstats"]/sqrt(10), 
        length=0.05, angle=90, code=3,col = "black")
+arrows(summary_table_sphere$n_row[summary_table_sphere$package == "rgudhi"], 
+       summary_table_sphere$mean[summary_table_sphere$package == "rgudhi"]
+       -1.96*summary_table_sphere$sd[summary_table_sphere$package == "rgudhi"]/sqrt(10), 
+       summary_table_sphere$n_row[summary_table_sphere$package == "rgudhi"], 
+       summary_table_sphere$mean[summary_table_sphere$package == "rgudhi"]
+       +1.96*summary_table_sphere$sd[summary_table_sphere$package == "rgudhi"]/sqrt(10), 
+       length=0.05, angle=90, code=3,col = "blue")
 ```
 
-As we can see the run time of `PyH` was significantly less than that of `calculate_homology`. We then used a linear model to analyze how the two functions scale compared to each other for all three shapes, regressing the ratio of **TDAstats**' runtime divided by **TDApplied**'s runtime onto the number of points in the data set. For each of the three datasets, the model intercept was highly significant ($p < 0.001$) and the coefficient estimate for number of points was not. This suggests that the runtime of the two functions scale similarly, but there was a constant speed increase of `PyH` which differed by shape (about 3 times faster for circles, 7 times faster for tori and 8 times faster for spheres). Overall, if Python is available to a **TDApplied** user then the `PyH` function can provide a very fast means to calculate persistence diagrams in R, making analyses containing many large persistent homology calculations much more feasible.
+As we can see the run time of `compute_persistence` was fastest, followed by `PyH` and finally `calculate_homology`. We then used linear models to analyze how the three functions scale compared to each other for all three shapes, regressing the ratio of runtimes onto the number of points in the data set. For the models dividing the runtime of `calculate_homology` by that of `PyH`, the intercepts were significant and positive but the slopes were positive and either barely significant or not significant (at the $\alpha = 0.05$ level). This suggests that the runtime of the two functions scale similarly, but there was a constant speed increase of `PyH` which differed by shape (about 1.06 times faster for circles, 1.75 times faster for tori and 3 times faster for spheres). The models for dividing the runtime of `PyH` by that of `compute_persistence` yielded similar results - roughly constant multiplicative runtime decreases with **rgudhi**. Overall, if Python is available to a **TDApplied** user then the `PyH` function may provide speedups compared to the **TDAstats** function **calculate_homology**, but in that case **rgudhi**'s `compute_persistence` is the fastest option at the expense of more lines of code (see the benchmarking script for in the exec directory for details).
 
 ```{r,echo = F,eval = F}
 model_circle <- stats::lm(data = 

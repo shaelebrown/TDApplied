@@ -570,17 +570,16 @@ if(requireNamespace("reticulate",quietly = T) == T)
     for(iteration in 1:10)
     {
       # simulate a sphere
-      circ <- TDA::sphereUnif(n = n_row,d = 2)
+      sphere <- TDA::sphereUnif(n = n_row,d = 2)
       
       # compute their diagrams in all dimensions and benchmark
       start_time_TDApplied = Sys.time()
-      phom_TDApplied <- PyH(circ,maxdim = 2,thresh = 1,ripser = ripser)
+      phom_TDApplied <- PyH(sphere,maxdim = 2,thresh = 1,ripser = ripser)
       end_time_TDApplied = Sys.time()
       time_diff_TDApplied = as.numeric(end_time_TDApplied - start_time_TDApplied,units = "secs")
       
       start_time_TDAstats = Sys.time()
-      start_time_TDAstats = Sys.time()
-      phom_TDAstats <- TDAstats::calculate_homology(circ,threshold = 1,dim = 2)
+      phom_TDAstats <- TDAstats::calculate_homology(sphere,threshold = 1,dim = 2)
       end_time_TDAstats = Sys.time()
       time_diff_TDAstats = as.numeric(end_time_TDAstats - start_time_TDAstats,units = "secs")
       
