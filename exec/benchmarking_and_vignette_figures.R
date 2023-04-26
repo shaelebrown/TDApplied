@@ -409,7 +409,7 @@ arrows(summary_table_rgudhi$n_row[summary_table_rgudhi$package == "rgudhi"],
        +1.96*summary_table_rgudhi$sd[summary_table_rgudhi$package == "rgudhi"]/sqrt(10), 
        length=0.05, angle=90, code=3,col = "black")
 
-#### PyH vs. calculate_homology ####
+#### PyH vs. calculate_homology vs. compute_homology ####
 
 if(requireNamespace("reticulate",quietly = T) == T)
 {
@@ -422,17 +422,35 @@ if(requireNamespace("reticulate",quietly = T) == T)
       # simulate a circle
       circ <- TDA::circleUnif(n = n_row)
       
-      # compute their wasserstein distances in all dimensions and benchmark
+      # compute their diagrams in all dimensions and benchmark
       start_time_TDApplied = Sys.time()
       phom_TDApplied <- PyH(circ,maxdim = 1,thresh = 1,ripser = ripser)
       end_time_TDApplied = Sys.time()
       time_diff_TDApplied = as.numeric(end_time_TDApplied - start_time_TDApplied,units = "secs")
       
       start_time_TDAstats = Sys.time()
-      start_time_TDAstats = Sys.time()
       phom_TDAstats <- TDAstats::calculate_homology(circ,threshold = 1)
       end_time_TDAstats = Sys.time()
       time_diff_TDAstats = as.numeric(end_time_TDAstats - start_time_TDAstats,units = "secs")
+      
+      start_time_rgudhi = Sys.time()
+      rc <- rgudhi::RipsComplex$new(data = circ, max_edge_length = 1)
+      st <- rc$create_simplex_tree(1)
+      st$compute_persistence()
+      dim_0 <- as.data.frame(st$persistence_intervals_in_dimension(0))
+      dim_0$dimension = 0
+      dim_1 <- as.data.frame(st$persistence_intervals_in_dimension(1))
+      if(nrow(dim_1) > 0)
+      {
+        dim_1$dimension = 1
+      }else
+      {
+        dim_1$dimension = numeric() 
+      }
+      phom_rgudhi <- rbind(dim_0,dim_1)
+      phom_rgudhi <- phom_rgudhi[,c("dimension","birth","death")]
+      end_time_rgudhi = Sys.time()
+      time_diff_rgudhi = as.numeric(end_time_rgudhi - start_time_rgudhi,units = "secs")
       
       runtimes_circle = rbind(runtimes_circle,data.frame(n_row = n_row,
                                                          package = "TDApplied",
@@ -440,6 +458,9 @@ if(requireNamespace("reticulate",quietly = T) == T)
       runtimes_circle = rbind(runtimes_circle,data.frame(n_row = n_row,
                                                          package = "TDAstats",
                                                          time_in_sec = time_diff_TDAstats))
+      runtimes_circle = rbind(runtimes_circle,data.frame(n_row = n_row,
+                                                         package = "rgudhi",
+                                                         time_in_sec = time_diff_rgudhi))
       
     }
     print(paste0("Done ",n_row," rows"))
@@ -450,7 +471,7 @@ if(requireNamespace("reticulate",quietly = T) == T)
                                     package = character())
   for(n_row in seq(100,1000,100))
   {
-    for(p in c("TDApplied","TDAstats"))
+    for(p in c("TDApplied","TDAstats","rgudhi"))
     {
       result = data.frame(n_row = n_row,
                           mean = mean(runtimes_circle[which(runtimes_circle$n_row == n_row
@@ -472,7 +493,7 @@ if(requireNamespace("reticulate",quietly = T) == T)
       # simulate a torus
       torus <- TDA::torusUnif(n = n_row,a = 0.25,c = 0.75)
       
-      # compute their wasserstein distances in all dimensions and benchmark
+      # compute their diagrams in all dimensions and benchmark
       start_time_TDApplied = Sys.time()
       phom_TDApplied <- PyH(torus,maxdim = 2,thresh = 1,ripser = ripser)
       end_time_TDApplied = Sys.time()
@@ -483,12 +504,42 @@ if(requireNamespace("reticulate",quietly = T) == T)
       end_time_TDAstats = Sys.time()
       time_diff_TDAstats = as.numeric(end_time_TDAstats - start_time_TDAstats,units = "secs")
       
+      start_time_rgudhi = Sys.time()
+      rc <- rgudhi::RipsComplex$new(data = torus, max_edge_length = 1)
+      st <- rc$create_simplex_tree(2)
+      st$compute_persistence()
+      dim_0 <- as.data.frame(st$persistence_intervals_in_dimension(0))
+      dim_0$dimension = 0
+      dim_1 <- as.data.frame(st$persistence_intervals_in_dimension(1))
+      if(nrow(dim_1) > 0)
+      {
+        dim_1$dimension = 1
+      }else
+      {
+        dim_1$dimension = numeric() 
+      }
+      dim_2 <- as.data.frame(st$persistence_intervals_in_dimension(2))
+      if(nrow(dim_2) > 0)
+      {
+        dim_2$dimension = 2
+      }else
+      {
+        dim_2$dimension = numeric() 
+      }
+      phom_rgudhi <- rbind(dim_0,dim_1,dim_2)
+      phom_rgudhi <- phom_rgudhi[,c("dimension","birth","death")]
+      end_time_rgudhi = Sys.time()
+      time_diff_rgudhi = as.numeric(end_time_rgudhi - start_time_rgudhi,units = "secs")
+      
       runtimes_torus = rbind(runtimes_torus,data.frame(n_row = n_row,
                                                        package = "TDApplied",
                                                        time_in_sec = time_diff_TDApplied))
       runtimes_torus = rbind(runtimes_torus,data.frame(n_row = n_row,
                                                        package = "TDAstats",
                                                        time_in_sec = time_diff_TDAstats))
+      runtimes_torus = rbind(runtimes_torus,data.frame(n_row = n_row,
+                                                       package = "rgudhi",
+                                                       time_in_sec = time_diff_rgudhi))
       
     }
     print(paste0("Done ",n_row," rows"))
@@ -499,7 +550,7 @@ if(requireNamespace("reticulate",quietly = T) == T)
                                    package = character())
   for(n_row in seq(100,1000,100))
   {
-    for(p in c("TDApplied","TDAstats"))
+    for(p in c("TDApplied","TDAstats","rgudhi"))
     {
       result = data.frame(n_row = n_row,
                           mean = mean(runtimes_torus[which(runtimes_torus$n_row == n_row
@@ -521,7 +572,7 @@ if(requireNamespace("reticulate",quietly = T) == T)
       # simulate a sphere
       circ <- TDA::sphereUnif(n = n_row,d = 2)
       
-      # compute their wasserstein distances in all dimensions and benchmark
+      # compute their diagrams in all dimensions and benchmark
       start_time_TDApplied = Sys.time()
       phom_TDApplied <- PyH(circ,maxdim = 2,thresh = 1,ripser = ripser)
       end_time_TDApplied = Sys.time()
@@ -533,12 +584,42 @@ if(requireNamespace("reticulate",quietly = T) == T)
       end_time_TDAstats = Sys.time()
       time_diff_TDAstats = as.numeric(end_time_TDAstats - start_time_TDAstats,units = "secs")
       
+      start_time_rgudhi = Sys.time()
+      rc <- rgudhi::RipsComplex$new(data = sphere, max_edge_length = 1)
+      st <- rc$create_simplex_tree(2)
+      st$compute_persistence()
+      dim_0 <- as.data.frame(st$persistence_intervals_in_dimension(0))
+      dim_0$dimension = 0
+      dim_1 <- as.data.frame(st$persistence_intervals_in_dimension(1))
+      if(nrow(dim_1) > 0)
+      {
+        dim_1$dimension = 1
+      }else
+      {
+        dim_1$dimension = numeric() 
+      }
+      dim_2 <- as.data.frame(st$persistence_intervals_in_dimension(2))
+      if(nrow(dim_2) > 0)
+      {
+        dim_2$dimension = 2
+      }else
+      {
+        dim_2$dimension = numeric() 
+      }
+      phom_rgudhi <- rbind(dim_0,dim_1,dim_2)
+      phom_rgudhi <- phom_rgudhi[,c("dimension","birth","death")]
+      end_time_rgudhi = Sys.time()
+      time_diff_rgudhi = as.numeric(end_time_rgudhi - start_time_rgudhi,units = "secs")
+      
       runtimes_sphere = rbind(runtimes_sphere,data.frame(n_row = n_row,
                                                          package = "TDApplied",
                                                          time_in_sec = time_diff_TDApplied))
       runtimes_sphere = rbind(runtimes_sphere,data.frame(n_row = n_row,
                                                          package = "TDAstats",
                                                          time_in_sec = time_diff_TDAstats))
+      runtimes_sphere = rbind(runtimes_sphere,data.frame(n_row = n_row,
+                                                         package = "rgudhi",
+                                                         time_in_sec = time_diff_rgudhi))
       
     }
     print(paste0("Done ",n_row," rows"))
@@ -549,7 +630,7 @@ if(requireNamespace("reticulate",quietly = T) == T)
                                     package = character())
   for(n_row in seq(100,1000,100))
   {
-    for(p in c("TDApplied","TDAstats"))
+    for(p in c("TDApplied","TDAstats","rgudhi"))
     {
       result = data.frame(n_row = n_row,
                           mean = mean(runtimes_sphere[which(runtimes_sphere$n_row == n_row
@@ -573,8 +654,11 @@ if(requireNamespace("reticulate",quietly = T) == T)
   lines(summary_table_circle$n_row[summary_table_circle$package=="TDApplied"],
         summary_table_circle$mean[summary_table_circle$package=="TDApplied"], 
         col=2, type="b")
-  legend(x = 200,y = 1.5,legend = c("TDApplied","TDAstats"),
-         col = c("red","black"),lty = c(1,1),cex = 0.8)
+  lines(summary_table_circle$n_row[summary_table_circle$package=="rgudhi"],
+        summary_table_circle$mean[summary_table_circle$package=="rgudhi"], 
+        col=4, type="b")
+  legend(x = 200,y = 1.5,legend = c("TDApplied","TDAstats","rgudhi"),
+         col = c("red","black","blue"),lty = c(1,1),cex = 0.8)
   arrows(summary_table_circle$n_row[summary_table_circle$package == "TDApplied"], 
          summary_table_circle$mean[summary_table_circle$package == "TDApplied"]
          -1.96*summary_table_circle$sd[summary_table_circle$package == "TDApplied"]/sqrt(10),
@@ -589,6 +673,13 @@ if(requireNamespace("reticulate",quietly = T) == T)
          summary_table_circle$mean[summary_table_circle$package == "TDAstats"]
          +1.96*summary_table_circle$sd[summary_table_circle$package == "TDAstats"]/sqrt(10), 
          length=0.05, angle=90, code=3,col = "black")
+  arrows(summary_table_circle$n_row[summary_table_circle$package == "rgudhi"], 
+         summary_table_circle$mean[summary_table_circle$package == "rgudhi"]
+         -1.96*summary_table_circle$sd[summary_table_circle$package == "rgudhi"]/sqrt(10), 
+         summary_table_circle$n_row[summary_table_circle$package == "rgudhi"], 
+         summary_table_circle$mean[summary_table_circle$package == "rgudhi"]
+         +1.96*summary_table_circle$sd[summary_table_circle$package == "rgudhi"]/sqrt(10), 
+         length=0.05, angle=90, code=3,col = "blue")
   plot(summary_table_torus$n_row[summary_table_torus$package=="TDAstats"], 
        summary_table_torus$mean[summary_table_torus$package=="TDAstats"], 
        type="b",
@@ -599,8 +690,11 @@ if(requireNamespace("reticulate",quietly = T) == T)
   lines(summary_table_torus$n_row[summary_table_torus$package=="TDApplied"],
         summary_table_torus$mean[summary_table_torus$package=="TDApplied"], 
         col=2, type="b")
-  legend(x = 200,y = 120,legend = c("TDApplied","TDAstats"),
-         col = c("red","black"),lty = c(1,1),cex = 0.8)
+  lines(summary_table_torus$n_row[summary_table_torus$package=="rgudhi"],
+        summary_table_torus$mean[summary_table_torus$package=="rgudhi"], 
+        col=4, type="b")
+  legend(x = 200,y = 120,legend = c("TDApplied","TDAstats","rgudhi"),
+         col = c("red","black","blue"),lty = c(1,1),cex = 0.8)
   arrows(summary_table_torus$n_row[summary_table_torus$package == "TDApplied"], 
          summary_table_torus$mean[summary_table_torus$package == "TDApplied"]
          -1.96*summary_table_torus$sd[summary_table_torus$package == "TDApplied"]/sqrt(10),
@@ -615,6 +709,13 @@ if(requireNamespace("reticulate",quietly = T) == T)
          summary_table_torus$mean[summary_table_torus$package == "TDAstats"]
          +1.96*summary_table_torus$sd[summary_table_torus$package == "TDAstats"]/sqrt(10), 
          length=0.05, angle=90, code=3,col = "black")
+  arrows(summary_table_torus$n_row[summary_table_torus$package == "rgudhi"], 
+         summary_table_torus$mean[summary_table_torus$package == "rgudhi"]
+         -1.96*summary_table_torus$sd[summary_table_torus$package == "rgudhi"]/sqrt(10), 
+         summary_table_torus$n_row[summary_table_torus$package == "rgudhi"], 
+         summary_table_torus$mean[summary_table_torus$package == "rgudhi"]
+         +1.96*summary_table_torus$sd[summary_table_torus$package == "rgudhi"]/sqrt(10), 
+         length=0.05, angle=90, code=3,col = "blue")
   plot(summary_table_sphere$n_row[summary_table_sphere$package=="TDAstats"], 
        summary_table_sphere$mean[summary_table_sphere$package=="TDAstats"], 
        type="b",
@@ -625,8 +726,11 @@ if(requireNamespace("reticulate",quietly = T) == T)
   lines(summary_table_sphere$n_row[summary_table_sphere$package=="TDApplied"],
         summary_table_sphere$mean[summary_table_sphere$package=="TDApplied"], 
         col=2, type="b")
-  legend(x = 200,y = 45,legend = c("TDApplied","TDAstats"),
-         col = c("red","black"),lty = c(1,1),cex = 0.8)
+  lines(summary_table_sphere$n_row[summary_table_sphere$package=="rgudhi"],
+        summary_table_sphere$mean[summary_table_sphere$package=="rgudhi"], 
+        col=4, type="b")
+  legend(x = 200,y = 45,legend = c("TDApplied","TDAstats","rgudhi"),
+         col = c("red","black","blue"),lty = c(1,1),cex = 0.8)
   arrows(summary_table_sphere$n_row[summary_table_sphere$package == "TDApplied"], 
          summary_table_sphere$mean[summary_table_sphere$package == "TDApplied"]
          -1.96*summary_table_sphere$sd[summary_table_sphere$package == "TDApplied"]/sqrt(10),
@@ -641,11 +745,18 @@ if(requireNamespace("reticulate",quietly = T) == T)
          summary_table_sphere$mean[summary_table_sphere$package == "TDAstats"]
          +1.96*summary_table_sphere$sd[summary_table_sphere$package == "TDAstats"]/sqrt(10), 
          length=0.05, angle=90, code=3,col = "black")
+  arrows(summary_table_sphere$n_row[summary_table_sphere$package == "rgudhi"], 
+         summary_table_sphere$mean[summary_table_sphere$package == "rgudhi"]
+         -1.96*summary_table_sphere$sd[summary_table_sphere$package == "rgudhi"]/sqrt(10), 
+         summary_table_sphere$n_row[summary_table_sphere$package == "rgudhi"], 
+         summary_table_sphere$mean[summary_table_sphere$package == "rgudhi"]
+         +1.96*summary_table_sphere$sd[summary_table_sphere$package == "rgudhi"]/sqrt(10), 
+         length=0.05, angle=90, code=3,col = "blue")
   
 }
 
 
-# comparing distance calcs
+#### comparing distance calcs ####
 # requires additional package rgudhi with python!
 
 # create diagrams

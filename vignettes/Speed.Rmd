@@ -210,7 +210,7 @@ Another significant source of redundancy can be found in the `permutation_test` 
 
 In order to properly situate **TDApplied** in the landscape of software for topological data analysis, we will compare the speed of its calculations to similar calculations from other packages. In the following sections we will benchmark:
 
-(1) Persistent (co)homology calculations with **TDApplied**'s `PyH` and **TDAstats**' [@R-TDAstats] `calculate_homology`.
+(1) Persistent (co)homology calculations with **TDApplied**'s `PyH`, **TDAstats**' [@R-TDAstats] `calculate_homology` and **rgudhi**'s `compute_persistence`.
 (2) Wasserstein distances between persistence diagrams with **TDApplied**'s `diagram_distance` and **TDA**'s [@R-TDA] `wasserstein`.
 (3) Wasserstein distances between persistence diagrams with **TDApplied**'s `diagram_distance` and the **persim** Python module's (https://persim.scikit-tda.org/en/latest/) `wasserstein`.
 (4) Fisher information metric distances between persistence diagrams with **TDApplied**'s `diagram_distance` and **rgudhi**'s [@rgudhi] `PersistenceFisherDistance`.
@@ -219,9 +219,9 @@ The script that was used to perform benchmarking (and plotting the results) is a
 
 The benchmarking results are displayed graphically in the following three subsections. On top of comparing raw run time of the various functions, we also compared the scalability of the functions by computing the runtime ratios (i.e. quotient of runtimes in the two packages) of the functions and regressing the ratios onto the number of points in the input shapes. Overall we found that **TDApplied**'s functions are faster and scale better than their R counterparts, and scale similarly to Python counterparts. These results indicate that **TDApplied** is a powerful and efficient tool for applied topological data analysis in R.
 
-## Benchmarking `PyH` Against **TDAstats**' `calculate_homology` Function
+## Benchmarking `PyH` Against **TDAstats**' `calculate_homology` Function and **rgudhi**'s `compute_persistence` Function
 
-The long calculation time of persistence diagrams is likely a large contributing factor to the slow adoption of topological data analysis for applied data science. Much research has been carried out in order to speed up these calculations, but the current state-of-the-art is the persistent cohomology algorithm [@PHom_dualities]. In R, the **TDAstats**' `calculate_homology` function is the fastest option for persistence diagram calculations [@PH_benchmarking], being a wrapper for the ripser persistent cohomology engine. **TDApplied**'s `PyH` function is a wrapper for the same engine, so we benchmarked their run time on circles, spheres and tori. The results were as follows: 
+The long calculation time of persistence diagrams is likely a large contributing factor to the slow adoption of topological data analysis for applied data science. Much research has been carried out in order to speed up these calculations, but the current state-of-the-art is the persistent cohomology algorithm [@PHom_dualities]. In R, the **TDAstats**' `calculate_homology` function is the fastest option for persistence diagram calculations [@PH_benchmarking], being a wrapper for the **ripser** [@ripser] persistent cohomology engine. **TDApplied**'s `PyH` function is a Python wrapper for the same engine, and **rgudhi** also provides a Python cohomology engine via the C++ library **GUDHI** [@GUDHI]. We benchmarked all three function's run time on circles, spheres and tori. The results were as follows: 
 
 ```{r,echo = F,eval = T}
 summary_table_circle = data.frame(n_row = rep(seq(100,1000,100),each = 2),mean = c(0.01196892,0.01326358,0.01396093,0.05216095,0.03361042,0.12436731,0.06431270,0.22828629,0.10450339,0.35640080,0.17263622,0.54174340,0.26653392,0.76970870,0.38913472,1.06795118,0.56827831,1.57888129,0.77001960,2.02081304),sd = c(0.010148940,0.002938113,0.002576150,0.004909125,0.004535042,0.004654923,0.008832229,0.008654974,0.015860676,0.013255301,0.027655884,0.031779819,0.038884235,0.054684568,0.074091101,0.050891635,0.066695288,0.110982818,0.098805909,0.139048883),package = rep(c("TDApplied","TDAstats"),10))
