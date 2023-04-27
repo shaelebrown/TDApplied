@@ -18,7 +18,7 @@
 #' @importFrom parallel clusterEvalQ clusterExport detectCores makeCluster stopCluster
 #' @importFrom parallelly availableCores
 #' @importFrom rdist cdist
-#' @importFrom stats cmdscale complete.cases pgamma lm quantile
+#' @importFrom stats cmdscale complete.cases pgamma lm quantile var
 #' @importFrom utils combn
 #' @importFrom iterators iter
 #' @importFrom graphics abline legend

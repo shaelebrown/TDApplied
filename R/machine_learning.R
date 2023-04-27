@@ -862,7 +862,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
     prod_vars <- unlist(lapply(X = 1:cv,FUN = function(X){
       
       cv_inds <- which(v == X)
-      return(var(as.vector(X_temp[cv_inds,cv_inds])))
+      return(stats::var(as.vector(X_temp[cv_inds,cv_inds])))
       
     }))
     prod_vars <- prod(prod_vars)
