@@ -29,5 +29,5 @@ Suggests:
     TDAstats,
     reticulate
 LinkingTo: Rcpp
-VignetteBuilder: knitr
+VignetteBuilder: knitr, rmarkdown
 Config/testthat/edition: 3

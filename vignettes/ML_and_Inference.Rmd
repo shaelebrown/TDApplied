@@ -120,8 +120,7 @@ Fortunately, we can still apply many machine learning and inference techniques t
 In this section we will describe the various computational tools implemented in the package **TDApplied** to analyze persistence diagrams. To start we must load the **TDApplied** package:
 
 ```{r setup}
-#library("TDApplied")
-devtools::load_all()
+library("TDApplied")
 ``` 
 
 Our examples will take as input persistence diagrams computed in one of three ways: (1) using the fixed diagrams D1, D2 and D3 from the diagram below, (2) using D1, D2 and D3 with added Gaussian noise to their points, or (3) **TDA**/**TDAstats** calculated persistence diagrams from simple shapes like points sampled from a unit circle.

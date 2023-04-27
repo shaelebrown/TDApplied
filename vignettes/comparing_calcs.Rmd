@@ -45,8 +45,7 @@ The **TDAstats** package has a (wasserstein) distance function, `phom.dist`, whi
 In order to compare the distance calculations of **TDA**, **rgudhi** and **TDApplied**, we will specify three simple diagrams (the same D1, D2 and D3 from the package vignette "TDApplied Theory and Practice") and consider distances between each of the three possible pairs. The three diagrams are as follows.
 
 ```{r,echo = F,include = F}
-#library(TDApplied)
-devtools::load_all()
+library(TDApplied)
 ```
 
 ```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center'}
