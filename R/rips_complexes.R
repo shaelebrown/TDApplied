@@ -6,13 +6,13 @@
 #' can be challenging to visualize, analyze and interpret. In order to help solve this problem the `rips_graphs`
 #' function computes the 1-skeleton (i.e. graph) of Rips complexes at particular radii.
 #' 
-#' This function may be used in conjunction with the \link{igraph} package to visualize the graphs (see examples).
+#' This function may be used in conjunction with the \link{igraph} package to visualize the graphs (see \code{\link{plot_rips_graph}}).
 #'
 #' @param X either a point cloud data frame/matrix, or a distance matrix.
 #' @param distance_mat a boolean representing if the input `X` is a distance matrix, default value is `FALSE`.
 #' @param eps a numeric vector of the positive scales at which to compute the Rips-Vietoris complexes, i.e. all edges at most the specified values.
 #' @param return_clusters a boolean determining if the connected components (i.e. data clusters) of the complex should be explicitly returned, default is `TRUE`.
-#' @return A list with a `data` field, containing a dataframe with the rownames of `X`, and then a list `graphs` one entry for each value in `eps`. Each entry is a list with a `graph` field, storing the (undirected) edges in the Rips-Vietoris complex in matrix format, and a `clusters` field, containing vectors of the data indices in each connected component of the Rips-Vietoris complex.
+#' @return A list with a `vertices` field, containing the rownames of `X`, and then a list `graphs` one entry for each value in `eps`. Each entry is a list with a `graph` field, storing the (undirected) edges in the Rips-Vietoris complex in matrix format, and a `clusters` field, containing vectors of the data indices (or row names) in each connected component of the Rips graph.
 #' @export
 #' @importFrom methods is
 #' @importFrom stats dist
@@ -38,18 +38,11 @@
 #'   # compute Rips-Vietoris graphs at radii half of 
 #'   # min_death_H0 and the mean of loop_birth and 
 #'   # loop_death, returning clusters
-#'   graph <- rips_graphs(X = df,eps = 
+#'   graphs <- rips_graphs(X = df,eps = 
 #'   c(0.5*min_death_H0,(loop_birth + loop_death)/2))
 #'
 #'   # verify that there are 25 clusters for the smaller radius
-#'   length(graph$graphs[[1]]$clusters)
-#'   
-#'   # plot graph of larger radius using 
-#'   # the igraph package to see the loop
-#'   g <- igraph::graph_from_data_frame(
-#'   graph$graphs[[2]]$graph,
-#'   directed = FALSE,vertices = graph$data)
-#'   igraph::plot.igraph(g)
+#'   length(graphs$graphs[[1]]$clusters)
 #'   
 #' }
 
@@ -111,10 +104,12 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
   # get rownames of X
   if(is.null(rownames(X)))
   {
-    data <- data.frame(name = as.character(1:nrow(X)))
+    rowNames <- F
+    vertices <- as.character(1:nrow(X))
   }else
   {
-    data <- data.frame(name = rownames(X))
+    rowNames <- T
+    vertices <- rownames(X)
   }
   
   # if X is not a distance matrix, convert it to one
@@ -142,6 +137,13 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
       complex <- t(as.matrix(complex))
     }
     
+    # replace row numbers with row names if possible
+    if(rowNames & nrow(complex) > 0)
+    {
+      complex[,1] <- vertices[complex[,1]]
+      complex[,2] <- vertices[as.numeric(complex[,2])]
+    }
+    
     ret_list <- list(graph = complex)
     
     # compute clusters if necessary
@@ -151,8 +153,14 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
       clusters <- list()
       
       # perform DFS to find all clusters
-      num_points <- nrow(X)
-      to_visit <- 1:num_points
+      if(rowNames)
+      {
+        to_visit <- vertices
+      }else
+      {
+        num_points <- nrow(X)
+        to_visit <- 1:num_points
+      }
       while(length(to_visit) > 0)
       {
         new_cluster <- c()
@@ -184,6 +192,83 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
     
   })
 
-  return(list(data = data,graphs = ret_list))
+  return(list(vertices = vertices,graphs = ret_list))
+  
+}
+
+#### PLOT RIPS GRAPHS ####
+#' Plot a Rips graph using the \link{igraph} package.
+#' 
+#' This function will throw an error if the \link{igraph} package is not installed.
+#'
+#' @param graphs the output of a `rips_graphs` function call.
+#' @param index the integer representing which graph out of the `graphs` parameter should be plotted, default 1. 
+#' @export
+#' @importFrom methods is
+#' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @examples
+#'
+#' if(require("TDA") & require("igraph"))
+#' {
+#'   # simulate data from the unit circle and calculate 
+#'   # its diagram
+#'   df <- TDA::circleUnif(n = 25)
+#'   diag <- TDA::ripsDiag(df,maxdimension = 1,maxscale = 2)
+#'   
+#'   # get minimum death radius of any data cluster
+#'   min_death_H0 <- 
+#'   min(diag$diagram[which(diag$diagram[,1] == 0),3L])
+#'   
+#'   # get birth and death radius of the loop
+#'   loop_birth <- as.numeric(diag$diagram[nrow(diag$diagram),2L])
+#'   loop_death <- as.numeric(diag$diagram[nrow(diag$diagram),3L])
+#'
+#'   # compute Rips-Vietoris graphs at radii half of 
+#'   # min_death_H0 and the mean of loop_birth and 
+#'   # loop_death, returning clusters
+#'   graphs <- rips_graphs(X = df,eps = 
+#'   c(0.5*min_death_H0,(loop_birth + loop_death)/2))
+#'   
+#'   # plot graph of smaller (first) radius
+#'   plot_rips_graph(graphs = graphs,index = 1L)
+#'   
+#'   # plot graph of larger (second) radius
+#'   plot_rips_graph(graphs = graphs,index = 2L)
+#'   
+#'   # repeat but with rownames for df, each vertex
+#'   # will be plotted with its rownames
+#'   rownames(df) <- paste0("V",1:25)
+#'   graphs <- rips_graphs(X = df,eps = 
+#'   c(0.5*min_death_H0,(loop_birth + loop_death)/2))
+#'   plot_rips_graph(graphs = graphs,index = 1L)
+#'   
+#' }
+
+plot_rips_graph <- function(graphs,index = 1L){
+  
+  # check for igraph
+  if (!requireNamespace("igraph", quietly = TRUE)) {
+    stop(
+      "Package \"igraph\" must be installed to use this function.",
+      call. = FALSE
+    )
+  }
+  
+  # error check parameters
+  if(!is.list(graphs) | length(graphs) != 2 | length(which(names(graphs) == c("vertices","graphs"))) != 2 | !methods::is(graphs$graphs,"list"))
+  {
+    stop("graphs must be the output of a rips_graphs function call.")
+  }
+  check_param(param_name = "index",param = index,numeric = T,whole_numbers = T,multiple = F,finite = T,positive = T)
+  if(index > length(graphs$graphs))
+  {
+    stop("index must be at most the number of graphs.")
+  }
+  
+  # create graph
+  g <- igraph::graph_from_data_frame(graphs$graphs[[index]]$graph,directed = FALSE,vertices = graphs$vertices)
+  
+  # plot graph
+  igraph::plot.igraph(g)
   
 }

@@ -55,4 +55,40 @@ test_that("rips_graphs is working properly",{
   comp <- rips_graphs(X = df,eps = c(0.5*(next_val + next_next_val)))
   expect_lte(length(comp$complexes[[1]]$clusters),24L)
   
+  # make sure that when data has rownames that they get saved properly
+  rownames(df) <- paste0("V",1:25)
+  comp <- rips_graphs(X = df,eps = c(0.5*min_death_H0,(loop_birth + loop_death)/2))
+  
 })
+
+test_that("plot_rips_graph can detect incorrect parameters properly",{
+  
+  skip_if_not_installed("igraph")
+  
+  expect_error(plot_rips_graph(graphs = c()),"rips_graphs")
+  expect_error(plot_rips_graph(graphs = list(1,2,3)),"rips_graphs")
+  expect_error(plot_rips_graph(graphs = list(data = 1,graphs = 2)),"rips_graphs")
+  expect_error(plot_rips_graph(graphs = list(data = c(1,2,3),graphs = c())),"rips_graphs")
+  
+  # simulate data from the unit circle and calculate
+  # its diagram
+  df <- TDA::circleUnif(n = 25)
+  diag <- TDA::ripsDiag(df,maxdimension = 1,maxscale = 2)
+  
+  # get minimum death radius of any data cluster
+  min_death_H0 <- min(diag$diagram[which(diag$diagram[,1] == 0),3L])
+  
+  # get birth and death radius of the loop
+  loop_birth <- as.numeric(diag$diagram[nrow(diag$diagram),2L])
+  loop_death <- as.numeric(diag$diagram[nrow(diag$diagram),3L])
+  
+  # compute Rips-Vietoris complexes at radii half of
+  # min_death_H0 and the mean of loop_birth and
+  # loop_death, returning clusters
+  comp <- rips_graphs(X = df,eps = c(0.5*min_death_H0,(loop_birth + loop_death)/2))
+  
+  expect_error(plot_rips_graph(graphs = comp,index = 0),"positive")
+  expect_error(plot_rips_graph(graphs = comp,index = 3),"number")
+  
+})
+

@@ -14,7 +14,7 @@
 #'
 #' @param X the input dataset, must either be a matrix or data frame.
 #' @param FUN a string representing the persistent homology function to use, either
-#' 'calculate_homology' (the default) or 'ripsDiag'.
+#' 'calculate_homology' (the default), 'PyH' or 'ripsDiag'.
 #' @param maxdim the integer maximum homological dimension for persistent homology, default 0.
 #' @param thresh the positive numeric maximum radius of the Vietoris-Rips filtration.
 #' @param distance_mat a boolean representing if `X` is a distance matrix (TRUE) or not (FALSE, default).

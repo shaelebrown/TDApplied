@@ -24,7 +24,7 @@ bootstrap_persistence_thresholds(
 \item{X}{the input dataset, must either be a matrix or data frame.}
 
 \item{FUN}{a string representing the persistent homology function to use, either
-'calculate_homology' (the default) or 'ripsDiag'.}
+'calculate_homology' (the default), 'PyH' or 'ripsDiag'.}
 
 \item{maxdim}{the integer maximum homological dimension for persistent homology, default 0.}
 

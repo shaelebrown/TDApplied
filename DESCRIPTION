@@ -27,7 +27,8 @@ Suggests:
     testthat (>= 3.0.0),
     TDA,
     TDAstats,
-    reticulate
+    reticulate,
+    igraph
 LinkingTo: Rcpp
 VignetteBuilder: knitr, rmarkdown
 Config/testthat/edition: 3
