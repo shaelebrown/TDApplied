@@ -174,6 +174,7 @@ plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,threshol
     
     dims <- unique(D[,1L])
     dims <- dims[order(dims)]
+    
     if(is.null(thresholds))
     {
       C <- cols[D[,1L] + 1]
@@ -185,12 +186,30 @@ plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,threshol
         
       }))
     }
-    plot(x = D[,2L],y = D[,3L],xlim = c(0,max_radius),ylim = c(0,max_radius),
-         xlab = "Feature birth",ylab = "Feature death",col = C,
-         pch = pchs[D[,1L] + 1],main = ifelse(test = is.null(title),yes = "",no = title))
+    if(is.null(thresholds))
+    {
+      plot(x = D[,2L],y = D[,3L],xlim = c(0,max_radius),ylim = c(0,max_radius),
+           xlab = "Birth",ylab = "Death",col = C,
+           pch = pchs[D[,1L] + 1],main = ifelse(test = is.null(title),yes = "",no = title))
+    }else
+    {
+      gray_inds <- which(C == "gray")
+      non_gray_inds <- which(C != "gray")
+      plot(x = D[gray_inds,2L],y = D[gray_inds,3L],xlim = c(0,max_radius),ylim = c(0,max_radius),
+           xlab = "Birth",ylab = "Death",col = C[gray_inds],
+           pch = pchs[D[gray_inds,1L] + 1],main = ifelse(test = is.null(title),yes = "",no = title))
+      points(x = D[non_gray_inds,2L],y = D[non_gray_inds,3L],col = C[non_gray_inds],pch = pchs[D[non_gray_inds,1L] + 1])
+    }
     if(legend == T)
     {
-      graphics::legend("bottomright",title = "Dimensions:",legend = as.character(dims),col = cols[dims + 1],pch = pchs[dims + 1],inset = 0.01*max(D[,3L])) 
+      if(max(dims) <= 2)
+      {
+        l <- c(expression(H[0]~' components'),expression(H[1]~' loops'),expression(H[2]~' voids'))[dims + 1]
+      }else
+      {
+        l <- as.character(dims)
+      }
+      graphics::legend("bottomright",legend = l,col = cols[dims + 1],pch = pchs[dims + 1],inset = 0.01*max(D[,3L])) 
     }
     graphics::abline(a = 0,b = 1)
     if(!is.null(thresholds))
