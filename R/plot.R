@@ -73,7 +73,7 @@ plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,threshol
   
   # build plot
   pchs <- c(15:18,0:8)
-  cols <- c("black","red","blue","darkgreen","violet","salmon","purple","orange","maroon","gold","chocolate","aquamarine","brown")
+  cols <- c("darkgreen","red","blue","black","violet","salmon","purple","orange","maroon","gold","chocolate","aquamarine","brown")
   
   # if D non-empty, plot
   # otherwise plot empty diagram
@@ -202,13 +202,7 @@ plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,threshol
     }
     if(legend == T)
     {
-      if(max(dims) <= 2)
-      {
-        l <- c(expression(H[0]~' components'),expression(H[1]~' loops'),expression(H[2]~' voids'))[dims + 1]
-      }else
-      {
-        l <- as.character(dims)
-      }
+      l <- c(expression(H[0]~' clusters'),expression(H[1]~' loops'),expression(H[2]~' voids'),expression(H[3]),expression(H[4]),expression(H[5]),expression(H[6]),expression(H[7]),expression(H[8]),expression(H[9]),expression(H[10]),expression(H[11]),expression(H[12]))[dims + 1]
       graphics::legend("bottomright",legend = l,col = cols[dims + 1],pch = pchs[dims + 1],inset = 0.01*max(D[,3L])) 
     }
     graphics::abline(a = 0,b = 1)
