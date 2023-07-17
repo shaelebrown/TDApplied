@@ -56,15 +56,32 @@ While persistence diagrams have been found to be a useful summary of datasets in
 
 **TDApplied** is the first R package which provides applied analysis implementations of published methods for analyzing persistence diagrams using machine learning and statistical inference. Its functions contain highly optimized and scalable code (see the package vignette "Benchmarking and Speedups") and have been tested and validated (see the package vignette "Comparing Distance Calculations"). **TDApplied** can interface with other data science packages to perform powerful and flexible analyses (see the package vignette "Personalized Analyses with **TDApplied**"), and an example usage of **TDApplied** on real data has been demonstrated (see the package vignette "Human Connectome Project Analysis").
 
-This vignette documents the background, theory, advantages and limitations of utilizing **TDApplied** functions on simulated data.
+This vignette documents the background of **TDApplied** functions and the usage of those functions on simulated data, by considering a typical data analysis workflow for topological data analysis: 
 
-# Background: Persistent Homology
+1. Computing and comparing persistence diagrams.
+2. Visualizing and interpreting persistence diagrams.
+3. Analyzing statistical properties of groups of persistence diagrams.
+4. Finding latent structure in groups of persistence diagrams.
+5. Predicting labels from persistence diagram structure.
 
-The main tool of topological data analysis is called *persistent homology* [@PHoriginal;@ComputingPH]. Persistent homology starts with data points and a distance function. It assumes that these points arise from a dataset with some kind of "shape". This "shape" has certain features that exist at various scales, but sampling induces noise in these features. Persistent homology aims to describe certain mathematical features of this underlying shape, by forming approximations to the shape at various distance scales. The mathematical features which are tracked include clusters (connected components), loops (ellipses) and voids (spheres), which are examples of *cycles* (i.e. different types of holes). The *homological dimension* of these features are 0, 1 and 2, respectively. What is interesting about these particular mathematical features is that they can tell us where our data is not, which is extremely important information which other data analysis methods cannot provide.
+To start we must load the **TDApplied** package:
+
+```{r setup}
+#library("TDApplied")
+devtools::load_all()
+``` 
+
+Let's get started!
+
+# Computing and Comparing Persistence Diagrams
+
+## Computing Diagrams and **TDApplied**'s `PyH` Function
+
+The main tool of topological data analysis is called *persistent homology* [@PHoriginal;@ComputingPH]. Persistent homology starts with either data points and a distance function, or a distance matrix storing distance values between data points. It assumes that these points arise from a dataset with some kind of "shape". This "shape" has certain features that exist at various scales, but sampling induces noise in these features. Persistent homology aims to describe certain mathematical features of this underlying shape, by forming approximations to the shape at various distance scales. The mathematical features which are tracked include clusters (connected components), loops (ellipses) and voids (spheres), which are examples of *cycles* (i.e. different types of holes). The *homological dimension* of these features are 0, 1 and 2, respectively. What is interesting about these particular mathematical features is that they can tell us where our data is not, which is extremely important information which other data analysis methods cannot provide.
 
 ```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center',eval = requireNamespace("TDA")}
-circ <- TDA::circleUnif(n = 50,r = 1)
 par(mfrow = c(1,4))
+circ <- TDA::circleUnif(n = 50,r = 1)
 plot(x = circ[,1],y = circ[,2],main = "Approximation 1:\nindividual data points",xlab = "",ylab = "",las = 1)
 plot(x = circ[,1],y = circ[,2],main = "Approximation 2:\nnot a loop",xlab = "",ylab = "",las = 1)
 for(i in 1:(nrow(circ)-1))
@@ -102,28 +119,85 @@ for(i in 1:(nrow(circ)-1))
 par(mfrow = c(1,1))
 ```
 
-The persistent homology algorithm proceeds in the following manner: first, if the input is a dataset and distance metric, then the distance matrix, storing the distance metric value of each pair of points in the dataset, is computed. Next, a parameter $\epsilon \geq 0$ is grown starting at 0, and at each $\epsilon$ value we compute a shape approximation of the dataset $C_{\epsilon}$, called a *simplicial complex*. We construct $C_{\epsilon}$ by connecting all pairs of points whose distance is at most $\epsilon$. To encode higher-dimensional structure in these approximations, we also add a triangle between any triple of points which are all connected (note that no triangles are formally shaded on the above diagram, even though there are certainly tripled of connected points), a tetrahedron between any quadruple of points which are all connected, etc. Note that this process of forming a sequence of skeletal approximations is called a *Rips-Vietoris filtration*, and other methods exist for forming the approximations.
+The persistent homology algorithm proceeds in the following manner: first, if the input is a dataset and distance metric, then the distance matrix, storing the distance metric value of each pair of points in the dataset, is computed. Next, a parameter $\epsilon \geq 0$ is grown starting at 0, and at each $\epsilon$ value we compute a shape approximation of the dataset $C_{\epsilon}$, called a *simplicial complex* or in this case a *Rips complex*. We construct $C_{\epsilon}$ by connecting all pairs of points whose distance is at most $\epsilon$. To encode higher-dimensional structure in these approximations, we also add a triangle between any triple of points which are all connected (note that no triangles are formally shaded on the above diagram, even though there are certainly triples of connected points), a tetrahedron between any quadruple of points which are all connected, etc. Note that this process of forming a sequence of skeletal approximations is called a *Rips-Vietoris filtration*, and other methods exist for forming the approximations.
 
-At any given $\epsilon$ value, some topological features will exist in $C_{\epsilon}$. As $\epsilon$ grows, the $C_{\epsilon}$'s will contain each other, i.e. if $\epsilon_{1} < \epsilon_{2}$, then every edge (triangle, tetrahedron etc.) in $C_{\epsilon_1}$ will also be present in $C_{\epsilon_2}$. Each topological feature of interest will be "born" at some $\epsilon_{birth}$ value, and "die" at some some $\epsilon_{death}$ value -- certainly each feature will die once the whole dataset is connected and has trivial shape structure. Consider the example of a loop -- a loop will be "born" when the last connection around the circumference of the loop is connected (at the $\epsilon$ value which is the largest distance between consecutive points around the loop), and the loop will "die" when the last connection across the loop's diameter is connected thereby filling in its hole. Since the topological features are tracked across multiple scales, we can estimate their (static) location in the data, i.e. finding the points on these structures, by calculating what are called *representative cycles*.
+At any given $\epsilon$ value, some topological features will exist in $C_{\epsilon}$. As $\epsilon$ grows, the $C_{\epsilon}$'s will contain each other, i.e. if $\epsilon_{1} < \epsilon_{2}$, then every edge (triangle, tetrahedron etc.) in $C_{\epsilon_1}$ will also be present in $C_{\epsilon_2}$. Each topological feature of interest will be "born" at some $\epsilon_{birth}$ value, and "die" at some some $\epsilon_{death}$ value -- certainly each feature will die once the whole dataset is connected and has trivial shape structure. Consider the example of a loop -- a loop will be "born" when the last connection around the circumference of the loop is connected (at the $\epsilon$ value which is the largest distance between consecutive points around the loop), and the loop will "die" when enough connections across the loop fill in its hole. Since the topological features are tracked across multiple scales, we can estimate their (static) location in the data, i.e. finding the points on these structures, by calculating what are called *representative cycles*.
 
 The output of persistent homology, a *persistence diagram*, has one 2D point for each topological feature found in the filtration process in each desired homological dimension, where the $x$-value of the point is the birth $\epsilon$-value and the $y$-value is the death $\epsilon$-value. Hence every point in a persistence diagram lies above the diagonal -- features die after they are born! The difference of a points $y$ and $x$ value, $y-x$, is called the "persistence" of the corresponding topological feature. Points which have high (large) persistence likely represent real topological features of the dataset, whereas points with low persistence likely represent topological noise.
+
+For a more practical and scalable computation of persistence diagrams, a method has been introduced called *persistence cohomology* [@PChom;@PHom_dualities] which calculates the exact same output as persistent homology (with analogous "representative co-cycles" to persistent homology's representative cycles) just much faster. Persistent cohomology is implemented in the c++ library **ripser** [@Ripser], which is wrapped in R in the **TDAstats** package [@R-TDAstats] and in Python in the **ripser** module. However, it was observed in simulations that the Python implementation of **ripser** seemed faster, even when called in R via the reticulate package [@R-reticulate] (see the package vignette "Benchmarking and Speedups"). Therefore, the **TDApplied** `PyH` function has been implemented as a wrapper of the Python **ripser** module for fast calculations of persistence diagrams.
+
+There are three prerequisites that must be satisfied in order to use the `PyH` function:
+
+1. The reticulate package must be installed.
+2. Python must be installed and configured to work with reticulate.
+3. The **ripser** Python module must be installed, via `reticulate::py_install("ripser")`.
+
+For a sample use of `PyH` we will use the following pre-loaded dataset called "circ" (which is stored as a data frame in this vignette):
+
+```{r,echo = F,eval = T}
+# create the data
+circ <- data.frame(x = c(-0.815663170207959,-0.595099344842628,0.864889292249816,0.20793951765139,-0.954866650195679,-0.18706988463915,-0.798725432243614,0.830591026518797,-0.661799977235305,0.999878714877245,0.245504222689744,-0.431326750789015,0.666897829439335,0.30720650008886,0.661328840033743,-0.76039885584628,0.239379052558954,-0.351042298907497,-0.829639564028719,0.71216384463492,-0.940714425455924,-0.949907158729059,0.101402707416082,0.986585898475086,0.33772426530395,0.734256674456601,0.771307272532461,0.980540492964891,-0.750935667779769,0.63057972598311,0.75993549565125,-0.997652044265574,-0.199144715289604,-0.996513284779077,0.997484507122883,0.918374523107964,0.54816769740782,0.22028039764542,-0.965072372227865,-0.86565030108487,0.999975356226944,-0.0356376975101777,-0.998775901784022,0.879402540916111,0.389455305917558,-0.73827286958174,0.322030655401438,0.321397994754972,0.943823546436826,-0.565572997267532),y = c(0.578527089051413,-0.803652144754107,-0.501962660116878,0.978141685544025,-0.297034813353725,-0.982346608006102,0.601695673814639,0.55688288415649,-0.749680458683131,0.0155741945354593,0.969395521261319,-0.902195784768357,-0.745149169689602,-0.951642877503506,0.750096104069088,0.649456372690012,-0.970926191425475,-0.936359602064153,-0.558299376498163,0.702013289329204,-0.339199601619947,0.312532222011246,-0.994845460827303,0.163242962880818,0.941245090624598,-0.678871958484023,0.63646295362616,-0.196316941847027,0.660375365119076,-0.776124480466288,-0.649998494190016,0.0684864845989492,-0.979970092590699,0.0834342451204145,-0.0708848224221418,0.395712313816768,0.836368444836729,-0.975436592717935,-0.261983427648545,0.500649134855612,-0.00702046571072753,0.999364775503006,-0.0494641083566077,0.476078954618127,-0.921045365165398,0.674502164592185,-0.946729241642889,0.946944205836586,-0.330449864868202,0.824698238607201))
+```
+
+```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
+plot(x = circ$x,y = circ$y,xlab = "x",ylab = "y",main = "circ")
+```
+
+We would then calculate the persistence diagram as follows:
+
+```{r,echo = T,eval = F}
+# import the ripser module
+ripser <- import_ripser()
+
+# calculate the persistence diagram
+diag <- PyH(X = circ,maxdim = 1,thresh = 2,ripser = ripser)
+
+# view last five rows of the diagram
+diag[47:51,]
+```
+
+```{r,echo = F,eval = T}
+diag <- data.frame(dimension = c(rep(0,50),1),birth = c(rep(0,50),0.5579783),death = c(0.0123064760118723,0.0144490944221616,0.0149910748004913,0.0156172784045339,0.0172923970967531,0.0189713705331087,0.0196240246295929,0.0225948672741652,0.0286996569484472,0.0365069359540939,0.038569450378418,0.0386403761804104,0.0444764532148838,0.0477333702147007,0.0612373314797878,0.0639129132032394,0.0699725300073624,0.0705153122544289,0.0721508488059044,0.0791449695825577,0.0858016163110733,0.0872511267662048,0.0882881134748459,0.0893174782395363,0.0925402045249939,0.0944025367498398,0.0944980531930923,0.099234826862812,0.117955945432186,0.120451688766479,0.126571387052536,0.139067515730858,0.142296731472015,0.148265853524208,0.158034011721611,0.181465998291969,0.188804805278778,0.19113427400589,0.20612421631813,0.21517525613308,0.228875741362572,0.233790531754494,0.235128790140152,0.242270082235336,0.244500055909157,0.245646774768829,0.254552245140076,0.281323730945587,0.288743227720261,2,1.73859250545502))
+diag[47:51,]
+```
+
+In the package vignette "Benchmarking and Speedups", simulations are used to demonstrate the practical advantages of using `PyH` to calculate persistence diagrams compared to other alternatives.
+
+Note that the installation status of Python for `PyH` is checked using the function `reticulate::py_available()`, which according to several online forums does not always behave as expected. If error messages occur using **TDApplied** functions regarding Python not being installed then we recommend consulting online resources to ensure that the `py_available` function returns `TRUE` on your system. Due to the complicated dependencies required to use the `PyH` function, it is only an optional function in the **TDApplied** package and therefore the reticulate package is only suggested in the **TDApplied** namespace.
+
+## Converting Diagrams to DataFrames with **TDApplied**'s `diagram_to_df` Function
+
+The most typical data structure used in R for data science is a data frame. The output of the `PyH` function is a data frame (unless representatives are calculated, in which case the output is a list containing a data frame and other information), but the persistence diagrams calculated from the popular R packages **TDA** [@R-TDA] and **TDAstats** [@R-TDAstats] are not stored in data frames, making subsequent machine learning and inference analyses of these diagrams challenging. In order to solve this problem the **TDApplied** function `diagram_to_df` can convert **TDA**/**TDAstats** persistence diagrams into data frames:
+
+```{r,echo = T,eval = requireNamespace("TDAstats") & requireNamespace("TDA")}
+# convert TDA diagram into data frame
+diag1 <- TDA::ripsDiag(circ,maxdimension = 1,maxscale = 2,library = "dionysus")
+diag1_df <- diagram_to_df(diag1)
+class(diag1_df)
+
+# convert TDAstats diagram into data frame
+diag2 <- TDAstats::calculate_homology(circ,dim = 1,threshold = 2)
+diag2_df <- diagram_to_df(diag1)
+class(diag2_df)
+```
+
+When a persistence diagram is calculated with either `PyH`, `ripsDiag` or `alphaComplexDiag` and contains representatives, `diagram_to_df` only returns the persistence diagram data frame (i.e. the representatives are ignored).
+
+## Comparing Persistence Diagrams and **TDApplied**'s `diagram_distance` and `diagram_kernel` Functions
 
 Earlier we mentioned that persistence diagrams do not form structured data, and now we will give an intuitive argument for why this is the case. A persistence diagram $\{(x_1,y_1),\dots,(x_n,y_n)\}$ containing $n$ topological features can be represented in a vector of length $2n$, $(x_1,y_1,x_2,y_2,\dots,x_n,y_n)$. However, we cannot easily combine vectors calculated in this way into a table with a fixed number of feature columns because
 
 (1) persistence diagrams can contain different numbers of features, meaning their vectors would be of different lengths, and
 (2) the ordering of the features is arbitrary, calling into question what the right way to compare the vectors would be. 
 
-Fortunately, we can still apply many machine learning and inference techniques to persistence diagrams provided we can quantify how near (similar) or far (distant) they are from each other, and describing suitable distance and similarity measures with their accompanying analysis methods will be the content of the following section.
+Fortunately, we can still apply many machine learning and inference techniques to persistence diagrams provided we can quantify how near (similar) or far (distant) they are from each other, and these calculations are possible with distance and kernel functions.
 
-# **TDApplied** Methods
+There are several ways to compute distances between persistence diagrams in the same homological dimension. The most common two are called the *2-wasserstein* and *bottleneck* distances [@distance_calc;@comp_geom]. These techniques find an optimal matching of the 2D points in their input two diagrams, and compute a cost of that optimal matching. A point from one diagram is allowed either to be paired (matched) with a point in the other diagram or its diagonal projection, i.e. the nearest point on the diagonal line $y=x$ (matching a point to its diagonal projection is essentially saying that feature is likely topological noise because it died very soon after it was born).
 
-In this section we will describe the various computational tools implemented in the package **TDApplied** to analyze persistence diagrams. To start we must load the **TDApplied** package:
+Allowing points to be paired with their diagonal projections both allows for matchings of persistence diagrams with different numbers of points (which is almost always the case in practice) and also formalizes the idea that some points in a persistence diagram represent noise. The "cost" value associated with a matching is given by either (i) the maximum of infinity-norm distances between paired points, or (ii) the square-root of the sum of squared infinity-norm between matched points. The cost of the optimal matching under loss (i) is the bottleneck distance of persistence diagrams, and the cost of the optimal matching of cost (ii) is called the 2-wasserstein metric of persistence diagrams. Both distance metrics have been used in a number of applications, but the 2-wasserstein metric is able to find more fine-scale differences in persistence diagrams compared to the bottleneck distance. The problem of finding an optimal matching can be solved with the Hungarian algorithm, which is implemented in the R package clue [@R-clue].
 
-```{r setup}
-library("TDApplied")
-``` 
-
-Our examples will take as input persistence diagrams computed in one of three ways: (1) using the fixed diagrams D1, D2 and D3 from the diagram below, (2) using D1, D2 and D3 with added Gaussian noise to their points, or (3) **TDA**/**TDAstats** calculated persistence diagrams from simple shapes like points sampled from a unit circle.
+We will introduce three new simple persistence diagrams, D1, D2 and D3, for examples in this section (and future ones):
 
 ```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center'}
 D1 = data.frame(dimension = c(0),birth = c(2),death = c(3))
@@ -135,11 +209,358 @@ plot_diagram(D2,title = "D2",max_radius = 4,legend = F)
 plot_diagram(D3,title = "D3",max_radius = 4,legend = F)
 ```
 
+Here is a plot of the optimal matchings between D1 and D2, and between D1 and D3:
+
+```{r,echo = F,fig.height = 3,fig.width = 5,fig.align = 'center'}
+par(mfrow = c(1,2))
+plot(x = c(D1$birth,D2$birth),y = c(D1$death,D2$death),main = "Best matching D1,D2",xlab = "",ylab = "",xlim = c(0,4),ylim = c(0,4))
+abline(a = 0,b = 1)
+lines(c(2,2),c(3,3.3))
+lines(c(0,0.25),c(0.5,0.25))
+
+plot(x = c(D1$birth,D3$birth),y = c(D1$death,D3$death),main = "Best matching D1,D3",xlab = "",ylab = "",xlim = c(0,4),ylim = c(0,4))
+abline(a = 0,b = 1)
+lines(c(2,2.5),c(3,2.5))
+lines(c(0,0.25),c(0.5,0.25))
+par(mfrow = c(1,1))
+```
+
+In the picture we can see that there is a "better" matching between D1 and D2 compared to D1 and D3, so the (wasserstein/bottleneck) distance value between D1 and D2 would be smaller than that of D1 and D3.
+
+Another distance metric between persistence diagrams, which will be useful for kernel calculations, is called the *Fisher information metric*, $d_{FIM}(D_1,D_2,\sigma)$ [@persistence_fisher]. The idea is to represent the two persistence diagrams as probability density functions, with a 2D-Gaussian point mass centered at each point in both diagrams (including the diagonal projections of the points in the opposite diagram), all of variance $\sigma^2 > 0$, and calculate how much those distributions disagree on their pdf value at each point in the plane (called their *Fisher information metric*). 
+
+```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center'}
+par(mfrow = c(1,3))
+x = seq(-4,4,0.01)
+y = seq(-4,4,0.01)
+
+D1_with_diag = rbind(D1,data.frame(dimension = c(0),birth = c(0.25),death = c(0.25)))
+z1 = outer(x,y,FUN = function(x,y){
+  
+  # sigma = 1
+  return((exp(-((x-D1_with_diag[1,2])^2+(y-D1_with_diag[1,3])^2)/(2*1^2)))/sqrt(2*pi*1^2) + 
+           (exp(-((x-D1_with_diag[2,2])^2+(y-D1_with_diag[2,3])^2)/(2*1^2)))/sqrt(2*pi*1^2))
+  
+})
+z1 = z1/sum(z1)
+image(x = x,y = y,z1,main = "Distribution for D1",xlab = "",xlim = c(-4,4),ylim = c(-4,4),ylab = "")
+abline(a = 0,b = 1)
+
+D3_with_diag = rbind(D3,data.frame(dimension = c(0),birth = c(2.5),death = c(2.5)))
+z3 = outer(x,y,FUN = function(x,y){
+  
+  # sigma = 1
+  return((exp(-((x-D3_with_diag[1,2])^2+(y-D3_with_diag[1,3])^2)/(2*1^2)))/sqrt(2*pi*1^2) + 
+           (exp(-((x-D3_with_diag[2,2])^2+(y-D3_with_diag[2,3])^2)/(2*1^2)))/sqrt(2*pi*1^2))
+  
+})
+z3 = z3/sum(z3)
+image(x = x,y = y,z3,main = "Distribution for D3",xlab = "",xlim = c(-4,4),ylim = c(-4,4),ylab = "")
+abline(a = 0,b = 1)
+
+image(x = x,y = y,z1-z3,main = "Difference of distributions",xlab = "",xlim = c(-4,4),ylim = c(-4,4),ylab = "")
+abline(a = 0,b = 1)
+
+par(mfrow = c(1,1))
+```
+
+Points in the rightmost plot which are close to white in color have the most similar pdf values in the two distributions, and would not contribute to a large distance value; however, having more points with a red color would contribute to a larger distance value.
+
+The wasserstein and bottleneck distances have been implemented in the **TDApplied** function `diagram_distance`. We can confirm that the distance between D1 and D2 is smaller than D1 and D3 for both distances:
+
+```{r,echo = T}
+# calculate 2-wasserstein distance between D1 and D2
+diagram_distance(D1,D2,dim = 0,p = 2,distance = "wasserstein")
+
+# calculate 2-wasserstein distance between D1 and D3
+diagram_distance(D1,D3,dim = 0,p = 2,distance = "wasserstein")
+
+# calculate bottleneck distance between D1 and D2
+diagram_distance(D1,D2,dim = 0,p = Inf,distance = "wasserstein")
+
+# calculate bottleneck distance between D1 and D3
+diagram_distance(D1,D3,dim = 0,p = Inf,distance = "wasserstein")
+```
+
+There is a generalization of the 2-wasserstein distance for any $p \geq 1$, the *p-wasserstein* distance, which can also be computed using the `diagram_distance` function by varying the parameter `p`, although $p = 2$ seems to be the most popular parameter choice.
+
+The `diagram_distance` function can also calculate the Fisher information metric between persistence diagrams:
+
+```{r,echo = T}
+# Fisher information metric calculation between D1 and D2 for sigma = 1
+diagram_distance(D1,D2,dim = 0,distance = "fisher",sigma = 1)
+
+# Fisher information metric calculation between D1 and D3 for sigma = 1
+diagram_distance(D1,D3,dim = 0,distance = "fisher",sigma = 1)
+```
+
+Again, D1 and D2 are less different than D1 and D3 using the Fisher information metric. 
+
+A fast approximation to the Fisher information metric was described in [@persistence_fisher], and C++ code in the GitHub repository (https://github.com/vmorariu/figtree) was used to calculate this approximation in Matlab. Using the Rcpp package [@Rcpp] this code is included in **TDApplied** and the approximation can be calculated by providing the positive `rho` parameter:
+
+```{r,echo = T}
+# Fisher information metric calculation between D1 and D2 for sigma = 1
+diagram_distance(D1,D2,dim = 0,distance = "fisher",sigma = 1)
+
+# fast approximate Fisher information metric calculation between D1 and D3 for sigma = 1
+diagram_distance(D1,D2,dim = 0,distance = "fisher",sigma = 1,rho = 0.001)
+```
+
+Now we will explore calculating similarity of persistence diagrams using kernel functions. A kernel function is a special (positive semi-definite) symmetric similarity measure between objects in some complicated space which can be used to project data into a space suitable for machine learning [@murphyML]. Some examples of machine learning techniques which can be "kernelized" when dealing with complicated data are *k-means* (kernel k-means), *principal components analysis* (kernel PCA), and *support vector machines* (SVM) which are inherently based on kernel calculations.
+
+There have been, to date, four main kernels proposed for persistence diagrams. In **TDApplied** the persistence Fisher kernel [@persistence_fisher] has been implemented because of its practical advantages over the other kernels -- smaller cross-validation SVM error on a number of test data sets and a faster method for cross validation. For information on the other three kernels see [@kernel_TDA;@sliced_wasserstein;@kernel_TDA_original].
+
+The persistence Fisher kernel is computed directly from the Fisher information metric between two persistence diagrams: let $\sigma > 0$ be the parameter for $d_{FIM}$, and let $t > 0$. Then the persistence Fisher kernel is defined as $k_{PF}(D_1,D_2) = \mbox{exp}(-t*d_{FIM}(D_1,D_2,\sigma))$. 
+
+Computing the persistence Fisher kernel can be achieved with the `diagram_kernel` function in **TDApplied**:
+
+```{r,echo = T}
+# calculate the kernel value between D1 and D2 with sigma = 2, t = 2
+diagram_kernel(D1,D2,dim = 0,sigma = 2,t = 2)
+# calculate the kernel value between D1 and D3 with sigma = 2, t = 2
+diagram_kernel(D1,D3,dim = 0,sigma = 2,t = 2)
+```
+
+As before, D1 and D2 are more similar than D1 and D3, and if desired a fast approximation to the kernel value can be computed.
+
+# Visualizing and Interpreting Persistence Diagrams
+
+## **TDApplied's** Function `plot_diagram`
+
+Persistence diagrams can contain any number of points representing different types of topological features from different homological dimensions. However we can easily view this information in a two-dimensional plot of the birth and death values of the topological features, where each homological dimension has a unique point shape and color, using **TDApplied's** `plot_diagram` function:
+
+```{r,echo = T,fig.height = 5,fig.width = 5,fig.align = 'center'}
+plot_diagram(diag,title = "Circle diagram")
+```
+
+Now that we can visualize persistence diagrams we will describe three tools which can be used for their interpretation -- filtering out noisy topological features with bootstrapping, representative (co)cycles and *Rips graphs*.
+
+## Bootstrapping Topological Features and **TDApplied**'s `bootstrap_persistence_thresholds` Function
+
+Noise in datasets can drastically affect the results of inference and machine learning procedures. Therefore it is desirable to clean data before applying such procedures. Noise in persistence diagrams are low persistence topological features, i.e. features whose birth and death values are very similar (such points would be near the diagonal line when plotted). The question of determining which points in a persistence diagrams are "significant" and which are "noise" has been addressed via a bootstrapping approach in [@bootstrap].
+
+The idea of the procedure is as follows, where $X$ is the input data set and $\alpha$ is the desired threshold for type 1 error:
+
+1. We first compute $D$, the diagram of $X$.
+2. Then we repeatedly sample, with replacement, the original data to obtain $\{X_1,\dots,X_n\}$ and compute new persistence diagrams $\{D_1,\dots,D_n\}$.
+3. We calculate the bottleneck distance of each new diagram with the original, $d_{\infty}(D_i,D)$, in each dimension separately.
+4. Finally we compute the $1-\alpha$ percentile of these values in each dimension.
+
+These thresholds form a square-shaped "confidence interval" around each point in $D$. In particular, if $t$ was the threshold found for dimension $k$ then the confidence interval around a point $(x,y) \in D$ (of dimension $k$) is the set of points $\{(x',y'):\mbox{max}(|x-x'|,|y-y'|) < t\}$. For example, if we calculated the bottleneck-threshold-based confidence interval around the single 1-dimensional point in the circ dataset's persistence diagram, we would get something like this:
+
+```{r,echo = F,fig.height = 5,fig.width = 5,fig.align = 'center',eval = requireNamespace("TDAstats") & requireNamespace("TDA")}
+par(mfrow = c(1,1))
+pt <- as.numeric(diag[which(diag[,1L] == 1),])[2:3]
+plot_diagram(D = diag,title = "Circ diagram with confidence interval",legend = T,max_radius = 2*0.3953059 + pt[[2]])
+graphics::rect(xleft = pt[[1]]-0.3953059,xright = pt[[1]]+0.3953059,ybottom = pt[[2]]-0.3953059,ytop = pt[[2]]+0.3953059,lty = "dashed")
+graphics::lines(x = c(pt[[1]],pt[[1]] + 0.3953059),y = c(pt[[2]],pt[[2]]))
+graphics::lines(x = c(pt[[1]],pt[[1]]),y = c(pt[[2]],pt[[2]] - 0.3953059))
+graphics::text(x = c(pt[[1]] + 0.3953059/2,0.4),y = c(1.83,1.55),c("t","t"))
+```
+
+In this setup, "significant" points will be those whose (open) confidence intervals do not overlap the diagonal line, i.e. where birth and death is the same. Note that the persistence threshold is twice the bottleneck distance threshold calculated above: the (Euclidean) distance from the point to the bottom right corner of the box is $\sqrt{2}t$, which must be greater than or equal to the (Euclidean) distance of the point to its diagonal projection, which is $\frac{y-x}{\sqrt{2}}$. Therefore, for the point to be considered real (i.e. significant), $\sqrt{2}t \leq \frac{y-x}{\sqrt{2}}$, implying that the persistence of the point, $y-x$, must be no less than twice the bottleneck threshold $t$.
+
+The function `bootstrap_persistence_thresholds` can be used to determine these persistence thresholds. Here is an example for the circ dataset, and the results can be plotted with the `plot_diagram` function:
+
+```{r,fig.height = 4,fig.width = 8,fig.align = 'center'}
+# calculate the bootstrapped persistence thresholds using 2 cores
+# and 30 iterations
+thresh <- bootstrap_persistence_thresholds(X = circ,FUN = "ripsDiag",
+                                 maxdim = 1,thresh = 2,num_workers = 2,
+                                 num_samples = 30)
+diag <- thresh$diag
+
+# plot original diagram and thresholded diagram side-by-side:
+par(mfrow = c(1,2))
+
+plot_diagram(diag,title = "Circ diagram")
+
+plot_diagram(diag,title = "Circ diagram with thresholds",
+             thresholds = thresh$thresholds)
+```
+
 ```{r,echo = F}
 par(mfrow = c(1,1))
 ```
 
-In this vignette we have implemented a helper function `generate_TDApplied_vignette_data` which will add Gaussian noise with a small variance to the birth and death values of the points in D1, D2 and D3, making "noisy copies" of the three diagrams.
+The bootstrap procedure can be done in parallel or sequentially, depending on which function is specified to calculate the persistence diagrams. There are three possible such functions -- **TDAstats**' `calculate_homology`, **TDA**'s `ripsDiag` and **TDApplied**'s `PyH`. The functions `calculate_homology` and `ripsDiag` can be run in parallel. However, `PyH` is the fastest function followed by `calculate_homology` based on our simulatations. Both `ripsDiag` and `PyH` allow for the calculation of representative (co)cycles (i.e. the approximate location in the data of each topological feature), whereas `calculate_homology` does not. Therefore, our recommendation is to pick the function according to the following criteria: if a user can use the `PyH` function, then it should be used in all cases except for when the input data set is small, the machine has many available cores and the number of desired bootstrap iterations is large. Otherwise, use `calculate_homology` for speed or `ripsDiag` for calculating representatives. 
+
+## Representative (Co)Cycles
+
+One of the advantages of the R package **TDA** over **TDAstats** is its ability to calculate representative cycles in the data, i.e. locating the persistence diagram topological features in the input data set. Having access to representative cycles can permit deep analyses of the original data set by finding particular types of features spanned by certain subsets of data points. For example, a representative cycle of a 1-dimensional topological feature would be a set of edges between data points which lie along that feature (a loop). The `PyH` function can also find *representative cocycles* (i.e. analogues of representative cycles for persistent cohomology) in its input data, which are returned if the `calculate_representatives` parameter is set to `TRUE`. In that case, the `PyH` function returns a list with a data frame called "diagram", containing the persistence diagram, and a list called "representatives". The "representatives" list has one element for each homological dimension in the persistence diagram, with one matrix/array for each point in the persistence diagram of that dimension (except for dimension 0, where the list is always empty). The matrix for a $d$-dimensional feature (1 for loops, 2 for voids, etc.) has $d + 1$ columns, where row $i$ contains the row indices in the data set of the data points in the $i$-th substructure in the representative (a substructure of a loop would be an edge, a substructure of a void would be a triangle, etc.). Here is an example where we calculate the representative cocycles of our circ dataset:
+
+```{r,echo = T,eval = F}
+# ripser has already been imported, so calculate diagram with representatives
+diag_rep <- PyH(circ,maxdim = 1,thresh = 2,ripser = ripser,calculate_representatives = T)
+
+# identify the loops in the diagram
+diag_rep$diagram[which(diag_rep$diagram$dimension == 1),]
+```
+
+```{r,echo = F}
+data.frame(dimension = c(1),birth = c(0.5579783),death = c(1.738593),row.names = c("50"))
+```
+
+```{r,echo = T,eval = F}
+# show the representative for the loop, just the first five rows
+diag_rep$representatives[[2]][[1]][1:5,]
+```
+
+```{r,echo = F}
+representative = matrix(data = c(50,42,46,42,50,4,42,29,42,16,50,11,42,7,42,1,50,48,50,25,42,40,46,4,29,4,16,4,46,11,29,11,16,11,7,4,48,46,4,1,11,7,46,25,48,29,50,37,48,16,29,25,11,1,25,16,42,22,48,7,40,4,25,7,48,1,40,11,25,1,50,15,48,40,40,25,50,20,46,37,37,29,37,16,42,34,22,4,42,32,50,27,22,11,37,7,37,1,46,15,29,15,48,22,50,8,43,42,16,15,25,22,46,20,40,37,29,20,15,7,20,16,50,44,15,1,34,4,46,27,32,4,20,7,29,27,34,11,27,16,20,1,32,11,50,36,40,15,42,39,27,7,46,8,48,34,48,32,29,8,43,4,34,25,37,22,27,1,42,5,40,20,16,8,32,25,43,11,42,21,46,44,8,7,44,29,40,27,8,1,44,16,48,43,43,25,22,15,46,36,44,7,50,24,36,29,40,8,36,16,44,1,39,4,22,20,37,34,5,4,37,32,39,11,36,7),nrow = 113,ncol = 2,byrow = T)
+representative[1:5,]
+```
+
+The representative of the one loop contains the edges found to be present in the loop. We could iterate over the representative for the loop to find all the data points in that representative:
+
+```{r,echo = T,eval = F}
+unique(c(diag_rep$representatives[[2]][[1]][,1],diag_rep$representatives[[2]][[1]][,2]))
+```
+
+```{r,echo = F}
+unique(c(representative[,1],representative[,2]))
+```
+
+Since the circ dataset is two-dimensional, we could actually plot the loop representative according to the following process:
+
+1. Pick a threshold $\epsilon$ between the birth and death radii of the cocycle.
+2. Plot all edges between pairs of points in circ of distance no more than $\epsilon$.
+3. Highlight all edges in the representative.
+
+Since the death radius of the main cocycle is 1.738894, we can use the following code to plot the cocycle at thresholds value 1.7:
+
+```{r,echo = T,eval = F}
+plot(x = circ$x,y = circ$y,xlab = "x",ylab = "y",main = "circ with representative")
+for(i in 1:nrow(circ))
+{
+  for(j in 1:nrow(circ))
+  {
+    pt1 <- circ[i,]
+    pt2 <- circ[j,]
+    if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) <= 1.7)
+    {
+      graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]))
+    }
+  }
+}
+
+for(i in 1:nrow(diag_rep$representatives[[2]][[1]]))
+{
+  pt1 <- circ[diag_rep$representatives[[2]][[1]][i,1],]
+  pt2 <- circ[diag_rep$representatives[[2]][[1]][i,2],]
+  if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) <= 1.7)
+  {
+    graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]),col = "red")
+  }
+}
+```
+
+```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
+plot(x = circ$x,y = circ$y,xlab = "x",ylab = "y",main = "circ with representative")
+for(i in 1:nrow(circ))
+{
+  for(j in 1:nrow(circ))
+  {
+    pt1 <- circ[i,]
+    pt2 <- circ[j,]
+    if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) < 1.7)
+    {
+      graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]))
+    }
+  }
+}
+
+for(i in 1:nrow(representative))
+{
+  pt1 <- circ[representative[i,1],]
+  pt2 <- circ[representative[i,2],]
+  if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) <= 1.7)
+  {
+    graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]),col = "red")
+  }
+}
+```
+
+This plot shows the main loop that was found via persistent cohomology, and the representative is a set of edges (in this 2D case) whose removal would destroy the loop. A more intuitive notion of a "representative loop" can be found with persistent homology, for instance using the **TDA** `ripsDiag` function with the `location` parameter set to TRUE. Another example of the representative cocycle can be found using another threshold value, for instance the (rounded up) birth value of 0.6009:
+
+```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
+plot(x = circ$x,y = circ$y,xlab = "x",ylab = "y",main = "circ with representative")
+for(i in 1:nrow(circ))
+{
+  for(j in 1:nrow(circ))
+  {
+    pt1 <- circ[i,]
+    pt2 <- circ[j,]
+    if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) <= 0.6009)
+    {
+      graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]))
+    }
+  }
+}
+
+for(i in 1:nrow(representative))
+{
+  pt1 <- circ[representative[i,1],]
+  pt2 <- circ[representative[i,2],]
+  if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) <= 0.6009)
+  {
+    graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]),col = "red")
+  }
+}
+```
+
+Since we know that the data points in the representatives help form a loop in the original data set, we could perform a further exploratory analysis in circ to explore the periodic nature of the feature. While in this example we know that a loop will be present, this type of analysis could help find hidden latent structure in data sets.
+
+## Rips Graphs and **TDApplied**'s `rips_graphs` and `plot_rips_graph` Functions
+
+Integral to the plots in the previous section were that the circ dataset is 2D, but most datasets are not 2D. In order to investigate topological features of high-dimensional datasets we can use the Rips complexes which are calculated as an intermediate step in persistent homology (as described earlier). Recall that the Rips complex of a dataset is a skeletal representations of the dataset's structure at a particular scale $\epsilon$ formed by connecting data points of distance at most $\epsilon$ and adding higher-dimensional structures (like triangles between triples of connected points). The connections between data points in a Rips complex form a "Rips graph", and this graph can be visualized regardless of the dimension of the underlying dataset.
+
+We can use the function `rips_graphs` to compute Rips graphs at a variety of scales, and can visualize the resulting graphs with the **igraph** package [@R-igraph] and the `plot_rips_graph` function. To demonstrate this functionality, we will pick two $\epsilon$ scales to study the dataset structure of circ, only based on its persistence diagram - the first scale will be half the birth radius of the loop and the second scale will be the average of the loop's birth and death radius:
+
+```{r,echo = T,eval = T}
+# get half of loop's birth radius
+eps_1 <- diag[nrow(diag),2L]/2
+
+# get mean of loop's birth and death radii
+eps_2 <- (diag[nrow(diag),3L] + diag[nrow(diag),2L])/2
+
+# compute two Rips graphs
+gs <- rips_graphs(X = circ,eps = c(eps_1,eps_2))
+```
+
+Next we can plot both Rips graphs:
+
+```{r,eval = requireNamespace("igraph"),fig.height = 5,fig.width = 5,fig.align = 'center'}
+# plot first graph
+plot_rips_graph(gs,1L)
+
+# plot second graph
+plot_rips_graph(gs,2L)
+```
+
+The first graph shows that at a scale before the loop is born, the dominant loop does not exist in the data (and that the space is more fragmented), while the second graph was able to retrieve the dominant loop. Visualizing multiple Rips graphs of a dataset, choosing particular scales of interest from the persistence diagram of the dataset, can be an effective tool for interpreting topological features.
+
+# Hypothesis Testing
+
+Having visualized and interpreted our data of interest (persistence diagrams), a common next step in data analysis pipelines is to ask statistical questions in the form of hypothesis testing [@CasellaBerger]. Two such questions that we will focus on are:
+
+1. Are groups of persistence diagrams different from each other?
+2. Are two groups of persistence diagrams independent of each other?
+
+In order to answer these questions we need to generate groups of persistence diagrams. We will generate diagrams which are random deviations of D1, D2 and D3 diagrams from earlier:
+
+```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center'}
+par(mfrow = c(1,3))
+plot_diagram(D1,title = "D1",max_radius = 4,legend = F)
+plot_diagram(D2,title = "D2",max_radius = 4,legend = F)
+plot_diagram(D3,title = "D3",max_radius = 4,legend = F)
+```
+
+```{r,echo = F}
+par(mfrow = c(1,1))
+```
+
+The helper function `generate_TDApplied_vignette_data` (seen below) adds Gaussian noise with a small variance to the birth and death values of the points in D1, D2 and D3, making "noisy copies" of the three diagrams:
 
 ```{r,echo = F}
 generate_TDApplied_vignette_data <- function(num_D1,num_D2,num_D3){
@@ -206,381 +627,81 @@ legend("topright", inset=c(-0.2,0),
        pch=16, col=c("black","red","blue"))
 ```
 
-## Fast Calculation of Persistence Diagrams
+## Detecting Group Differences and **TDApplied**'s `permutation_test` Function
 
-The time required to calculate persistence diagrams in, in general, a major limiting factor in applied topological data analyses. In order to reduce this computational bottleneck, a method has been introduced called *persistence cohomology* [@PChom;@PHom_dualities], which calculates the exact same output as persistent homology just much faster. Persistent cohomology is implemented in the c++ library **ripser** [@ripser], which is wrapped in R in the **TDAstats** package [@r-TDAstats] and in Python in the **ripser** module. However, it was observed in simulations that the Python implementation of **ripser** seemed faster, even when called in R via the reticulate package [@r-reticulate] (see the package vignette "Benchmarking and Speedups"). Therefore, the **TDApplied** `PyH` function has been implemented as a wrapper of the Python **ripser** module for fast calculations of persistence diagrams.
+One of the most important inference procedures in classical statistics is the analysis of variance (ANOVA), which can find differences in the means of groups of normally-distributed measurements [@CasellaBerger]. Distributions of persistence diagrams and their means can be complicated (see [@PD_means] and [@PD_distributions]). Therefore, a non-parametric permutation test has been proposed which can find differences in groups of persistence diagrams. Such a test was first proposed in [@Robinson_Turner], and some variations have been suggested in later publications. In [@Robinson_Turner], two groups of persistence diagrams would be compared. The null hypothesis, $H_0$, is that the diagrams from the two groups are generated from shapes with the same type and scale of topological features, i.e. they "come" from the same "shape". The alternative hypothesis, $H_A$, is that the underlying type or scale of the features are different between the two groups. In each dimension a p-value is computed, finding evidence against $H_0$ in that dimension. A measure of within-group distances (a "loss function") is calculated for the two groups, and that measure is compared to a null distribution for when the group labels are permuted.
 
-### **TDApplied**'s `PyH` Requirements and Usage
+This inference procedure is implemented in the `permutation_test` function, with several speedups and additional functionalities. Firstly, the loss function is computed in parallel for scalability since distance computations can be expensive. Secondly, we store distance calculations as we compute them because these calculations are often repeated. Additional functionality includes allowing for any number groups (not just two) and allowing for a pairing between groups of the same size as described in (@dependencies). When a natural pairing exists between the groups (such as if the groups represent persistence diagrams from the same subject of a study in different conditions) we can simulate a more realistic null distribution by restricting the way in which we permute group labels, achieving higher statistical power. 
 
-There are three prerequisites that must be satisfied in order to use the `PyH` function:
-
-1. The reticulate package must be installed.
-2. Python must be installed and configured to work with reticulate.
-3. The **ripser** Python module must be installed, via `reticulate::py_install("ripser")`.
-
-Note that the installation status of Python is checked using the function `reticulate::py_available()`, which according to several online forums does not always behave as expected. If error messages occur using **TDApplied** functions regarding Python not being installed then we recommend consulting online resources to ensure that the `py_available` function returns `TRUE` on your system. Due to the complicated dependencies required to use the `PyH` function, it is only an optional function in the **TDApplied** package and therefore the reticulate package is only suggested in the **TDApplied** namespace.
-
-For a sample use of `PyH` we will use the following pre-loaded dataset called "circ" (which is stored as a data frame in this vignette):
-
-```{r,echo = F,eval = T}
-# create the data
-circ <- data.frame(x = c(0.37206401439763,0.187252903758128,-0.941946837003475,0.0442567282078249,0.184638555615293,-0.0837545101464481,-0.364816992194448,-0.722635069185668,-0.965713143554718,-0.832555262051846,0.416857546850322,0.262628948512087,0.335630458504239,-0.987359078856224,0.971143015697996,0.828642381920149,-0.993094328640157,0.864705993526812,-0.601822463909246,0.00855304668431679,-0.694732418249695,0.281097726412362,-0.536528403939666,0.999578844170687,0.500427719325381,0.972755007124087,-0.985828528101177,0.382116090228366,0.187341042513765,-0.999497942642912,0.447939273429357,-0.995551072494437,0.582222964962477,0.852912225230687,0.914794382538427,-0.977030870815178,0.999052449805392,0.986668984725482,0.379560512351362,-0.99022104692615,-0.9293797636278,0.028209644693279,0.125079985118729,0.126437768180937,0.504013549595047,0.933397935474915,0.574043084808964,0.747953695502559,0.841062122135969,0.228565768955052),y = c(-0.928207072366032,0.982311737705576,-0.335762053036297,0.999020190991323,-0.982806493558268,-0.996486418387189,0.93107924593248,-0.691229742403367,-0.259611487353053,0.553941996629414,0.908971828845059,-0.964896904028319,-0.941993734227694,-0.158499367191759,0.238497889007434,0.559778351569352,0.117318602202532,-0.502278353862486,-0.798629902980225,-0.999963422027234,-0.719268285852317,-0.959679148573001,-0.843882261791273,-0.0290195500721963,0.865778319046393,0.231835493648013,-0.167756112204196,0.924114329284308,0.982294932181702,0.0316837916384251,0.894063983906957,0.0942234687069815,-0.813029162496834,0.52205434204883,0.403919840656704,0.213097811988145,0.0435224371772166,-0.162740021447664,0.925166913299201,-0.13950726943238,-0.369124985552503,-0.999602028782595,-0.992146661196165,0.991974541395808,-0.863695746096159,-0.358842993593529,-0.818825095354929,-0.663750909139916,0.540938542450194,-0.973528473780806))
-```
-
-```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
-plot(x = circ$x,y = circ$y,xlab = "x",ylab = "y",main = "circ")
-```
-
-We would then calculate the persistence diagram as follows:
-
-```{r,echo = T,eval = F}
-# import the ripser module
-ripser <- import_ripser()
-
-# calculate the persistence diagram
-diag <- PyH(X = circ,maxdim = 1,thresh = 1,ripser = ripser)
-```
-
-The **ripser** module is imported outside of the `PyH` function using the `import_ripser` function, because this command checks the `PyH` requirements and can be slow -- if many persistence diagrams are to be computed then repeating such checks would be highly prohibitive. Additionally, the `import_ripser` function checks the three prerequisites for `PyH` listed earlier in this section, to avoid repeating checks. In the **TDApplied** package testing it was verified that the `PyH` output matches the **TDAstats** `calculate_homology` output for the same input data and parameters, except for one small difference: in the Python **ripser** calculation there is always one connected component (i.e. dimension 0 topological feature) with infinite death value, whereas this feature is omitted in the **TDAstats** calculation. Whether or not to include this feature in the outputted diagram can be decided by the user via the `ignore_infinite_cluster` parameter being set to `TRUE` (the default value) or `FALSE`.
-
-### Representative Cocycles
-
-One of the advantages of the R package **TDA** over **TDAstats** is its ability to calculate representative cycles in the data, i.e. locating the persistence diagram topological features in the input data set. Having access to representative cycles can permit deep analyses of the original data set by finding particular types of features spanned by certain subsets of data points. For example, a representative cycle of a 1-dimensional topological feature would be a set of edges between data points which lie along that feature (a loop). The `PyH` function can also find *representative cocycles* (i.e. analogues of representative cycles for persistent cohomology) in its input data, which are returned if the `calculate_representatives` parameter is set to `TRUE`. In that case, the `PyH` function returns a list with a data frame called "diagram", containing the persistence diagram, and a list called "representatives". The "representatives" list has one element for each homological dimension in the persistence diagram, with one matrix/array for each point in the persistence diagram of that dimension (except for dimension 0, where the list is always empty). The matrix for a $d$-dimensional feature (1 for loops, 2 for voids, etc.) has $d + 1$ columns, where row $i$ contains the row indices in the data set of the data points in the $i$-th substructure in the representative (a substructure of a loop would be an edge, a substructure of a void would be a triangle, etc.). Here is an example where we calculate the representative cocycles of our circ dataset:
-
-```{r,echo = T,eval = F}
-# ripser has already been imported, so calculate diagram with representatives
-diag <- PyH(circ,maxdim = 1,thresh = 2,ripser = ripser,calculate_representatives = T)
-
-# identify the loops in the diagram
-diag$diagram[which(diag$diagram$dimension == 1),]
-```
-
-```{r,echo = F}
-data.frame(dimension = c(1),birth = c(0.6008424),death = c(1.738894),row.names = c("50"))
-```
-
-```{r,echo = T,eval = F}
-# show the representative for the loop, just the first five rows
-diag$representatives[[2]][[1]][1:5,]
-```
-
-```{r,echo = F}
-representative = matrix(data = c(9,6,35,6,9,3,16,6,31,6,43,9,29,6,9,1,28,9,39,6,13,6,26,6,38,9,27,9,35,3,10,9,30,9,8,6,43,35,16,3,24,9,31,3,6,2,35,1,35,28,40,6,43,16,29,3,43,31,16,1,28,16,31,1,31,28,43,29,29,1,29,28,38,35,35,27,39,3,13,3,26,3,35,10,35,30,43,39,38,16,27,16,43,13,38,31,43,26,31,27,8,3,35,24,16,10,39,1,39,28,31,10,30,16,13,1,28,13,26,1,28,26,38,29,29,27,31,30,3,2,43,8,15,9,7,6,29,10,24,16,48,9,40,3,20,6,31,24,30,29,33,9,8,1,28,8,43,2,29,24,43,40,39,38,2,1,28,2,39,27),nrow = 85,ncol = 2,byrow = T) + matrix(data = 1,nrow = 85,ncol = 2)
-representative[1:5,]
-```
-
-The representative of the one loop contains the edges found to be present in the loop. We could iterate over the representative for the loop to find all the data point in that representative:
-
-```{r,echo = T,eval = F}
-unique(c(diag$representatives[[2]][[1]][,1],diag$representatives[[2]][[1]][,2]))
-```
-
-```{r,echo = F}
-c(9,35,16,31,43,29,28,39,13,26,38,27,10,30,8,24,6,40,3,15,7,48,20,33,2,1) + rep(1,26)
-```
-
-Since the circ dataset is two-dimensional, we can actually plot the loop representative according to the following process:
-
-1. Pick a threshold $\epsilon$ less than the death radius of the cocycle.
-2. Plot all edges between pairs of points in circ of distance no more than $\epsilon$.
-3. Highlight all edges in the representative.
-
-Since the death radius of the main cocycle is 1.738894, we can use the following code to plot the cocycle at thresholds value 1.7:
-
-```{r,echo = T,eval = F}
-plot(x = circ$x,y = circ$y,xlab = "x",ylab = "y",main = "circ with representative")
-for(i in 1:nrow(circ))
-{
-  for(j in 1:nrow(circ))
-  {
-    pt1 <- circ[i,]
-    pt2 <- circ[j,]
-    if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) <= 1.7)
-    {
-      graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]))
-    }
-  }
-}
-
-for(i in 1:nrow(diag$representatives[[2]][[1]]))
-{
-  pt1 <- circ[diag$representatives[[2]][[1]][i,1],]
-  pt2 <- circ[diag$representatives[[2]][[1]][i,2],]
-  if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) <= 1.7)
-  {
-    graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]),col = "red")
-  }
-}
-```
-
-```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
-plot(x = circ$x,y = circ$y,xlab = "x",ylab = "y",main = "circ with representative")
-for(i in 1:nrow(circ))
-{
-  for(j in 1:nrow(circ))
-  {
-    pt1 <- circ[i,]
-    pt2 <- circ[j,]
-    if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) < 1.7)
-    {
-      graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]))
-    }
-  }
-}
-
-for(i in 1:nrow(representative))
-{
-  pt1 <- circ[representative[i,1],]
-  pt2 <- circ[representative[i,2],]
-  if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) <= 1.7)
-  {
-    graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]),col = "red")
-  }
-}
-```
-
-This plot shows the main loop that was found via persistent cohomology, and the representative is a set of edges (in this 2D case) whose removal would destroy the loop. A more intuitive notion of a "representative loop" can be found with persistent homology, for instance using the **TDA** `ripsDiag` function with the `cycleLocation` parameter set to TRUE. Another example of the representative cocycle can be found using another threshold value, for instance the (rounded up) birth value of 0.6009:
-
-```{r,echo = F,warning=F,fig.height = 4,fig.width = 4,fig.align = 'center'}
-plot(x = circ$x,y = circ$y,xlab = "x",ylab = "y",main = "circ with representative")
-for(i in 1:nrow(circ))
-{
-  for(j in 1:nrow(circ))
-  {
-    pt1 <- circ[i,]
-    pt2 <- circ[j,]
-    if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) <= 0.6009)
-    {
-      graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]))
-    }
-  }
-}
-
-for(i in 1:nrow(representative))
-{
-  pt1 <- circ[representative[i,1],]
-  pt2 <- circ[representative[i,2],]
-  if(sqrt((pt1[[1]] - pt2[[1]])^2 + (pt1[[2]] - pt2[[2]])^2) <= 0.6009)
-  {
-    graphics::lines(x = c(pt1[[1]],pt2[[1]]),y = c(pt1[[2]],pt2[[2]]),col = "red")
-  }
-}
-```
-
-Since we know that the data points in the representatives help form a loop in the original data set, we could perform a further exploratory analysis in circ to explore the periodic nature of the feature. While in this example we know that a loop will be present, this type of analysis could help find hidden latent structure in data sets. In this way `PyH` is as flexible as the **TDA** persistent homology function `ripsDiag`, although representative cocycles are less intuitive than representative cycles.
-
-## Converting Diagrams to Data Frames
-
-The most typical data structure used in R for data science is a data frame. The output of the `PyH` function is a data frame (unless representatives are calculated, in which case the output is a list containing a data frame and other information),but the persistence diagrams calculated from the popular R packages **TDA** [@R-TDA] and **TDAstats** [@R-TDAstats] are not stored in data frames, making subsequent machine learning and inference analyses of these diagrams challenging. In order to solve this problem the **TDApplied** function `diagram_to_df` can convert **TDA**/**TDAstats** persistence diagrams into data frames:
-
-```{r,echo = T,eval = requireNamespace("TDAstats") & requireNamespace("TDA")}
-# convert TDA diagram into data frame
-diag1 <- TDA::ripsDiag(circ,maxdimension = 1,maxscale = 2,library = "dionysus")
-diag1_df <- diagram_to_df(diag1)
-class(diag1_df)
-
-# convert TDAstats diagram into data frame
-diag2 <- TDAstats::calculate_homology(circ,dim = 1,threshold = 2)
-diag2_df <- diagram_to_df(diag1)
-class(diag2_df)
-```
-
-When a persistence diagram is calculated with either `PyH`, `ripsDiag` or `alphaComplexDiag` and contains representatives, `diagram_to_df` only returns the persistence diagram data frame (i.e. the representatives are ignored).
-
-## Quantifying Differences and Similarities Between Pairs Persistence Diagrams
-
-As the persistence diagram is a descriptor of the underlying shape structure of a dataset, it can be useful to quantify the difference and similarity between pairs of persistence diagrams. Difference can be quantified with distance functions and similarity with kernel functions, and these types of functions are the foundation of all applied analysis methods of persistence diagrams. 
-
-### Distance Functions
-
-There are several ways to compute distances between persistence diagrams in the same homological dimension. The most common two are called the *2-wasserstein* and *bottleneck* distances [@distance_calc;@comp_geom]. These techniques find an optimal matching of the 2D points in their input two diagrams, and compute a cost of that optimal matching. A point from one diagram is allowed either to be paired (matched) with a point in the other diagram or its diagonal projection, i.e. the nearest point on the diagonal line $y=x$ (matching a point to its diagonal projection is essentially saying that feature is likely topological noise because it died very soon after it was born).
-
-Allowing points to be paired with their diagonal projections both allows for matchings of persistence diagrams with different numbers of points (which is almost always the case in practice) and also formalizes the idea that some points in a persistence diagram represent noise. The "cost" value associated with a matching is given by either (i) the maximum of infinity-norm distances between paired points, or (ii) the square-root of the sum of squared infinity-norm between matched points. The cost of the optimal matching under loss (i) is the bottleneck distance of persistence diagrams, and the cost of the optimal matching of cost (ii) is called the 2-wasserstein metric of persistence diagrams. Both distance metrics have been used in a number of applications, but the 2-wasserstein metric is able to find more fine-scale differences in persistence diagrams compared to the bottleneck distance. The problem of finding an optimal matching can be solved with the Hungarian algorithm, which is implemented in the R package clue [@R-clue].
-
-```{r,echo = F,fig.height = 3,fig.width = 5,fig.align = 'center'}
-par(mfrow = c(1,2))
-plot(x = c(D1$birth,D2$birth),y = c(D1$death,D2$death),main = "Best matching D1,D2",xlab = "",ylab = "",xlim = c(0,4),ylim = c(0,4))
-abline(a = 0,b = 1)
-lines(c(2,2),c(3,3.3))
-lines(c(0,0.25),c(0.5,0.25))
-
-plot(x = c(D1$birth,D3$birth),y = c(D1$death,D3$death),main = "Best matching D1,D3",xlab = "",ylab = "",xlim = c(0,4),ylim = c(0,4))
-abline(a = 0,b = 1)
-lines(c(2,2.5),c(3,2.5))
-lines(c(0,0.25),c(0.5,0.25))
-par(mfrow = c(1,1))
-```
-
-In the picture we can see that there is a "better" matching between D1 and D2 compared to D1 and D3, so the (wasserstein/bottleneck) distance value between D1 and D2 would be smaller than that of D1 and D3.
-
-The wasserstein and bottleneck distances have been implemented in the **TDApplied** function `diagram_distance`. We can confirm that the distance between D1 and D2 is smaller than D1 and D3 for both distances:
+In order to demonstrate the permutation test we will detect differences between noisy copies of D1, D2, D3:
 
 ```{r,echo = T}
-# calculate 2-wasserstein distance between D1 and D2
-diagram_distance(D1,D2,dim = 0,p = 2,distance = "wasserstein")
-
-# calculate 2-wasserstein distance between D1 and D3
-diagram_distance(D1,D3,dim = 0,p = 2,distance = "wasserstein")
-
-# calculate bottleneck distance between D1 and D2
-diagram_distance(D1,D2,dim = 0,p = Inf,distance = "wasserstein")
-
-# calculate bottleneck distance between D1 and D3
-diagram_distance(D1,D3,dim = 0,p = Inf,distance = "wasserstein")
+# permutation test between three diagrams
+g1 <- generate_TDApplied_vignette_data(3,0,0)
+g2 <- generate_TDApplied_vignette_data(0,3,0)
+g3 <- generate_TDApplied_vignette_data(0,0,3)
+perm_test <- permutation_test(g1,g2,g3,
+                              num_workers = 2,
+                              dims = c(0))
+perm_test$p_values
 ```
 
-There is a generalization of the 2-wasserstein distance for any $p \geq 1$, the *p-wasserstein* distance, which can also be computed using the `diagram_distance` function by varying the parameter `p`, although $p = 2$ seems to be the most popular parameter choice.
+As expected, a difference was found (at the $\alpha = 0.05$ significance level) between the three groups. 
 
-Another distance metric between persistence diagrams, which will be useful for kernel calculations, is called the *Fisher information metric*, $d_{FIM}(D_1,D_2,\sigma)$ [@persistence_fisher]. The idea is to represent the two persistence diagrams as probability density functions, with a 2D-Gaussian point mass centered at each point in both diagrams (including the diagonal projections of the points in the opposite diagram), all of variance $\sigma^2 > 0$, and calculate how much those distributions disagree on their pdf value at each point in the plane (called their *Fisher information metric*). 
+The package **TDAstats** also has a function called `permutation_test` which is based on the same test procedure. However, it uses an unpublished distance metric between persistence diagrams (see the package vignette "Comparing Distance Calculations") and does not use parallelization for scalability. As such, care must be taken when both **TDApplied** and **TDAstats** are attached in an R script to use the particular `permutation_test` function desired.
 
-```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center'}
-par(mfrow = c(1,3))
-x = seq(-4,4,0.01)
-y = seq(-4,4,0.01)
+## Independence Between Two Groups of Paired Diagrams and **TDApplied**'s `independence_test` Function
 
-D1_with_diag = rbind(D1,data.frame(dimension = c(0),birth = c(0.25),death = c(0.25)))
-z1 = outer(x,y,FUN = function(x,y){
-  
-  # sigma = 1
-  return((exp(-((x-D1_with_diag[1,2])^2+(y-D1_with_diag[1,3])^2)/(2*1^2)))/sqrt(2*pi*1^2) + 
-           (exp(-((x-D1_with_diag[2,2])^2+(y-D1_with_diag[2,3])^2)/(2*1^2)))/sqrt(2*pi*1^2))
-  
-})
-z1 = z1/sum(z1)
-image(x = x,y = y,z1,main = "Distribution for D1",xlab = "",xlim = c(-4,4),ylim = c(-4,4),ylab = "")
-abline(a = 0,b = 1)
+An important question when presented with two groups of paired data is determining if the pairings are independent or not. A procedure was described in [@kernel_test] which can be used to answer this question using kernel computations, and importantly uses a parametric null distribution. The null hypothesis for this test is that the groups are independent, and the alternative hypothesis is that the groups are not independent. A test statistic called the *Hilbert-Schmidt independence criteria* [@kernel_test] is calculated, and its value is compared to a gamma distribution with certain parameters which are estimated from the data.
 
-D3_with_diag = rbind(D3,data.frame(dimension = c(0),birth = c(2.5),death = c(2.5)))
-z3 = outer(x,y,FUN = function(x,y){
-  
-  # sigma = 1
-  return((exp(-((x-D3_with_diag[1,2])^2+(y-D3_with_diag[1,3])^2)/(2*1^2)))/sqrt(2*pi*1^2) + 
-           (exp(-((x-D3_with_diag[2,2])^2+(y-D3_with_diag[2,3])^2)/(2*1^2)))/sqrt(2*pi*1^2))
-  
-})
-z3 = z3/sum(z3)
-image(x = x,y = y,z3,main = "Distribution for D3",xlab = "",xlim = c(-4,4),ylim = c(-4,4),ylab = "")
-abline(a = 0,b = 1)
-
-image(x = x,y = y,z1-z3,main = "Difference of distributions",xlab = "",xlim = c(-4,4),ylim = c(-4,4),ylab = "")
-abline(a = 0,b = 1)
-
-par(mfrow = c(1,1))
-```
-
-Points in the rightmost plot which are close to white in color have the most similar pdf values in the two distributions, and would not contribute to a large distance value; however, having more points with a red color would contribute to a larger distance value.
-
-The `diagram_distance` function can also calculate the Fisher information metric between persistence diagrams:
+This inference procedure has been implemented in the `independence_test` function, and returns the p-value of the test in each desired dimension of the diagrams (among other additional information). We would expect to find no dependence between noisy copies of D1, D2 and D3, since each copy is generated randomly:
 
 ```{r,echo = T}
-# Fisher information metric calculation between D1 and D2 for sigma = 1
-diagram_distance(D1,D2,dim = 0,distance = "fisher",sigma = 1)
+# create 10 noisy copies of D1 and D2
+g1 <- generate_TDApplied_vignette_data(10,0,0)
+g2 <- generate_TDApplied_vignette_data(0,10,0)
 
-# Fisher information metric calculation between D1 and D3 for sigma = 1
-diagram_distance(D1,D3,dim = 0,distance = "fisher",sigma = 1)
+# do independence test with sigma = t = 1
+indep_test <- independence_test(g1,g2,dims = c(0),num_workers = 2)
+indep_test$p_values
 ```
 
-Again, D1 and D2 are less different than D1 and D3 using the Fisher information metric. 
+The p-value of this test would not be significant at any typical significance threshold, reflecting the fact that there is no real (i.e. non-spurious) dependence between the two groups, as expected.
 
-A fast approximation to the Fisher information metric was described in [@persistence_fisher], and C++ code in the GitHub repository (https://github.com/vmorariu/figtree) was used to calculate this approximation in Matlab. Using the Rcpp package [@Rcpp] this code is included in **TDApplied** and the approximation can be calculated by providing the positive `rho` parameter:
+# Finding Latent Structure
+
+Patterns may exist in a collection of persistence diagrams. For example, if the collection contained diagrams from three distinct shapes then we would like to be able to assign three distinct (discrete) labels to the correct subsets of diagrams. On the other hand, maybe the diagrams vary along several dimensions, like the mean persistence of their loops and the mean persistence of their components. In this case we would like to be able to retrieve these continuous features for visualizing all diagrams in the same (2D in this example) space. These two types of analyses are called clustering and dimension reduction respectively, and are two of the most common and popular machine learning applications. We will explore three techniques from these areas - kernel k-means from clustering, and multidimensional scaling and kernel principal components analysis from dimension reduction.
+
+## Kernel k-means and **TDApplied**'s `diagram_kkmeans` Function
+
+Kernel k-means [@kkmeans] is a method which can find hidden groups in complex data, extending regular k-means clustering [@murphyML] via a kernel. A "kernel distance" is calculated between a persistence diagram and a cluster center using only the kernel function, and the algorithm converges like regular k-means. This algorithm is implemented in the function `diagram_kkmeans` as a wrapper of the kernlab function `kkmeans`. Moreover, a prediction function `predict_diagram_kkmeans` can be used to find the nearest cluster labels for a new set of diagrams. Here is an example clustering three groups of noisy copies from D1, D2 and D3:
 
 ```{r,echo = T}
-# Fisher information metric calculation between D1 and D2 for sigma = 1
-diagram_distance(D1,D2,dim = 0,distance = "fisher",sigma = 1)
+# create noisy copies of D1, D2 and D3
+g <- generate_TDApplied_vignette_data(3,3,3)
+                              
+# calculate kmeans clusters with centers = 3, and sigma = t = 2
+clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
 
-# fast approximate Fisher information metric calculation between D1 and D3 for sigma = 1
-diagram_distance(D1,D2,dim = 0,distance = "fisher",sigma = 1,rho = 0.001)
+# display cluster labels
+clust$clustering@.Data
 ```
 
-### Kernel Functions
+As we can see, the `diagram_kkmeans` function was able to correctly separate the three generating diagrams D1, D2 and D3 (the cluster labels are arbitrary and therefore may not be 1,1,1,2,2,2,3,3,3; however, they induce the correct partition).
 
-A kernel function is a special (positive semi-definite) symmetric similarity measure between objects in some complicated space which can be used to project data into a space suitable for machine learning [@murphyML]. Some examples of machine learning techniques which can be "kernelized" when dealing with complicated data are *k-means* (kernel k-means), *principal components analysis* (kernel PCA), and *support vector machines* (SVM) which are inherently based on kernel calculations.
-
-There have been, to date, four main kernels proposed for persistence diagrams. In **TDApplied** the persistence Fisher kernel [@persistence_fisher] has been implemented because of its practical advantages over the other kernels -- smaller cross-validation SVM error on a number of test data sets and a faster method for cross validation. For information on the other three kernels see [@kernel_TDA;@sliced_wasserstein;@kernel_TDA_original].
-
-The persistence Fisher kernel is computed directly from the Fisher information metric between two persistence diagrams: let $\sigma > 0$ be the parameter for $d_{FIM}$, and let $t > 0$. Then the persistence Fisher kernel is defined as $k_{PF}(D_1,D_2) = \mbox{exp}(-t*d_{FIM}(D_1,D_2,\sigma))$. Computing the persistence Fisher kernel can be achieved with the `diagram_kernel` function in **TDApplied**:
+If we wish to predict the cluster label for new persistence diagrams (computed via the largest kernel value to any cluster center), we can use the `predict_diagram_kkmeans` function as follows:
 
 ```{r,echo = T}
-# calculate the kernel value between D1 and D2 with sigma = 2, t = 2
-diagram_kernel(D1,D2,dim = 0,sigma = 2,t = 2)
-# calculate the kernel value between D1 and D3 with sigma = 2, t = 2
-diagram_kernel(D1,D3,dim = 0,sigma = 2,t = 2)
+# create nine new diagrams
+g_new <- generate_TDApplied_vignette_data(3,3,3)
+
+# predict cluster labels
+predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)
 ```
 
-As before, D1 and D2 are more similar than D1 and D3, and if desired a fast approximation to the kernel value can be computed.
+This function correctly predicted the cluster for each new diagram (assigning each diagram to the cluster label by D1, D2 or D3, depending on which diagram it was generated from).
 
-## Interpretive Tools
-
-Before analyzing data it is often best practice to first visualize and clean the data. **TDApplied** has one function for plotting persistence diagrams and another for removing points from persistence diagrams which are not "significant".
-
-### Plotting Diagrams
-
-Persistence diagrams can contain any number of points representing different types of topological features from different homological dimensions. However we can easily view this information in a two-dimensional plot of the birth and death values of the topological features, where each homological dimension has a unique point shape and color, using the `plot_diagram` function:
-
-```{r,echo = T,fig.height = 5,fig.width = 5,fig.align = 'center'}
-D_plot <- data.frame(dimension = c(0,1,1,2),birth = c(0,0.1,0.1,0.2),death = c(2,0.2,0.3,0.25))
-plot_diagram(D_plot,title = "Example plot")
-```
-
-### Finding Real Topological Features via Bootstrapping
-
-Noise in datasets can drastically affect the results of inference and machine learning procedures. Therefore it is desirable to clean data before applying such procedures. Noise in persistence diagrams are low persistence topological features, i.e. features whose birth and death values are very similar (such points would be near the diagonal line when plotted). The question of determining which points in a persistence diagrams are "significant" and which are "noise" has been addressed via a bootstrapping approach in [@bootstrap].
-
-The idea of the procedure is as follows, where $X$ is the input data set and $\alpha$ is the desired threshold for type 1 error:
-
-1. We first compute $D$, the diagram of $X$.
-2. Then we repeatedly sample, with replacement, the original data to obtain $\{X_1,\dots,X_n\}$ and compute new persistence diagrams $\{D_1,\dots,D_n\}$.
-3. We calculate the bottleneck distance of each new diagram with the original, $d_{\infty}(D_i,D)$, in each dimension separately.
-4. Finally we compute the $1-\alpha$ percentile of these values in each dimension.
-
-These thresholds form a square-shaped "confidence interval" around each point in $D$. In particular, if $t$ was the threshold found for dimension $k$ then the confidence interval around a point $(x,y) \in D$ (of dimension $k$) is the set of points $\{(x',y'):\mbox{max}(|x-x'|,|y-y'|) < t\}$. For example, if we sampled 50 points on the unit circle, calculated the bottleneck-threshold-based confidence interval around the single 1-dimensional point, we would get something like this:
-
-```{r,echo = F,fig.height = 5,fig.width = 5,fig.align = 'center',eval = requireNamespace("TDAstats") & requireNamespace("TDA")}
-par(mfrow = c(1,1))
-D <- TDAstats::calculate_homology(mat = TDA::circleUnif(n = 50),dim = 1,threshold = 2)
-pt <- as.numeric(D[which(D[,1L] == 1),])[2:3]
-plot_diagram(D = D,title = "Circle diagram with confidence interval",legend = T,max_radius = 2*0.3953059 + pt[[2]])
-graphics::rect(xleft = pt[[1]]-0.3953059,xright = pt[[1]]+0.3953059,ybottom = pt[[2]]-0.3953059,ytop = pt[[2]]+0.3953059,lty = "dashed")
-graphics::lines(x = c(pt[[1]],pt[[1]] + 0.3953059),y = c(pt[[2]],pt[[2]]))
-graphics::lines(x = c(pt[[1]],pt[[1]]),y = c(pt[[2]],pt[[2]] - 0.3953059))
-graphics::text(x = c(pt[[1]] + 0.3953059/2,0.4),y = c(1.83,1.55),c("t","t"))
-```
-
-In this setup, "significant" points will be those whose (open) confidence intervals do not overlap the diagonal line, i.e. where birth and death is the same. Note that the persistence threshold is twice the bottleneck distance threshold calculated above: the (Euclidean) distance from the point to the bottom right corner of the box is $\sqrt{2}t$, which must be greater than or equal to the (Euclidean) distance of the point to its diagonal projection, which is $\frac{y-x}{\sqrt{2}}$. Therefore, for the point to be considered real (i.e. significant), $\sqrt{2}t \leq \frac{y-x}{\sqrt{2}}$, implying that the persistence of the point, $y-x$, must be no less than twice the bottleneck threshold $t$.
-
-The function `bootstrap_persistence_thresholds` can be used to determine these persistence thresholds. Here is an example for a circle dataset (which is not the same as the one from above), and the results can be plotted with the `plot_diagram` function (this figure will not generate without the **TDA** package):
-
-```{r,fig.height = 4,fig.width = 8,fig.align = 'center',eval = requireNamespace("TDA")}
-# sample 50 points from the unit circle
-circle <- TDA::circleUnif(n = 50)
-
-# calculate the bootstrapped persistence thresholds using 2 cores
-# and 20 iterations
-thresh <- bootstrap_persistence_thresholds(X = circle,FUN = "ripsDiag",
-                                 maxdim = 1,thresh = 2,num_workers = 2,
-                                 num_samples = 30)
-diag <- thresh$diag
-
-# plot original diagram and thresholded diagram side-by-side:
-par(mfrow = c(1,2))
-
-plot_diagram(diag,title = "Circle diagram")
-
-plot_diagram(diag,title = "Circle diagram with thresholds",
-             thresholds = thresh$thresholds)
-```
-
-```{r,echo = F}
-par(mfrow = c(1,1))
-```
-
-The bootstrap procedure can be done in parallel or sequentially, depending on which function is specified to calculate the persistence diagrams. There are three possible such functions -- **TDAstats**' `calculate_homology`, **TDA**'s `ripsDiag` and **TDApplied**'s `PyH`. The functions `calculate_homology` and `ripsDiag` can be run in parallel. However, `PyH` is the fastest function followed by `calculate_homology` based on our simulatations. Both `ripsDiag` and `PyH` allow for the calculation of representative (co)cycles (i.e. the approximate location in the data of each topological feature), whereas `calculate_homology` does not. Therefore, our recommendation is to pick the function according to the following criteria: if a user can use the `PyH` function, then it should be used in all cases except for when the input data set is small, the machine has many available cores and the number of desired bootstrap iterations is large. Otherwise, use `calculate_homology` for speed or `ripsDiag` for calculating representatives. 
-
-## Machine Learning
-
-Machine learning is perhaps the most popular field of data science -- providing powerful and practical tools for a wide variety of data analysis tasks. Some of the most common such tasks include dimension reduction (e.g. multidimensional scaling and principal components analysis), clustering (e.g. k-means) and regression and classification (e.g. support vector machines). **TDApplied** has implemented such functions for persistence diagrams using distance and kernel functions.
-
-### Multidimensional Scaling of Persistence Diagrams
+## Multidimensional Scaling and **TDApplied**'s `diagram_mds` Function
 
 Dimension reduction is a task in machine learning which is commonly used for data visualization, removing noise in data, and decreasing the number of covariates in a model (which can be helpful in reducing overfitting). One common dimension reduction technique in machine learning is called *multidimensional scaling* (MDS) [@Cox2008]. MDS takes as input an $n$ by $n$ distance (or dissimilarity) matrix $D$, computed from $n$ points in a dataset, and outputs an embedding of those points into a Euclidean space of chosen dimension $k$ which best preserves the inter-point distances. MDS is often used for visualizing data in exploratory analyses, and can be particularly useful when the input data points do not live in a shared Euclidean space (as is the case for persistence diagrams). Using the R function `cmdscale` from the package stats (@R-stats) we can compute the optimal embedding of a set of persistence diagrams using any of the three distance metrics with the function `diagram_mds`. Here is an example of the `diagram_mds` function projecting nine persistence diagrams, three noisy copies sampled from each of D1, D2 and D3, into 2D space:
 
@@ -602,7 +723,7 @@ legend("topright", inset=c(-0.2,0),
 
 The MDS plot shows the clear separation between the three generating diagrams (D1, D2 and D3), and the embedded coordinates could be used for further downstream analyses.
 
-### Kernel Principal Components Analysis of Persistence Diagrams
+### Kernel Principal Components Analysis, and **TDApplied**'s `diagram_kpca` Function
 
 PCA is another dimension reduction technique in machine learning, but can be preferable compared to MDS in certain situations because it allows for the projection of new data points onto an old embedding model [@murphyML]. For example, this can be important if PCA is used as a pre-processing step in model fitting. Kernel PCA (kPCA) [@kpca] is an extension of regular PCA which uses a kernel to project complex data into a high-dimensional Euclidean space and then uses PCA to project that data into a low-dimensional space. The `diagram_kpca` method computes the kPCA embedding of a set of persistence diagrams, and the `predict_diagram_kpca` function can be used to project new diagrams using a pre-trained kPCA model. Here is an example using a group of noisy copies of D1, D2 and D3:
 
@@ -644,38 +765,15 @@ legend("topright",inset = c(-0.2,0),
 
 As we can see, the original three groups, and their approximate location in 2D space, is preserved during prediction.
 
-### Kernel k-means of Persistence Diagrams
+# Predicting Labels of Persistence Diagrams
 
-Kernel k-means [@kkmeans] is a method which can find hidden groups in complex data, extending regular k-means clustering [@murphyML] via a kernel. A "kernel distance" is calculated between a persistence diagram and a cluster center using only the kernel function, and the algorithm converges like regular k-means. This algorithm is implemented in the function `diagram_kkmeans` as a wrapper of the kernlab function `kkmeans`. Moreover, a prediction function `predict_diagram_kkmeans` can be used to find the nearest cluster labels for a new set of diagrams. Here is an example clustering three groups of noisy copies from D1, D2 and D3:
+One of the most valuable problems that machine learning is used to solve is that of prediction - can a variable $Y$ be predicted from other variables $X$. Kernel functions can be used to predict a variable $Y$ from a persistence diagram $D$ using a class of models called support vector machines (SVMs) [@murphyML]. 
 
-```{r,echo = T}
-# create noisy copies of D1, D2 and D3
-g <- generate_TDApplied_vignette_data(3,3,3)
-                              
-# calculate kmeans clusters with centers = 3, and sigma = t = 2
-clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
+## Support Vector Machines and **TDApplied**'s `diagram_ksvm` Function
 
-# display cluster labels
-clust$clustering@.Data
-```
+SVMs are one of the most popular machine learning techniques for regression and classification tasks. SVMs use a kernel function to project complex data into a high-dimensional space and then find a sparse set of training examples, called "support vectors", which maximally linearly separate the outcome variable classes (or yield the highest explained variance in the case of regression).
 
-As we can see, the `diagram_kkmeans` function was able to correctly separate the three generating diagrams D1, D2 and D3 (the cluster labels are arbitrary and therefore may not be 1,1,1,2,2,2,3,3,3; however, they induce the correct partition).
-
-If we wish to predict the cluster label for new persistence diagrams (computed via the largest kernel value to any cluster center), we can use the `predict_diagram_kkmeans` function as follows:
-
-```{r,echo = T}
-# create nine new diagrams
-g_new <- generate_TDApplied_vignette_data(3,3,3)
-
-# predict cluster labels
-predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)
-```
-
-This function correctly predicted the cluster for each new diagram (assigning each diagram to the cluster label by D1, D2 or D3, depending on which diagram it was generated from).
-
-## Kernel Support Vector Machines of Persistence Diagrams
-
-SVMs [@murphyML] are one of the most popular machine learning techniques for regression and classification tasks. SVMs use a kernel function to project complex data into a high-dimensional space and then find a sparse set of training examples, called "support vectors", which maximally linearly separate the outcome variable classes (or yield the highest explained variance in the case of regression).
+Unlike in the case of dimension reduction or clustering, it is possible that our persistence diagrams may each have a label, either discrete or continuous, which gives us more information about the underlying data represented by the diagram. For instance, if our persistence diagrams represented periodic behavior in stock market trends during a particular temporal window then a useful (discrete) label could be whether the overall market went up or down during that period. Being able to predict such labels from the persistence diagrams themselves is a way to link persistence diagrams to external data through modelling, i.e. classification and regression. Support vector machines 
 
 SVMs have been implemented in **TDApplied** by the function `diagram_ksvm`, tailored for input datasets which contain pairs of persistence diagrams and their outcome variable labels. A prediction method is supplied called `predict_diagram_ksvm` which can be used to predict the label value of a set of new persistence diagrams given a pre-trained model. A parallelized implementation of cross-validation model-fitting is used based on the remarks in [@persistence_fisher] for scalability (which avoids needlessly recomputing persistence Fisher information metric values). Here is an example of fitting an SVM model on a list of persistence diagrams for a classification task (guessing whether the diagram comes from D1, D2 or D3):
 
@@ -703,51 +801,6 @@ predict_diagram_ksvm(new_diagrams = g_new,model = model_svm,num_workers = 2)
 ```
 
 As we can see the best SVM model was able to separate the three diagrams We can gain more information about the best model found during model fitting and the CV results by accessing different list elements of `model_svm`.
-
-## Inference
-
-Hypothesis testing [@CasellaBerger] is a mathematical framework for making inferences about statistics, and is a common first approach for analyzing data. **TDApplied** has implemented two hypothesis testing procedures.
-
-### Testing for Group Differences of Persistence Diagrams
-
-One of the most important inference procedures in classical statistics is the analysis of variance (ANOVA), which can find differences in the means of groups of normally-distributed measurements [@CasellaBerger]. Distributions of persistence diagrams and their means can be complicated (see [@PD_means] and [@PD_distributions]). Therefore, a non-parametric permutation test has been proposed which can find differences in groups of persistence diagrams. Such a test was first proposed in [@Robinson_Turner], and some variations have been suggested in later publications. In [@Robinson_Turner], two groups of persistence diagrams would be compared. The null hypothesis, $H_0$, is that the diagrams from the two groups are generated from shapes with the same type and scale of topological features, i.e. they "come" from the same "shape". The alternative hypothesis, $H_A$, is that the underlying type or scale of the features are different between the two groups. In each dimension a p-value is computed, finding evidence against $H_0$ in that dimension. A measure of within-group distances (a "loss function") is calculated for the two groups, and that measure is compared to a null distribution for when the group labels are permuted.
-
-This inference procedure is implemented in the `permutation_test` function, with several speedups and additional functionalities. Firstly, the loss function is computed in parallel for scalability since distance computations can be expensive. Secondly, we store distance calculations as we compute them because these calculations are often repeated. Additional functionality includes allowing for any number groups (not just two) and allowing for a pairing between groups of the same size as described in (@dependencies). When a natural pairing exists between the groups (such as if the groups represent persistence diagrams from the same subject of a study in different conditions) we can simulate a more realistic null distribution by restricting the way in which we permute group labels, achieving higher statistical power. 
-
-In order to demonstrate the permutation test we will detect differences between noisy copies of D1, D2, D3:
-
-```{r,echo = T}
-# permutation test between three diagrams
-g1 <- generate_TDApplied_vignette_data(3,0,0)
-g2 <- generate_TDApplied_vignette_data(0,3,0)
-g3 <- generate_TDApplied_vignette_data(0,0,3)
-perm_test <- permutation_test(g1,g2,g3,
-                              num_workers = 2,
-                              dims = c(0))
-perm_test$p_values
-```
-
-As expected, a difference was found (at the $\alpha = 0.05$ significance level) between the three groups. 
-
-The package **TDAstats** also has a function called `permutation_test` which is based on the same test procedure. However, it uses an unpublished distance metric between persistence diagrams (see the package vignette "Comparing Distance Calculations") and does not use parallelization for scalability. As such, care must be taken when both **TDApplied** and **TDAstats** are attached in an R script to use the particular `permutation_test` function desired.
-
-### Testing for Independence Between Two Groups of Paired Persistence Diagrams
-
-An important question when presented with two groups of paired data is determining if the pairings are independent or not. A procedure was described in [@kernel_test] which can be used to answer this question using kernel computations, and importantly uses a parametric null distribution. The null hypothesis for this test is that the groups are independent, and the alternative hypothesis is that the groups are not independent. A test statistic called the *Hilbert-Schmidt independence criteria* [@kernel_test] is calculated, and its value is compared to a gamma distribution with certain parameters which can be estimated from the data.
-
-This inference procedure has been implemented in the `independence_test` function, and returns the p-value of the test in each desired dimension of the diagrams (among other additional information). We would expect to find no dependence between noisy copies of D1, D2 and D3, since each copy is generated randomly:
-
-```{r,echo = T}
-# create 10 noisy copies of D1 and D2
-g1 <- generate_TDApplied_vignette_data(10,0,0)
-g2 <- generate_TDApplied_vignette_data(0,10,0)
-
-# do independence test with sigma = t = 1
-indep_test <- independence_test(g1,g2,dims = c(0),num_workers = 2)
-indep_test$p_values
-```
-
-The p-value of this test would not be significant at any typical significance threshold, reflecting the fact that there is no real (i.e. non-spurious) dependence between the two groups, as expected.
 
 # Limitations of **TDApplied** Functionality
 
