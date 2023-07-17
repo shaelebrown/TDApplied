@@ -249,6 +249,9 @@ PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_
   
   PH <- as.data.frame(PH)
   
+  # set all birth values to 0-cycles to 0
+  PH[which(PH$dimension == 0),2L] <- 0
+  
   if(calculate_representatives == F)
   {
     return(PH)
