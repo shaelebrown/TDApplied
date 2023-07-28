@@ -3,7 +3,7 @@
 #'
 #' Plots a persistence diagram outputted from either a persistent homology calculation or from diagram_to_df, with
 #' maximum homological dimension no more than 12 (otherwise the legend doesn't fit in the plot).
-#' Each homological dimension has its own color and point type (with colors chosen to be clear and distinct from each other), 
+#' Each homological dimension has its own color (the \code{\link[rcartocolor]{Safe}} color-blind safe color palette) and point type, 
 #' and the main plot title can be altered via the `title` parameter.
 #' 
 #' The `thresholds` parameter, if not NULL, can either be a user-defined numeric vector, with
@@ -73,8 +73,9 @@ plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,threshol
   
   # build plot
   pchs <- c(15:18,0:8)
-  cols <- c("darkgreen","red","blue","black","violet","salmon","purple","orange","maroon","gold","chocolate","aquamarine","brown")
-  
+  cols <- c("#88CCEE", "#CC6677", "#DDCC77", "#117733", "#332288", "#AA4499",
+            "#44AA99", "#999933", "#882255", "#661100", "#6699CC", "#888888")
+
   # if D non-empty, plot
   # otherwise plot empty diagram
   if(nrow(D) > 0)
