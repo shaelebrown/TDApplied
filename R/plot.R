@@ -75,7 +75,7 @@ plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,threshol
   
   # build plot
   pchs <- c(15:18,0:8)
-  cols <- c("#88CCEE", "#CC6677", "#DDCC77", "#117733", "#332288", "#AA4499",
+  cols <- c("#CC6677", "#DDCC77", "#117733", "#332288", "#AA4499", "#88CCEE", 
             "#44AA99", "#999933", "#882255", "#661100", "#6699CC", "#888888")
 
   # if D non-empty, plot
