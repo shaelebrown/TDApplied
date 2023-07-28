@@ -4,7 +4,9 @@
 #' Plots a persistence diagram outputted from either a persistent homology calculation or from diagram_to_df, with
 #' maximum homological dimension no more than 12 (otherwise the legend doesn't fit in the plot).
 #' Each homological dimension has its own color (the \code{\link[rcartocolor]{Safe}} color-blind safe color palette) and point type, 
-#' and the main plot title can be altered via the `title` parameter.
+#' and the main plot title can be altered via the `title` parameter. Each feature is plotted with
+#' a black point at its center in order to distinguish between overlapping features and easily compare
+#' features to their persistence thresholds.
 #' 
 #' The `thresholds` parameter, if not NULL, can either be a user-defined numeric vector, with
 #' one entry (persistence threshold) for each dimension in `D`, or the output of
@@ -192,6 +194,7 @@ plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,threshol
       plot(x = D[,2L],y = D[,3L],xlim = c(0,max_radius),ylim = c(0,max_radius),
            xlab = "Birth",ylab = "Death",col = C,
            pch = pchs[D[,1L] + 1],main = ifelse(test = is.null(title),yes = "",no = title))
+      points(x = D[,2L],y = D[,3L],pch = pchs[[2]],col = "black",cex = 0.2)
     }else
     {
       gray_inds <- which(C == "gray")
@@ -200,6 +203,7 @@ plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,threshol
            xlab = "Birth",ylab = "Death",col = C[gray_inds],
            pch = pchs[D[gray_inds,1L] + 1],main = ifelse(test = is.null(title),yes = "",no = title))
       points(x = D[non_gray_inds,2L],y = D[non_gray_inds,3L],col = C[non_gray_inds],pch = pchs[D[non_gray_inds,1L] + 1])
+      points(x = D[,2L],y = D[,3L],pch = pchs[[2]],col = "black",cex = 0.2)
     }
     if(legend == T)
     {
