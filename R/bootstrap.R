@@ -1,14 +1,20 @@
 #### BOOTSTRAPPING FOR PERSISTENCE DIAGRAMS ####
 #' Estimate persistence threshold(s) for topological features in a data set using bootstrapping.
 #'
-#' Bootstrapping is used to find a conservative estimate of a "confidence interval" around
+#' Bootstrapping is used to find a conservative estimate of an (at least) 1-`alpha` percent "confidence interval" around
 #' each point in the persistence diagram of the data set, and points whose (open) intervals do not
 #' overlap with the diagonal (birth = death) would be considered "significant" or "real".
 #' One threshold is computed for each dimension in the diagram.
 #' 
-#' The thresholds are determined by calculating the 1-alpha percentile of the bottleneck
+#' To ensure that the confidence intervals correspond to real p-values, 
+#' we first apply the conservative transformation `alpha'` <- (`alpha`(`num_samples` + 1) - 1)/(`num_samples` + 1).
+#' The thresholds are then determined by calculating the 1-`alpha'` percentile of the bottleneck
 #' distance values between the real persistence diagram and other diagrams obtained
-#' by bootstrap resampling the data. Note that since \code{\link[TDAstats]{calculate_homology}} 
+#' by bootstrap resampling the data. 
+#' This ensures that the p-value of any feature which survives thresholding is less than the original `alpha` value, and 
+#' these values are returned if both `return_subsetted` and `return_pvals` are `TRUE`. The minimum
+#' possible p-value is always 1/(`num_samples` + 1).
+#' Note that since \code{\link[TDAstats]{calculate_homology}} 
 #' can ignore the longest-lived cluster, fewer "real" clusters may be found. To avoid this possibility
 #' try setting `FUN` equal to 'ripsDiag'.
 #'
@@ -27,8 +33,9 @@
 #' @param alpha the type-1 error threshold, default 0.05.
 #' @param return_diag a boolean representing whether or not to return the calculated persistence diagram, default TRUE.
 #' @param return_subsetted a boolean representing whether or not to return the subsetted persistence diagram (with or without representatives), default FALSE.
+#' @param return_pvals a boolean representing whether or not to return p-values for features in the subsetted diagram, default FALSE.
 #' @param num_workers the integer number of cores used for parallelizing (over bootstrap samples), default one less the maximum amount of cores on the machine.
-#' @return a numeric vector of threshold values ,with one for each dimension 0..`maxdim` (in that order).
+#' @return either a numeric vector of threshold values ,with one for each dimension 0..`maxdim` (in that order), or a list containing those thresholds and elements (if desired) 
 #' @export
 #' @importFrom methods is
 #' @importFrom stats quantile
@@ -52,7 +59,7 @@
 #'   FUN = "calculate_homology",maxdim = 1,thresh = 2,num_workers = 2)
 #' }
 
-bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim = 0,thresh,distance_mat = FALSE,ripser = NULL,ignore_infinite_cluster = TRUE,calculate_representatives = FALSE,num_samples = 30,alpha = 0.05,return_subsetted = FALSE,return_diag = TRUE,num_workers = parallelly::availableCores(omit = 1)){
+bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim = 0,thresh,distance_mat = FALSE,ripser = NULL,ignore_infinite_cluster = TRUE,calculate_representatives = FALSE,num_samples = 30,alpha = 0.05,return_subsetted = FALSE,return_pvals = FALSE,return_diag = TRUE,num_workers = parallelly::availableCores(omit = 1)){
   
   # function for thresholding the points computed in a diagram
   # based on persistence
@@ -82,6 +89,19 @@ bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim
   if(is.na(return_subsetted) | is.nan(return_subsetted) )
   {
     stop("return_subsetted must not be NA/NAN.")
+  }
+  
+  if(is.null(return_pvals))
+  {
+    stop("return_pvals must not be NULL.")
+  }
+  if(length(return_pvals) > 1 | !methods::is(return_pvals,"logical"))
+  {
+    stop("return_pvals must be a single logical (i.e. T or F).")
+  }
+  if(is.na(return_pvals) | is.nan(return_pvals) )
+  {
+    stop("return_pvals must not be NA/NAN.")
   }
   
   if(is.null(return_diag))
@@ -295,6 +315,10 @@ bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim
              
   })
   
+  # convert alpha parameter into more conservative p-value parameter
+  Z <- max(c(alpha*(num_samples + 1) - 1,0))
+  alpha = Z/num_samples
+  
   # convert distance threshold(s) into persistence threshold(s)
   thresholds <- unlist(lapply(X = 0:maxdim,FUN = function(X){
     
@@ -339,6 +363,22 @@ bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim
           ret_list$subsetted_representatives[[d + 1]] <- ret_list$subsetted_representatives[[d + 1]][inds[which(inds %in% c(min_ind:max_ind))] - min_ind + 1]
         }
       }
+    }
+    
+    if(return_pvals)
+    {
+      # compute p-values for each remaining feature
+      # p-value is (Z + 1)/(N + 1) where N is the number of samples and
+      # Z is the number of bootstrap samples which do not have smaller distances to the diagonal
+      pvals <- unlist(lapply(X = 1:nrow(ret_list$subsetted_diag),FUN = function(X){
+        
+        pers <- ret_list$subsetted_diag[X,3L] - ret_list$subsetted_diag[X,2L]
+        Z <- length(which(2*unlist(bootstrap_values[seq(X + 1,length(bootstrap_values),maxdim + 1)]) >= pers))
+        return((Z + 1)/(num_samples + 1))
+        
+      }))
+      
+      ret_list$pvals <- pvals
     }
   }
   

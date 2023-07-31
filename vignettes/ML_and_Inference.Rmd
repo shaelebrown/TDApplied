@@ -360,23 +360,33 @@ graphics::text(x = c(pt[[1]] + 0.3953059/2,0.4),y = c(1.83,1.55),c("t","t"))
 
 In this setup, "significant" points will be those whose (open) confidence intervals do not overlap the diagonal line, i.e. where birth and death is the same. Note that the persistence threshold is twice the bottleneck distance threshold calculated above: the (Euclidean) distance from the point to the bottom right corner of the box is $\sqrt{2}t$, which must be greater than or equal to the (Euclidean) distance of the point to its diagonal projection, which is $\frac{y-x}{\sqrt{2}}$. Therefore, for the point to be considered real (i.e. significant), $\sqrt{2}t \leq \frac{y-x}{\sqrt{2}}$, implying that the persistence of the point, $y-x$, must be no less than twice the bottleneck threshold $t$.
 
-The function `bootstrap_persistence_thresholds` can be used to determine these persistence thresholds. Here is an example for the circ dataset, and the results can be plotted with the `plot_diagram` function:
+Like in [@Robinson_Turner] we can calculate the p-value for a feature as $p = \frac{Z + 1}{N + 1}$ where $Z$ is the number of bootstrap iterations which, when doubled, are at least the persistence of the feature, and $N$ is the number of bootstrap samples. In order to ensure that the p-value of any topological feature which survives the thresholding is less than $\alpha$ we transform $\alpha$ by $\alpha \leftarrow \frac{\mbox{max}\{\alpha(N + 1) - 1,0\}}{N + 1}$.
+
+The function `bootstrap_persistence_thresholds` can be used to determine these persistence thresholds. Here is an example for the circ dataset, and the results can be plotted with the `plot_diagram` function (with overlaid p-values using the graphics `text` function):
 
 ```{r,fig.height = 4,fig.width = 8,fig.align = 'center'}
 # calculate the bootstrapped persistence thresholds using 2 cores
 # and 30 iterations
 thresh <- bootstrap_persistence_thresholds(X = circ,FUN = "ripsDiag",
                                  maxdim = 1,thresh = 2,num_workers = 2,
-                                 num_samples = 30)
+                                 alpha = 0.05,num_samples = 30,
+                                 return_subsetted = T,return_pvals = T)
 diag <- thresh$diag
 
-# plot original diagram and thresholded diagram side-by-side:
+# the p-values are both 1/31 (about 0.032) which is the minimum possible
+thresh$pvals
+
+# plot original diagram and thresholded diagram side-by-side, including
+# p-values
 par(mfrow = c(1,2))
 
 plot_diagram(diag,title = "Circ diagram")
 
 plot_diagram(diag,title = "Circ diagram with thresholds",
              thresholds = thresh$thresholds)
+text(x = c(0.2,0.5),y = c(2,1.8),
+     paste("p = ",round(thresh$pvals,digits = 3)),
+     cex = 0.5)
 ```
 
 ```{r,echo = F}

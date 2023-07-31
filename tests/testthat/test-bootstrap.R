@@ -53,6 +53,11 @@ test_that("bootstrap_persistence_thresholds can detect incorrect parameters corr
   expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "ripsDiag",maxdim = 1,thresh = 2,distance_mat = NA),"NA")
   expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "ripsDiag",maxdim = 1,thresh = 2,distance_mat = T),"square")
   
+  expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "calculate_homology",maxdim = 1,thresh = 2,return_pvals = "F"),"logical")
+  expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "ripsDiag",maxdim = 1,thresh = 2,return_pvals = c(F,T)),"single")
+  expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "ripsDiag",maxdim = 1,thresh = 2,return_pvals = NULL),"NULL")
+  expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "ripsDiag",maxdim = 1,thresh = 2,return_pvals = NA),"NA")
+  
   # PyH parameters (ripser,ignore_infinite_cluster,calculate_representatives) are all working, tested in test-python.R
   
   expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN = "ripsDiag",maxdim = 1,thresh = 2,calculate_representatives = c(T,F)),"boolean")
@@ -135,6 +140,15 @@ test_that("bootstrap_persistence_thresholds is computing properly",{
   }
   thresholds <- unique(thresholds)
   expect_true(bootstrap_persistence_thresholds(X = D,FUN = "ripsDiag",maxdim = 0,thresh = 2.5,num_workers = 2,num_samples = 3)$thresholds %in% thresholds)
+  
+  # check p-values
+  bs <- bootstrap_persistence_thresholds(X = D,FUN = "calculate_homology",maxdim = 1,thresh = 2,return_diag = T,num_workers = 2,return_subsetted = T,return_pvals = T)
+  expect_lte(length(bs$pvals),2L)
+  expect_true(bs$pvals[[1]] < 0.05)
+  if(length(bs$pvals) == 2L)
+  {
+    expect_true(bs$pvals[[2]] < 0.05)
+  }
   
 })
 
