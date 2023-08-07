@@ -36,7 +36,7 @@
 #' @param return_pvals a boolean representing whether or not to return p-values for features in the subsetted diagram, default FALSE.
 #' @param p_less_than_alpha a boolean representing whether or not subset further and return only feature whose p-values are strictly less than `alpha`, default `FALSE`. Note that this is not part of the original bootstrap procedure.
 #' @param num_workers the integer number of cores used for parallelizing (over bootstrap samples), default one less the maximum amount of cores on the machine.
-#' @return either a numeric vector of threshold values ,with one for each dimension 0..`maxdim` (in that order), or a list containing those thresholds and elements (if desired) 
+#' @return either a numeric vector of threshold values, with one for each dimension 0..`maxdim` (in that order), or a list containing those thresholds and elements (if desired) 
 #' @export
 #' @importFrom methods is
 #' @importFrom stats quantile

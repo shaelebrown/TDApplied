@@ -57,7 +57,7 @@ calculated when using the 'calculate_homology' function.}
 \item{p_less_than_alpha}{a boolean representing whether or not subset further and return only feature whose p-values are strictly less than `alpha`, default `FALSE`. Note that this is not part of the original bootstrap procedure.}
 }
 \value{
-either a numeric vector of threshold values ,with one for each dimension 0..`maxdim` (in that order), or a list containing those thresholds and elements (if desired)
+either a numeric vector of threshold values, with one for each dimension 0..`maxdim` (in that order), or a list containing those thresholds and elements (if desired)
 }
 \description{
 Bootstrapping is used to find a conservative estimate of a 1-`alpha` percent "confidence interval" around
