@@ -18,7 +18,8 @@ bootstrap_persistence_thresholds(
   return_subsetted = FALSE,
   return_pvals = FALSE,
   return_diag = TRUE,
-  num_workers = parallelly::availableCores(omit = 1)
+  num_workers = parallelly::availableCores(omit = 1),
+  p_less_than_alpha = FALSE
 )
 }
 \arguments{
@@ -52,24 +53,26 @@ calculated when using the 'calculate_homology' function.}
 \item{return_diag}{a boolean representing whether or not to return the calculated persistence diagram, default TRUE.}
 
 \item{num_workers}{the integer number of cores used for parallelizing (over bootstrap samples), default one less the maximum amount of cores on the machine.}
+
+\item{p_less_than_alpha}{a boolean representing whether or not subset further and return only feature whose p-values are strictly less than `alpha`, default `FALSE`. Note that this is not part of the original bootstrap procedure.}
 }
 \value{
 either a numeric vector of threshold values ,with one for each dimension 0..`maxdim` (in that order), or a list containing those thresholds and elements (if desired)
 }
 \description{
-Bootstrapping is used to find a conservative estimate of an (at least) 1-`alpha` percent "confidence interval" around
+Bootstrapping is used to find a conservative estimate of a 1-`alpha` percent "confidence interval" around
 each point in the persistence diagram of the data set, and points whose (open) intervals do not
 overlap with the diagonal (birth = death) would be considered "significant" or "real".
 One threshold is computed for each dimension in the diagram.
 }
 \details{
-To ensure that the confidence intervals correspond to real p-values, 
-we first apply the conservative transformation `alpha'` <- (`alpha`(`num_samples` + 1) - 1)/(`num_samples` + 1).
 The thresholds are then determined by calculating the 1-`alpha'` percentile of the bottleneck
 distance values between the real persistence diagram and other diagrams obtained
 by bootstrap resampling the data. 
-This ensures that the p-value of any feature which survives thresholding is less than the original `alpha` value, and 
-these values are returned if both `return_subsetted` and `return_pvals` are `TRUE`. The minimum
+p-values can be calculated for any feature which survives the thresholding if both `return_subsetted` and `return_pvals` are `TRUE`, 
+however these values may be larger than the original `alpha` value in some cases. Note that this is not part of the original bootstrap procedure.
+If stricter thresholding is desired,
+or the p-values must be less than `alpha`, set `p_less_than_alpha` to `TRUE`. The minimum
 possible p-value is always 1/(`num_samples` + 1).
 Note that since \code{\link[TDAstats]{calculate_homology}} 
 can ignore the longest-lived cluster, fewer "real" clusters may be found. To avoid this possibility
