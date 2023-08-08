@@ -368,9 +368,15 @@ bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim
       {
         for(d in 1:maxdim)
         {
-          min_ind <- min(which(diag$dimension == d))
-          max_ind <- max(which(diag$dimension == d))
-          ret_list$subsetted_representatives[[d + 1]] <- ret_list$subsetted_representatives[[d + 1]][inds[which(inds %in% c(min_ind:max_ind))] - min_ind + 1]
+          if(length(which(diag$dimension == d)) > 0)
+          {
+            min_ind <- min(which(diag$dimension == d))
+            max_ind <- max(which(diag$dimension == d))
+            ret_list$subsetted_representatives[[d + 1]] <- ret_list$subsetted_representatives[[d + 1]][inds[which(inds %in% c(min_ind:max_ind))] - min_ind + 1]
+          }else
+          {
+            ret_list$subsetted_representatives[[d + 1]] <- list()
+          }
         }
       }
     }

@@ -2,16 +2,20 @@
 #### ANALYZING MULTIPLE REPRESENTATIVES ####
 #' Analyze the data point memberships of multiple representative (co)cycles.
 #'
-#' Multiple datasets with corresponding data points can contain the same topological features. 
-#' Therefore we may wish to compare many representative (co)cycles across datasets to decide if their topological features are the same.
-#' The `analyze_representatives` function returns a matrix of binary datapoint memberships in an input list of representatives across datasets.
+#' Multiple distance matrices with corresponding data points can contain the same topological features. 
+#' Therefore we may wish to compare many representative (co)cycles across distance matrices to decide if their topological features are the same.
+#' The `analyze_representatives` function returns a matrix of binary datapoint memberships in an input list of representatives across distance matrices.
 #' Optionally this matrix can be plotted as a heatmap with rows (i.e. representatives) reordered by similarity, and the 
 #' contributions (i.e. percentage membership) of each point in the representatives can also be returned.
 #' 
 #' The clustering dendrogram can be used to determine if there are any similar groups of representatives (i.e.
-#' shared topological features across datasets) and if so how many.
+#' shared topological features across datasets) and if so how many. The row labels of the heatmap are of the form
+#' 'DX[Y]', meaning the Yth representative of diagram X, and the column labels are the data point numbers.
+#' If diagrams are the output of the \code{\link{bootstrap_persistence_thresholds}}
+#' function, then the subsetted_representatives (if present) will be analyzed. Therefore, a column label like 'DX[Y]' in the 
+#' plotted heatmap would mean the Yth representative of diagram X.
 #'
-#' @param diagrams a list of persistence diagrams, either the output of persistent homology calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
+#' @param diagrams a list of persistence diagrams, either the output of persistent homology calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, \code{\link{diagram_to_df}} or \code{\link{bootstrap_persistence_thresholds}}.
 #' @param dim the integer homological dimension of representatives to consider.
 #' @param num_points the integer number of data points in all the original datasets (from which the diagrams were calculated).
 #' @param plot_heatmap a boolean representing if a heatmap of data point membership similarity of the representatives should be plotted, default `TRUE`. A dendrogram of hierarchical clustering is plotted, and rows (representatives) are sorted according to this clustering.
@@ -29,7 +33,7 @@
 #'   df <- TDA::circleUnif(n = 50)
 #'                         
 #'   # create 10 copies with added Gaussian noise and
-#'   # calculate their diagrams
+#'   # calculate their diagrams from distance matrices
 #'   circs <- lapply(X = 1:10,FUN = function(X){
 #'      df <- circ
 #'      df$x <- df$x + rnorm(n = 50,sd = 0.05)
@@ -49,9 +53,9 @@
 #'    analyze_representatives(diagrams = circs,dim = 1,
 #'                            num_points = 50)
 #'   
-#'  }
+#' }
 
-analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap,return_contributions){
+analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap = TRUE,return_contributions = FALSE){
   
   # error check parameters
   check_param(param_name = "dim",dim,numeric = T,at_least_one = T,multiple = F,infinite = F)
@@ -89,6 +93,11 @@ analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap,return_
   check_param("diagrams",diagrams,min_length = 2)
   diagrams <- lapply(X = diagrams,FUN = function(X){
     
+    if("diagram" %in% names(X))
+    {
+      X$diag <- diagram_to_df(X)
+    }
+    
     # make sure there are either cycles or representatives, and rename
     if("cycleLocation" %in% names(X) == F & "representatives" %in% names(X) == F)
     {
@@ -103,23 +112,72 @@ analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap,return_
     {
       stop("Representatives must be a list.")
     }
-    if(length(which(unlist(lapply(X = X$representatives,FUN = function(X){
-      
-      return(class(X))
-      
-    })) %in% c("matrix","array") == F)) > 0 | length(which(unlist(lapply(X = X$representatives,FUN = function(X){
-      
-      return(!all(X == round(X)))
-      
-    })))) > 0)
+    if(!is.list(X$representatives[[1]]))
     {
-      stop("Representatives must be matrices with integer entries - make sure that the diagrams were calculated from distance matrices.")
+      ripsDiag <- T
+      # ripsDiag
+      if(length(which(unlist(lapply(X = X$representatives,FUN = function(X){
+        
+        return(class(X))
+        
+      })) %in% c("matrix","array") == F)) > 0 | length(which(unlist(lapply(X = X$representatives,FUN = function(X){
+        
+        return(!all(X == round(X)))
+        
+      })))) > 0)
+      {
+        stop("Representatives must be matrices with integer entries - make sure that the diagrams were calculated from distance matrices.")
+      }
+    }else
+    {
+      # PyH
+      ripsDiag <- F
+      classes <- unlist(lapply(X = X$representatives,FUN = function(X){
+        
+        Y <- X
+        if(length(Y) == 0)
+        {
+          return("array")
+        }
+        return(unlist(lapply(X = Y,FUN = function(X){
+          
+          if(!all(X == round(X)))
+          {
+            return("float")
+          }
+          return(class(X))
+          
+        })))
+        
+      }))
+      if(all(classes %in% c("matrix","array")) == F)
+      {
+        stop("Representatives must be matrices with integer entries - make sure that the diagrams were calculated from distance matrices.")
+      }
     }
     
     # make sure that all representatives do not have any data point greater than num_points
-    if(max(X) > num_points)
+    if(ripsDiag)
     {
-      stop("No representative should contain a data point which is greater than num_points.")
+      if(suppressWarnings(max(unlist(lapply(X$representatives,FUN = max)))) > num_points)
+      {
+        stop("No representative should contain a data point which is greater than num_points.")
+      }
+    }else
+    {
+      if(suppressWarnings(max(unlist(lapply(X$representatives,FUN = function(X){
+        
+        Y <- X
+        return(lapply(X = Y,FUN = function(X){
+          
+          return(max(X))
+          
+        }))
+        
+      })))) > num_points)
+      {
+        stop("No representative should contain a data point which is greater than num_points.")
+      }
     }
     
     # check persistence diagrams and rename
@@ -132,11 +190,9 @@ analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap,return_
       X$diag <- X$subsetted_diag
       X$representatives <- X$subsetted_representatives
     }
-    if("diagram" %in% names(X))
-    {
-      X$diag <- diagram_to_df(X)
-    }
     check_diagram(X$diag,ret = F)
+    
+    return(list(diag = X$diag,representatives = X$representatives))
     
   })
   
@@ -156,6 +212,12 @@ analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap,return_
     })
     
   })
+  
+  num_cycles <- sum(unlist(lapply(X = cycles,FUN = length)))
+  if(num_cycles == 0)
+  {
+    stop("No representatives were found in the desired dimension.")
+  }
   
   mat <- do.call(rbind,lapply(X = cycles,FUN = function(X){
     

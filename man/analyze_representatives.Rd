@@ -8,12 +8,12 @@ analyze_representatives(
   diagrams,
   dim,
   num_points,
-  plot_heatmap,
-  return_contributions
+  plot_heatmap = TRUE,
+  return_contributions = FALSE
 )
 }
 \arguments{
-\item{diagrams}{a list of persistence diagrams, either the output of persistent homology calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.}
+\item{diagrams}{a list of persistence diagrams, either the output of persistent homology calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, \code{\link{diagram_to_df}} or \code{\link{bootstrap_persistence_thresholds}}.}
 
 \item{dim}{the integer homological dimension of representatives to consider.}
 
@@ -27,15 +27,19 @@ analyze_representatives(
 either a matrix of data point contributions to the representatives, or a list with elements "memberships" (the matrix) and "contributions" (a vector of membership percentages for each data point across representatives).
 }
 \description{
-Multiple datasets with corresponding data points can contain the same topological features. 
-Therefore we may wish to compare many representative (co)cycles across datasets to decide if their topological features are the same.
-The `analyze_representatives` function returns a matrix of binary datapoint memberships in an input list of representatives across datasets.
+Multiple distance matrices with corresponding data points can contain the same topological features. 
+Therefore we may wish to compare many representative (co)cycles across distance matrices to decide if their topological features are the same.
+The `analyze_representatives` function returns a matrix of binary datapoint memberships in an input list of representatives across distance matrices.
 Optionally this matrix can be plotted as a heatmap with rows (i.e. representatives) reordered by similarity, and the 
 contributions (i.e. percentage membership) of each point in the representatives can also be returned.
 }
 \details{
 The clustering dendrogram can be used to determine if there are any similar groups of representatives (i.e.
-shared topological features across datasets) and if so how many.
+shared topological features across datasets) and if so how many. The row labels of the heatmap are of the form
+'DX[Y]', meaning the Yth representative of diagram X, and the column labels are the data point numbers.
+If diagrams are the output of the \code{\link{bootstrap_persistence_thresholds}}
+function, then the subsetted_representatives (if present) will be analyzed. Therefore, a column label like 'DX[Y]' in the 
+plotted heatmap would mean the Yth representative of diagram X.
 }
 \examples{
 
@@ -45,7 +49,7 @@ if(require("TDA"))
   df <- TDA::circleUnif(n = 50)
                         
   # create 10 copies with added Gaussian noise and
-  # calculate their diagrams
+  # calculate their diagrams from distance matrices
   circs <- lapply(X = 1:10,FUN = function(X){
      df <- circ
      df$x <- df$x + rnorm(n = 50,sd = 0.05)
@@ -65,7 +69,7 @@ if(require("TDA"))
    analyze_representatives(diagrams = circs,dim = 1,
                            num_points = 50)
   
- }
+}
 }
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}
