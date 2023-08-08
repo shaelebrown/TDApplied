@@ -4,12 +4,12 @@
 \alias{plot_rips_graph}
 \title{Plot a Rips graph using the \link{igraph} package.}
 \usage{
-plot_rips_graph(graphs, index = 1L)
+plot_rips_graph(graphs, eps)
 }
 \arguments{
 \item{graphs}{the output of a `rips_graphs` function call.}
 
-\item{index}{the integer representing which graph out of the `graphs` parameter should be plotted, default 1.}
+\item{eps}{the numeric radius of the graph in `graphs` to plot.}
 }
 \description{
 This function will throw an error if the \link{igraph} package is not installed.
@@ -38,17 +38,17 @@ if(require("TDA") & require("igraph"))
   c(0.5*min_death_H0,(loop_birth + loop_death)/2))
   
   # plot graph of smaller (first) radius
-  plot_rips_graph(graphs = graphs,index = 1L)
+  plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0)
   
   # plot graph of larger (second) radius
-  plot_rips_graph(graphs = graphs,index = 2L)
+  plot_rips_graph(graphs = graphs,eps = (loop_birth + loop_death)/2)
   
   # repeat but with rownames for df, each vertex
   # will be plotted with its rownames
   rownames(df) <- paste0("V",1:25)
   graphs <- rips_graphs(X = df,eps = 
   c(0.5*min_death_H0,(loop_birth + loop_death)/2))
-  plot_rips_graph(graphs = graphs,index = 1L)
+  plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0)
   
 }
 }

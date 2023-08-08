@@ -12,7 +12,7 @@
 #' @param distance_mat a boolean representing if the input `X` is a distance matrix, default value is `FALSE`.
 #' @param eps a numeric vector of the positive scales at which to compute the Rips-Vietoris complexes, i.e. all edges at most the specified values.
 #' @param return_clusters a boolean determining if the connected components (i.e. data clusters) of the complex should be explicitly returned, default is `TRUE`.
-#' @return A list with a `vertices` field, containing the rownames of `X`, and then a list `graphs` one entry for each value in `eps`. Each entry is a list with a `graph` field, storing the (undirected) edges in the Rips-Vietoris complex in matrix format, and a `clusters` field, containing vectors of the data indices (or row names) in each connected component of the Rips graph.
+#' @return A list with a `vertices` field, containing the rownames of `X`, and then a list `graphs` one (named) entry for each value in `eps`. Each entry is a list with a `graph` field, storing the (undirected) edges in the Rips-Vietoris complex in matrix format, and a `clusters` field, containing vectors of the data indices (or row names) in each connected component of the Rips graph.
 #' @export
 #' @importFrom methods is
 #' @importFrom stats dist
@@ -42,7 +42,7 @@
 #'   c(0.5*min_death_H0,(loop_birth + loop_death)/2))
 #'
 #'   # verify that there are 25 clusters for the smaller radius
-#'   length(graphs$graphs[[1]]$clusters)
+#'   length(graphs$graphs[[0.5*min_death_H0]]$clusters)
 #'   
 #' }
 
@@ -52,7 +52,7 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
   # specific epsilon radius values
   
   # error check parameters
-  check_param(param = eps,param_name = "eps",numeric = T,whole_numbers = F,multiple = T,finite = T,non_negative = T,positive = T)
+  check_param(param = eps,param_name = "eps",numeric = T,whole_numbers = F,multiple = T,finite = T,positive = T)
   
   if(is.null(distance_mat))
   {
@@ -191,6 +191,7 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
     return(ret_list)
     
   })
+  names(ret_list) <- as.character(eps)
 
   return(list(vertices = vertices,graphs = ret_list))
   
@@ -202,7 +203,7 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
 #' This function will throw an error if the \link{igraph} package is not installed.
 #'
 #' @param graphs the output of a `rips_graphs` function call.
-#' @param index the integer representing which graph out of the `graphs` parameter should be plotted, default 1. 
+#' @param eps the numeric radius of the graph in `graphs` to plot.
 #' @export
 #' @importFrom methods is
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
@@ -230,21 +231,21 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
 #'   c(0.5*min_death_H0,(loop_birth + loop_death)/2))
 #'   
 #'   # plot graph of smaller (first) radius
-#'   plot_rips_graph(graphs = graphs,index = 1L)
+#'   plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0)
 #'   
 #'   # plot graph of larger (second) radius
-#'   plot_rips_graph(graphs = graphs,index = 2L)
+#'   plot_rips_graph(graphs = graphs,eps = (loop_birth + loop_death)/2)
 #'   
 #'   # repeat but with rownames for df, each vertex
 #'   # will be plotted with its rownames
 #'   rownames(df) <- paste0("V",1:25)
 #'   graphs <- rips_graphs(X = df,eps = 
 #'   c(0.5*min_death_H0,(loop_birth + loop_death)/2))
-#'   plot_rips_graph(graphs = graphs,index = 1L)
+#'   plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0)
 #'   
 #' }
 
-plot_rips_graph <- function(graphs,index = 1L){
+plot_rips_graph <- function(graphs,eps){
   
   # check for igraph
   if (!requireNamespace("igraph", quietly = TRUE)) {
@@ -259,14 +260,14 @@ plot_rips_graph <- function(graphs,index = 1L){
   {
     stop("graphs must be the output of a rips_graphs function call.")
   }
-  check_param(param_name = "index",param = index,numeric = T,whole_numbers = T,multiple = F,finite = T,positive = T)
-  if(index > length(graphs$graphs))
+  check_param(param_name = "eps",param = eps,numeric = T,multiple = F,finite = T,positive = T)
+  if(eps %in% names(graphs$graphs) == F)
   {
-    stop("index must be at most the number of graphs.")
+    stop("eps must be the scale of one of the graphs.")
   }
   
   # create graph
-  g <- igraph::graph_from_data_frame(graphs$graphs[[index]]$graph,directed = FALSE,vertices = graphs$vertices)
+  g <- igraph::graph_from_data_frame(graphs$graphs[[eps]]$graph,directed = FALSE,vertices = graphs$vertices)
   
   # plot graph
   igraph::plot.igraph(g)

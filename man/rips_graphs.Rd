@@ -16,7 +16,7 @@ rips_graphs(X, distance_mat = FALSE, eps, return_clusters = TRUE)
 \item{return_clusters}{a boolean determining if the connected components (i.e. data clusters) of the complex should be explicitly returned, default is `TRUE`.}
 }
 \value{
-A list with a `vertices` field, containing the rownames of `X`, and then a list `graphs` one entry for each value in `eps`. Each entry is a list with a `graph` field, storing the (undirected) edges in the Rips-Vietoris complex in matrix format, and a `clusters` field, containing vectors of the data indices (or row names) in each connected component of the Rips graph.
+A list with a `vertices` field, containing the rownames of `X`, and then a list `graphs` one (named) entry for each value in `eps`. Each entry is a list with a `graph` field, storing the (undirected) edges in the Rips-Vietoris complex in matrix format, and a `clusters` field, containing vectors of the data indices (or row names) in each connected component of the Rips graph.
 }
 \description{
 Persistence diagrams computed from Rips-Vietoris filtrations contain information about 
@@ -51,7 +51,7 @@ if(require("TDA") & require("igraph"))
   c(0.5*min_death_H0,(loop_birth + loop_death)/2))
 
   # verify that there are 25 clusters for the smaller radius
-  length(graphs$graphs[[1]]$clusters)
+  length(graphs$graphs[[0.5*min_death_H0]]$clusters)
   
 }
 }

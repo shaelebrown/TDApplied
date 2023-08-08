@@ -87,8 +87,8 @@ test_that("plot_rips_graph can detect incorrect parameters properly",{
   # loop_death, returning clusters
   comp <- rips_graphs(X = df,eps = c(0.5*min_death_H0,(loop_birth + loop_death)/2))
   
-  expect_error(plot_rips_graph(graphs = comp,index = 0),"positive")
-  expect_error(plot_rips_graph(graphs = comp,index = 3),"number")
+  expect_error(plot_rips_graph(graphs = comp,eps = 0),"positive")
+  expect_error(plot_rips_graph(graphs = comp,eps = 3),"scale")
   
 })
 
