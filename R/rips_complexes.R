@@ -209,7 +209,7 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
 #' @param plot_isolated_vertices a boolean representing whether or not to plot isolated vertices, default `FALSE`.
 #' @param vertex_labels a boolean representing whether or not to plot vertex labels, default `TRUE`.
 #' @param return_layout a boolean representing whether or not to return the plotting layout (x-y coordinates of each vertex) and the vertex labels, default `FALSE`.
-#' @return if `return_layout` is `TRUE` then a list with elements "layout" (the numeric matrix of vertex x-y coordinates) and "vertices" (vertex labels), otherwise the function does not return anything.
+#' @return if `return_layout` is `TRUE` then a list with elements "layout" (the numeric matrix of vertex x-y coordinates) and "vertices" (character vertex labels), otherwise the function does not return anything.
 #' @export
 #' @importFrom methods is
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
@@ -395,16 +395,16 @@ plot_rips_graph <- function(graphs,eps,cols = NULL,component_of = NULL,plot_isol
   # plot graph
   if(vertex_labels)
   {
-    igraph::plot.igraph(g,layout = layout)
+    igraph::plot.igraph(g,layout = layout,margin = -0.3)
   }else
   {
-    igraph::plot.igraph(g,layout = layout,vertex.label = NA)
+    igraph::plot.igraph(g,layout = layout,vertex.label = NA,margin = -0.3)
   }
   
   # if desired return layout and final vertex labels
   if(return_layout)
   {
-    return(list(layout = layout,vertices = igraph::V(g)))
+    return(list(layout = layout,vertices = names(igraph::V(g))))
   }
   
 }
