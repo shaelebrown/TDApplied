@@ -204,6 +204,12 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
 #'
 #' @param graphs the output of a `rips_graphs` function call.
 #' @param eps the numeric radius of the graph in `graphs` to plot.
+#' @param cols an optional character vector of vertex colors, default `NULL`.
+#' @param component_of a vertex name, only the component of the graph containing that vertex will be plotted (useful for identifying representative (co)cycles in graphs). Default `NULL` (plot the whole graph).
+#' @param plot_isolated_vertices a boolean representing whether or not to plot isolated vertices, default `FALSE`.
+#' @param vertex_labels a boolean representing whether or not to plot vertex labels, default `TRUE`.
+#' @param return_layout a boolean representing whether or not to return the plotting layout (x-y coordinates of each vertex) and the vertex labels, default `FALSE`.
+#' @return if `return_layout` is `TRUE` then a list with elements "layout" (the numeric matrix of vertex x-y coordinates) and "vertices" (vertex labels), otherwise the function does not return anything.
 #' @export
 #' @importFrom methods is
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
@@ -243,9 +249,26 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
 #'   c(0.5*min_death_H0,(loop_birth + loop_death)/2))
 #'   plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0)
 #'   
+#'   # plot without vertex labels
+#'   plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0,
+#'                   vertex_labels = FALSE)
+#'   
+#'   # remove isolated vertices
+#'   plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0,
+#'                   plot_isolated_vertices = FALSE)
+#'                  
+#'   # plot only the graph component containing vertex "1"
+#'   plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0,
+#'                   component_of = 1)
+#'  
+#'   # return the layout of the graph for further
+#'   # plotting customization
+#'   plot_info <- plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0,
+#'                                return_layout = TRUE)
+#'   
 #' }
 
-plot_rips_graph <- function(graphs,eps){
+plot_rips_graph <- function(graphs,eps,cols = NULL,component_of = NULL,plot_isolated_vertices = FALSE,return_layout = FALSE,vertex_labels = TRUE){
   
   # check for igraph
   if (!requireNamespace("igraph", quietly = TRUE)) {
@@ -266,10 +289,122 @@ plot_rips_graph <- function(graphs,eps){
     stop("eps must be the scale of one of the graphs.")
   }
   
+  if(!is.null(cols))
+  {
+    check_param(param_name = "cols",param = cols,multiple = T)
+    if(!is.character(cols))
+    {
+      stop("cols must be a character vector.")
+    }
+    if(length(which(is.na(cols) | is.nan(cols) | is.null(cols))) > 0)
+    {
+      stop("cols must not having missing values.")
+    }
+    if(length(cols) != length(graphs$vertices))
+    {
+      stop("cols must have the same length as graphs$vertices.")
+    }
+  }
+  
+  if(is.null(plot_isolated_vertices))
+  {
+    stop("plot_isolated_vertices must not be NULL.")
+  }
+  if(length(plot_isolated_vertices) > 1 | !methods::is(plot_isolated_vertices,"logical"))
+  {
+    stop("plot_isolated_vertices must be a single boolean value.")
+  }
+  if(is.na(plot_isolated_vertices) | is.nan(plot_isolated_vertices) )
+  {
+    stop("plot_isolated_vertices must not be NA/NAN.")
+  }
+  
+  if(is.null(return_layout))
+  {
+    stop("return_layout must not be NULL.")
+  }
+  if(length(return_layout) > 1 | !methods::is(return_layout,"logical"))
+  {
+    stop("return_layout must be a single boolean value.")
+  }
+  if(is.na(return_layout) | is.nan(return_layout) )
+  {
+    stop("return_layout must not be NA/NAN.")
+  }
+  
+  if(is.null(vertex_labels))
+  {
+    stop("vertex_labels must not be NULL.")
+  }
+  if(length(vertex_labels) > 1 | !methods::is(vertex_labels,"logical"))
+  {
+    stop("vertex_labels must be a single boolean value.")
+  }
+  if(is.na(vertex_labels) | is.nan(vertex_labels) )
+  {
+    stop("vertex_labels must not be NA/NAN.")
+  }
+  
+  if(!is.null(component_of))
+  {
+    check_param(param_name = "component_of",param = component_of,multiple = F)
+    if(is.na(component_of) | is.nan(component_of))
+    {
+      stop("component_of must not be NA or NaN.")
+    }
+    if(component_of %in% graphs$vertices == F)
+    {
+      stop("component_of must be an element of graphs$vertices.")
+    }
+  }
+  
   # create graph
-  g <- igraph::graph_from_data_frame(graphs$graphs[[eps]]$graph,directed = FALSE,vertices = graphs$vertices)
+  g <- igraph::graph_from_data_frame(graphs$graphs[[which(names(graphs$graphs) == eps)]]$graph,directed = FALSE,vertices = graphs$vertices)
+  if(!is.null(cols))
+  {
+    igraph::V(g)$color <- cols
+  }
+  
+  # if desired, subset by component of one vertex
+  if(!is.null(component_of))
+  {
+    components <- igraph::components(g)
+    comp <- graphs$vertices[which(components$membership == components$membership[[component_of]])]
+    g <- igraph::induced_subgraph(g,comp)
+  }
+  
+  # if desired remove isolated vertices
+  if(plot_isolated_vertices == F)
+  {
+    isolated = which(igraph::degree(g)==0)
+    g = igraph::delete.vertices(g, isolated)
+    if(length(igraph::V(g)) == 0)
+    {
+      warning("graph had 0 non-isolated vertices, empty graph will be plotted.")
+    }
+  }
+  
+  # get graph layout
+  layout <- igraph::layout_nicely(g)
+  layout <- apply(X = layout,MARGIN = 2L,FUN = function(X){
+    
+    return(-1 + 2*(X - min(X))/(max(X) - min(X)))
+    
+  })
   
   # plot graph
-  igraph::plot.igraph(g)
+  if(vertex_labels)
+  {
+    igraph::plot.igraph(g,layout = layout)
+  }else
+  {
+    igraph::plot.igraph(g,layout = layout,vertex.label = NA)
+  }
+  
+  # if desired return layout and final vertex labels
+  if(return_layout)
+  {
+    return(list(layout = layout,vertices = igraph::V(g)))
+  }
   
 }

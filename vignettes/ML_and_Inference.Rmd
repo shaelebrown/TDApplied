@@ -366,14 +366,18 @@ The function `bootstrap_persistence_thresholds` can be used to determine these p
 
 ```{r,fig.height = 4,fig.width = 8,fig.align = 'center'}
 # calculate the bootstrapped persistence thresholds using 2 cores
-# and 30 iterations
-thresh <- bootstrap_persistence_thresholds(X = circ,FUN = "ripsDiag",
-                                 maxdim = 1,thresh = 2,num_workers = 2,
-                                 alpha = 0.05,num_samples = 30,
-                                 return_subsetted = T,return_pvals = T)
+# and 30 iterations. We'll use the distance matrix of circ to
+# make representative cycles more comprehensible
+thresh <- bootstrap_persistence_thresholds(X = as.matrix(dist(circ)),
+                                           FUN = "ripsDiag",distance_mat = T,
+                                           maxdim = 1,thresh = 2,num_workers = 2,
+                                           alpha = 0.05,num_samples = 30,
+                                           return_subsetted = T,return_pvals = T,
+                                           calculate_representatives = T)
 diag <- thresh$diag
 
 # the p-values are both 1/31 (about 0.032) which is the minimum possible
+# when num_samples = 30 
 thresh$pvals
 
 # plot original diagram and thresholded diagram side-by-side, including
@@ -542,13 +546,65 @@ Next we can plot both Rips graphs:
 
 ```{r,eval = requireNamespace("igraph"),fig.height = 5,fig.width = 5,fig.align = 'center'}
 # plot first graph
-plot_rips_graph(gs,1L)
+plot_rips_graph(gs,eps_1)
 
 # plot second graph
-plot_rips_graph(gs,2L)
+plot_rips_graph(gs,eps_2)
 ```
 
 The first graph shows that at a scale before the loop is born, the dominant loop does not exist in the data (and that the space is more fragmented), while the second graph was able to retrieve the dominant loop. Visualizing multiple Rips graphs of a dataset, choosing particular scales of interest from the persistence diagram of the dataset, can be an effective tool for interpreting topological features.
+
+The input parameters of `plot_rips_graph` can help customize the graph visualizations. For example, if we want to investigate the loop we can also customize the plot to highlight the loop representative, and to only plot the component of the graph which contains the loop vertices:
+
+```{r,eval = requireNamespace('igraph'),echo = F,fig.width = 5,fig.align = 'center'}
+# get the stimuli in the loop
+stimuli_in_loop <- unique(as.numeric(thresh$subsetted_representatives[[2]]))
+
+# create colors for the data points, light blue if not in the loop
+# and red if in the loop
+colors <- rep("lightblue",50) 
+colors[stimuli_in_loop] <- "red"
+
+# plot only component containing the loop stimuli with vertex colors
+plot_rips_graph(gs,eps_2,cols = colors,component_of = stimuli_in_loop[[1]])
+```
+
+We can customize one level further by removing the vertex labels and using the graph layout (i.e. x-y coordinates of all vertices) to plot other things on the graph:
+
+```{r,eval = requireNamespace('igraph'),fig.width = 5,fig.align = 'center'}
+# plot only component containing the loop stimuli with vertex colors
+graph_info <- plot_rips_graph(gs,eps_2,cols = colors,
+                component_of = stimuli_in_loop[[1]],
+                vertex_labels = F,return_layout = T)
+
+# get layout
+layout <- graph_info$layout
+layout <- apply(layout,MARGIN = 2,FUN = function(X){
+  
+  return(-1 + 2*(X - min(X))/(max(X) - min(X)))
+  
+})
+
+# get indices of vertices in loop
+# not necessary in this case but necessary when we have
+# removed some vertices from the graph
+vertex_inds <- match(stimuli_in_loop,graph_info$vertices)
+
+# add volcano image over loop nodes
+# image could be anything like rasters read from
+# png files! this is just an example..
+utils::data("volcano")
+volcano <- (volcano - min(volcano)) / diff(range(volcano))
+for(i in vertex_inds)
+{
+  graphics::rasterImage(volcano,xleft = layout[i,1L] - 0.05,
+                              xright = layout[i,1L] + 0.05,
+                              ybottom = layout[i,2L] - 0.05,
+                              ytop = layout[i,2L] + 0.05)
+}
+```
+
+These visualizations can help determine which points are part of a representative and what the dataset structure is at various scales.
 
 ## Analyzing Multiple Representatives with **TDApplied**'s `analyze_representatives` Function
 

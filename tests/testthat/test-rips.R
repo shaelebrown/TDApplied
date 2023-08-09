@@ -90,5 +90,26 @@ test_that("plot_rips_graph can detect incorrect parameters properly",{
   expect_error(plot_rips_graph(graphs = comp,eps = 0),"positive")
   expect_error(plot_rips_graph(graphs = comp,eps = 3),"scale")
   
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,plot_isolated_vertices = NULL),"NULL")
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,plot_isolated_vertices = c(T,F)),"single")
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,plot_isolated_vertices = 2),"boolean")
+  
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,return_layout = NULL),"NULL")
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,return_layout = c(T,F)),"single")
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,return_layout = 2),"boolean")
+  
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,vertex_labels = NULL),"NULL")
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,vertex_labels = c(T,F)),"single")
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,vertex_labels = "2"),"boolean")
+  
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,cols = NA),"NA")
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,cols = c(1,2)),"character")
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,cols = c("1",NA)),"missing")
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,cols = c("1","2")),"vertices")
+  
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,component_of = c(1,2)),"single")
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,component_of = NaN),"NaN")
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,component_of = 26),"vertices")
+  
 })
 
