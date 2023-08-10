@@ -61,8 +61,8 @@ either a numeric vector of threshold values, with one for each dimension 0..`max
 }
 \description{
 Bootstrapping is used to find a conservative estimate of a 1-`alpha` percent "confidence interval" around
-each point in the persistence diagram of the data set, and points whose (open) intervals do not
-overlap with the diagonal (birth = death) would be considered "significant" or "real".
+each point in the persistence diagram of the data set, and points whose intervals do not
+touch the diagonal (birth == death) would be considered "significant" or "real".
 One threshold is computed for each dimension in the diagram.
 }
 \details{

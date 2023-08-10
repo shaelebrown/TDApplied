@@ -2,8 +2,8 @@
 #' Estimate persistence threshold(s) for topological features in a data set using bootstrapping.
 #'
 #' Bootstrapping is used to find a conservative estimate of a 1-`alpha` percent "confidence interval" around
-#' each point in the persistence diagram of the data set, and points whose (open) intervals do not
-#' overlap with the diagonal (birth = death) would be considered "significant" or "real".
+#' each point in the persistence diagram of the data set, and points whose intervals do not
+#' touch the diagonal (birth == death) would be considered "significant" or "real".
 #' One threshold is computed for each dimension in the diagram.
 #' 
 #' The thresholds are then determined by calculating the 1-`alpha'` percentile of the bottleneck
@@ -275,7 +275,7 @@ bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim
     bootstrap_values <- foreach_func(foreach::foreach(N = 1:num_samples,.combine = c),ex = {
       
       # sample data points with replacement
-      s <- sample(1:nrow(X),size = nrow(X),replace = T)
+      s <- unique(sample(1:nrow(X),size = nrow(X),replace = T))
       if(distance_mat == F)
       {
         X_sample <- X[s,]
@@ -352,7 +352,7 @@ bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim
     inds <- c()
     for(d in 0:maxdim)
     {
-      inds <- c(inds,which(diag$dimension == d & diag$death - diag$birth >= thresholds[[d + 1]])) 
+      inds <- c(inds,which(diag$dimension == d & diag$death - diag$birth > thresholds[[d + 1]])) 
     }
     ret_list$subsetted_diag <- diag[inds,]
     
@@ -393,7 +393,8 @@ bootstrap_persistence_thresholds <- function(X,FUN = "calculate_homology",maxdim
         pvals <- unlist(lapply(X = 1:nrow(ret_list$subsetted_diag),FUN = function(X){
           
           pers <- ret_list$subsetted_diag[X,3L] - ret_list$subsetted_diag[X,2L]
-          Z <- length(which(2*unlist(bootstrap_values[seq(X + 1,length(bootstrap_values),maxdim + 1)]) >= pers))
+          d <- ret_list$subsetted_diag[X,1L]
+          Z <- length(which(2*unlist(bootstrap_values[seq(d + 1,length(bootstrap_values),maxdim + 1)]) >= pers))
           return((Z + 1)/(num_samples + 1))
           
         }))

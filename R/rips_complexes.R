@@ -395,10 +395,10 @@ plot_rips_graph <- function(graphs,eps,cols = NULL,component_of = NULL,plot_isol
   # plot graph
   if(vertex_labels)
   {
-    igraph::plot.igraph(g,layout = layout,margin = -0.3)
+    igraph::plot.igraph(g,layout = layout,margin = 0)
   }else
   {
-    igraph::plot.igraph(g,layout = layout,vertex.label = NA,margin = -0.3)
+    igraph::plot.igraph(g,layout = layout,vertex.label = NA,margin = 0)
   }
   
   # if desired return layout and final vertex labels
