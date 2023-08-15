@@ -352,7 +352,7 @@ These thresholds form a square-shaped "confidence interval" around each point in
 par(mfrow = c(1,1))
 pt <- as.numeric(diag[which(diag[,1L] == 1),])[2:3]
 plot_diagram(D = diag,title = "Circ diagram with confidence interval",legend = T,max_radius = 2*0.3953059 + pt[[2]])
-graphics::rect(xleft = pt[[1]]-0.3953059,xright = pt[[1]]+0.3953059,ybottom = pt[[2]]-0.3953059,ytop = pt[[2]]+0.3953059,lty = "dashed")
+graphics::rect(xleft = pt[[1]]-0.3953059,xright = pt[[1]]+0.3953059,ybottom = pt[[2]]-0.3953059,ytop = pt[[2]]+0.3953059)
 graphics::lines(x = c(pt[[1]],pt[[1]] + 0.3953059),y = c(pt[[2]],pt[[2]]))
 graphics::lines(x = c(pt[[1]],pt[[1]]),y = c(pt[[2]],pt[[2]] - 0.3953059))
 graphics::text(x = c(pt[[1]] + 0.3953059/2,0.4),y = c(1.83,1.55),c("t","t"))
@@ -369,15 +369,17 @@ The function `bootstrap_persistence_thresholds` can be used to determine these p
 # and 30 iterations. We'll use the distance matrix of circ to
 # make representative cycles more comprehensible
 thresh <- bootstrap_persistence_thresholds(X = as.matrix(dist(circ)),
-                                           FUN = "ripsDiag",distance_mat = T,
+                                           FUN_diag = "ripsDiag",
+                                           FUN_boot = "ripsDiag",
+                                           distance_mat = T,
                                            maxdim = 1,thresh = 2,num_workers = 2,
                                            alpha = 0.05,num_samples = 30,
                                            return_subsetted = T,return_pvals = T,
                                            calculate_representatives = T)
 diag <- thresh$diag
 
-# the p-values are both 1/31 (about 0.032) which is the minimum possible
-# when num_samples = 30 
+# the p-value are 1/31 (about 0.032) and 2/31 (about 0.065) respectively 
+# which are the two smallest possible values when num_samples = 30 
 thresh$pvals
 
 # plot original diagram and thresholded diagram side-by-side, including
@@ -620,7 +622,8 @@ circs <- lapply(X = 1:10,FUN = function(X){
    df$x <- df$x + rnorm(n = 50,sd = 0.05)
    df$y <- df$y + rnorm(n = 50,sd = 0.05)
    diag <- bootstrap_persistence_thresholds(X = as.matrix(dist(df)),
-                                            FUN = "ripsDiag",maxdim = 1,
+                                            FUN_diag = "ripsDiag",
+                                            FUN_boot = "ripsDiag",maxdim = 1,
                                             thresh = 2,distance_mat = T,
                                             calculate_representatives = T,
                                             return_subsetted = T)

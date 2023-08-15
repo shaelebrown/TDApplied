@@ -6,7 +6,8 @@
 \usage{
 bootstrap_persistence_thresholds(
   X,
-  FUN = "calculate_homology",
+  FUN_diag = "calculate_homology",
+  FUN_boot = "calculate_homology",
   maxdim = 0,
   thresh,
   distance_mat = FALSE,
@@ -25,7 +26,10 @@ bootstrap_persistence_thresholds(
 \arguments{
 \item{X}{the input dataset, must either be a matrix or data frame.}
 
-\item{FUN}{a string representing the persistent homology function to use, either
+\item{FUN_diag}{a string representing the persistent homology function to use for calculating the full persistence diagram, either
+'calculate_homology' (the default), 'PyH' or 'ripsDiag'.}
+
+\item{FUN_boot}{a string representing the persistent homology function to use for calculating the bootstrapped persistence diagrams, either
 'calculate_homology' (the default), 'PyH' or 'ripsDiag'.}
 
 \item{maxdim}{the integer maximum homological dimension for persistent homology, default 0.}
@@ -35,9 +39,9 @@ bootstrap_persistence_thresholds(
 \item{distance_mat}{a boolean representing if `X` is a distance matrix (TRUE) or not (FALSE, default).
 dimensions together (TRUE, the default) or if one threshold should be calculated for each dimension separately (FALSE).}
 
-\item{ripser}{the imported ripser module when `FUN` is `PyH`.}
+\item{ripser}{the imported ripser module when `FUN_diag` or `FUN_boot` is `PyH`.}
 
-\item{ignore_infinite_cluster}{a boolean indicating whether or not to ignore the infinitely lived cluster when `FUN` is `PyH`.}
+\item{ignore_infinite_cluster}{a boolean indicating whether or not to ignore the infinitely lived cluster when `FUN_diag` or `FUN_boot` is `PyH`.}
 
 \item{calculate_representatives}{a boolean representing whether to calculate representative (co)cycles, default FALSE. Note that representatives cant be
 calculated when using the 'calculate_homology' function.}
@@ -68,7 +72,11 @@ One threshold is computed for each dimension in the diagram.
 \details{
 The thresholds are then determined by calculating the 1-`alpha'` percentile of the bottleneck
 distance values between the real persistence diagram and other diagrams obtained
-by bootstrap resampling the data. 
+by bootstrap resampling the data. Since `ripsDiag` is the slowest homology engine but is the
+only engine which calculates representative cycles (as opposed to co-cycles with `PyH`), two
+homology engines are input to this function - one to calculate the actual persistence diagram, `FUN_diag`
+(possibly with representative (co)cycles) and one to calculate the bootstrap diagrams, `FUN_boot` (this should be
+a faster engine, like `calculate_homology` or `PyH`).
 p-values can be calculated for any feature which survives the thresholding if both `return_subsetted` and `return_pvals` are `TRUE`, 
 however these values may be larger than the original `alpha` value in some cases. Note that this is not part of the original bootstrap procedure.
 If stricter thresholding is desired,
@@ -76,7 +84,7 @@ or the p-values must be less than `alpha`, set `p_less_than_alpha` to `TRUE`. Th
 possible p-value is always 1/(`num_samples` + 1).
 Note that since \code{\link[TDAstats]{calculate_homology}} 
 can ignore the longest-lived cluster, fewer "real" clusters may be found. To avoid this possibility
-try setting `FUN` equal to 'ripsDiag'.
+try setting `FUN_diag` equal to 'ripsDiag'.
 }
 \examples{
 
@@ -88,7 +96,7 @@ if(require("TDA"))
   # calculate persistence thresholds for alpha = 0.05 
   # and return the calculated diagram as well as the subsetted diagram
   bootstrapped_diagram <- bootstrap_persistence_thresholds(X = df,
-  FUN = "calculate_homology",maxdim = 1,thresh = 2,num_workers = 2)
+  maxdim = 1,thresh = 2,num_workers = 2)
 }
 }
 \references{
