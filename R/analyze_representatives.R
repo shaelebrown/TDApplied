@@ -39,7 +39,8 @@
 #'      df$x <- df$x + rnorm(n = 50,sd = 0.05)
 #'      df$y <- df$y + rnorm(n = 50,sd = 0.05)
 #'      diag <- bootstrap_persistence_thresholds(X = as.matrix(dist(df)),
-#'                                               FUN = "ripsDiag",maxdim = 1,
+#'                                               FUN_diag = "ripsDiag",
+#'                                               maxdim = 1,
 #'                                               thresh = 2,distance_mat = T,
 #'                                               calculate_representatives = T,
 #'                                               return_subsetted = T)
