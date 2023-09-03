@@ -8,6 +8,8 @@ plot_rips_graph(
   graphs,
   eps,
   cols = NULL,
+  layout = NULL,
+  title = NULL,
   component_of = NULL,
   plot_isolated_vertices = FALSE,
   return_layout = FALSE,
@@ -20,6 +22,10 @@ plot_rips_graph(
 \item{eps}{the numeric radius of the graph in `graphs` to plot.}
 
 \item{cols}{an optional character vector of vertex colors, default `NULL`.}
+
+\item{layout}{an optional 2D matrix of vertex coordinates, default `NULL`. If row names are supplied they can be used to subset a graph by those vertex names.}
+
+\item{title}{an optional str title for the plot, default `NULL`.}
 
 \item{component_of}{a vertex name, only the component of the graph containing that vertex will be plotted (useful for identifying representative (co)cycles in graphs). Default `NULL` (plot the whole graph).}
 
@@ -59,7 +65,8 @@ if(require("TDA") & require("igraph"))
   c(0.5*min_death_H0,(loop_birth + loop_death)/2))
   
   # plot graph of smaller (first) radius
-  plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0)
+  plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0,
+                  plot_isolated_vertices = TRUE)
   
   # plot graph of larger (second) radius
   plot_rips_graph(graphs = graphs,eps = (loop_birth + loop_death)/2)
@@ -69,24 +76,25 @@ if(require("TDA") & require("igraph"))
   rownames(df) <- paste0("V",1:25)
   graphs <- rips_graphs(X = df,eps = 
   c(0.5*min_death_H0,(loop_birth + loop_death)/2))
-  plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0)
+  plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0,
+                  plot_isolated_vertices = TRUE)
   
   # plot without vertex labels
-  plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0,
+  plot_rips_graph(graphs = graphs,eps = (loop_birth + loop_death)/2,
                   vertex_labels = FALSE)
-  
-  # remove isolated vertices
-  plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0,
-                  plot_isolated_vertices = FALSE)
                  
   # plot only the graph component containing vertex "1"
   plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0,
-                  component_of = 1)
+                  component_of = "V1",plot_isolated_vertices = TRUE)
  
-  # return the layout of the graph for further
-  # plotting customization
-  plot_info <- plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0,
-                               return_layout = TRUE)
+  # save the layout of the graph for adding features to 
+  # the same graph layout, like color
+  layout <- plot_rips_graph(graphs = graphs,eps = (loop_birth + loop_death)/2,
+                            return_layout = TRUE,vertex_labels = TRUE)
+  cols <- rep("blue",25)
+  cols[1:5] <- "red"
+  plot_rips_graph(graphs = graphs,eps = (loop_birth + loop_death)/2,cols = cols,
+                  layout = layout)
   
 }
 }

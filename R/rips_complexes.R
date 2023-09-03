@@ -205,7 +205,9 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
 #' @param graphs the output of a `rips_graphs` function call.
 #' @param eps the numeric radius of the graph in `graphs` to plot.
 #' @param cols an optional character vector of vertex colors, default `NULL`.
-#' @param component_of a vertex name, only the component of the graph containing that vertex will be plotted (useful for identifying representative (co)cycles in graphs). Default `NULL` (plot the whole graph).
+#' @param layout an optional 2D matrix of vertex coordinates, default `NULL`. If row names are supplied they can be used to subset a graph by those vertex names.
+#' @param title an optional str title for the plot, default `NULL`.
+#' @param component_of a vertex name (integer or character), only the component of the graph containing that vertex will be plotted (useful for identifying representative (co)cycles in graphs). Default `NULL` (plot the whole graph).
 #' @param plot_isolated_vertices a boolean representing whether or not to plot isolated vertices, default `FALSE`.
 #' @param vertex_labels a boolean representing whether or not to plot vertex labels, default `TRUE`.
 #' @param return_layout a boolean representing whether or not to return the plotting layout (x-y coordinates of each vertex) and the vertex labels, default `FALSE`.
@@ -237,7 +239,8 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
 #'   c(0.5*min_death_H0,(loop_birth + loop_death)/2))
 #'   
 #'   # plot graph of smaller (first) radius
-#'   plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0)
+#'   plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0,
+#'                   plot_isolated_vertices = TRUE)
 #'   
 #'   # plot graph of larger (second) radius
 #'   plot_rips_graph(graphs = graphs,eps = (loop_birth + loop_death)/2)
@@ -247,28 +250,29 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
 #'   rownames(df) <- paste0("V",1:25)
 #'   graphs <- rips_graphs(X = df,eps = 
 #'   c(0.5*min_death_H0,(loop_birth + loop_death)/2))
-#'   plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0)
+#'   plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0,
+#'                   plot_isolated_vertices = TRUE)
 #'   
 #'   # plot without vertex labels
-#'   plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0,
+#'   plot_rips_graph(graphs = graphs,eps = (loop_birth + loop_death)/2,
 #'                   vertex_labels = FALSE)
-#'   
-#'   # remove isolated vertices
-#'   plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0,
-#'                   plot_isolated_vertices = FALSE)
 #'                  
 #'   # plot only the graph component containing vertex "1"
 #'   plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0,
-#'                   component_of = 1)
+#'                   component_of = "V1",plot_isolated_vertices = TRUE)
 #'  
-#'   # return the layout of the graph for further
-#'   # plotting customization
-#'   plot_info <- plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0,
-#'                                return_layout = TRUE)
+#'   # save the layout of the graph for adding features to 
+#'   # the same graph layout, like color
+#'   layout <- plot_rips_graph(graphs = graphs,eps = (loop_birth + loop_death)/2,
+#'                             return_layout = TRUE,vertex_labels = TRUE)
+#'   cols <- rep("blue",25)
+#'   cols[1:5] <- "red"
+#'   plot_rips_graph(graphs = graphs,eps = (loop_birth + loop_death)/2,cols = cols,
+#'                   layout = layout)
 #'   
 #' }
 
-plot_rips_graph <- function(graphs,eps,cols = NULL,component_of = NULL,plot_isolated_vertices = FALSE,return_layout = FALSE,vertex_labels = TRUE){
+plot_rips_graph <- function(graphs,eps,cols = NULL,layout = NULL,title = NULL,component_of = NULL,plot_isolated_vertices = FALSE,return_layout = FALSE,vertex_labels = TRUE){
   
   # check for igraph
   if (!requireNamespace("igraph", quietly = TRUE)) {
@@ -303,6 +307,61 @@ plot_rips_graph <- function(graphs,eps,cols = NULL,component_of = NULL,plot_isol
     if(length(cols) != length(graphs$vertices))
     {
       stop("cols must have the same length as graphs$vertices.")
+    }
+  }
+  
+  if(!is.null(layout))
+  {
+    if(!is.matrix(layout))
+    {
+      stop("layout must be a matrix.")
+    }
+    if(ncol(layout) != 2)
+    {
+      stop("layout must have 2 columns.")
+    }
+    if(is.null(rownames(layout)))
+    {
+      if(nrow(layout) != length(graphs$vertices))
+      {
+        stop("when layout has no rownames, layout must have the same number of rows as the number of vertices in the graph.")
+      }
+    }else
+    {
+      # subset graphs by row names of layout
+      rnames <- as.character(rownames(layout))
+      inds <- unlist(lapply(X = rnames,FUN = function(X){
+        
+        ind <- which(graphs$vertices == X)
+        if(length(ind) == 0)
+        {
+          return(NA)
+        }
+        return(ind)
+        
+      }))
+      layout <- layout[which(!is.na(inds)),]
+      if(is.null(dim(layout)))
+      {
+        layout <- matrix(data = layout,ncol = 2)
+        rownames(layout) <- rnames[which(!is.na(inds))]
+      }
+      cols <- cols[which(!is.na(inds))]
+      inds <- inds[which(!is.na(inds))]
+      graphs$graphs <- lapply(X = graphs$graphs,FUN = function(X){
+        
+        return(list(graph = X$graph[which(as.character(X$graph[,1]) %in% rnames & as.character(X$graph[,2]) %in% rnames),]))
+        
+      })
+      graphs$vertices <- rnames
+    }
+  }
+  
+  if(!is.null(title))
+  {
+    if(!is.character(title) | length(title) > 1)
+    {
+      stop("title must be a single character string.")
     }
   }
   
@@ -352,7 +411,7 @@ plot_rips_graph <- function(graphs,eps,cols = NULL,component_of = NULL,plot_isol
     {
       stop("component_of must not be NA or NaN.")
     }
-    if(component_of %in% graphs$vertices == F)
+    if(as.character(component_of) %in% graphs$vertices == F)
     {
       stop("component_of must be an element of graphs$vertices.")
     }
@@ -380,31 +439,77 @@ plot_rips_graph <- function(graphs,eps,cols = NULL,component_of = NULL,plot_isol
     g = igraph::delete.vertices(g, isolated)
     if(length(igraph::V(g)) == 0)
     {
-      warning("graph had 0 non-isolated vertices, empty graph will be plotted.")
+      warning("graph had 0 non-isolated vertices, empty graph will be plotted and no layout will be returned.")
+      if(is.null(title))
+      {
+        if(vertex_labels)
+        {
+          igraph::plot.igraph(g,margin = 0)
+        }else
+        {
+          igraph::plot.igraph(g,vertex.label = NA,margin = 0)
+        }
+      }else
+      {
+        if(vertex_labels)
+        {
+          igraph::plot.igraph(g,margin = 0,main = title)
+        }else
+        {
+          igraph::plot.igraph(g,vertex.label = NA,margin = 0,main = title)
+        }
+      }
     }
   }
   
-  # get graph layout
-  layout <- igraph::layout_nicely(g)
-  layout <- apply(X = layout,MARGIN = 2L,FUN = function(X){
-    
-    return(-1 + 2*(X - min(X))/(max(X) - min(X)))
-    
-  })
-  
-  # plot graph
-  if(vertex_labels)
+  # get graph layout if needed and standardize
+  if(is.null(layout))
   {
-    igraph::plot.igraph(g,layout = layout,margin = 0)
+    layout <- igraph::layout_nicely(g)
   }else
   {
-    igraph::plot.igraph(g,layout = layout,vertex.label = NA,margin = 0)
+    layout <- layout[which(rownames(layout) %in% names(igraph::V(g))),]
+    if(is.null(dim(layout)))
+    {
+      layout <- matrix(data = layout,nrow = 1,ncol = 2)
+    }
   }
+  if(nrow(layout) > 1)
+  {
+    layout <- apply(X = layout,MARGIN = 2L,FUN = function(X){
+      
+      return(-1 + 2*(X - min(X))/(max(X) - min(X)))
+      
+    }) 
+  }
+  
+  # plot graph
+  if(is.null(title))
+  {
+    if(vertex_labels)
+    {
+      igraph::plot.igraph(g,layout = layout,margin = 0)
+    }else
+    {
+      igraph::plot.igraph(g,layout = layout,vertex.label = NA,margin = 0)
+    }
+  }else
+  {
+    if(vertex_labels)
+    {
+      igraph::plot.igraph(g,layout = layout,margin = 0,main = title)
+    }else
+    {
+      igraph::plot.igraph(g,layout = layout,vertex.label = NA,margin = 0,main = title)
+    }
+  }
+  
   
   # if desired return layout and final vertex labels
   if(return_layout)
   {
-    return(list(layout = layout,vertices = names(igraph::V(g))))
+    rownames(layout) <- names(igraph::V(g))
+    return(layout)
   }
   
 }

@@ -111,5 +111,57 @@ test_that("plot_rips_graph can detect incorrect parameters properly",{
   expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,component_of = NaN),"NaN")
   expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,component_of = 26),"vertices")
   
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,title = NA),"character")
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,title = c("1","2")),"single")
+  
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,layout = NA),"matrix")
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,layout = matrix(data = 1)),"columns")
+  expect_error(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0,layout = matrix(data = c(1,2),ncol = 2)),"rows")
+  
+  expect_warning(plot_rips_graph(graphs = comp,eps = 0.5*min_death_H0, component_of = 1),"empty")
+
+})
+
+test_that("plot_rips_graph is working properly",{
+  
+  # simulate data from the unit circle and calculate
+  # its diagram
+  df <- TDA::circleUnif(n = 25)
+  diag <- TDA::ripsDiag(df,maxdimension = 1,maxscale = 2)
+  
+  # get minimum death radius of any data cluster
+  min_death_H0 <- min(diag$diagram[which(diag$diagram[,1] == 0),3L])
+  
+  # get birth and death radius of the loop
+  loop_birth <- as.numeric(diag$diagram[nrow(diag$diagram),2L])
+  loop_death <- as.numeric(diag$diagram[nrow(diag$diagram),3L])
+  
+  # compute Rips-Vietoris complexes at radii half of
+  # min_death_H0 and the mean of loop_birth and
+  # loop_death, returning clusters
+  comp <- rips_graphs(X = df,eps = c(0.5*min_death_H0,(loop_birth + loop_death)/2))
+  
+  # check layout functionality
+  suppressWarnings({
+    
+    layout <- plot_rips_graph(comp,eps = 0.5*min_death_H0,return_layout = T)
+    
+  })
+  expect_equal(dim(layout),c(0,2))
+  layout <- plot_rips_graph(comp,eps = 0.5*min_death_H0,return_layout = T,plot_isolated_vertices = T)
+  expect_equal(nrow(layout),25)
+  layout <- plot_rips_graph(comp,eps = 0.5*min_death_H0,return_layout = T,plot_isolated_vertices = T,component_of = 1)
+  expect_equal(nrow(layout),1)
+  layout <- plot_rips_graph(comp,eps = (loop_birth + loop_death)/2,return_layout = T,component_of = 1)
+  expect_equal(nrow(layout),25)
+  rownames(df) <- paste("V",1:25,sep = "")
+  comp <- rips_graphs(X = df,eps = c(0.5*min_death_H0,(loop_birth + loop_death)/2))
+  layout <- plot_rips_graph(comp,eps = 0.5*min_death_H0,return_layout = T,plot_isolated_vertices = T)
+  expect_equal(nrow(layout),25)
+  layout <- plot_rips_graph(comp,eps = 0.5*min_death_H0,return_layout = T,plot_isolated_vertices = T,component_of = "V1")
+  expect_equal(nrow(layout),1)
+  layout <- plot_rips_graph(comp,eps = 0.5*min_death_H0,return_layout = T,plot_isolated_vertices = T,layout = layout)
+  expect_equal(nrow(layout),1)
+  
 })
 
