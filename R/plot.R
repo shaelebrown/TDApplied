@@ -19,7 +19,7 @@
 #' @param max_radius the x and y limits of the plot are defined as `c(0,max_radius)`, and the default value of `max_radius` is the maximum death value in `D`.
 #' @param legend a logical indicating whether to include a legend of feature dimensions, default TRUE.
 #' @param thresholds either a numeric vector with one persistence threshold for each dimension in `D` or the output of a \code{\link{bootstrap_persistence_thresholds}} function call, default NULL.
-#' @importFrom graphics legend abline
+#' @importFrom graphics legend lines
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @examples
@@ -210,12 +210,12 @@ plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,threshol
       l <- c(expression(H[0]~' clusters'),expression(H[1]~' loops'),expression(H[2]~' voids'),expression(H[3]),expression(H[4]),expression(H[5]),expression(H[6]),expression(H[7]),expression(H[8]),expression(H[9]),expression(H[10]),expression(H[11]),expression(H[12]))[dims + 1]
       graphics::legend("bottomright",legend = l,col = cols[dims + 1],pch = pchs[dims + 1],inset = 0.01*max(D[,3L])) 
     }
-    graphics::abline(a = 0,b = 1)
+    graphics::lines(x = c(0,max_radius),y = c(0,max_radius))
     if(!is.null(thresholds))
     {
       for(i in dims)
       {
-        graphics::abline(b = 1,a = thresholds[[i + 1]],col = cols[i + 1],lty = "dashed")
+        graphics::lines(x = c(0,max_radius - thresholds[[i + 1]]),y = c(thresholds[[i + 1]],max_radius),col = cols[i + 1],lty = "dashed")
       } 
     }
   }else
@@ -246,7 +246,7 @@ plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,threshol
     plot(x = numeric(),y = numeric(),xlim = c(0,max_radius),ylim = c(0,max_radius),
          xlab = "Feature birth",ylab = "Feature death",
          main = ifelse(test = is.null(title),yes = "",no = title))
-    graphics::abline(a = 0,b = 1)
+    graphics::lines(x = c(0,max_radius),y = c(0,max_radius))
   }
   
 }
