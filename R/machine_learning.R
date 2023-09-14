@@ -124,7 +124,7 @@ diagram_mds <- function(diagrams,D = NULL,k = 2,distance = "wasserstein",dim = 0
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #' @param ... additional parameters for the \code{\link[kernlab]{kkmeans}} kernlab function.
 #'
-#' @return a 'diagram_kkmeans' S3 object containing the output of \code{\link[kernlab]{kkmeans}} on the Gram matrix, i.e. a list containing the elements
+#' @return a list of class 'diagram_kkmeans' containing the output of \code{\link[kernlab]{kkmeans}} on the Gram matrix, i.e. a list containing the elements
 #' 
 #' \describe{
 #' 
@@ -247,10 +247,10 @@ diagram_kkmeans <- function(diagrams,K = NULL,centers,dim = 0,t = 1,sigma = 1,rh
   
   # set up return list
   ret_list <- list(clustering = clustering,diagrams = diagrams,dim = dim,sigma = sigma,t = t,rho = rho)
-  
+
   # set class for easy recognition in prediction method
   class(ret_list) <- "diagram_kkmeans"
-  
+
   return(ret_list)
   
 }
@@ -263,7 +263,7 @@ diagram_kkmeans <- function(diagrams,K = NULL,centers,dim = 0,t = 1,sigma = 1,rh
 #'
 #' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `new_diagrams` and `K` need to be supplied.
 #' @param K an optional precomputed cross Gram matrix of the new diagrams and the diagrams used in `clustering`, default NULL. If not NULL then `new_diagrams` does not need to be supplied.
-#' @param clustering the output of a \code{\link{diagram_kkmeans}} function call.
+#' @param clustering the output of a \code{\link{diagram_kkmeans}} function call, of class 'diagram_kkmeans'.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #'
 #' @return a vector of the predicted cluster labels for the new diagrams.
@@ -317,7 +317,7 @@ predict_diagram_kkmeans <- function(new_diagrams,K = NULL,clustering,num_workers
   {
     stop("clustering must not be NULL.")
   }
-  if(!methods::is(clustering,"diagram_kkmeans"))
+  if(!inherits(clustering,"diagram_kkmeans"))
   {
     stop("clustering object must be the output of a diagram_kkmeans function call.")
   }
@@ -381,7 +381,7 @@ predict_diagram_kkmeans <- function(new_diagrams,K = NULL,clustering,num_workers
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #' @param th the threshold value under which principal components are ignored (default 0.0001).
 #'
-#' @return a list containing the elements
+#' @return a list of class 'diagram_kpca' containing the elements
 #' 
 #' \describe{
 #' 
@@ -488,7 +488,7 @@ diagram_kpca <- function(diagrams,K = NULL,dim = 0,t = 1,sigma = 1,rho = NULL,fe
 #'
 #' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `new_diagrams` and `K` need to be supplied.
 #' @param K an optional precomputed cross-Gram matrix of the new diagrams and the ones used in `embedding`, default NULL. If not NULL then `new_diagrams` does not need to be supplied.
-#' @param embedding the output of a \code{\link{diagram_kpca}} function call.
+#' @param embedding the output of a \code{\link{diagram_kpca}} function call, of class 'diagram_kpca'.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #'
 #' @return the data projection (rotation), stored as a numeric matrix. Each row corresponds to the same-index diagram in `new_diagrams`.
@@ -631,7 +631,7 @@ predict_diagram_kpca <- function(new_diagrams,K = NULL,embedding,num_workers = p
 #' @param tol tolerance of termination criteria (default 0.001).
 #' @param shrinking option whether to use the shrinking-heuristics (default TRUE).
 #' @param num_workers the number of cores used for parallel computation, default is one less the number of cores on the machine.
-#' @return a list containing the elements
+#' @return a list of class 'diagram_ksvm' containing the elements
 #' 
 #' \describe{
 #' 
@@ -1116,7 +1116,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
 #'
 #'
 #' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `new_diagrams` and `K` need to be supplied.
-#' @param model the output of a \code{\link{diagram_ksvm}} function call.
+#' @param model the output of a \code{\link{diagram_ksvm}} function call, of class 'diagram_ksvm'.
 #' @param K an optional cross-Gram matrix of the new diagrams and the diagrams in `model`, default NULL. If not NULL then `new_diagrams` does not need to be supplied.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #' @return a vector containing the output of \code{\link[kernlab]{predict.ksvm}} on the cross Gram matrix of the new diagrams and the support vector diagrams stored in the model.
