@@ -27,7 +27,7 @@ plot_rips_graph(
 
 \item{title}{an optional str title for the plot, default `NULL`.}
 
-\item{component_of}{a vertex name, only the component of the graph containing that vertex will be plotted (useful for identifying representative (co)cycles in graphs). Default `NULL` (plot the whole graph).}
+\item{component_of}{a vertex name (integer or character), only the component of the graph containing that vertex will be plotted (useful for identifying representative (co)cycles in graphs). Default `NULL` (plot the whole graph).}
 
 \item{plot_isolated_vertices}{a boolean representing whether or not to plot isolated vertices, default `FALSE`.}
 
