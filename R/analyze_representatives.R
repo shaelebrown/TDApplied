@@ -5,39 +5,55 @@
 #' Multiple distance matrices with corresponding data points can contain the same topological features. 
 #' Therefore we may wish to compare many representative (co)cycles across distance matrices to decide if their topological features are the same.
 #' The `analyze_representatives` function returns a matrix of binary datapoint memberships in an input list of representatives across distance matrices.
-#' Optionally this matrix can be plotted as a heatmap with rows (i.e. representatives) reordered by similarity, and the 
-#' contributions (i.e. percentage membership) of each point in the representatives can also be returned.
+#' Optionally this matrix can be plotted as a heatmap with columns as data points and rows (i.e. representatives) reordered by similarity, and the 
+#' contributions (i.e. percentage membership) of each point in the representatives can also be returned. The heatmap has
+#' dark red squares representing membership - location [i,j] is dark red if data point j is in representative i.
 #' 
 #' The clustering dendrogram can be used to determine if there are any similar groups of representatives (i.e.
 #' shared topological features across datasets) and if so how many. The row labels of the heatmap are of the form
 #' 'DX[Y]', meaning the Yth representative of diagram X, and the column labels are the data point numbers.
 #' If diagrams are the output of the \code{\link{bootstrap_persistence_thresholds}}
 #' function, then the subsetted_representatives (if present) will be analyzed. Therefore, a column label like 'DX[Y]' in the 
-#' plotted heatmap would mean the Yth representative of diagram X.
+#' plotted heatmap would mean the Yth representative of diagram X. If certain representatives should be highlighted (by drawing a box around its row)
+#' in the heatmap, a dataframe `boxed_reps` can be supplied with two integer columns - 'diagram' and 'rep'. For example, if we wish to draw a box for DX[Y] then we
+#' add the row (diagram = X,rep = Y) to `boxed_reps`.
+#' 
+#' If the data represents time series information, then comparing representative memberships may be
+#' uninformative. If `temporal_distance` is set to `TRUE` then a different distance metric will be used
+#' to compare two representatives r1, r2: for each a in r1 define d(a) to be the minimum absolute difference
+#' of a with any element in r2, and vice versa for b in r2 and d(b). The temporal distance is then defined as
+#' 
+#' d(r1,r2) = max\{max(d(a)|a in r1),max(d(b)|b in r2\}
 #'
 #' @param diagrams a list of persistence diagrams, either the output of persistent homology calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, \code{\link{diagram_to_df}} or \code{\link{bootstrap_persistence_thresholds}}.
 #' @param dim the integer homological dimension of representatives to consider.
 #' @param num_points the integer number of data points in all the original datasets (from which the diagrams were calculated).
 #' @param plot_heatmap a boolean representing if a heatmap of data point membership similarity of the representatives should be plotted, default `TRUE`. A dendrogram of hierarchical clustering is plotted, and rows (representatives) are sorted according to this clustering.
 #' @param return_contributions a boolean indicating whether or not to return the membership contributions (i.e. percentages) of the data points (1:`num_points`) across all the representatives, default `FALSE`.
-#' @return either a matrix of data point contributions to the representatives, or a list with elements "memberships" (the matrix) and "contributions" (a vector of membership percentages for each data point across representatives).
+#' @param boxed_reps a data frame specifying specific rows of the output heatmap which should have a box drawn around them (for highlighting), default NULL. See the details section for more information.
+#' @param lwd a positive number width for the lines of drawn boxes, if boxed_reps is not null.
+#' @param temporal_distance a boolean representing if a custom distance function should be used to compare the representatives, default `FALSE`. See the details section for more information.
+#' @param title a character string title for the plotted heatmap, default NULL.
+#' @param return_clust a boolean determining whether or not to return the result of the `stats::hclust` call when a heatmap is plotted, default `FALSE`.
+#' @return either a matrix of data point contributions to the representatives, or a list with elements "memberships" (the matrix) and some combination of elements "contributions" (a vector of membership percentages for each data point across representatives) and "clust" (the results of `stats::hclust` on the membership matrix).
 #' @export
 #' @importFrom methods is
-#' @importFrom stats heatmap
+#' @importFrom stats heatmap order.dendrogram as.dendrogram hclust
+#' @importFrom graphics rect
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @examples
 #'
 #' if(require("TDA"))
 #' {
 #'   # sample the unit circle
-#'   df <- TDA::circleUnif(n = 50)
+#'   circ <- TDA::circleUnif(n = 50)
 #'                         
 #'   # create 10 copies with added Gaussian noise and
 #'   # calculate their diagrams from distance matrices
 #'   circs <- lapply(X = 1:10,FUN = function(X){
 #'      df <- circ
-#'      df$x <- df$x + rnorm(n = 50,sd = 0.05)
-#'      df$y <- df$y + rnorm(n = 50,sd = 0.05)
+#'      df[,1] <- df[,1] + rnorm(n = 50,sd = 0.05)
+#'      df[,2] <- df[,2] + rnorm(n = 50,sd = 0.05)
 #'      diag <- bootstrap_persistence_thresholds(X = as.matrix(dist(df)),
 #'                                               FUN_diag = "ripsDiag",
 #'                                               maxdim = 1,
@@ -53,10 +69,24 @@
 #'    # 50 (corresponding) points
 #'    analyze_representatives(diagrams = circs,dim = 1,
 #'                            num_points = 50)
+#'                            
+#'    # now highlight the first non-trivial cycle
+#'    first_loop_diag <- 0
+#'    for(i in 1:10)
+#'    {
+#'       if(nrow(circs[[i]]$subsetted_diag) > 0)
+#'       {
+#'          first_loop_diag <- i
+#'          break
+#'       }
+#'    }
+#'    br <- data.frame(diagram = first_loop_diag,rep = 1)
+#'    analyze_representatives(diagrams = circs,dim = 1,
+#'                            num_points = 50,boxed_reps = br)
 #'   
 #' }
 
-analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap = TRUE,return_contributions = FALSE){
+analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap = TRUE,return_contributions = FALSE,boxed_reps = NULL,temporal_distance = FALSE,lwd = NULL,title = NULL,return_clust = FALSE){
   
   # error check parameters
   check_param(param_name = "dim",dim,numeric = T,at_least_one = T,multiple = F,infinite = F)
@@ -88,6 +118,49 @@ analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap = TRUE,
   if(is.na(return_contributions) | is.nan(return_contributions) )
   {
     stop("return_contributions must not be NA/NAN.")
+  }
+  if(is.null(temporal_distance))
+  {
+    stop("temporal_distance must not be NULL.")
+  }
+  if(length(temporal_distance) > 1 | !methods::is(temporal_distance,"logical"))
+  {
+    stop("temporal_distance must be a single logical (i.e. T or F).")
+  }
+  if(is.na(temporal_distance) | is.nan(temporal_distance) )
+  {
+    stop("temporal_distance must not be NA/NAN.")
+  }
+  if(plot_heatmap == T)
+  {
+    # error check title
+    if(!is.null(title))
+    {
+      if(length(title) > 1)
+      {
+        stop("title must be a single character string.")
+      }
+      if(is.na(title) | is.nan(title))
+      {
+        stop("title must not be NA/NaN.")
+      }
+      if(!methods::is(title,"character"))
+      {
+        stop("title must be a character string.")
+      }
+    }
+  }
+  if(is.null(return_clust))
+  {
+    stop("return_clust must not be NULL.")
+  }
+  if(length(return_clust) > 1 | !methods::is(return_clust,"logical"))
+  {
+    stop("return_clust must be a single logical (i.e. T or F).")
+  }
+  if(is.na(return_clust) | is.nan(return_clust) )
+  {
+    stop("return_clust must not be NA/NAN.")
   }
   
   # check diagrams
@@ -197,6 +270,38 @@ analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap = TRUE,
     
   })
   
+  if(!is.null(boxed_reps))
+  {
+    if(methods::is(boxed_reps,"data.frame") == F)
+    {
+      stop("If supplied, boxed_reps must be a data frame.")
+    }
+    if(ncol(boxed_reps) != 2 | all(colnames(boxed_reps) %in% c("diagram","rep")) == F)
+    {
+      stop("boxed_reps must have two columns - 'diagram' and 'rep'.")
+    }
+    if(nrow(boxed_reps) > 0)
+    {
+      if(length(which(boxed_reps$diagram != round(boxed_reps$diagram))) > 0 | length(which(boxed_reps$rep != round(boxed_reps$rep))) > 0)
+      {
+        stop("boxed_reps must contain only integer values.")
+      }
+      if(length(which(boxed_reps$diagram %in% 1:length(diagrams) == F)) > 0)
+      {
+        stop("boxed_reps contains a diagram entry outside of 1:length(diagrams).")
+      }
+    }else
+    {
+      boxed_reps <- NULL
+    }
+    
+    if(!is.null(lwd))
+    {
+      check_param(param_name = "lwd",param = lwd,numeric = T,positive = T,multiple = F,finite = T) 
+    }
+    
+  }
+  
   cycle_inds <- lapply(X = diagrams,FUN = function(X){
     
     return(which(X$diag[,1] == dim))
@@ -213,6 +318,18 @@ analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap = TRUE,
     })
     
   })
+  
+  if(!is.null(boxed_reps))
+  {
+    error_check <- lapply(X = 1:nrow(boxed_reps),FUN = function(X){
+      
+      if(boxed_reps[X,2L] %in% 1:length(cycles[[boxed_reps[X,1L]]]) == F)
+      {
+        stop("Some row of boxed_reps contained a rep value either less than 1 or greater than the number of cycles in that diagram (in the desired dimension).")
+      }
+        
+    }) 
+  }
   
   num_cycles <- sum(unlist(lapply(X = cycles,FUN = length)))
   if(num_cycles == 0)
@@ -244,16 +361,104 @@ analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap = TRUE,
   
   if(plot_heatmap)
   {
-    stats::heatmap(mat,scale = "none",Colv = NA) 
+    if(temporal_distance)
+    {
+      d <- temporal_distance(mat)
+    }else
+    {
+      d <- stats::dist(mat)
+    }
+    cluster <- stats::hclust(d = d)
+    dendrogram  = stats::as.dendrogram(cluster)
+    stats::heatmap(mat,scale = "none",xlab = "Data point",ylab = "Representative",main = title,Colv = NA,Rowv = dendrogram,add.expr = {
+      
+      if(!is.null(boxed_reps))
+      {
+        if(nrow(boxed_reps) > 0)
+        {
+          dend_order <- stats::order.dendrogram(dendrogram)
+          box_top <- 0.5 + length(cycles)
+          box_right <- 0.5 + num_points
+          box_left <- 0.5
+          box_bot <- 0.5
+          box_height <- (box_top - box_bot)/nrow(mat)
+          for(i in 1:nrow(boxed_reps))
+          {
+            ind <- which(rownames(mat) == paste0("D",boxed_reps[i,1L],"[",boxed_reps[i,2L],"]"))
+            rownum <- which(dend_order == ind)
+            if(!is.null(lwd))
+            {
+              graphics::rect(xleft = box_left,xright = box_right,ybottom = rownum - 0.5,ytop = rownum + 0.5,lwd = lwd,col = "red")
+            }else
+            {
+              graphics::rect(xleft = box_left,xright = box_right,ybottom = rownum - 0.5,ytop = rownum + 0.5,col = "red")
+            }
+          }
+        }
+      }
+      
+    })
   }
   
+  # compute contributions if desired
   if(return_contributions == T)
   {
-    return(list(mat = mat,contributions = apply(X = mat,MARGIN = 2L,mean)))
+    contributions <- apply(X = mat,MARGIN = 2L,mean)
+    if(plot_heatmap == T & return_clust == T)
+    {
+      # return clustering object if desired
+      return(list(mat = mat,contributions = contributions,clust = cluster))
+    }else
+    {
+      return(list(mat = mat,contributions = contributions))
+    }
+  }else
+  {
+    if(plot_heatmap == T & return_clust == T)
+    {
+      # return clustering object if desired
+      return(list(mat = mat,clust = cluster))
+    }
   }
   
   return(mat)
   
 }
 
+# distance function between two representatives r1 and r2 for
+# the temporal distance
+dist_func <- function(r1,r2){
+  
+  # do Hausdorf distance like thing
+  members_r1 <- which(r1 == 1)
+  members_r2 <- which(r2 == 1)
+  d1 <- max(unlist(lapply(X = members_r1,FUN = function(X){
+    
+    return(min(abs(X - members_r2)))
+    
+  })))
+  d2 <- max(unlist(lapply(X = members_r2,FUN = function(X){
+    
+    return(min(abs(X - members_r1)))
+    
+  })))
+  return(max(c(d1,d2)))
+  
+}
 
+# temporal distance function for a matrix of representatives, x
+# rows are reps, binary membership over the number of data points (columns)
+temporal_distance <- function(x){
+  d <- matrix(0,nrow = nrow(x),ncol = nrow(x))
+  for(i in 1:(nrow(x) - 1))
+  {
+    for(j in (i+1):nrow(x))
+    {
+      v <- dist_func(x[i,],x[j,])
+      d[i,j] <- v
+      d[j,i] <- v
+    }
+  }
+  d <- as.dist(d)
+  return(d)
+}

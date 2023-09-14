@@ -9,7 +9,12 @@ analyze_representatives(
   dim,
   num_points,
   plot_heatmap = TRUE,
-  return_contributions = FALSE
+  return_contributions = FALSE,
+  boxed_reps = NULL,
+  temporal_distance = FALSE,
+  lwd = NULL,
+  title = NULL,
+  return_clust = FALSE
 )
 }
 \arguments{
@@ -22,16 +27,27 @@ analyze_representatives(
 \item{plot_heatmap}{a boolean representing if a heatmap of data point membership similarity of the representatives should be plotted, default `TRUE`. A dendrogram of hierarchical clustering is plotted, and rows (representatives) are sorted according to this clustering.}
 
 \item{return_contributions}{a boolean indicating whether or not to return the membership contributions (i.e. percentages) of the data points (1:`num_points`) across all the representatives, default `FALSE`.}
+
+\item{boxed_reps}{a data frame specifying specific rows of the output heatmap which should have a box drawn around them (for highlighting), default NULL. See the details section for more information.}
+
+\item{temporal_distance}{a boolean representing if a custom distance function should be used to compare the representatives, default `FALSE`. See the details section for more information.}
+
+\item{lwd}{a positive number width for the lines of drawn boxes, if boxed_reps is not null.}
+
+\item{title}{a character string title for the plotted heatmap, default NULL.}
+
+\item{return_clust}{a boolean determining whether or not to return the result of the `stats::hclust` call when a heatmap is plotted, default `FALSE`.}
 }
 \value{
-either a matrix of data point contributions to the representatives, or a list with elements "memberships" (the matrix) and "contributions" (a vector of membership percentages for each data point across representatives).
+either a matrix of data point contributions to the representatives, or a list with elements "memberships" (the matrix) and some combination of elements "contributions" (a vector of membership percentages for each data point across representatives) and "clust" (the results of `stats::hclust` on the membership matrix).
 }
 \description{
 Multiple distance matrices with corresponding data points can contain the same topological features. 
 Therefore we may wish to compare many representative (co)cycles across distance matrices to decide if their topological features are the same.
 The `analyze_representatives` function returns a matrix of binary datapoint memberships in an input list of representatives across distance matrices.
-Optionally this matrix can be plotted as a heatmap with rows (i.e. representatives) reordered by similarity, and the 
-contributions (i.e. percentage membership) of each point in the representatives can also be returned.
+Optionally this matrix can be plotted as a heatmap with columns as data points and rows (i.e. representatives) reordered by similarity, and the 
+contributions (i.e. percentage membership) of each point in the representatives can also be returned. The heatmap has
+dark red squares representing membership - location [i,j] is dark red if data point j is in representative i.
 }
 \details{
 The clustering dendrogram can be used to determine if there are any similar groups of representatives (i.e.
@@ -39,21 +55,30 @@ shared topological features across datasets) and if so how many. The row labels 
 'DX[Y]', meaning the Yth representative of diagram X, and the column labels are the data point numbers.
 If diagrams are the output of the \code{\link{bootstrap_persistence_thresholds}}
 function, then the subsetted_representatives (if present) will be analyzed. Therefore, a column label like 'DX[Y]' in the 
-plotted heatmap would mean the Yth representative of diagram X.
+plotted heatmap would mean the Yth representative of diagram X. If certain representatives should be highlighted (by drawing a box around its row)
+in the heatmap, a dataframe `boxed_reps` can be supplied with two integer columns - 'diagram' and 'rep'. For example, if we wish to draw a box for DX[Y] then we
+add the row (diagram = X,rep = Y) to `boxed_reps`.
+
+If the data represents time series information, then comparing representative memberships may be
+uninformative. If `temporal_distance` is set to `TRUE` then a different distance metric will be used
+to compare two representatives r1, r2: for each a in r1 define d(a) to be the minimum absolute difference
+of a with any element in r2, and vice versa for b in r2 and d(b). The temporal distance is then defined as
+
+d(r1,r2) = max\{max(d(a)|a in r1),max(d(b)|b in r2\}
 }
 \examples{
 
 if(require("TDA"))
 {
   # sample the unit circle
-  df <- TDA::circleUnif(n = 50)
+  circ <- TDA::circleUnif(n = 50)
                         
   # create 10 copies with added Gaussian noise and
   # calculate their diagrams from distance matrices
   circs <- lapply(X = 1:10,FUN = function(X){
      df <- circ
-     df$x <- df$x + rnorm(n = 50,sd = 0.05)
-     df$y <- df$y + rnorm(n = 50,sd = 0.05)
+     df[,1] <- df[,1] + rnorm(n = 50,sd = 0.05)
+     df[,2] <- df[,2] + rnorm(n = 50,sd = 0.05)
      diag <- bootstrap_persistence_thresholds(X = as.matrix(dist(df)),
                                               FUN_diag = "ripsDiag",
                                               maxdim = 1,
@@ -69,6 +94,20 @@ if(require("TDA"))
    # 50 (corresponding) points
    analyze_representatives(diagrams = circs,dim = 1,
                            num_points = 50)
+                           
+   # now highlight the first non-trivial cycle
+   first_loop_diag <- 0
+   for(i in 1:10)
+   {
+      if(nrow(circs[[i]]$subsetted_diag) > 0)
+      {
+         first_loop_diag <- i
+         break
+      }
+   }
+   br <- data.frame(diagram = first_loop_diag,rep = 1)
+   analyze_representatives(diagrams = circs,dim = 1,
+                           num_points = 50,boxed_reps = br)
   
 }
 }
