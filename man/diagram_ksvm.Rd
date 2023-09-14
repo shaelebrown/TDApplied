@@ -66,7 +66,7 @@ diagram_ksvm(
 \item{num_workers}{the number of cores used for parallel computation, default is one less the number of cores on the machine.}
 }
 \value{
-a list containing the elements
+a list of class 'diagram_ksvm' containing the elements
 
 \describe{
 

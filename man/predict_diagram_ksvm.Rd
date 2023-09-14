@@ -14,7 +14,7 @@ predict_diagram_ksvm(
 \arguments{
 \item{new_diagrams}{a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `new_diagrams` and `K` need to be supplied.}
 
-\item{model}{the output of a \code{\link{diagram_ksvm}} function call.}
+\item{model}{the output of a \code{\link{diagram_ksvm}} function call, of class 'diagram_ksvm'.}
 
 \item{K}{an optional cross-Gram matrix of the new diagrams and the diagrams in `model`, default NULL. If not NULL then `new_diagrams` does not need to be supplied.}
 

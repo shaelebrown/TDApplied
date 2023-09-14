@@ -16,7 +16,7 @@ predict_diagram_kpca(
 
 \item{K}{an optional precomputed cross-Gram matrix of the new diagrams and the ones used in `embedding`, default NULL. If not NULL then `new_diagrams` does not need to be supplied.}
 
-\item{embedding}{the output of a \code{\link{diagram_kpca}} function call.}
+\item{embedding}{the output of a \code{\link{diagram_kpca}} function call, of class 'diagram_kpca'.}
 
 \item{num_workers}{the number of cores used for parallel computation, default is one less than the number of cores on the machine.}
 }

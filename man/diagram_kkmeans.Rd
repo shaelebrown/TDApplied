@@ -36,7 +36,7 @@ diagram_kkmeans(
 \item{...}{additional parameters for the \code{\link[kernlab]{kkmeans}} kernlab function.}
 }
 \value{
-a 'diagram_kkmeans' S3 object containing the output of \code{\link[kernlab]{kkmeans}} on the Gram matrix, i.e. a list containing the elements
+a list of class 'diagram_kkmeans' containing the output of \code{\link[kernlab]{kkmeans}} on the Gram matrix, i.e. a list containing the elements
 
 \describe{
 

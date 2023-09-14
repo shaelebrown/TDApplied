@@ -36,7 +36,7 @@ diagram_kpca(
 \item{th}{the threshold value under which principal components are ignored (default 0.0001).}
 }
 \value{
-a list containing the elements
+a list of class 'diagram_kpca' containing the elements
 
 \describe{
 
