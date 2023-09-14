@@ -1,6 +1,8 @@
 
 test_that("analyze_representatives can detect incorrect parameters correctly",{
   
+  skip_if_not_installed("TDA")
+  
   D = data.frame(dimension = c(0),birth = c(0),death = c(1))
   expect_error(analyze_representatives(diagrams = list(),dim = 1,num_points = 10),"2")
   expect_error(analyze_representatives(diagrams = 5,dim = 1,num_points = 10),"list")
@@ -23,7 +25,36 @@ test_that("analyze_representatives can detect incorrect parameters correctly",{
   expect_error(analyze_representatives(diagrams = list(list(D,representatives = list(matrix(data = c(1.1,2),nrow = 1))),D,D),dim = 1,num_points = 4),"integer")
   expect_error(analyze_representatives(diagrams = list(list(D,representatives = list(matrix(data = c(1,5),nrow = 1))),D,D),dim = 1,num_points = 4),"num_points")
   expect_error(analyze_representatives(diagrams = list(list(D,representatives = list(matrix(data = c(1,4),nrow = 1))),D,D),dim = 1,num_points = 4),"diagram")
-
+  
+  circs_ripsDiag <- lapply(X = 1:10,FUN = function(X){
+    
+    return(TDA::ripsDiag(X = as.matrix(dist(TDA::circleUnif(n = 25))),maxdimension = 1,maxscale = 1,library = "dionysus",location = T,dist = "arbitrary"))
+    
+  })
+  expect_error(analyze_representatives(diagrams = circs_ripsDiag,dim = 1,num_points = 25,boxed_reps = NA),"boxed_reps")
+  expect_error(analyze_representatives(diagrams = circs_ripsDiag,dim = 1,num_points = 25,boxed_reps = data.frame()),"two")
+  expect_error(analyze_representatives(diagrams = circs_ripsDiag,dim = 1,num_points = 25,boxed_reps = data.frame(diagrams = c(1),reps = c(1))),"rep")
+  
+  expect_error(analyze_representatives(diagrams = list(D,D,D),dim = 1,num_points = 4,temporal_distance = "F"),"logical")
+  expect_error(analyze_representatives(diagrams = list(D,D,D),dim = 1,num_points = 4,temporal_distance = c(F,T)),"single")
+  expect_error(analyze_representatives(diagrams = list(D,D,D),dim = 1,num_points = 4,temporal_distance = NULL),"NULL")
+  expect_error(analyze_representatives(diagrams = list(D,D,D),dim = 1,num_points = 4,temporal_distance = NA),"NA")
+  
+  expect_error(analyze_representatives(diagrams = circs_ripsDiag,dim = 1,num_points = 25,lwd = "2",boxed_reps = data.frame(diagram = c(1),rep = c(1))),"numeric")
+  expect_error(analyze_representatives(diagrams = circs_ripsDiag,dim = 1,num_points = 25,lwd = c(1,2),boxed_reps = data.frame(diagram = c(1),rep = c(1))),"single")
+  expect_error(analyze_representatives(diagrams = circs_ripsDiag,dim = 1,num_points = 25,lwd = 0,boxed_reps = data.frame(diagram = c(1),rep = c(1))),"positive")
+  expect_error(analyze_representatives(diagrams = circs_ripsDiag,dim = 1,num_points = 25,lwd = NA,boxed_reps = data.frame(diagram = c(1),rep = c(1))),"NA")
+  expect_error(analyze_representatives(diagrams = circs_ripsDiag,dim = 1,num_points = 25,lwd = Inf,boxed_reps = data.frame(diagram = c(1),rep = c(1))),"finite")
+  
+  expect_error(analyze_representatives(diagrams = circs_ripsDiag,dim = 1,num_points = 25,title = NaN),"NaN")
+  expect_error(analyze_representatives(diagrams = circs_ripsDiag,dim = 1,num_points = 25,title = 1),"character")
+  expect_error(analyze_representatives(diagrams = circs_ripsDiag,dim = 1,num_points = 25,title = c("1","2")),"single")
+  
+  expect_error(analyze_representatives(diagrams = list(D,D,D),dim = 1,num_points = 4,return_clust = "F"),"logical")
+  expect_error(analyze_representatives(diagrams = list(D,D,D),dim = 1,num_points = 4,return_clust = c(F,T)),"single")
+  expect_error(analyze_representatives(diagrams = list(D,D,D),dim = 1,num_points = 4,return_clust = NULL),"NULL")
+  expect_error(analyze_representatives(diagrams = list(D,D,D),dim = 1,num_points = 4,return_clust = NA),"NA")
+  
 })
 
 test_that("analyze_representatives is computing properly",{
