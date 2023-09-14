@@ -1,19 +1,18 @@
 
 #' @importFrom stats complete.cases
-#' @importFrom methods is
 
 # error checks for function parameters
 
 check_diagram <- function(d,ret){
 
   # error checks for a diagram d stored as a data frame, and conversion
-  if((is.list(d) && ((length(d) == 1 && all(names(d) %in% "diagram") && (methods::is(d$diagram,"diagram")) || methods::is(d$diagram,"data.frame")) || ((length(d) == 4 && all(names(d) %in% c("diagram","birthLocation","deathLocation","cycleLocation")) && methods::is(d$diagram,"diagram"))))) || (methods::is(d,"matrix") && methods::is(d,"array") & all(colnames(d) %in% c("dimension","birth","death"))))
+  if((is.list(d) && ((length(d) == 1 && all(names(d) %in% "diagram") && (inherits(d$diagram,"diagram")) || inherits(d$diagram,"data.frame")) || ((length(d) == 4 && all(names(d) %in% c("diagram","birthLocation","deathLocation","cycleLocation")) && inherits(d$diagram,"diagram"))))) || (inherits(d,"matrix") && inherits(d,"array") & all(colnames(d) %in% c("dimension","birth","death"))))
   {
     # d is the output from a TDA/TDAstats calculation
     d <- diagram_to_df(d)
   }else
   {
-    if(!methods::is(d,"data.frame"))
+    if(!inherits(d,"data.frame"))
     {
       stop("Diagrams must either be the output of a TDA/TDAstats computation or a data frame.")
     }
@@ -29,7 +28,7 @@ check_diagram <- function(d,ret){
     stop("Every diagram must have three columns.")
   }
 
-  if(!methods::is(d[,1L],"numeric") | !methods::is(d[,2L],"numeric") | !methods::is(d[,3L],"numeric"))
+  if(!is.numeric(d[,1L]) | !is.numeric(d[,2L]) | !is.numeric(d[,3L]))
   {
     stop("Diagrams must have numeric columns.")
   }
@@ -211,19 +210,18 @@ check_param <- function(param_name,param,...){
 }
 
 #' @importFrom stats complete.cases
-#' @importFrom methods is
 
 check_matrix <- function(M,name,type = "kernel",symmetric = T){
   
   if(type == "kernel")
   {
-    if(methods::is(M,"kernelMatrix") == F)
+    if(inherits(M,"kernelMatrix") == F)
     {
       stop(paste0(name," must be of type kernelMatrix."))
     }
   }else
   {
-    if(methods::is(M,"matrix") == F)
+    if(inherits(M,"matrix") == F)
     {
       stop(paste0(name," must be of type matrix."))
     }

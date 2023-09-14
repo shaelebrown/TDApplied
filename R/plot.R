@@ -67,7 +67,7 @@ plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,threshol
     {
       stop("title must be a single character string.")
     }
-    if(!methods::is(title,"character"))
+    if(!inherits(title,"character"))
     {
       stop("title must be a character string.")
     }

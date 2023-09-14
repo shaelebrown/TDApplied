@@ -14,7 +14,6 @@
 #' @param return_clusters a boolean determining if the connected components (i.e. data clusters) of the complex should be explicitly returned, default is `TRUE`.
 #' @return A list with a `vertices` field, containing the rownames of `X`, and then a list `graphs` one (named) entry for each value in `eps`. Each entry is a list with a `graph` field, storing the (undirected) edges in the Rips-Vietoris complex in matrix format, and a `clusters` field, containing vectors of the data indices (or row names) in each connected component of the Rips graph.
 #' @export
-#' @importFrom methods is
 #' @importFrom stats dist
 #' @importFrom foreach foreach %do%
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
@@ -58,7 +57,7 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
   {
     stop("distance_mat must not be NULL.")
   }
-  if(length(distance_mat) > 1 | !methods::is(distance_mat,"logical"))
+  if(length(distance_mat) > 1 | !inherits(distance_mat,"logical"))
   {
     stop("distance_mat must be a single logical (i.e. T or F).")
   }
@@ -67,7 +66,7 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
     stop("distance_mat must not be NA/NAN.")
   }
   
-  if(!methods::is(X,"data.frame") & !methods::is(X,"matrix"))
+  if(!inherits(X,"data.frame") & !inherits(X,"matrix"))
   {
     stop("X must either be a dataframe or a matrix.")
   }
@@ -79,11 +78,11 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
   {
     stop("X must not contain any missing values.")
   }
-  if(distance_mat == T & (ncol(X) != nrow(X) | !methods::is(X,"matrix")))
+  if(distance_mat == T & (ncol(X) != nrow(X) | !inherits(X,"matrix")))
   {
     stop("if distance_mat is TRUE then X must be a square matrix.")
   }
-  if((methods::is(X,"matrix") & !methods::is(X[1,1],"numeric")) | (methods::is(X,"data.frame") & length(which(unlist(lapply(X,is.numeric)))) < ncol(X)))
+  if((inherits(X,"matrix") & !inherits(X[1,1],"numeric")) | (inherits(X,"data.frame") & length(which(unlist(lapply(X,is.numeric)))) < ncol(X)))
   {
     stop("X must have only numeric entries.")
   }
@@ -92,7 +91,7 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
   {
     stop("return_clusters must not be NULL.")
   }
-  if(length(return_clusters) > 1 | !methods::is(return_clusters,"logical"))
+  if(length(return_clusters) > 1 | !inherits(return_clusters,"logical"))
   {
     stop("return_clusters must be a single logical (i.e. T or F).")
   }
@@ -127,12 +126,12 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
     
     # format and remove duplicate rows
     rownames(complex) <- NULL
-    if(methods::is(complex,"integer"))
+    if(inherits(complex,"integer"))
     {
       complex <- t(as.matrix(complex))
     }
     complex <- complex[which(complex[,1] < complex[,2]),]
-    if(methods::is(complex,"integer"))
+    if(inherits(complex,"integer"))
     {
       complex <- t(as.matrix(complex))
     }
@@ -213,7 +212,6 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
 #' @param return_layout a boolean representing whether or not to return the plotting layout (x-y coordinates of each vertex) and the vertex labels, default `FALSE`.
 #' @return if `return_layout` is `TRUE` then a list with elements "layout" (the numeric matrix of vertex x-y coordinates) and "vertices" (character vertex labels), otherwise the function does not return anything.
 #' @export
-#' @importFrom methods is
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @examples
 #'
@@ -283,7 +281,7 @@ plot_rips_graph <- function(graphs,eps,cols = NULL,layout = NULL,title = NULL,co
   }
   
   # error check parameters
-  if(!is.list(graphs) | length(graphs) != 2 | length(which(names(graphs) == c("vertices","graphs"))) != 2 | !methods::is(graphs$graphs,"list"))
+  if(!is.list(graphs) | length(graphs) != 2 | length(which(names(graphs) == c("vertices","graphs"))) != 2 | !inherits(graphs$graphs,"list"))
   {
     stop("graphs must be the output of a rips_graphs function call.")
   }
@@ -369,7 +367,7 @@ plot_rips_graph <- function(graphs,eps,cols = NULL,layout = NULL,title = NULL,co
   {
     stop("plot_isolated_vertices must not be NULL.")
   }
-  if(length(plot_isolated_vertices) > 1 | !methods::is(plot_isolated_vertices,"logical"))
+  if(length(plot_isolated_vertices) > 1 | !inherits(plot_isolated_vertices,"logical"))
   {
     stop("plot_isolated_vertices must be a single boolean value.")
   }
@@ -382,7 +380,7 @@ plot_rips_graph <- function(graphs,eps,cols = NULL,layout = NULL,title = NULL,co
   {
     stop("return_layout must not be NULL.")
   }
-  if(length(return_layout) > 1 | !methods::is(return_layout,"logical"))
+  if(length(return_layout) > 1 | !inherits(return_layout,"logical"))
   {
     stop("return_layout must be a single boolean value.")
   }
@@ -395,7 +393,7 @@ plot_rips_graph <- function(graphs,eps,cols = NULL,layout = NULL,title = NULL,co
   {
     stop("vertex_labels must not be NULL.")
   }
-  if(length(vertex_labels) > 1 | !methods::is(vertex_labels,"logical"))
+  if(length(vertex_labels) > 1 | !inherits(vertex_labels,"logical"))
   {
     stop("vertex_labels must be a single boolean value.")
   }

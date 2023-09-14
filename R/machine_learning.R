@@ -267,7 +267,6 @@ diagram_kkmeans <- function(diagrams,K = NULL,centers,dim = 0,t = 1,sigma = 1,rh
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
 #'
 #' @return a vector of the predicted cluster labels for the new diagrams.
-#' @importFrom methods is
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @seealso \code{\link{diagram_kkmeans}} for clustering persistence diagrams.
@@ -494,7 +493,6 @@ diagram_kpca <- function(diagrams,K = NULL,dim = 0,t = 1,sigma = 1,rho = NULL,fe
 #' @return the data projection (rotation), stored as a numeric matrix. Each row corresponds to the same-index diagram in `new_diagrams`.
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
-#' @importFrom methods is
 #' @seealso \code{\link{diagram_kpca}} for embedding persistence diagrams into a low-dimensional space.
 #' @examples
 #'
@@ -551,7 +549,7 @@ predict_diagram_kpca <- function(new_diagrams,K = NULL,embedding,num_workers = p
   {
     stop("embedding must be supplied.")
   }
-  if(!methods::is(embedding,"diagram_kpca"))
+  if(!inherits(embedding,"diagram_kpca"))
   {
     stop("embedding must be the output of a diagram_kpca function call.")
   }
@@ -1179,7 +1177,7 @@ predict_diagram_ksvm <- function(new_diagrams,model,K = NULL,num_workers = paral
   {
     stop("model must be supplied.")
   }
-  if(!methods::is(model,"diagram_ksvm"))
+  if(!inherits(model,"diagram_ksvm"))
   {
     stop("model must be the output of a diagram_ksvm function call.")
   }

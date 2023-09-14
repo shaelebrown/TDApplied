@@ -37,7 +37,6 @@
 #' @param return_clust a boolean determining whether or not to return the result of the `stats::hclust` call when a heatmap is plotted, default `FALSE`.
 #' @return either a matrix of data point contributions to the representatives, or a list with elements "memberships" (the matrix) and some combination of elements "contributions" (a vector of membership percentages for each data point across representatives) and "clust" (the results of `stats::hclust` on the membership matrix).
 #' @export
-#' @importFrom methods is
 #' @importFrom stats heatmap order.dendrogram as.dendrogram hclust
 #' @importFrom graphics rect
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
@@ -99,7 +98,7 @@ analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap = TRUE,
   {
     stop("plot_heatmap must not be NULL.")
   }
-  if(length(plot_heatmap) > 1 | !methods::is(plot_heatmap,"logical"))
+  if(length(plot_heatmap) > 1 | !inherits(plot_heatmap,"logical"))
   {
     stop("plot_heatmap must be a single logical (i.e. T or F).")
   }
@@ -111,7 +110,7 @@ analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap = TRUE,
   {
     stop("return_contributions must not be NULL.")
   }
-  if(length(return_contributions) > 1 | !methods::is(return_contributions,"logical"))
+  if(length(return_contributions) > 1 | !inherits(return_contributions,"logical"))
   {
     stop("return_contributions must be a single logical (i.e. T or F).")
   }
@@ -123,7 +122,7 @@ analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap = TRUE,
   {
     stop("temporal_distance must not be NULL.")
   }
-  if(length(temporal_distance) > 1 | !methods::is(temporal_distance,"logical"))
+  if(length(temporal_distance) > 1 | !inherits(temporal_distance,"logical"))
   {
     stop("temporal_distance must be a single logical (i.e. T or F).")
   }
@@ -144,7 +143,7 @@ analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap = TRUE,
       {
         stop("title must not be NA/NaN.")
       }
-      if(!methods::is(title,"character"))
+      if(!inherits(title,"character"))
       {
         stop("title must be a character string.")
       }
@@ -154,7 +153,7 @@ analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap = TRUE,
   {
     stop("return_clust must not be NULL.")
   }
-  if(length(return_clust) > 1 | !methods::is(return_clust,"logical"))
+  if(length(return_clust) > 1 | !inherits(return_clust,"logical"))
   {
     stop("return_clust must be a single logical (i.e. T or F).")
   }
@@ -272,7 +271,7 @@ analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap = TRUE,
   
   if(!is.null(boxed_reps))
   {
-    if(methods::is(boxed_reps,"data.frame") == F)
+    if(inherits(boxed_reps,"data.frame") == F)
     {
       stop("If supplied, boxed_reps must be a data frame.")
     }

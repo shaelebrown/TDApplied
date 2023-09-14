@@ -44,7 +44,6 @@
 #' @param num_workers the integer number of cores used for parallelizing (over bootstrap samples), default one less the maximum amount of cores on the machine.
 #' @return either a numeric vector of threshold values, with one for each dimension 0..`maxdim` (in that order), or a list containing those thresholds and elements (if desired) 
 #' @export
-#' @importFrom methods is
 #' @importFrom stats quantile
 #' @importFrom foreach foreach %dopar% %do%
 #' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
@@ -76,7 +75,7 @@ bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",F
   {
     stop("distance_mat must not be NULL.")
   }
-  if(length(distance_mat) > 1 | !methods::is(distance_mat,"logical"))
+  if(length(distance_mat) > 1 | !inherits(distance_mat,"logical"))
   {
     stop("distance_mat must be a single logical (i.e. T or F).")
   }
@@ -89,7 +88,7 @@ bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",F
   {
     stop("return_subsetted must not be NULL.")
   }
-  if(length(return_subsetted) > 1 | !methods::is(return_subsetted,"logical"))
+  if(length(return_subsetted) > 1 | !inherits(return_subsetted,"logical"))
   {
     stop("return_subsetted must be a single logical (i.e. T or F).")
   }
@@ -102,7 +101,7 @@ bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",F
   {
     stop("return_pvals must not be NULL.")
   }
-  if(length(return_pvals) > 1 | !methods::is(return_pvals,"logical"))
+  if(length(return_pvals) > 1 | !inherits(return_pvals,"logical"))
   {
     stop("return_pvals must be a single logical (i.e. T or F).")
   }
@@ -115,7 +114,7 @@ bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",F
   {
     stop("p_less_than_alpha must not be NULL.")
   }
-  if(length(p_less_than_alpha) > 1 | !methods::is(p_less_than_alpha,"logical"))
+  if(length(p_less_than_alpha) > 1 | !inherits(p_less_than_alpha,"logical"))
   {
     stop("p_less_than_alpha must be a single logical (i.e. T or F).")
   }
@@ -128,7 +127,7 @@ bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",F
   {
     stop("return_diag must not be NULL.")
   }
-  if(length(return_diag) > 1 | !methods::is(return_diag,"logical"))
+  if(length(return_diag) > 1 | !inherits(return_diag,"logical"))
   {
     stop("return_diag must be a single logical (i.e. T or F).")
   }
@@ -140,7 +139,7 @@ bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",F
   check_param(param = maxdim,param_name = "maxdim",numeric = T,whole_numbers = T,multiple = F,finite = T,non_negative = T)
   check_param(param = thresh,param_name = "thresh",numeric = T,whole_numbers = F,multiple = F,finite = T,non_negative = T,positive = T)
   
-  if(!methods::is(X,"data.frame") & !methods::is(X,"matrix"))
+  if(!inherits(X,"data.frame") & !inherits(X,"matrix"))
   {
     stop("X must either be a dataframe or a matrix.")
   }
@@ -152,11 +151,11 @@ bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",F
   {
     stop("X must not contain any missing values.")
   }
-  if(distance_mat == T & (ncol(X) != nrow(X) | !methods::is(X,"matrix")))
+  if(distance_mat == T & (ncol(X) != nrow(X) | !inherits(X,"matrix")))
   {
     stop("if distance_mat is TRUE then X must be a square matrix.")
   }
-  if((methods::is(X,"matrix") & !methods::is(X[1,1],"numeric")) | (methods::is(X,"data.frame") & length(which(unlist(lapply(X,is.numeric)))) < ncol(X)))
+  if((inherits(X,"matrix") & !inherits(X[1,1],"numeric")) | (inherits(X,"data.frame") & length(which(unlist(lapply(X,is.numeric)))) < ncol(X)))
   {
     stop("X must have only numeric entries.")
   }
@@ -165,7 +164,7 @@ bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",F
   {
     stop("FUN_diag must not be NULL.")
   }
-  if(length(FUN_diag) > 1 | !methods::is(FUN_diag,"character"))
+  if(length(FUN_diag) > 1 | !inherits(FUN_diag,"character"))
   {
     stop("FUN_diag must be a single string.")
   }
@@ -199,7 +198,7 @@ bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",F
     {
       stop("ignore_infinite_cluster must not be NULL.")
     }
-    if(length(ignore_infinite_cluster) > 1 | !methods::is(ignore_infinite_cluster,"logical"))
+    if(length(ignore_infinite_cluster) > 1 | !inherits(ignore_infinite_cluster,"logical"))
     {
       stop("ignore_infinite_cluster must be a single logical (i.e. T or F).")
     }
@@ -216,7 +215,7 @@ bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",F
   {
     stop("FUN_boot must not be NULL.")
   }
-  if(length(FUN_boot) > 1 | !methods::is(FUN_boot,"character"))
+  if(length(FUN_boot) > 1 | !inherits(FUN_boot,"character"))
   {
     stop("FUN_boot must be a single string.")
   }
@@ -250,7 +249,7 @@ bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",F
     {
       stop("ignore_infinite_cluster must not be NULL.")
     }
-    if(length(ignore_infinite_cluster) > 1 | !methods::is(ignore_infinite_cluster,"logical"))
+    if(length(ignore_infinite_cluster) > 1 | !inherits(ignore_infinite_cluster,"logical"))
     {
       stop("ignore_infinite_cluster must be a single logical (i.e. T or F).")
     }
@@ -276,7 +275,7 @@ bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",F
   {
     stop("calculate_representatives must not be NULL.")
   }
-  if(length(calculate_representatives) > 1 | !methods::is(calculate_representatives,"logical"))
+  if(length(calculate_representatives) > 1 | !inherits(calculate_representatives,"logical"))
   {
     stop("calculate_representatives must be a single boolean value.")
   }

@@ -12,7 +12,6 @@
 #' @param d the output of a TDA/TDAstats homology calculation, like \code{\link[TDA]{ripsDiag}} or \code{\link[TDAstats]{calculate_homology}}.
 #' @return a 3-column data frame, with each row representing a topological feature. The first column is the feature dimension (a non-negative integer), the second column is the birth radius of the feature and the third column is the death radius.
 #' @export
-#' @importFrom methods is
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @examples
 #'
@@ -40,17 +39,17 @@ diagram_to_df <- function(d){
   # d is a diagram from library TDA or TDAstats
   
   # preliminary check, mostly for internal methods
-  if(methods::is(d,"data.frame"))
+  if(inherits(d,"data.frame"))
   {
     return(d)
   }
   
-  if((is.list(d) && ((length(d) == 1 && all(names(d) %in% "diagram") && (methods::is(d$diagram,"diagram")) || methods::is(d$diagram,"data.frame")) || ((length(d) == 4 && all(names(d) %in% c("diagram","birthLocation","deathLocation","cycleLocation")) && methods::is(d$diagram,"diagram"))))) == F && (methods::is(d,"matrix") && methods::is(d,"array") & all(colnames(d) %in% c("dimension","birth","death"))) == F)
+  if((is.list(d) && ((length(d) == 1 && all(names(d) %in% "diagram") && (inherits(d$diagram,"diagram")) || inherits(d$diagram,"data.frame")) || ((length(d) == 4 && all(names(d) %in% c("diagram","birthLocation","deathLocation","cycleLocation")) && inherits(d$diagram,"diagram"))))) == F && (inherits(d,"matrix") && inherits(d,"array") & all(colnames(d) %in% c("dimension","birth","death"))) == F)
   {
     stop("Diagrams must either be the output of a TDA/TDAstats/PyH computation.")
   }
   
-  if(methods::is(d,"matrix") & methods::is(d,"array"))
+  if(inherits(d,"matrix") & inherits(d,"array"))
   {
     # diagram was the output of a TDAstats calculation
     return(as.data.frame(d))
@@ -58,7 +57,7 @@ diagram_to_df <- function(d){
   
   if("diagram" %in% names(d))
   {
-    if(methods::is(d$diagram,"data.frame"))
+    if(inherits(d$diagram,"data.frame"))
     {
       # diagram was the output of a PyH calculation, with representatives
       return(d$diagram)

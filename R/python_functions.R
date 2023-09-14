@@ -68,7 +68,6 @@ import_ripser <- function(){
 #### CHECK RIPSER MODULE ####
 #' Verify an imported ripser module.
 #' 
-#' @importFrom methods is
 #' @param ripser the ripser module object.
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 check_ripser <- function(ripser){
@@ -76,7 +75,7 @@ check_ripser <- function(ripser){
   e <- "ripser object should be created using the import_ripser() function."
   
   # check class
-  if((methods::is(ripser,"python.builtin.module")) == F | (methods::is(ripser,"python.builtin.object")) == F)
+  if((inherits(ripser,"python.builtin.module")) == F | (inherits(ripser,"python.builtin.object")) == F)
   {
     stop(e)
   }
@@ -118,7 +117,6 @@ check_ripser <- function(ripser){
 #' @return Either a dataframe containing the persistence diagram if `calculate_representatives` is `FALSE` (the default), otherwise a list with two elements: 
 #' diagram of class diagram, containing the persistence diagram,
 #' and representatives, a list containing the edges, triangles etc. contained in each representative cocycle.
-#' @importFrom methods is
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @examples
@@ -140,7 +138,7 @@ PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_
   {
     stop("distance_mat must not be NULL.")
   }
-  if(length(distance_mat) > 1 | !methods::is(distance_mat,"logical"))
+  if(length(distance_mat) > 1 | !inherits(distance_mat,"logical"))
   {
     stop("distance_mat must be a single logical (i.e. T or F).")
   }
@@ -153,7 +151,7 @@ PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_
   {
     stop("ignore_infinite_cluster must not be NULL.")
   }
-  if(length(ignore_infinite_cluster) > 1 | !methods::is(ignore_infinite_cluster,"logical"))
+  if(length(ignore_infinite_cluster) > 1 | !inherits(ignore_infinite_cluster,"logical"))
   {
     stop("ignore_infinite_cluster must be a single logical (i.e. T or F).")
   }
@@ -166,7 +164,7 @@ PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_
   {
     stop("calculate_representatives must not be NULL.")
   }
-  if(length(calculate_representatives) > 1 | !methods::is(calculate_representatives,"logical"))
+  if(length(calculate_representatives) > 1 | !inherits(calculate_representatives,"logical"))
   {
     stop("calculate_representatives must be a single logical (i.e. T or F).")
   }
@@ -178,7 +176,7 @@ PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_
   check_param(param = maxdim,param_name = "maxdim",numeric = T,whole_numbers = T,multiple = F,finite = T,non_negative = T)
   check_param(param = thresh,param_name = "thresh",numeric = T,whole_numbers = F,multiple = F,finite = T,non_negative = T)
   check_ripser(ripser)
-  if(!methods::is(X,"data.frame") & !methods::is(X,"matrix"))
+  if(!inherits(X,"data.frame") & !inherits(X,"matrix"))
   {
     stop("X must either be a dataframe or a matrix.")
   }
@@ -190,11 +188,11 @@ PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_
   {
     stop("X must not contain any missing values.")
   }
-  if(distance_mat == T & (ncol(X) != nrow(X) | !methods::is(X,"matrix")))
+  if(distance_mat == T & (ncol(X) != nrow(X) | !inherits(X,"matrix")))
   {
     stop("if distance_mat is TRUE then X must be a square matrix.")
   }
-  if((methods::is(X,"matrix") & !methods::is(X[1,1],"numeric")) | (methods::is(X,"data.frame") & length(which(unlist(lapply(X,is.numeric)))) < ncol(X)))
+  if((inherits(X,"matrix") & !inherits(X[1,1],"numeric")) | (inherits(X,"data.frame") & length(which(unlist(lapply(X,is.numeric)))) < ncol(X)))
   {
     stop("X must have only numeric entries.")
   }
@@ -353,7 +351,6 @@ PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_
 #### CHECK PERSIM MODULE ####
 #' Verify an imported persim module.
 #' 
-#' @importFrom methods is
 #' @param ripser the persim module object.
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 # check_persim <- function(persim){
@@ -361,7 +358,7 @@ PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_
 #   e <- "persim object should be created using the import_persim() function."
 #   
 #   # check class
-#   if((methods::is(persim,"python.builtin.module")) == F | (methods::is(persim,"python.builtin.object")) == F)
+#   if((inherits(persim,"python.builtin.module")) == F | (inherits(persim,"python.builtin.object")) == F)
 #   {
 #     stop(e)
 #   }
@@ -413,7 +410,6 @@ PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_
 #' @param dim the non-negative integer homological dimension in which to calculate distances, default 0.
 #' @param p a number representing the wasserstein power parameter, at least 1 and default 2.
 #' @param ripser the ripser python module.
-#' @importFrom methods is
 # @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @examples
