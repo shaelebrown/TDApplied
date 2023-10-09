@@ -11,7 +11,7 @@ analyze_representatives(
   plot_heatmap = TRUE,
   return_contributions = FALSE,
   boxed_reps = NULL,
-  dist_func = NULL,
+  d = NULL,
   lwd = NULL,
   title = NULL,
   return_clust = FALSE
@@ -30,7 +30,7 @@ analyze_representatives(
 
 \item{boxed_reps}{a data frame specifying specific rows of the output heatmap which should have a box drawn around them (for highlighting), default NULL. See the details section for more information.}
 
-\item{dist_func}{an optional non-negative distance function, where d(d1,i,d2,j) is the distance between data point i from diagram d1 and likewise for d2 and j, default NULL. If not NULL then this distance function will be used to cluster representatives - see the details section. This function should be symmetric - `dist_func(d1,i,d2,j) == dist_func(d2,j,d1,i)`.}
+\item{d}{either NULL (default) or a "dist" object representing a distance matrix for the representatives, which must have the same number of rows and columns as cycles in the dimension `dim`.}
 
 \item{lwd}{a positive number width for the lines of drawn boxes, if boxed_reps is not null.}
 
@@ -57,9 +57,7 @@ If diagrams are the output of the \code{\link{bootstrap_persistence_thresholds}}
 function, then the subsetted_representatives (if present) will be analyzed. Therefore, a column label like 'DX[Y]' in the 
 plotted heatmap would mean the Yth representative of diagram X. If certain representatives should be highlighted (by drawing a box around its row)
 in the heatmap, a dataframe `boxed_reps` can be supplied with two integer columns - 'diagram' and 'rep'. For example, if we wish to draw a box for DX[Y] then we
-add the row (diagram = X,rep = Y) to `boxed_reps`. If `d_func` is supplied then it will be used to cluster the representatives, based on distances between
-data points in the various diagrams using the Hausdorff distance (the maximum distance between any two points
-in the two representatives).
+add the row (diagram = X,rep = Y) to `boxed_reps`. If `d` is supplied then it will be used to cluster the representatives, based on the distances in `d`.
 }
 \examples{
 

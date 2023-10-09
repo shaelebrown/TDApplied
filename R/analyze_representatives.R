@@ -16,9 +16,7 @@
 #' function, then the subsetted_representatives (if present) will be analyzed. Therefore, a column label like 'DX[Y]' in the 
 #' plotted heatmap would mean the Yth representative of diagram X. If certain representatives should be highlighted (by drawing a box around its row)
 #' in the heatmap, a dataframe `boxed_reps` can be supplied with two integer columns - 'diagram' and 'rep'. For example, if we wish to draw a box for DX[Y] then we
-#' add the row (diagram = X,rep = Y) to `boxed_reps`. If `d_func` is supplied then it will be used to cluster the representatives, based on distances between
-#' data points in the various diagrams using the Hausdorff distance (the maximum distance between any two points
-#' in the two representatives).
+#' add the row (diagram = X,rep = Y) to `boxed_reps`. If `d` is supplied then it will be used to cluster the representatives, based on the distances in `d`.
 #'
 #' @param diagrams a list of persistence diagrams, either the output of persistent homology calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, \code{\link{diagram_to_df}} or \code{\link{bootstrap_persistence_thresholds}}.
 #' @param dim the integer homological dimension of representatives to consider.
@@ -27,7 +25,7 @@
 #' @param return_contributions a boolean indicating whether or not to return the membership contributions (i.e. percentages) of the data points (1:`num_points`) across all the representatives, default `FALSE`.
 #' @param boxed_reps a data frame specifying specific rows of the output heatmap which should have a box drawn around them (for highlighting), default NULL. See the details section for more information.
 #' @param lwd a positive number width for the lines of drawn boxes, if boxed_reps is not null.
-#' @param dist_func an optional non-negative distance function, where d(d1,i,d2,j) is the distance between data point i from diagram d1 and likewise for d2 and j, default NULL. If not NULL then this distance function will be used to cluster representatives - see the details section. This function should be symmetric - `dist_func(d1,i,d2,j) == dist_func(d2,j,d1,i)`.
+#' @param d either NULL (default) or a "dist" object representing a distance matrix for the representatives, which must have the same number of rows and columns as cycles in the dimension `dim`.
 #' @param title a character string title for the plotted heatmap, default NULL.
 #' @param return_clust a boolean determining whether or not to return the result of the `stats::hclust` call when a heatmap is plotted, default `FALSE`.
 #' @return either a matrix of data point contributions to the representatives, or a list with elements "memberships" (the matrix) and some combination of elements "contributions" (a vector of membership percentages for each data point across representatives) and "clust" (the results of `stats::hclust` on the membership matrix).
@@ -80,7 +78,7 @@
 #'   
 #' }
 
-analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap = TRUE,return_contributions = FALSE,boxed_reps = NULL,dist_func = NULL,lwd = NULL,title = NULL,return_clust = FALSE){
+analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap = TRUE,return_contributions = FALSE,boxed_reps = NULL,d = NULL,lwd = NULL,title = NULL,return_clust = FALSE){
   
   # error check parameters
   check_param(param_name = "dim",dim,numeric = T,at_least_one = T,multiple = F,infinite = F)
@@ -343,64 +341,16 @@ analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap = TRUE,
   
   if(plot_heatmap)
   {
-    if(!is.null(dist_func))
+    if(!is.null(d))
     {
-      if(!is.function(dist_func))
+      if(!inherits(d,"dist"))
       {
-        stop("If not NULL, dist_func must be a function.")
+        stop("If supplied, d must be of class 'dist'.")
       }
-      if(length(formals("dist_func")) != 4)
+      if(length(d) != nrow(mat)*(nrow(mat) - 1)/2)
       {
-        stop("dist_func must have four arguments - (d1,i,d2,j). d1 is the number of the first diagram and i is data point i from d1, and likewise for d2 and j.")
+        stop("d must have the same number of rows and columns as the number of cycles in the desired dimension.")
       }
-      # use distance function to compute distance matrix
-      d <- matrix(data = 0,nrow = nrow(mat),ncol = nrow(mat))
-      for(r1 in 1:(nrow(mat) - 1))
-      {
-        for(r2 in (r1+1):nrow(mat))
-        {
-          d1 <- strsplit(rownames(mat)[[r1]],split = "\\[")[[1]][[1]]
-          d1 <- as.numeric(strsplit(d1,split = "D")[[1]][[2]])
-          d2 <- strsplit(rownames(mat)[[r2]],split = "\\[")[[1]][[1]]
-          d2 <- as.numeric(strsplit(d2,split = "D")[[1]][[2]])
-          inds1 <- which(mat[r1,] != 0)
-          inds2 <- which(mat[r2,] != 0)
-          dist1 <- max(unlist(lapply(X = inds1,FUN = function(X){
-            
-            Y <- X
-            return(min(unlist(lapply(X = inds2,FUN = function(X){
-              
-              v <- dist_func(d1 = d1,i = Y,d2 = d2,j = X)
-              if(v < 0)
-              {
-                stop("dist_func must be non-negative.")
-              }
-              return(v)
-              
-            }))))
-            
-          })))
-          dist2 <- max(unlist(lapply(X = inds2,FUN = function(X){
-            
-            Y <- X
-            return(min(unlist(lapply(X = inds1,FUN = function(X){
-              
-              v <- dist_func(d1 = d1,i = X,d2 = d2,j = Y)
-              if(v < 0)
-              {
-                stop("dist_func must be non-negative.")
-              }
-              return(v)
-              
-            }))))
-            
-          })))
-          v <- max(c(dist1,dist2))
-          d[r1,r2] <- v
-          d[r2,r1] <- v
-        }
-      }
-      d <- stats::as.dist(d)
     }else
     {
       d <- stats::dist(mat)
