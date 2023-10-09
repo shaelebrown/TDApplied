@@ -10,6 +10,7 @@
 #' @useDynLib TDApplied, .registration = TRUE
 #' @docType package
 #' @name TDApplied
+#' @aliases TDApplied-package
 #' @importFrom clue solve_LSAP
 #' @importFrom doParallel registerDoParallel stopImplicitCluster
 #' @importFrom foreach foreach %dopar% %do%
