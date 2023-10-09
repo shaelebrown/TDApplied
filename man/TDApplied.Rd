@@ -3,6 +3,7 @@
 \docType{package}
 \name{TDApplied}
 \alias{TDApplied}
+\alias{_PACKAGE}
 \alias{TDApplied-package}
 \title{Machine learning and inference for persistence diagrams}
 \description{
