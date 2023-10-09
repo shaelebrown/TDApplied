@@ -575,12 +575,9 @@ We can customize one level further by removing the vertex labels and using the g
 
 ```{r,eval = requireNamespace('igraph'),fig.width = 5,fig.align = 'center'}
 # plot only component containing the loop stimuli with vertex colors
-graph_info <- plot_rips_graph(gs,eps_2,cols = colors,
+layout <- plot_rips_graph(gs,eps_2,cols = colors,
                 component_of = stimuli_in_loop[[1]],
                 vertex_labels = F,return_layout = T)
-
-# get layout
-layout <- graph_info$layout
 layout <- apply(layout,MARGIN = 2,FUN = function(X){
   
   return(-1 + 2*(X - min(X))/(max(X) - min(X)))
@@ -590,7 +587,7 @@ layout <- apply(layout,MARGIN = 2,FUN = function(X){
 # get indices of vertices in loop
 # not necessary in this case but necessary when we have
 # removed some vertices from the graph
-vertex_inds <- match(stimuli_in_loop,graph_info$vertices)
+vertex_inds <- match(stimuli_in_loop,as.numeric(rownames(layout)))
 
 # add volcano image over loop nodes
 # image could be anything like rasters read from
