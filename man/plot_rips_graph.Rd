@@ -2,7 +2,7 @@
 % Please edit documentation in R/rips_complexes.R
 \name{plot_rips_graph}
 \alias{plot_rips_graph}
-\title{Plot a Rips graph using the \link{igraph} package.}
+\title{Plot a Rips graph using the igraph package.}
 \usage{
 plot_rips_graph(
   graphs,
@@ -39,7 +39,7 @@ plot_rips_graph(
 if `return_layout` is `TRUE` then a list with elements "layout" (the numeric matrix of vertex x-y coordinates) and "vertices" (character vertex labels), otherwise the function does not return anything.
 }
 \description{
-This function will throw an error if the \link{igraph} package is not installed.
+This function will throw an error if the igraph package is not installed.
 }
 \examples{
 

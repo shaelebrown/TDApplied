@@ -25,7 +25,7 @@ can be challenging to visualize, analyze and interpret. In order to help solve t
 function computes the 1-skeleton (i.e. graph) of Rips complexes at particular radii.
 }
 \details{
-This function may be used in conjunction with the \link{igraph} package to visualize the graphs (see \code{\link{plot_rips_graph}}).
+This function may be used in conjunction with the igraph package to visualize the graphs (see \code{\link{plot_rips_graph}}).
 }
 \examples{
 

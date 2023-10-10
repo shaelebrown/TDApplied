@@ -50,10 +50,9 @@ test_that("analyze_representatives can detect incorrect parameters correctly",{
   expect_error(analyze_representatives(diagrams = list(D,D,D),dim = 1,num_points = 4,return_clust = NULL),"NULL")
   expect_error(analyze_representatives(diagrams = list(D,D,D),dim = 1,num_points = 4,return_clust = NA),"NA")
   
-  expect_error(analyze_representatives(diagrams = circs_ripsDiag,dim = 1,num_points = 25,dist_func = NA),"function")
-  expect_error(analyze_representatives(diagrams = circs_ripsDiag,dim = 1,num_points = 25,dist_func = function(a,b,c){return(a*b*c)}),"four")
-  expect_error(analyze_representatives(diagrams = circs_ripsDiag,dim = 1,num_points = 25,dist_func = function(d1,i,d2,j){return(-1)}),"negative")
-  
+  expect_error(analyze_representatives(diagrams = circs_ripsDiag,dim = 1,num_points = 25,d = matrix(data = 0,nrow = 2,ncol = 2)),"dist")
+  expect_error(analyze_representatives(diagrams = circs_ripsDiag,dim = 1,num_points = 25,d = stats::dist(matrix(data = 0,nrow = 2,ncol = 2))),"rows")
+
 })
 
 test_that("analyze_representatives is computing properly",{

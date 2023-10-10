@@ -27,7 +27,7 @@ maximum dimension at most 12.}
 \description{
 Plots a persistence diagram outputted from either a persistent homology calculation or from diagram_to_df, with
 maximum homological dimension no more than 12 (otherwise the legend doesn't fit in the plot).
-Each homological dimension has its own color (the \code{\link[rcartocolor]{Safe}} color-blind safe color palette) and point type, 
+Each homological dimension has its own color (the rcartocolor color-blind safe color palette) and point type, 
 and the main plot title can be altered via the `title` parameter. Each feature is plotted with
 a black point at its center in order to distinguish between overlapping features and easily compare
 features to their persistence thresholds.

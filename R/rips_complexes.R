@@ -6,7 +6,7 @@
 #' can be challenging to visualize, analyze and interpret. In order to help solve this problem the `rips_graphs`
 #' function computes the 1-skeleton (i.e. graph) of Rips complexes at particular radii.
 #' 
-#' This function may be used in conjunction with the \link{igraph} package to visualize the graphs (see \code{\link{plot_rips_graph}}).
+#' This function may be used in conjunction with the igraph package to visualize the graphs (see \code{\link{plot_rips_graph}}).
 #'
 #' @param X either a point cloud data frame/matrix, or a distance matrix.
 #' @param distance_mat a boolean representing if the input `X` is a distance matrix, default value is `FALSE`.
@@ -49,6 +49,9 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
   
   # function to compute static Rips complexes from a filtration at
   # specific epsilon radius values
+  
+  # to avoid build issues
+  e <- NULL
   
   # error check parameters
   check_param(param = eps,param_name = "eps",numeric = T,whole_numbers = F,multiple = T,finite = T,positive = T)
@@ -197,9 +200,9 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
 }
 
 #### PLOT RIPS GRAPHS ####
-#' Plot a Rips graph using the \link{igraph} package.
+#' Plot a Rips graph using the igraph package.
 #' 
-#' This function will throw an error if the \link{igraph} package is not installed.
+#' This function will throw an error if the igraph package is not installed.
 #'
 #' @param graphs the output of a `rips_graphs` function call.
 #' @param eps the numeric radius of the graph in `graphs` to plot.

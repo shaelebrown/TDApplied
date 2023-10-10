@@ -3,7 +3,7 @@
 #'
 #' Plots a persistence diagram outputted from either a persistent homology calculation or from diagram_to_df, with
 #' maximum homological dimension no more than 12 (otherwise the legend doesn't fit in the plot).
-#' Each homological dimension has its own color (the \code{\link[rcartocolor]{Safe}} color-blind safe color palette) and point type, 
+#' Each homological dimension has its own color (the rcartocolor color-blind safe color palette) and point type, 
 #' and the main plot title can be altered via the `title` parameter. Each feature is plotted with
 #' a black point at its center in order to distinguish between overlapping features and easily compare
 #' features to their persistence thresholds.
@@ -19,7 +19,7 @@
 #' @param max_radius the x and y limits of the plot are defined as `c(0,max_radius)`, and the default value of `max_radius` is the maximum death value in `D`.
 #' @param legend a logical indicating whether to include a legend of feature dimensions, default TRUE.
 #' @param thresholds either a numeric vector with one persistence threshold for each dimension in `D` or the output of a \code{\link{bootstrap_persistence_thresholds}} function call, default NULL.
-#' @importFrom graphics legend lines
+#' @importFrom graphics legend lines points
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @examples
@@ -194,7 +194,7 @@ plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,threshol
       plot(x = D[,2L],y = D[,3L],xlim = c(0,max_radius),ylim = c(0,max_radius),
            xlab = "Birth",ylab = "Death",col = C,
            pch = pchs[D[,1L] + 1],main = ifelse(test = is.null(title),yes = "",no = title))
-      points(x = D[,2L],y = D[,3L],pch = pchs[[2]],col = "black",cex = 0.2)
+      graphics::points(x = D[,2L],y = D[,3L],pch = pchs[[2]],col = "black",cex = 0.2)
     }else
     {
       gray_inds <- which(C == "gray")
@@ -202,8 +202,8 @@ plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,threshol
       plot(x = D[gray_inds,2L],y = D[gray_inds,3L],xlim = c(0,max_radius),ylim = c(0,max_radius),
            xlab = "Birth",ylab = "Death",col = C[gray_inds],
            pch = pchs[D[gray_inds,1L] + 1],main = ifelse(test = is.null(title),yes = "",no = title))
-      points(x = D[non_gray_inds,2L],y = D[non_gray_inds,3L],col = C[non_gray_inds],pch = pchs[D[non_gray_inds,1L] + 1])
-      points(x = D[,2L],y = D[,3L],pch = pchs[[2]],col = "black",cex = 0.2)
+      graphics::points(x = D[non_gray_inds,2L],y = D[non_gray_inds,3L],col = C[non_gray_inds],pch = pchs[D[non_gray_inds,1L] + 1])
+      graphics::points(x = D[,2L],y = D[,3L],pch = pchs[[2]],col = "black",cex = 0.2)
     }
     if(legend == T)
     {

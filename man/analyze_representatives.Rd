@@ -75,9 +75,9 @@ if(require("TDA"))
      diag <- bootstrap_persistence_thresholds(X = as.matrix(dist(df)),
                                               FUN_diag = "ripsDiag",
                                               maxdim = 1,
-                                              thresh = 2,distance_mat = T,
-                                              calculate_representatives = T,
-                                              return_subsetted = T)
+                                              thresh = 2,distance_mat = TRUE,
+                                              calculate_representatives = TRUE,
+                                              return_subsetted = TRUE)
      return(diag)
   
    })
