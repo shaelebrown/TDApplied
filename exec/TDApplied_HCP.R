@@ -38,7 +38,7 @@ library(TDApplied)
 
 # sign on to aws using personal access key and secret key
 # need connectomedb account @ https://db.humanconnectome.org
-set_aws_api_key(access_key = "AKIAXO65CT57MNH2MN4C", secret_key = "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")
+set_aws_api_key(access_key = "XXXXXXXXXXXXXXXXXXXX", secret_key = "YYYYYYYYYYYYYYYYYYYYYYYYYYYY")
 
 # FUNCTIONS
 
