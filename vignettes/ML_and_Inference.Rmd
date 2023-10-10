@@ -67,8 +67,7 @@ This vignette documents the background of **TDApplied** functions and the usage 
 To start we must load the **TDApplied** package:
 
 ```{r setup}
-#library("TDApplied")
-devtools::load_all()
+library("TDApplied")
 ``` 
 
 Let's get started!
