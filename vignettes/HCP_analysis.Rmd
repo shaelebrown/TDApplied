@@ -104,4 +104,12 @@ We analyzed spatial loops in HCP emotion fMRI data using **TDApplied**, and were
 
 In our analysis of HCP data we converted correlation values to correlation distance values using the formula $\rho \rightarrow \sqrt{2*(1-\rho)}$. To see why this transformation does produce distance values, let $X$ and $Y$ be two vectors (of the same length $n$) with 0 mean and unit variance. Then $\rho(X,Y) = \frac{Cov(E,Y)}{\sigma_{x}\sigma_{y}} = \frac{E[(X-0)(Y-0)]}{(1)(1)} = E[XY] = \frac{\sum_{i = 1}^{n}X_i Y_i}{n}$. The Euclidean distance of $X$ and $Y$ is therefore $d(X,Y) = \sqrt{\sum_{i=1}^{n}(X_i-Y_i)^2} = \sqrt{\sum_{i=1}^{n}X_i^2 + \sum_{i=1}^{n}Y_i^2 -2\sum_{i=1}^{n}X_i Y_i} = \sqrt{n + n - 2\rho(X,Y)} = \sqrt{2n(1-\rho(X,Y))} \propto \sqrt{2(1-\rho(X,Y))}$. Therefore, since a scaled distance metric (by a positive number like $\sqrt{n}$) is also a distance metric (this is very easy to verify), the transformation $\rho \rightarrow \sqrt{2*(1-\rho)}$ indeed gives distance values. Note that in [@topological_time_and_space] a proportional transformation was used $\rho \rightarrow \sqrt{1-\rho} \propto \sqrt{2(1-\rho)}$ and therefore our results are consistent with those found in that work.
 
+```{r,echo = F}
+# reset parameters
+par(mfrow = original_mfrow,xpd = original_xpd,mar = original_mar)
+options(scipen = original_scipen)
+do.call("RNGkind",as.list(oldRNGkind))
+assign(".Random.seed", oldseed, .GlobalEnv)
+```
+
 ## References
