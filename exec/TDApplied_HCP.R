@@ -38,35 +38,9 @@ library(TDApplied)
 
 # sign on to aws using personal access key and secret key
 # need connectomedb account @ https://db.humanconnectome.org
-set_aws_api_key(access_key = "XXXXXXXXXXXXXXXXXXXX", secret_key = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+set_aws_api_key(access_key = "AKIAXO65CT57MNH2MN4C", secret_key = "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")
 
 # FUNCTIONS
-
-# compute persistence diagram of HCP fMRI file 'f'
-PH_from_file <- function(f){
-  
-  # read in fMRI data, each column is a time point and each row is a cortical surface node
-  fMRI <- readNifti(f)
-  fMRI <- fMRI[1,1,1,1,1:dim(fMRI)[[5]],1:91282]
-  
-  # create representational dissimilarity matrix
-  RDM <- sqrt(2*(matrix(data = 1,nrow = nrow(fMRI),ncol = nrow(fMRI)) - cor(t(fMRI))))
-  
-  # compute diagram up to dimension 1 via bootstrapping
-  # with 30 bootstrap iterations
-  diag <- bootstrap_persistence_thresholds(X = RDM,FUN = "calculate_homology",maxdim = 1,thresh = 2,num_samples = 30,return_subsetted = T,return_diag = T,distance_mat = T)$subsetted_diag
-  
-  # subset for dimension 1
-  diag <- diag[which(diag$dimension == 1),]
-  
-  # save results
-  prefix <- strsplit(f,split = "_Atlas_MSMAll.dtseries.nii")[[1]][[1]]
-  write.csv(diag,paste0(prefix,"_diagram.csv"))
-  
-  # remove raw file for clean up
-  file.remove(f)
-  
-}
 
 # try to download one HCP fMRI file 'f' via AWS
 try_to_download_one_file <- function(f,directory_for_subjects){
@@ -86,873 +60,339 @@ try_to_download_one_file <- function(f,directory_for_subjects){
   
 }
 
-# try to download one HCP fMRI file 'f' via AWS and compute its persistence diagram
-analyze_one_file <- function(f,directory_for_subjects){
+# download a subject's stats file via AWS
+download_RL_emotion_stats_file <- function(s,directory_for_subjects){
   
-  try_to_download_one_file(f,directory_for_subjects)
-  s <- strsplit(f,"/")[[1]][[2]]
-  prefix <- strsplit(f,paste0("HCP_1200/",s,"/MNINonLinear/Results/"))[[1]][[2]]
-  prefix <- strsplit(prefix,"/")[[1]][[2]]
-  PH_from_file(f = paste0(directory_for_subjects,"/",s,"/",prefix))
+  f <- paste0("HCP_1200/",s,"/MNINonLinear/Results/tfMRI_EMOTION_RL/EVs/EMOTION_Stats.csv")
+  m <- tryCatch(expr = {neurohcp::download_hcp_file(path_to_file = f,destfile = paste0(directory_for_subjects,"/",s,"/stats.csv"))
+    return()},error = function(e){
+      
+      unlink(paste0(directory_for_subjects,"/",s,"/",fl))
+      
+      return(e)})
   
-}
-
-# try to download all HCP fMRI files via AWS for one subject 's'
-# and compute their persistence diagrams
-PH_subject_fMRI_data <- function(s,directory_for_subjects){
-  
-  # make directory for the subject
-  system(command = paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/",s))
-  
-  # download the subject's data and compute persistence diagrams
-  
-  # resting-state fMRI data
-  analyze_one_file(paste0("HCP_1200/",s,"/MNINonLinear/Results/rfMRI_REST1_LR/rfMRI_REST1_LR_Atlas_MSMAll.dtseries.nii"),directory_for_subjects)
-  analyze_one_file(paste0("HCP_1200/",s,"/MNINonLinear/Results/rfMRI_REST1_RL/rfMRI_REST1_RL_Atlas_MSMAll.dtseries.nii"),directory_for_subjects)
-  analyze_one_file(paste0("HCP_1200/",s,"/MNINonLinear/Results/rfMRI_REST2_LR/rfMRI_REST2_LR_Atlas_MSMAll.dtseries.nii"),directory_for_subjects)
-  analyze_one_file(paste0("HCP_1200/",s,"/MNINonLinear/Results/rfMRI_REST2_RL/rfMRI_REST2_RL_Atlas_MSMAll.dtseries.nii"),directory_for_subjects)
-  
-  # task-based fMRI data
-  analyze_one_file(paste0("HCP_1200/",s,"/MNINonLinear/Results/tfMRI_EMOTION_LR/tfMRI_EMOTION_LR_Atlas_MSMAll.dtseries.nii"),directory_for_subjects)
-  analyze_one_file(paste0("HCP_1200/",s,"/MNINonLinear/Results/tfMRI_EMOTION_RL/tfMRI_EMOTION_RL_Atlas_MSMAll.dtseries.nii"),directory_for_subjects)
-  analyze_one_file(paste0("HCP_1200/",s,"/MNINonLinear/Results/tfMRI_GAMBLING_LR/tfMRI_GAMBLING_LR_Atlas_MSMAll.dtseries.nii"),directory_for_subjects)
-  analyze_one_file(paste0("HCP_1200/",s,"/MNINonLinear/Results/tfMRI_GAMBLING_RL/tfMRI_GAMBLING_RL_Atlas_MSMAll.dtseries.nii"),directory_for_subjects)
-  analyze_one_file(paste0("HCP_1200/",s,"/MNINonLinear/Results/tfMRI_LANGUAGE_LR/tfMRI_LANGUAGE_LR_Atlas_MSMAll.dtseries.nii"),directory_for_subjects)
-  analyze_one_file(paste0("HCP_1200/",s,"/MNINonLinear/Results/tfMRI_LANGUAGE_RL/tfMRI_LANGUAGE_RL_Atlas_MSMAll.dtseries.nii"),directory_for_subjects)
-  analyze_one_file(paste0("HCP_1200/",s,"/MNINonLinear/Results/tfMRI_MOTOR_LR/tfMRI_MOTOR_LR_Atlas_MSMAll.dtseries.nii"),directory_for_subjects)
-  analyze_one_file(paste0("HCP_1200/",s,"/MNINonLinear/Results/tfMRI_MOTOR_RL/tfMRI_MOTOR_RL_Atlas_MSMAll.dtseries.nii"),directory_for_subjects)
-  analyze_one_file(paste0("HCP_1200/",s,"/MNINonLinear/Results/tfMRI_RELATIONAL_LR/tfMRI_RELATIONAL_LR_Atlas_MSMAll.dtseries.nii"),directory_for_subjects)
-  analyze_one_file(paste0("HCP_1200/",s,"/MNINonLinear/Results/tfMRI_RELATIONAL_RL/tfMRI_RELATIONAL_RL_Atlas_MSMAll.dtseries.nii"),directory_for_subjects)
-  analyze_one_file(paste0("HCP_1200/",s,"/MNINonLinear/Results/tfMRI_SOCIAL_LR/tfMRI_SOCIAL_LR_Atlas_MSMAll.dtseries.nii"),directory_for_subjects)
-  analyze_one_file(paste0("HCP_1200/",s,"/MNINonLinear/Results/tfMRI_SOCIAL_RL/tfMRI_SOCIAL_RL_Atlas_MSMAll.dtseries.nii"),directory_for_subjects)
-  analyze_one_file(paste0("HCP_1200/",s,"/MNINonLinear/Results/tfMRI_WM_LR/tfMRI_WM_LR_Atlas_MSMAll.dtseries.nii"),directory_for_subjects)
-  analyze_one_file(paste0("HCP_1200/",s,"/MNINonLinear/Results/tfMRI_WM_RL/tfMRI_WM_RL_Atlas_MSMAll.dtseries.nii"),directory_for_subjects)
+  return(m)
   
 }
 
-# helper function for determining if a subject has all necessary fMRI files
-# for analysis
-subject_has_all_files <- function(subj){
+# scale a vector to colors, between blue (lowest), white (middle) and red (highest)
+scale_between_r_w_and_b <- function(vec){
   
-  dirs <- unname(unlist(parse_list_files(hcp_list_dirs(paste0("HCP_1200/",subj,"/MNINonLinear/Results/")))$prefixes))
-  if(is.null(dirs))
-  {
-    return(F)
-  }
-  dirs <- unlist(strsplit(dirs,split = paste0("HCP_1200/",subj,"/MNINonLinear/Results/")))
-  
-  if(length(dirs) == 50)
-  {
-    return(T)
-  }
-  return(F)
-  
-}
-
-# calculate persistence diagrams for all fMRI files for 100 subjects
-calculate_diags <- function(directory_for_subjects,subjects){
-  
-  # including timing to track progress over subjects
-  S <- Sys.time()
-  
-  for(subj in subjects)
-  {
-    print(paste0("Time before starting subject ",subj,": ",Sys.time()))
-    PH_subject_fMRI_data(subj,directory_for_subjects)
-    print(paste0("Time after finishing subject ",subj,": ",Sys.time()))
-  }
-  
-  print(paste0("Time taken for 100 subjects was ",Sys.time()-S))
-  
-}
-
-# visualize a list of persistence diagrams via a heat kernel of parameter 'sigma'
-visualize_group_of_diagrams <- function(diagrams,sigma,plot_title){
-  
-  diag <- do.call(rbind,diagrams)
-  if(nrow(diag) == 0 | length(which(complete.cases(diag) == F)) == nrow(diag))
-  {
-    plot(1, type="n", xlab="Birth", ylab="Death", xlim=c(0, 1), ylim=c(0, 1),main = plot_title)
-    abline(a = 0,b = 1)
-    return()
-  }
-  min_x <- min(diag$birth) - 3*sigma
-  max_x <- max(diag$birth) + 3*sigma
-  min_y <- min(diag$death) - 3*sigma
-  max_y <- max(diag$death) + 3*sigma
-  x <- seq(min_x,max_x,(max_x-min_x)/100)
-  y <- seq(min_y,max_y,(max_y-min_y)/100)
-  z <- outer(x,y,FUN = function(x,y){
+  min_val <- min(vec,na.rm = T)
+  max_val <- max(vec[which(is.finite(vec))],na.rm = T)
+  return(unlist(lapply(X = vec,FUN = function(X){
     
-    sum <- 0
-    for(i in 1:nrow(diag))
+    if(is.infinite(X))
     {
-      sum <- sum + (exp(-((x-diag[i,2])^2+(y-diag[i,3])^2)/(2*sigma^2)))/sqrt(2*pi*sigma^2)
+      return(rgb(0,0,0,1))
     }
-    return(sum)
+    X <- (X - min_val)/(max_val - min_val)
+    if(X < 0.5)
+    {
+      return(rgb(red = 2*X, green = 2*X, blue = 1, alpha = 1))
+    }
+    return(rgb(red = 1, green = 2*(1 - X), blue = 2*(1 - X), alpha = 1))
     
-  })
-  z <- z/sum(z)
-  image(x = x,y = y,z,main = plot_title,xlab = "Birth",xlim = c(min_x,max_x),ylim = c(min_y,max_y),ylab = "Death")
-  abline(a = 0,b = 1)
+  })))
   
 }
 
-# plot time point, smoothed spatially in neighborhoods of
-# size sigma and thresholded by absolute value th
-# nib, plotting, np and hcp are required python modules
-plot_smooth_timepoint <- function(f,tp,output_file,time_point,sigma,th,nib,plotting,np,hcp){
+# normalize a vector between 0 and 1
+normalize <- function(v){
   
-  # load surface mesh
-  coords = hcp$mesh$pial[[1]]
-  
-  # load image and normalize
-  img = nib$load(f)
-  X = img$get_fdata()
-  Xn = hcp$normalize(X)
-  
-  # subset for specific time point
-  spatial_pattern = Xn[tp,]
-  
-  # smooth a time point in parallel
-  cl = parallel::makeCluster(parallel::detectCores() - 1)
-  doParallel::registerDoParallel(cl)
-  parallel::clusterEvalQ(cl,library("rdist"))
-  parallel::clusterExport(cl,c("spatial_pattern","coords","sigma"),envir = environment())
-  smoothed = foreach::`%dopar%`(foreach::foreach(n = 1:64984,.combine = c),{
-    
-    distances = rdist::cdist(coords,t(as.matrix(coords[n,])))
-    return(mean(spatial_pattern[which(distances > 0 & distances <= sigma)]))
-    
-  })
-  
-  # clean up
-  parallel::stopCluster(cl)
-  
-  # plot 
-  plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(smoothed),threshold = th,bg_map = hcp$mesh$sulc,hemi = "right",output_file = paste0(output_file,"_hemi_right.png"))
-  plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(smoothed),threshold = th,bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(output_file,"_hemi_left.png"))
+  return((v - min(v))/(max(v) - min(v)))
   
 }
 
-# analyze one loop representative using PyH
-# mainly internal function
-loop_scatterplot <- function(f,directory_for_subjects,birth_val,death_val,plot_title,output_file){
-  
-  # read in fMRI data, each column is a time point and each row is a cortical surface node
-  fMRI <- readNifti(f)
-  fMRI <- fMRI[1,1,1,1,1:dim(fMRI)[[5]],1:91282]
-  
-  # create representational dissimilarity matrix, which is equal to sqrt(2*(1 - correlation)) between
-  # each pair of normalized time points
-  RDM <- sqrt(2*(matrix(data = 1,nrow = nrow(fMRI),ncol = nrow(fMRI)) - cor(t(fMRI))))
-  RDM2 <- RDM
-  
-  # calculate diagram and get correct representative
-  RDM2[which(RDM2 < birth_val,arr.ind = T)] <- 0
-  diag <- TDA::ripsDiag(X = RDM2,maxdimension = 1,maxscale = death_val,library = "dionysus",location = T,dist = "arbitrary")
-  repr <- unique(as.vector(diag$cycleLocation[[198]]))
-  repr <- repr[c(1,3,16,2,8,7,17,6,5)] # this forms the initial loop, determined ad hoc
-  
-  # compute embedding and plot
-  grDevices::png(output_file)
-  emb <- cmdscale(RDM[repr,repr],k = 2)
-  plot(x = emb[,1],y = emb[,2],xlab = "Embedding coordinate 1",ylab = "Embedding coordinate 2",pch = 19,main = plot_title)
-  
-  # add red points for specific time points along the loop
-  points(x = emb[c(7,9,1,5),1],y = emb[c(7,9,1,5),2],col = "red",pch = 19)
-  
-  dev.off()
-  
-}
+# temporary
+directory_for_subjects = "/Users/jibaccount/Downloads/HCP_test"
+devtools::load_all()
 
-# analyze specific loop
-analyze_loop <- function(directory_for_subjects,output_file,th,sigma){
+# carry out analysis
+analyze_HCP <- function(directory_for_subjects){
   
   # download the specific file needed
-  try_to_download_one_file("HCP_1200/206222/MNINonLinear/Results/rfMRI_REST1_RL/rfMRI_REST1_RL_Atlas_MSMAll.dtseries.nii",directory_for_subjects = directory_for_subjects)
+  try_to_download_one_file("HCP_1200/103111/MNINonLinear/Results/tfMRI_EMOTION_RL/tfMRI_EMOTION_RL_Atlas_MSMAll.dtseries.nii",directory_for_subjects = directory_for_subjects)
   
   # set file names
-  f = paste0(directory_for_subjects,"/206222/rfMRI_REST1_RL_Atlas_MSMAll.dtseries.nii")
+  f = paste0(directory_for_subjects,"/103111/tfMRI_EMOTION_RL_Atlas_MSMAll.dtseries.nii")
   
-  # determine the birth and death vals
-  rest1 <- read.csv("./vignettes/rest1.csv")
-  rest1$X <- NULL
-  birth_val <- rest1$birth[64]
-  death_val <- rest1$death[64] # this the loop closest to the mean resting state 1 birth and death values
+  # read in data
+  emotion = readNifti(f)
+  emotion <- emotion[1,1,1,1,1:dim(emotion)[[5]],1:91282]
   
-  # plot loop scatter plot
-  loop_scatterplot(f = f,directory_for_subjects = directory_for_subjects,birth_val = birth_val,death_val = death_val,output_file = paste0(output_file,"_scatter.png"),plot_title = "Loop scatterplot")
+  # create representational dissimilarity matrix
+  RDM <- sqrt(2*(matrix(data = 1,nrow = nrow(emotion),ncol = nrow(emotion)) - cor(t(emotion))))
   
-  # import python modules
+  # compute diagram up to dimension 1 with representatives
+  boot <- bootstrap_persistence_thresholds(X = RDM,FUN_diag = 'ripsDiag',maxdim = 1,thresh = 2,calculate_representatives = T,distance_mat = T,return_subsetted = T,return_diag = T)
+  PH <- TDA::ripsDiag(X = RDM,maxdimension = 1,maxscale = max(RDM),dist = "arbitrary",library = "dionysus",location = T)
+  
+  # get most persistent loop
+  diag <- diagram_to_df(PH)
+  repr <- 296
+  loop <- as.numeric(diag[repr,2:3])
+  cycle <- unique(as.numeric(boot$representatives[[repr]]))
+  secondary_cycle <- unique(as.numeric(PH$cycleLocation[[207]]))
+  
+  # plot diagram
+  plot_diagram(diag,title = "Subject 103111 emotion task RL",thresholds = boot$thresholds,max_radius = 0.26)
+  
+  # compute rips graphs and plot
+  RDM_cycle = RDM[cycle,cycle]
+  colnames(RDM_cycle) <- cycle
+  rownames(RDM_cycle) <- cycle
+  cols <- rep("lightblue",ncol(RDM))
+  cols[cycle] <- "red"
+  g <- rips_graphs(X = RDM_cycle,distance_mat = T,eps = loop[[1]],return_clusters = F)
+  plot_rips_graph(g,eps = loop[[1]],vertex_labels = T,title = "Rips graph of representative cycle") # clear loop
+  g <- rips_graphs(X = RDM,distance_mat = T,eps = loop[[1]],return_clusters = F)
+  l <- plot_rips_graph(g,eps = loop[[1]],component_of = cycle[[1]],vertex_labels = F,cols = cols,return_layout = T,title = "Rips graph of all data") # two clear loops! One big, one dense
+  
+  # gather stimulus onset and physiological data
+  # and summarize by TR
+  stimulus_timing <- data.frame(condition = c("fear","fear","fear","shape","shape","shape"),onset = c(32.066, 74.209, 116.352, 10.995, 53.138, 95.28))
+  stimulus_timing <- stimulus_timing[order(stimulus_timing$onset),]
+  stimulus_timing$end <- stimulus_timing$onset + 18
+  neurohcp::download_hcp_file(path_to_file = "/HCP_1200/103111/MNINonLinear/Results/tfMRI_EMOTION_RL/tfMRI_EMOTION_RL_Physio_log.txt",destfile = paste0(directory_for_subjects,"/tfMRI_EMOTION_RL_Physio_log.txt"))
+  physio_data <- read.table(paste0(directory_for_subjects,"/tfMRI_EMOTION_RL_Physio_log.txt"))
+  colnames(physio_data) <- c("trigger_pulse","respiratory","pulse_oximeter")
+  physio_data$TR <- floor(c(0:(nrow(physio_data) - 1))/400/0.72) + 1 # fMRI data was collected with 0.72s TR
+  physio_data[nrow(physio_data),4L] <- 176
+  physio_data$timing <- c(0:(nrow(physio_data) - 1))/400
+  suppressWarnings({
+    
+    tr_data <- do.call(rbind,lapply(X = unique(physio_data$TR),FUN = function(X){
+      
+      df <- physio_data[which(physio_data$TR == X),]
+      onset <- 0.72*(X - 1)
+      return(data.frame(tr = X,onset = onset,trigger_pulse = mean(df$trigger_pulse),
+                        respiratory = mean(df$respiratory),pulse_oximeter = mean(df$pulse_oximeter),
+                        time_since_last_block = onset - max(stimulus_timing[which(stimulus_timing$onset <= onset),2L]),
+                        time_since_last_fear_block = onset - max(stimulus_timing[which(stimulus_timing$onset <= onset & stimulus_timing$condition == "fear"),2L]),
+                        time_since_last_shape_block = onset - max(stimulus_timing[which(stimulus_timing$onset <= onset & stimulus_timing$condition == "shape"),2L])))
+      
+    }))
+    
+  })
+  
+  # create colors based on TR data
+  cols_trigger_pulse <- scale_between_r_w_and_b(tr_data$trigger_pulse) 
+  cols_respiratory <- scale_between_r_w_and_b(tr_data$respiratory) 
+  cols_pulse_oximeter <- scale_between_r_w_and_b(tr_data$pulse_oximeter)
+  cols_time_since_last_block <- scale_between_r_w_and_b(tr_data$time_since_last_block)
+  cols_time_since_last_fear_block <- scale_between_r_w_and_b(tr_data$time_since_last_fear_block)
+  cols_time_since_last_shape_block <- scale_between_r_w_and_b(tr_data$time_since_last_shape_block)
+  
+  # plot rips graphs with each color scheme
+  plot_rips_graph(g,eps = loop[[1]],cols = cols_trigger_pulse,component_of = cycle[[1]],vertex_labels = F,layout = l,title = "Trigger pulse") # not super interesting
+  plot_rips_graph(g,eps = loop[[1]],cols = cols_respiratory,component_of = cycle[[1]],vertex_labels = F,layout = l,title = "Respiratory") # not super interesting
+  plot_rips_graph(g,eps = loop[[1]],cols = cols_pulse_oximeter,component_of = cycle[[1]],vertex_labels = F,layout = l,title = "Pulse Oximeter") # not super interesting
+  plot_rips_graph(g,eps = loop[[1]],cols = cols_time_since_last_block,component_of = cycle[[1]],vertex_labels = F,layout = l,title = "Time since last block") # interesting!!! same as time since last shape block
+  plot_rips_graph(g,eps = loop[[1]],cols = cols_time_since_last_fear_block,component_of = cycle[[1]],vertex_labels = F,layout = l,title = "Time since last fear block") # not interesting
+  plot_rips_graph(g,eps = loop[[1]],cols = cols_time_since_last_shape_block,component_of = cycle[[1]],vertex_labels = F,layout = l,title = "Time since last shape black") # interesting!! same as time since last block
+  
+  # main loop is the first stimulus block (shape)
+  # is the secondary loop also time since shape block?
+  secondary_loop <- g
+  secondary_loop$vertices <- setdiff(g$vertices,as.character(cycle))
+  secondary_loop$graphs[[1]][[1]] <- secondary_loop$graphs[[1]][[1]][which(secondary_loop$graphs[[1]][[1]][,1L] %in% cycle == F & secondary_loop$graphs[[1]][[1]][,2L] %in% cycle == F),]
+  info <- plot_rips_graph(secondary_loop,eps = loop[[1]],component_of = 99,vertex_labels = F,cols = cols_time_since_last_block[as.numeric(secondary_loop$vertices)],return_layout = T,title = "Rips graph of secondary loop")
+  
+  # compute position around loop, theta, and
+  # distance to loop center, r
+  theta <- atan2(y = info[,2],x = info[,1])
+  r <- sqrt(info[,1]^2 + info[,2]^2)
+  
+  # was this secondary loop the second most persistent loop?
+  PH_secondary <- TDA::ripsDiag(X = RDM[as.numeric(rownames(info)),as.numeric(rownames(info))],dist = "arbitrary",library = "dionysus",maxdimension = 1,maxscale = max(RDM))
+  diag_secondary <- diagram_to_df(PH_secondary)
+  diag_secondary$pers <- diag_secondary$death - diag_secondary$birth
+  diag_secondary <- diag_secondary[order(diag_secondary$pers,decreasing = T),]
+  diag_secondary[min(which(diag_secondary$dimension == 1)),1:3]
+  diag[207,]
+  diag$pers <- diag$death - diag$birth
+  diag <- diag[order(diag$pers,decreasing = T),]
+  diag[which(diag$dimension == 1)[1:2],1:3] # it is the second biggest loop!!
+  
+  # modelling loop activity with theta and r
+  stimulus_timing_TR <- stimulus_timing
+  stimulus_timing_TR$onset <- 1 + stimulus_timing_TR$onset/0.72
+  stimulus_timing_TR$end <- 1 + stimulus_timing_TR$end/0.72
+  p_val_thresh <- 0.05/ncol(emotion)/2
+  theta_coefs <- unlist(lapply(X = 1:ncol(emotion),FUN = function(X){
+    
+    mod <- lm(data = data.frame(x = theta,y = emotion[as.numeric(rownames(info)),X]),formula = y ~ cos(x) + sin(x))
+    tab <- summary(mod)$coefficients
+    coefs <- as.numeric(tab[2:3,1L])*ifelse(test = as.numeric(tab[2:3,4L]) < p_val_thresh,yes = 1,no = 0)
+    names(coefs) <- c(paste0("cos_",X),paste0("sin_",X))
+    return(coefs)
+    
+  }))
+  r_coefs <- unlist(lapply(X = 1:ncol(emotion),FUN = function(X){
+    
+    mod <- lm(data = data.frame(x = r,y = emotion[as.numeric(rownames(info)),X]),formula = y ~ x)
+    tab <- summary(mod)$coefficients
+    return(as.numeric(tab[2,1])*ifelse(test = as.numeric(tab[2,4L]) < p_val_thresh,yes = 1,no = 0))
+    
+  }))
+  length(which(theta_coefs != 0))/length(theta_coefs) # only about 0.8% of model coefficients were non-zero
+  length(which(theta_coefs != 0)) # 1475
+  length(which(r_coefs != 0))/length(r_coefs) # only about 0.06% of model coefficients were non-zero
+  length(which(r_coefs != 0)) # 53
+  non_zero_theta_nodes <- unlist(lapply(X = 1:ncol(emotion),FUN = function(X){
+    
+    return(length(which(theta_coefs[(2*X - 1):(2*X)] != 0)) > 0)
+    
+  }))
+  non_zero_r_nodes <- ifelse(r_coefs != 0,yes = T,no = F)
+  length(which(non_zero_theta_nodes == T))/length(non_zero_theta_nodes) # only about 1.6% of nodes had non-zero effects across the loop
+  length(which(non_zero_theta_nodes == T)) # 1442
+  
+  length(setdiff(which(non_zero_r_nodes),which(non_zero_theta_nodes))) # 52! so pretty much all nodes orthogonal to the loop dimension
+  length(setdiff(which(non_zero_theta_nodes),which(non_zero_r_nodes))) # 1441
+  
+  # let's plot the nodes in the loop
+  hcp = reticulate::import("hcp_utils")
+  atlas <- hcp$hcp_utils$mmp$map_all
+  LUT <- unlist(hcp$hcp_utils$mmp$labels)
   nib = reticulate::import("nibabel")
   plotting = reticulate::import("nilearn.plotting")
   np = reticulate::import("numpy")
-  hcp = reticulate::import("hcp_utils")
   
-  # time points go bottom, right, top then left
-  plot_smooth_timepoint(f = f,tp = 615,output_file = paste0(output_file,"_bottom"),th = th,sigma = sigma,nib = nib,plotting = plotting,np = np,hcp = hcp)
-  plot_smooth_timepoint(f = f,tp = 545,output_file = paste0(output_file,"_right"),th = th,sigma = sigma,nib = nib,plotting = plotting,np = np,hcp = hcp)
-  plot_smooth_timepoint(f = f,tp = 551,output_file = paste0(output_file,"_top"),th = th,sigma = sigma,nib = nib,plotting = plotting,np = np,hcp = hcp)
-  plot_smooth_timepoint(f = f,tp = 481,output_file = paste0(output_file,"_left"),th = th,sigma = sigma,nib = nib,plotting = plotting,np = np,hcp = hcp)
+  # load surface mesh
+  theta_nodes <- ifelse(non_zero_theta_nodes == T,yes = 1,no = 0)[1:64984]
+  r_nodes <- ifelse(non_zero_r_nodes == T,yes = 1,no = 0)[1:64984]
+  combined_nodes <- theta_nodes + r_nodes
+  combined_nodes[which(combined_nodes > 1)] <- 1
   
-  # clean up files
-  unlink(f)
+  # plot loop nodes on left hemisphere
+  plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(r_nodes),bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(directory_for_subjects,"/r_nodes.png"),threshold = 0.001,colorbar = F)
+  plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(theta_nodes),bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(directory_for_subjects,"/theta_nodes.png"),threshold = 0.001,colorbar = F)
+  plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(combined_nodes),bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(directory_for_subjects,"/combined_nodes.png"),threshold = 0.001,colorbar = F)
   
-}
+  # now let's plot the loop activity around the loop for left hemi
+  sampled_theta_inds <- unlist(lapply(X = c(0,pi/4,pi/2,3*pi/4,pi,5*pi/4,3*pi/2,7*pi/4),FUN = function(X){
+    
+    theta2 <- ifelse(theta < 0,yes = theta + 2*pi,no = theta)
+    dists <- abs(theta2 - X)
+    return(which(dists == min(dists)))
+    
+  }))
+  scaled_emotion <- apply(emotion[as.numeric(rownames(info)),1:64984],MARGIN = 2,FUN = function(X){
+    
+    return((X - min(X))/(max(X) - min(X)))
+    
+  })
+  plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(theta_nodes*scaled_emotion[sampled_theta_inds[[1]],1:64984]),bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(directory_for_subjects,"/loop_0.png"),threshold = 0.000002)
+  plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(theta_nodes*scaled_emotion[sampled_theta_inds[[2]],1:64984]),bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(directory_for_subjects,"/loop_pi_over_4.png"),threshold = 0.000002)
+  plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(theta_nodes*scaled_emotion[sampled_theta_inds[[3]],1:64984]),bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(directory_for_subjects,"/loop_pi_over_2.png"),threshold = 0.000002)
+  plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(theta_nodes*scaled_emotion[sampled_theta_inds[[4]],1:64984]),bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(directory_for_subjects,"/loop_3_pi_over_4.png"),threshold = 0.000002)
+  plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(theta_nodes*scaled_emotion[sampled_theta_inds[[5]],1:64984]),bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(directory_for_subjects,"/loop_pi.png"),threshold = 0.000002)
+  plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(theta_nodes*scaled_emotion[sampled_theta_inds[[6]],1:64984]),bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(directory_for_subjects,"/loop_5_pi_over_4.png"),threshold = 0.000002)
+  plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(theta_nodes*scaled_emotion[sampled_theta_inds[[7]],1:64984]),bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(directory_for_subjects,"/loop_3_pi_over_2"),threshold = 0.000002)
+  plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(theta_nodes*scaled_emotion[sampled_theta_inds[[8]],1:64984]),bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(directory_for_subjects,"/loop_7_pi_over_4.png"),threshold = 0.000002)
 
-# plot parcellation
-view_parcellation <- function(output_file){
+  plot(c(-1, 1), c(-1, 1), type = "n",xlab = "",ylab = "",xaxt = "n",yaxt = "n",bty = "n",xlim = c(-2.6,2.6),ylim = c(-2.6,2.6),main = "Activity with respect to theta")
+  radius = 1
+  center_x = 0
+  center_y = 0
+  theta = seq(0, 2 * pi, length = 200)
+  lines(x = radius * cos(theta) + center_x, y = radius * sin(theta) + center_y)
   
-  # based on the hcp_utils function view_parcellation
-  # initialize variables for yeo7 parcellation
-  # can be adapted for other parcellations easily, though
-  hcp <- reticulate::import("hcp_utils")
-  np <- reticulate::import("numpy")
-  matplotlib <- reticulate::import("matplotlib")
-  plotting <- reticulate::import("nilearn.plotting")
-  meshLR <- hcp$mesh$inflated
-  parcellation <- hcp$yeo7
-  
-  cortex_map <- hcp$cortex_data(parcellation$map_all)
-  ids <- np$unique(cortex_map)
-  normalized_cortex_map <- np$zeros_like(cortex_map)
-  rgba <- np$zeros(reticulate::tuple(length(ids),4L))
-  for(i in 0:(length(ids)-1))
+  angles <- c(0,pi/4,pi/2,3*pi/4,pi,5*pi/4,3*pi/2,7*pi/4)
+  angle_names <- c("0","pi_over_4","pi_over_2","3_pi_over_4","pi","5_pi_over_4","3_pi_over_2","7_pi_over_4")
+  # this plot will only generate if the png library is installed
+  if(requireNamespace("png"))
   {
-    ind <- which(cortex_map == ids[[i + 1]])
-    normalized_cortex_map[ind] = i
-    rgba[i + 1,] <- get(as.character(i),parcellation$rgba)
+    graphics::rasterImage(png::readPNG(paste0(directory_for_subjects,"/loop_",angle_names[[1]],".png")),xleft = 1.1,xright = 2.6,ybottom = -0.75,ytop = 0.75)
+    graphics::rasterImage(png::readPNG(paste0(directory_for_subjects,"/loop_",angle_names[[2]],".png")),xleft = 0.8,xright = 2.3,ybottom = 0.6,ytop = 2.1)
+    graphics::rasterImage(png::readPNG(paste0(directory_for_subjects,"/loop_",angle_names[[3]],".png")),xleft = -0.75,xright = 0.75,ybottom = 1.1,ytop = 2.6)
+    graphics::rasterImage(png::readPNG(paste0(directory_for_subjects,"/loop_",angle_names[[4]],".png")),xleft = -2.3,xright = -0.8,ybottom = 0.6,ytop = 2.1)
+    graphics::rasterImage(png::readPNG(paste0(directory_for_subjects,"/loop_",angle_names[[5]],".png")),xleft = -2.6,xright = -1.1,ybottom = -0.75,ytop = 0.75)
+    graphics::rasterImage(png::readPNG(paste0(directory_for_subjects,"/loop_",angle_names[[6]],".png")),xleft = -2.3,xright = -0.8,ybottom = -2.1,ytop = -0.6)
+    graphics::rasterImage(png::readPNG(paste0(directory_for_subjects,"/loop_",angle_names[[7]],".png")),xleft = -0.75,xright = 0.75,ybottom = -2.6,ytop = -1.1)
+    graphics::rasterImage(png::readPNG(paste0(directory_for_subjects,"/loop_",angle_names[[8]],".png")),xleft = 0.8,xright = 2.3,ybottom = -2.1,ytop = -0.6)
   }
   
-  cmap = matplotlib$colors$ListedColormap(rgba)
+  # now let's plot activity over different values of r
+  min_ind <- which(r == min(r))
+  max_ind <- which(r == max(r))
+  med_ind <- which(abs(r - mean(r)) == min(abs(r - mean(r))))[[1]]
+  plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(r_nodes*scaled_emotion[min_ind,1:64984]),bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(directory_for_subjects,"/r_min.png"),threshold = 0.000002)
+  plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(r_nodes*scaled_emotion[med_ind,1:64984]),bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(directory_for_subjects,"/r_mean.png"),threshold = 0.000002)
+  plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(r_nodes*scaled_emotion[max_ind,1:64984]),bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(directory_for_subjects,"/r_max.png"),threshold = 0.000002)
   
-  # view parcellation on surface
-  plotting$plot_surf(meshLR,normalized_cortex_map,threshold = 0,bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(output_file,"_hemi_left.png"),cmap=cmap)
-  plotting$plot_surf(meshLR,normalized_cortex_map,threshold = 0,bg_map = hcp$mesh$sulc,hemi = "right",output_file = paste0(output_file,"_hemi_right.png"),cmap=cmap)
+  plot(c(-1, 1), c(-1, 1), type = "n",xlab = "",ylab = "",xaxt = "n",yaxt = "n",bty = "n",main = "Activity with respect to r",xlim = c(-4.5,4.5),ylim = c(-1.5,1.5))
+  axis(1, at=c(-3,0,3), las=2,labels = c("Min","Mean","Max"))
+  # this plot will only generate if the png library is installed
+  if(requireNamespace("png"))
+  {
+    graphics::rasterImage(png::readPNG(paste0(directory_for_subjects,"/r_min.png")),xleft = -4.5,xright = -1.5,ybottom = -1.5,ytop = 1.5)
+    graphics::rasterImage(png::readPNG(paste0(directory_for_subjects,"/r_mean.png")),xleft = -1.5,xright = 1.5,ybottom = -1.5,ytop = 1.5)
+    graphics::rasterImage(png::readPNG(paste0(directory_for_subjects,"/r_max.png")),xleft = 1.5,xright = 4.5,ybottom = -1.5,ytop = 1.5)
+  }
   
-  # view parcellation labels
-  hcp$parcellation_labels(parcellation)
-  matplotlib$pyplot$savefig(paste0(output_file,"_labels.png"))
+  # comparing values of r across shapes and faces
+  trs <- as.numeric(rownames(info))
+  tr_onset <- stimulus_timing$onset/0.72 + 1
+  tr_end <- stimulus_timing$end/0.72 + 1
+  shape_inds <- trs[c(which(trs >= tr_onset[[1]] & trs <= tr_end[[1]]),which(trs >= tr_onset[[3]] & trs <= tr_end[[3]]),which(trs >= tr_onset[[5]] & trs <= tr_end[[5]]))]
+  face_inds <- trs[c(which(trs >= tr_onset[[2]] & trs <= tr_end[[2]]),which(trs >= tr_onset[[4]] & trs <= tr_end[[4]]),which(trs >= tr_onset[[6]] & trs <= tr_end[[6]]))]
+  shape_inds <- intersect(shape_inds,as.numeric(rownames(info)))
+  face_inds <- intersect(face_inds,as.numeric(rownames(info)))
+  shape_inds_2 <- c()
+  face_inds_2 <- c()
+  for(i in shape_inds)
+  {
+    shape_inds_2 <- c(shape_inds_2,which(trs == i))
+  }
+  for(i in face_inds)
+  {
+    face_inds_2 <- c(face_inds_2,which(trs == i))
+  }
+  t.test(r[shape_inds_2],r[face_inds_2],alternative = "two.sided")
+  boxplot(r[shape_inds_2],r[face_inds_2],main = "r across conditions, p < 0.01",xlab = "Condition",ylab = "r",names = c("Shape","Face"))
   
-}
-
-# calculate persistence diagrams for all fMRI files for 100 subjects
-# and analyze them
-# if desired subjects can be set to NULL to randomly select 100 new subjects
-analyze_HCP <- function(directory_for_subjects){
-  
+  # now do embedding with 100 emotion RL diagrams
+  source("./exec/parallel_with_approximation.R")
+  ripser <- import_ripser()
   subjects = c(103111,103212,105620,106521,108222,110007,110613,113316,117122,118023,118528,118932,119126,122317,123420,123521,123723,129028,129634,130417,130720,131419,133827,135528,136631,136833,138332,138837,140319,140824,143224,143325,147030,147636,151324,153631,153934,154229,154835,156536,156637,158843,160729,162228,162329,173839,173940,176037,177241,178748,179245,180735,185947,186040,186141,187850,192237,198350,200008,202113,205826,206222,213522,219231,237334,239944,255639,299760,305830,329440,334635,341834,353740,395958,406432,424939,433839,456346,479762,510225,545345,555954,561444,562446,567052,571144,579665,579867,580751,586460,590047,599065,599671,657659,663755,687163,786569,788674,800941,818455)
-  
-  # generate 100 new subjects for analysis if desired
-  # (i.e. not the same 100 as were analyzed in the vignette)
-  # note that subjects 162228 and 341834 must be analyzed in order
-  # to not cause an error on lines X and Y.
-  # if(is.null(subjects))
-  # {
-  #   possible_subjects <- unlist(strsplit(unname(unlist(parse_list_files(hcp_list_dirs("HCP_1200/"))$prefixes)),split = "HCP_1200/"))
-  #   possible_subjects <- possible_subjects[seq(2,length(possible_subjects),2)]
-  #   possible_subjects <- unlist(strsplit(possible_subjects,split = "/"))
-  #   
-  #   subjects_with_all_files <- unlist(lapply(X = possible_subjects,FUN = function(X){
-  #     
-  #     return(subject_has_all_files(X))
-  #     
-  #   }))
-  #   
-  #   possible_subjects <- possible_subjects[subjects_with_all_files]
-  #   
-  #   subjects <- sample(possible_subjects,size = 100,replace = F)
-  # }
-  
-  # start by reading in data, then analyze:
-  calculate_diags(directory_for_subjects = directory_for_subjects,subjects = subjects)
-  
-  # create directories to store results
-  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results"))
-  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/permutation_tests"))
-  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/permutation_tests/tasks"))
-  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/permutation_tests/subjects"))
-  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/independence_tests"))
-  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/independence_tests/tasks"))
-  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/independence_tests/subjects"))
-  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/mds"))
-  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/kmeans"))
-  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/visualizations"))
-  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/visualizations/tasks"))
-  system(paste0(ifelse(Sys.info()['sysname'][[1]] == "Windows",yes = "powershell -command ",no = ""),"mkdir ",directory_for_subjects,"/analysis_results/visualizations/subjects"))
-  
-  # read in diagrams, order is rest1, rest2, emotion, gambling, language, motor, relational, social, wm
-  diagrams <- lapply(subjects,FUN = function(X){
+  diags <- lapply(X = subjects,FUN = function(X){
     
-    ret_list <- list()
-    ret_list[[1]] <- read.csv(paste0(directory_for_subjects,"/",X,"/rfMRI_REST1_LR_diagram.csv"))
-    ret_list[[1]]$X <- NULL
-    ret_list[[2]] <- read.csv(paste0(directory_for_subjects,"/",X,"/rfMRI_REST1_RL_diagram.csv"))
-    ret_list[[2]]$X <- NULL
-    ret_list[[3]] <- read.csv(paste0(directory_for_subjects,"/",X,"/rfMRI_REST2_LR_diagram.csv"))
-    ret_list[[3]]$X <- NULL
-    ret_list[[4]] <- read.csv(paste0(directory_for_subjects,"/",X,"/rfMRI_REST2_RL_diagram.csv"))
-    ret_list[[4]]$X <- NULL
-    ret_list[[5]] <- read.csv(paste0(directory_for_subjects,"/",X,"/tfMRI_EMOTION_LR_diagram.csv"))
-    ret_list[[5]]$X <- NULL
-    ret_list[[6]] <- read.csv(paste0(directory_for_subjects,"/",X,"/tfMRI_EMOTION_RL_diagram.csv"))
-    ret_list[[6]]$X <- NULL
-    ret_list[[7]] <- read.csv(paste0(directory_for_subjects,"/",X,"/tfMRI_GAMBLING_LR_diagram.csv"))
-    ret_list[[7]]$X <- NULL
-    ret_list[[8]] <- read.csv(paste0(directory_for_subjects,"/",X,"/tfMRI_GAMBLING_RL_diagram.csv"))
-    ret_list[[8]]$X <- NULL
-    ret_list[[9]] <- read.csv(paste0(directory_for_subjects,"/",X,"/tfMRI_LANGUAGE_LR_diagram.csv"))
-    ret_list[[9]]$X <- NULL
-    ret_list[[10]] <- read.csv(paste0(directory_for_subjects,"/",X,"/tfMRI_LANGUAGE_RL_diagram.csv"))
-    ret_list[[10]]$X <- NULL
-    ret_list[[11]] <- read.csv(paste0(directory_for_subjects,"/",X,"/tfMRI_MOTOR_LR_diagram.csv"))
-    ret_list[[11]]$X <- NULL
-    ret_list[[12]] <- read.csv(paste0(directory_for_subjects,"/",X,"/tfMRI_MOTOR_RL_diagram.csv"))
-    ret_list[[12]]$X <- NULL
-    ret_list[[13]] <- read.csv(paste0(directory_for_subjects,"/",X,"/tfMRI_RELATIONAL_LR_diagram.csv"))
-    ret_list[[13]]$X <- NULL
-    ret_list[[14]] <- read.csv(paste0(directory_for_subjects,"/",X,"/tfMRI_RELATIONAL_RL_diagram.csv"))
-    ret_list[[14]]$X <- NULL
-    ret_list[[15]] <- read.csv(paste0(directory_for_subjects,"/",X,"/tfMRI_SOCIAL_LR_diagram.csv"))
-    ret_list[[15]]$X <- NULL
-    ret_list[[16]] <- read.csv(paste0(directory_for_subjects,"/",X,"/tfMRI_SOCIAL_RL_diagram.csv"))
-    ret_list[[16]]$X <- NULL
-    ret_list[[17]] <- read.csv(paste0(directory_for_subjects,"/",X,"/tfMRI_WM_LR_diagram.csv"))
-    ret_list[[17]]$X <- NULL
-    ret_list[[18]] <- read.csv(paste0(directory_for_subjects,"/",X,"/tfMRI_WM_RL_diagram.csv"))
-    ret_list[[18]]$X <- NULL
-    return(ret_list)
+    f <- paste0("HCP_1200/",X,"/MNINonLinear/Results/tfMRI_EMOTION_RL/tfMRI_EMOTION_RL_Atlas_MSMAll.dtseries.nii")
+    try_to_download_one_file(f = f,directory_for_subjects = directory_for_subjects)
+    f = paste0(directory_for_subjects,"/",X,"/tfMRI_EMOTION_RL_Atlas_MSMAll.dtseries.nii")
+    dt = readNifti(f)
+    dt <- dt[1,1,1,1,1:dim(dt)[[5]],1:91282]
+    RDM <- sqrt(2*(matrix(data = 1,nrow = nrow(dt),ncol = nrow(dt)) - cor(t(dt))))
+    return(PyH(X = RDM,thresh = max(RDM),distance_mat = T,ripser = ripser))
     
   })
-  tasks <- c("rest1","rest2","emotion","gambling","language","motor","relational","social","wm")
-  unlisted_diagrams <- list()
-  for(i in 1:length(diagrams))
+  K <- parallel_approx_gram_matrix(diagrams = diags,dim = 1,sigma = 0.05,rho = 1e-4) # occasionally needs to be rerun
+  emb <- diagram_kpca(diagrams = diags,K = K,dim = 1,t = 1,sigma = 0.05,rho = 1e-4,features = 2,th = 1e-6)
+  
+  # download subject emotion stats for plotting
+  for(s in subjects)
   {
-    for(j in 1:18)
-    {
-      if(nrow(diagrams[[i]][[j]]) == 0)
-      {
-        unlisted_diagrams[[length(unlisted_diagrams) + 1]] <- data.frame(dimension = numeric(),birth = numeric(),death = numeric())
-      }else
-      {
-        unlisted_diagrams[[length(unlisted_diagrams)+1]] <- diagrams[[i]][[j]] 
-      }
-    }
+    download_RL_emotion_stats_file(s = s,directory_for_subjects = directory_for_subjects)
   }
-  rm(diagrams)
-  gc()
-  
-  # determine kernel parameter values
-  print(paste0("Determining kernel parameters at ",Sys.time()))
-  sigma_vals <- c(0.001,0.01,0.1)
-  
-  # find percentiles of Fisher information metrics between all diagrams
-  D_fisher_0.001 <- distance_matrix(diagrams = unlisted_diagrams,dim = 1,distance = "fisher",sigma = 0.001)
-  D_fisher_0.01 <- distance_matrix(diagrams = unlisted_diagrams,dim = 1,distance = "fisher",sigma = 0.01)
-  D_fisher_0.1 <- distance_matrix(diagrams = unlisted_diagrams,dim = 1,distance = "fisher",sigma = 0.1)
-  vals_0.001 <- D_fisher_0.001[which(upper.tri(D_fisher_0.001),arr.ind = T)]
-  vals_0.001 <- vals_0.001[which(vals_0.001!=0)]
-  vals_0.01 <- D_fisher_0.01[which(upper.tri(D_fisher_0.01),arr.ind = T)]
-  vals_0.01 <- vals_0.01[which(vals_0.01!=0)]
-  vals_0.1 <- D_fisher_0.1[which(upper.tri(D_fisher_0.1),arr.ind = T)]
-  vals_0.1 <- vals_0.1[which(vals_0.1!=0)]
-  t_vals_0.001 <- quantile(vals_0.001,probs = c(0.01,0.02,0.05,0.1,0.25,0.5))
-  t_vals_0.01 <- quantile(vals_0.01,probs = c(0.01,0.02,0.05,0.1,0.25,0.5))
-  t_vals_0.1 <- quantile(vals_0.1,probs = c(0.01,0.02,0.05,0.1,0.25,0.5))
-  
-  # combine and save
-  write.csv(D_fisher_0.001,paste0(directory_for_subjects,"/D_fisher_0.001.csv"))
-  write.csv(D_fisher_0.01,paste0(directory_for_subjects,"/D_fisher_0.01.csv"))
-  write.csv(D_fisher_0.1,paste0(directory_for_subjects,"/D_fisher_0.1.csv"))
-  kernel_parameters <- rbind(expand.grid(t = t_vals_0.001,sigma = sigma_vals),rbind(expand.grid(t = t_vals_0.01,sigma = sigma_vals),expand.grid(t = t_vals_0.1,sigma = sigma_vals)))
-  write.csv(kernel_parameters,paste0(directory_for_subjects,"/kernel_parameters.csv"))
-  
-  # visualize all subject and task diagram distributions:
-  print(paste0("Working on visualizing diagrams at ",Sys.time()))
-  for(sigma in sigma_vals)
-  {
-    for(s in 1:length(subjects))
-    {
-      png(filename = paste0(directory_for_subjects,"/analysis_results/visualizations/subjects/",subjects[[s]],"_",sigma,".png"),width = 400,height = 450)
-      visualize_group_of_diagrams(diagrams = unlisted_diagrams[(18*(s-1)+1):(18*s)],sigma = sigma,plot_title = paste0("Subject ",subjects[[s]]))
-      dev.off()
-    }
+  stats <- do.call(rbind,lapply(X = subjects,FUN = function(X){
     
-    for(task in 1:length(tasks))
-    {
-      png(filename = paste0(directory_for_subjects,"/analysis_results/visualizations/tasks/",tasks[[task]],"_",sigma,".png"),width = 400,height = 450)
-      visualize_group_of_diagrams(diagrams = unlisted_diagrams[c(seq(2*task-1,length(unlisted_diagrams),18),seq(2*task,length(unlisted_diagrams),18))],sigma = sigma,plot_title = paste0("Task ",tasks[[task]]))
-      dev.off()
-    }
-  }
-  
-  # plot specifically the two representative loops of resting state 1 task
-  analyze_loop(directory_for_subjects = directory_for_subjects,output_file = paste0(directory_for_subjects,"/loop"),th = 0.75,sigma = 5)
-  
-  # plot surface parcellation
-  view_parcellation(output_file = paste0(directory_for_subjects,"/parcellation"))
-  
-  # look for statistical differences in the number of loops in the diagrams between subjects and tasks
-  num_loops <- unlist(lapply(unlisted_diagrams,FUN = function(X){return(nrow(X))}))
-  loop_test_subjs <- matrix(data = 0,nrow = 100,ncol = 100)
-  for(i in 1:(length(subjects) - 1))
-  {
-    for(j in (i+1):length(subjects))
-    {
-      v <- 0
-      t <- t.test(x = num_loops[seq(18*(i-1)+1,18*i,1)],y = num_loops[seq(18*(j-1)+1,18*j,1)],paired = T,alternative = "two.sided")
-      if(!is.na(t$p.value) & t$p.value < 0.05)
-      {
-        if(t$conf.int[[1]] + t$conf.int[[2]] < 0)
-        {
-          v <- -1 # lower mean in row than col
-        }else
-        {
-          v <- 1 # higher mean in row than col
-        }
-      }
-      loop_test_subjs[i,j] <- v
-      loop_test_subjs[j,i] <- v
-      
-    }
-  }
-  
-  loop_test_tasks <- matrix(data = 0,nrow = 9,ncol = 9)
-  for(i in 1:8)
-  {
-    for(j in (i+1):9)
-    {
-      v <- 0
-      t <- t.test(x = num_loops[c(seq(2*i-1,length(unlisted_diagrams),18),seq(2*i,length(unlisted_diagrams),18))],y = num_loops[c(seq(2*j-1,length(unlisted_diagrams),18),seq(2*j,length(unlisted_diagrams),18))],paired = T,alternative = "two.sided")
-      if(!is.na(t$p.value) & t$p.value < 0.05)
-      {
-        if(t$conf.int[[1]] + t$conf.int[[2]] < 0)
-        {
-          v <- -1 
-        }else
-        {
-          v <- 1
-        }
-      }
-      loop_test_tasks[i,j] <- v
-      loop_test_tasks[j,i] <- v
-      
-    }
-  }
-  
-  # look for statistical differences in mean persistence between subjects and tasks
-  mean_persistence <- unlist(lapply(unlisted_diagrams,FUN = function(X){
-    
-    if(nrow(X) == 0)
-    {
-      return(0)
-    }
-    return(mean(X[,3L] - X[,2L]))
+    df <- read.csv(paste0(directory_for_subjects,"/",X,"/stats.csv"))
+    df$X <- NULL
+    return(data.frame(subject = X,face_acc = df[1,1L],face_rt = df[2,1L],shape_acc = df[3,1L],shape_rt = df[4,1L]))
     
   }))
-  persistence_test_subjs <- matrix(data = 0,nrow = 100,ncol = 100)
-  for(i in 1:(length(subjects) - 1))
-  {
-    for(j in (i+1):length(subjects))
-    {
-      v <- 0
-      t <- t.test(x = mean_persistence[seq(18*(i-1)+1,18*i,1)],y = mean_persistence[seq(18*(j-1)+1,18*j,1)],paired = T,alternative = "two.sided")
-      if(!is.na(t$p.value) & t$p.value < 0.05)
-      {
-        if(t$conf.int[[1]] + t$conf.int[[2]] < 0)
-        {
-          v <- -1
-        }else
-        {
-          v <- 1
-        }
-      }
-      persistence_test_subjs[i,j] <- v
-      persistence_test_subjs[j,i] <- v
-      
-    }
-  }
-  
-  persistence_test_tasks <- matrix(data = 0,nrow = 9,ncol = 9)
-  for(i in 1:8)
-  {
-    for(j in (i+1):9)
-    {
-      v <- 0
-      t <- t.test(x = mean_persistence[c(seq(2*i-1,length(unlisted_diagrams),18),seq(2*i,length(unlisted_diagrams),18))],y = mean_persistence[c(seq(2*j-1,length(unlisted_diagrams),18),seq(2*j,length(unlisted_diagrams),18))],paired = T,alternative = "two.sided")
-      if(!is.na(t$p.value) & t$p.value < 0.05)
-      {
-        if(t$conf.int[[1]] + t$conf.int[[2]] < 0)
-        {
-          v <- -1
-        }else
-        {
-          v <- 1
-        }
-      }
-      persistence_test_tasks[i,j] <- v
-      persistence_test_tasks[j,i] <- v
-      
-    }
-  }
-  
-  # precompute other distance matrices
-  D_bot <- distance_matrix(diagrams = unlisted_diagrams,p = Inf,dim = 1)
-  D_wass <- distance_matrix(diagrams = unlisted_diagrams,dim = 1)
-  write.csv(D_bot,paste0(directory_for_subjects,"/D_bot.csv"))
-  write.csv(D_wass,paste0(directory_for_subjects,"/D_wass.csv"))
-  
-  # test if each task is different using the permutation test
-  print(paste0("Working on permutation tests for tasks at ",Sys.time()))
-  perm_test_mat_wass <- matrix(data = 1,nrow = 9,ncol = 9)
-  perm_test_mat_bottleneck <- matrix(data = 1,nrow = 9,ncol = 9)
-  for(i in 1:8)
-  {
-    for(j in (i+1):9)
-    {
-      inds <- c(c(seq(2*i-1,length(unlisted_diagrams),18),seq(2*i,length(unlisted_diagrams),18)),c(seq(2*j-1,length(unlisted_diagrams),18),seq(2*j,length(unlisted_diagrams),18)))
-      perm_test_mat_wass[i,j] <- permutation_test(dist_mats = list(D_wass[inds,inds]),p = 2,iterations = 1000,dims = c(1),group_sizes = c(200,200))$p_values[[1]]
-      perm_test_mat_wass[j,i] <- perm_test_mat_wass[i,j]
-      perm_test_mat_bottleneck[i,j] <- permutation_test(dist_mats = list(D_bot[inds,inds]),p = 2,iterations = 1000,dims = c(1),group_sizes = c(200,200))$p_values[[1]]
-      perm_test_mat_bottleneck[j,i] <- perm_test_mat_bottleneck[i,j]
-    }
-  }
-  write.csv(perm_test_mat_wass,paste0(directory_for_subjects,"/analysis_results/permutation_tests/tasks/perm_test_tasks_wass.csv"))
-  write.csv(perm_test_mat_bottleneck,paste0(directory_for_subjects,"/analysis_results/permutation_tests/tasks/perm_test_tasks_bottleneck.csv"))
-  
-  # what about subject differences?
-  print(paste0("Working on permutation tests for subjects at ",Sys.time()))
-  perm_test_subj_wass <- matrix(data = 1,nrow = length(subjects),ncol = length(subjects))
-  perm_test_subj_bottleneck <- matrix(data = 1,nrow = length(subjects),ncol = length(subjects))
-  for(i in 1:(length(subjects) - 1))
-  {
-    for(j in (i+1):length(subjects))
-    {
-      inds <- c(seq(18*(i-1)+1,18*i,1),seq(18*(j-1)+1,18*j,1))
-      perm_test_subj_wass[i,j] <- permutation_test(dist_mats = list(D_wass[inds,inds]),p = 2,iterations = 1000,dims = c(1),group_sizes = c(18,18),paired = T)$p_values[[1]]
-      perm_test_subj_bottleneck[i,j] <- permutation_test(dist_mats = list(D_wass[inds,inds]),p = Inf,iterations = 1000,dims = c(1),group_sizes = c(18,18),paired = T)$p_values[[1]]
-      perm_test_subj_wass[j,i] <- perm_test_subj_wass[i,j]
-      perm_test_subj_bottleneck[j,i] <- perm_test_subj_bottleneck[i,j]
-    }
-  }
-  write.csv(perm_test_subj_wass,paste0(directory_for_subjects,"/analysis_results/permutation_tests/subjects/perm_test_subjs_wass.csv"))
-  write.csv(perm_test_subj_bottleneck,paste0(directory_for_subjects,"/analysis_results/permutation_tests/subjects/perm_test_subjs_bottleneck.csv"))
-  
-  # do independence tests between tasks and subjects
-  print(paste0("Working on independence tests for tasks at ",Sys.time()))
-  for(k in 1:nrow(kernel_parameters))
-  {
-    indep_mat <- matrix(data = 1,nrow = 9,ncol = 9)
-    for(i in 1:8)
-    {
-      for(j in (i+1):9)
-      {
-        D <- get(paste0("D_fisher_",kernel_parameters[k,2]))
-        K <- exp(-1*kernel_parameters[k,2]*D)
-        inds1 <- c(seq(2*i-1,length(unlisted_diagrams),18),seq(2*i,length(unlisted_diagrams),18))
-        inds2 <- c(seq(2*j-1,length(unlisted_diagrams),18),seq(2*j,length(unlisted_diagrams),18))
-        K1 <- K[inds1,inds1]
-        K2 <- K[inds2,inds2]
-        class(K1) <- "kernelMatrix"
-        class(K2) <- "kernelMatrix"
-        indep_mat[i,j] <- independence_test(Ks = list(K1),Ls = list(K2),dims = c(1),sigma = kernel_parameters[k,2],t = kernel_parameters[k,1])$p_values[[1]]
-        indep_mat[j,i] <- indep_mat[i,j]
-      }
-    }
-    write.csv(indep_mat,paste0(directory_for_subjects,"/analysis_results/independence_tests/tasks/indep_mat_task_t_",kernel_parameters[k,1],"_sigma_",kernel_parameters[k,2],".csv"))
-  }
-  
-  # now check for dependence within subjects
-  print(paste0("Working on independence tests for subjects at ",Sys.time()))
-  for(k in 1:nrow(kernel_parameters))
-  {
-    indep_mat <- matrix(data = 1,nrow = length(subjects),ncol = length(subjects))
-    for(i in 1:(length(subjects) - 1))
-    {
-      for(j in (i+1):length(subjects))
-      {
-        D <- get(paste0("D_fisher_",kernel_parameters[k,2]))
-        K <- exp(-1*kernel_parameters[k,2]*D)
-        inds1 <- seq(18*(i-1)+1,18*i,1)
-        inds2 <- seq(18*(j-1)+1,18*j,1)
-        K1 <- K[inds1,inds1]
-        K2 <- K[inds2,inds2]
-        class(K1) <- "kernelMatrix"
-        class(K2) <- "kernelMatrix"
-        indep_mat[i,j] <- independence_test(Ks = list(K1),Ls = list(K2),dims = c(1),sigma = kernel_parameters[k,2],t = kernel_parameters[k,1])$p_values[[1]]
-        indep_mat[j,i] <- indep_mat[i,j]
-      }
-    }
-    write.csv(indep_mat,paste0(directory_for_subjects,"/analysis_results/independence_tests/subjects/indep_mat_subj_t_",kernel_parameters[k,1],"_sigma_",kernel_parameters[k,2],".csv"))
-  }
-  
-  print(paste0("Working on comparing independence of tasks and subjects at ",Sys.time()))
-  
-  # now verify that some tasks/subjects were consistently dependent:
-  indep_task_mats <- lapply(X = list.files(paste0(directory_for_subjects,"/analysis_results/independence_tests/tasks"),pattern = "indep_mat_task"),FUN = function(X){
-    
-    df <- read.csv(paste0(directory_for_subjects,"/analysis_results/independence_tests/tasks/",X))
-    df$X <- NULL
-    return(df)
-    
-  })
-  indep_subj_mats <- lapply(X = list.files(paste0(directory_for_subjects,"/analysis_results/independence_tests/subjects"),pattern = "indep_mat_subj"),FUN = function(X){
-    
-    df <- read.csv(paste0(directory_for_subjects,"/analysis_results/independence_tests/subjects/",X))
-    df$X <- NULL
-    return(df)
-    
-  })
-  
-  # subset
-  indep_task_mats_good <- list()
-  indep_subj_mats_good <- list()
-  indices_task_good <- c()
-  indices_subj_good <- c()
-  for(i in 1:nrow(kernel_parameters))
-  {
-    if(length(which(as.vector(indep_task_mats[[i]]) < 0.05)) > 0)
-    {
-      indep_task_mats_good[[length(indep_task_mats_good) + 1]] <- indep_task_mats[[i]]
-      indices_task_good <- c(indices_task_good,i)
-    }
-    
-    if(length(which(as.vector(indep_subj_mats[[i]]) < 0.05)) > 0)
-    {
-      indep_subj_mats_good[[length(indep_subj_mats_good) + 1]] <- indep_subj_mats[[i]]
-      indices_subj_good <- c(indices_subj_good,i)
-    }
-  }
-  
-  # get percent significant across all kernel parameters for each p value calculation for tasks
-  indep_task_mats_good <- lapply(indep_task_mats_good,FUN = function(X){
-    
-    # switch matrices to binary - 1 if p value less than 0.05 and 0 otherwise
-    return(ifelse(test = X < 0.05,yes = 1,no = 0))
-    
-  })
-  
-  # take mean of all matrices
-  indep_task_mat <- matrix(data = 0,nrow = 9,ncol = 9)
-  for(i in 1:8)
-  {
-    for(j in (i+1):9)
-    {
-      indep_task_mat[i,j] <- mean(unlist(lapply(X = 1:length(indep_task_mats_good),FUN = function(X){return(indep_task_mats_good[[X]][i,j])})),na.rm = T)
-      indep_task_mat[j,i] <- indep_task_mat[i,j]
-    }
-  }
-  write.csv(indep_task_mat,paste0(directory_for_subjects,"/analysis_results/independence_tests/tasks/indep_task_mat_percent.csv"))
-  
-  # same but for subjects
-  indep_subj_mats_good <- lapply(indep_subj_mats_good,FUN = function(X){
-    
-    return(ifelse(test = X < 0.05,yes = 1,no = 0))
-    
-  })
-  indep_subj_mat <- matrix(data = 0,nrow = length(subjects),ncol = length(subjects))
-  for(i in 1:(length(subjects)-1))
-  {
-    for(j in (i+1):length(subjects))
-    {
-      indep_subj_mat[i,j] <- mean(unlist(lapply(X = 1:length(indep_subj_mats_good),FUN = function(X){return(indep_subj_mats_good[[X]][i,j])})),na.rm = T)
-      indep_subj_mat[j,i] <- indep_subj_mat[i,j]
-    }
-  }
-  write.csv(indep_subj_mat,paste0(directory_for_subjects,"/analysis_results/independence_tests/subjects/indep_subj_mat_percent.csv"))
-  
-  # t tests for comparing percent kernel parameter non-independence for topologically different diagrams and not
-  t.test(x = indep_subj_mat[which(perm_test_subj_bottleneck < 0.05,arr.ind = T)],y = indep_subj_mat[which(perm_test_subj_bottleneck >= 0.05,arr.ind = T)],alternative = "two.sided",paired = F)
-  t.test(x = indep_subj_mat[which(perm_test_subj_wass < 0.05,arr.ind = T)],y = indep_subj_mat[which(perm_test_subj_wass >= 0.05,arr.ind = T)],alternative = "two.sided",paired = F)
-  
-  # run clustering to see if tasks or subjects can be discerned
-  print(paste0("Working on clustering at ",Sys.time()))
-  # parameter grid for k in kkmeans
-  kvals <- c(2:18,25,50,100)
-  for(i in 1:nrow(kernel_parameters))
-  {
-    K <- exp(-1*kernel_parameters[i,1]*get(paste0("D_fisher_",kernel_parameters[i,2])))
-    class(K) <- "kernelMatrix"
-    kmeans_results <- data.frame(k = kvals,withinss = unlist(lapply(X = kvals,FUN = function(X){
-      
-      s <- tryCatch(expr = {
-        
-        R.utils::withTimeout(sum(diagram_kkmeans(diagrams = unlisted_diagrams,K = K,centers = X,dim = 1,t = kernel_parameters[i,1L],sigma = kernel_parameters[i,2L])$clustering@withinss),timeout = 60)
-      },
-      TimeoutException = function(ex){return(NA)},
-      error = function(e){return(NA)})
-      return(s)
-      
-    })))
-    kmeans_results <- kmeans_results[which(is.na(kmeans_results$withinss) == F),]
-    write.csv(kmeans_results,paste0(directory_for_subjects,"/analysis_results/kmeans/kmeans_results_t_",kernel_parameters[i,1],"_sigma_",kernel_parameters[i,2],".csv"))
-  }
-  
-  # get optimal number of clusters according to min within cluster sum of squares
-  kmeans_best_num_clusters <- unlist(lapply(X = list.files(paste0(directory_for_subjects,"/analysis_results/kmeans")),FUN = function(X){
-    
-    df <- read.csv(paste0(directory_for_subjects,"/analysis_results/kmeans/",X))
-    df$X <- NULL
-    return(df[which(df$withinss == min(df$withinss)),1L])
-    
-  }))
-  
-  # barplot distribution of best number of clusters
-  barplot(table(kmeans_best_num_clusters))
-  
-  # compute cluster membership adjacency matrices for each kernel parameters
-  # for two clusters through five clusters
-  two_clusters <- list()
-  for(X in 1:nrow(kernel_parameters))
-  {
-    K <- exp(-1*kernel_parameters[X,1]*get(paste0("D_fisher_",kernel_parameters[X,2])))
-    class(K) <- "kernelMatrix"
-    ret <- tryCatch(expr = {
-      
-      R.utils::withTimeout(diagram_kkmeans(diagrams = unlisted_diagrams,K = K,dim = 1,t = kernel_parameters[X,1L],sigma = kernel_parameters[X,2L],centers = 2)$clustering@.Data,timeout = 60)
-    },
-    TimeoutException = function(ex){return(matrix(data = 1,nrow = 0,ncol = length(unlisted_diagrams)))},
-    error = function(e){return(matrix(data = 1,nrow = 0,ncol = length(unlisted_diagrams)))})
-    ret_mat <- matrix(data = 0,nrow = length(unlisted_diagrams),ncol = length(unlisted_diagrams))
-    if(!is.matrix(ret))
-    {
-      for(i in 1:2)
-      {
-        inds <- which(ret == i)
-        ret_mat[as.matrix(expand.grid(inds,inds))] <- 1
-      }
-    }
-    two_clusters[[length(two_clusters) + 1]] <- ret_mat
-  }
-  
-  three_clusters <- list()
-  for(X in 1:nrow(kernel_parameters))
-  {
-    K <- exp(-1*kernel_parameters[X,1]*get(paste0("D_fisher_",kernel_parameters[X,2])))
-    class(K) <- "kernelMatrix"
-    ret <- tryCatch(expr = {
-      
-      R.utils::withTimeout(diagram_kkmeans(diagrams = unlisted_diagrams,K = K,dim = 1,t = kernel_parameters[X,1L],sigma = kernel_parameters[X,2L],centers = 3)$clustering@.Data,timeout = 60)
-    },
-    TimeoutException = function(ex){return(matrix(data = 1,nrow = 0,ncol = length(unlisted_diagrams)))},
-    error = function(e){return(matrix(data = 1,nrow = 0,ncol = length(unlisted_diagrams)))})
-    ret_mat <- matrix(data = 0,nrow = length(unlisted_diagrams),ncol = length(unlisted_diagrams))
-    if(!is.matrix(ret))
-    {
-      for(i in 1:3)
-      {
-        inds <- which(ret == i)
-        ret_mat[as.matrix(expand.grid(inds,inds))] <- 1
-      }
-    }
-    three_clusters[[length(three_clusters) + 1]] <- ret_mat
-  }
-  
-  four_clusters <- list()
-  for(X in 1:nrow(kernel_parameters))
-  {
-    K <- exp(-1*kernel_parameters[X,1]*get(paste0("D_fisher_",kernel_parameters[X,2])))
-    class(K) <- "kernelMatrix"
-    ret <- tryCatch(expr = {
-      
-      R.utils::withTimeout(diagram_kkmeans(diagrams = unlisted_diagrams,K = K,dim = 1,t = kernel_parameters[X,1L],sigma = kernel_parameters[X,2L],centers = 4)$clustering@.Data,timeout = 60)
-    },
-    TimeoutException = function(ex){return(matrix(data = 1,nrow = 0,ncol = length(unlisted_diagrams)))},
-    error = function(e){return(matrix(data = 1,nrow = 0,ncol = length(unlisted_diagrams)))})
-    ret_mat <- matrix(data = 0,nrow = length(unlisted_diagrams),ncol = length(unlisted_diagrams))
-    if(!is.matrix(ret))
-    {
-      for(i in 1:4)
-      {
-        inds <- which(ret == i)
-        ret_mat[as.matrix(expand.grid(inds,inds))] <- 1
-      }
-    }
-    four_clusters[[length(four_clusters) + 1]] <- ret_mat
-  }
-  
-  five_clusters <- list()
-  for(X in 1:nrow(kernel_parameters))
-  {
-    K <- exp(-1*kernel_parameters[X,1]*get(paste0("D_fisher_",kernel_parameters[X,2])))
-    class(K) <- "kernelMatrix"
-    ret <- tryCatch(expr = {
-      
-      R.utils::withTimeout(diagram_kkmeans(diagrams = unlisted_diagrams,K = K,dim = 1,t = kernel_parameters[X,1L],sigma = kernel_parameters[X,2L],centers = 5)$clustering@.Data,timeout = 60)
-    },
-    TimeoutException = function(ex){return(matrix(data = 1,nrow = 0,ncol = length(unlisted_diagrams)))},
-    error = function(e){return(matrix(data = 1,nrow = 0,ncol = length(unlisted_diagrams)))})
-    ret_mat <- matrix(data = 0,nrow = length(unlisted_diagrams),ncol = length(unlisted_diagrams))
-    if(!is.matrix(ret))
-    {
-      for(i in 1:5)
-      {
-        inds <- which(ret == i)
-        ret_mat[as.matrix(expand.grid(inds,inds))] <- 1
-      }
-    }
-    five_clusters[[length(five_clusters) + 1]] <- ret_mat
-  }
-  
-  # compute mean cluster membership matrix for 3 and 4 clusters
-  two_clusters <- Reduce("+",two_clusters)/nrow(kernel_parameters)
-  three_clusters <- Reduce("+",three_clusters)/nrow(kernel_parameters)
-  four_clusters <- Reduce("+",four_clusters)/nrow(kernel_parameters)
-  five_clusters <- Reduce("+",five_clusters)/nrow(kernel_parameters)
-  
-  # plot histograms of percent same-cluster membership
-  hist(two_clusters[which(upper.tri(two_clusters),arr.ind = T)],xlab = "Percent same cluster membership across all pairs of diagrams",main = "Cluster stability with k = 2")
-  hist(three_clusters[which(upper.tri(three_clusters),arr.ind = T)],xlab = "Percent same cluster membership across all pairs of diagrams",main = "Cluster stability with k = 3")
-  hist(four_clusters[which(upper.tri(four_clusters),arr.ind = T)],xlab = "Percent same cluster membership across all pairs of diagrams",main = "Cluster stability with k = 4")
-  hist(five_clusters[which(upper.tri(five_clusters),arr.ind = T)],xlab = "Percent same cluster membership across all pairs of diagrams",main = "Cluster stability with k = 5")
-  
-  # cluster two_clusters, three_clusters and four_clusters to get static labels
-  class(two_clusters) <- "kernelMatrix"
-  class(three_clusters) <- "kernelMatrix"
-  class(four_clusters) <- "kernelMatrix"
-  two_cluster_labels <- kernlab::kkmeans(x = two_clusters,centers = 2)@.Data
-  three_cluster_labels <- kernlab::kkmeans(x = three_clusters,centers = 3)@.Data
-  # four_cluster_labels <- kernlab::kkmeans(x = four_clusters,centers = 4) # did not converge
-  
-  # two_cluster_labels mainly separated out the empty diagrams
-  mean(num_loops[which(two_cluster_labels == 1)])
-  mean(num_loops[which(two_cluster_labels == 2)])
-  
-  # analyze the number of rows in the diagrams in each cluster
-  table(num_loops[which(three_cluster_labels == 1)])
-  table(num_loops[which(three_cluster_labels == 2)])
-  table(num_loops[which(three_cluster_labels == 3)])
-  
-  # analyze the task composition of the three clusters
-  tasks_long <- rep(rep(tasks,each = 2),100)
-  table(tasks_long[which(three_cluster_labels == 1)])/length(which(three_cluster_labels == 1))
-  table(tasks_long[which(three_cluster_labels == 2)])/length(which(three_cluster_labels == 2))
-  table(tasks_long[which(three_cluster_labels == 3)])/length(which(three_cluster_labels == 3))
-  
-  # visualize three found clusters
-  visualize_group_of_diagrams(diagrams = unlisted_diagrams[which(three_cluster_labels == 1)],sigma = 0.01,plot_title = "Cluster 1")
-  visualize_group_of_diagrams(diagrams = unlisted_diagrams[which(three_cluster_labels == 2)],sigma = 0.01,plot_title = "Cluster 2")
-  visualize_group_of_diagrams(diagrams = unlisted_diagrams[which(three_cluster_labels == 3)],sigma = 0.01,plot_title = "Cluster 3")
-  
-  # embed all diagrams into 2D using mds
-  print(paste0("Working on MDS embeddings at ",Sys.time()))
-  mds_embedding_wass <- diagram_mds(D = D_wass,k = 2,dim = 1)
-  mds_embedding_bottleneck <- diagram_mds(D = D_bot,k = 2,dim = 1)
-  
-  # add subject and task identifiers to each row
-  mds_embedding_wass <- as.data.frame(mds_embedding_wass)
-  mds_embedding_bottleneck <- as.data.frame(mds_embedding_bottleneck)
-  mds_embedding_wass$Subject <- rep(subjects,each = 18)
-  mds_embedding_wass$task <- rep(rep(tasks,each = 2),length(subjects))
-  mds_embedding_bottleneck$Subject <- rep(subjects,each = 18)
-  mds_embedding_bottleneck$task <- rep(rep(tasks,each = 2),length(subjects))
-  
-  write.csv(mds_embedding_wass,paste0(directory_for_subjects,"/analysis_results/mds/mds_wass.csv"))
-  write.csv(mds_embedding_bottleneck,paste0(directory_for_subjects,"/analysis_results/mds/mds_bottleneck.csv"))
+  plot(emb$pca@rotated[,1],emb$pca@rotated[,2],xlab = "Embedding dim 1",ylab = "Embedding dim 2",main = "100 fMRI Persistence Diagrams",col = rgb(red = 1,green = 0,blue = 0,alpha = normalize(stats$shape_rt)))
+  plot(emb$pca@rotated[,1],stats$shape_rt,xlab = "Embedding dim 1",ylab = "Mean Shape Block Reaction Time (ms)",main = "Topology-Behavior Relationship")
+  l <- lm(formula = stats$shape_rt ~ emb$pca@rotated[,1])
+  coefficients <- as.numeric(coef(l))
+  graphics::lines(x = c(min(emb$pca@rotated[,1]),max(emb$pca@rotated[,1])),y = coefficients[[1]] + coefficients[[2]]*c(min(emb$pca@rotated[,1]),max(emb$pca@rotated[,1])))
+  cor_val <- round(cor(emb$pca@rotated[,1],stats$shape_rt),digits = 2)
+  graphics::text(x = 0,y = 1400,paste0("Correlation = ",cor_val))
   
 }
 
 # EXECUTION
-# with default 100 subjects
 analyze_HCP(directory_for_subjects = "desired/path")
