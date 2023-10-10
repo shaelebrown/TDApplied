@@ -1,23 +1,23 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# TDApplied
+# **TDApplied**
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-TDApplied is an R package for analyzing persistence diagrams using
+**TDApplied** is an R package for analyzing persistence diagrams using
 machine learning and statistical inference, and is designed to interface
-with persistent (co)homology calculations from the R packages TDA and
-TDAstats.
+with persistent (co)homology calculations from the R packages **TDA** and
+**TDAstats**.
 
-R package TDA:
+R package **TDA**:
 
 > Fasy, Brittany T., Jisu Kim, Fabrizio Lecci, Clement Maria, David L.
 > Millman, and Vincent Rouvreau. 2021. TDA: Statistical Tools for
 > Topological Data Analysis. <https://CRAN.R-project.org/package=TDA>.
 
-R package TDAstats:
+R package **TDAstats**:
 
 > Wadhwa, Raoul R., Drew R. K. Williamson, Andrew Dhawan, and Jacob G.
 > Scott. 2018. TDAstats: R pipeline for computing persistent homology in
@@ -30,8 +30,8 @@ To install the latest version of this R package directly from github:
 
     install.packages("devtools")
     library(devtools)
-    devtools::install_github("shaelebrown/TDApplied")
-    library(TDApplied)
+    devtools::install_github("shaelebrown/**TDApplied**")
+    library(**TDApplied**)
 
 To install from Github you might need:
 
@@ -42,7 +42,7 @@ To install from Github you might need:
 
 To install the stable version of this R package from CRAN:
 
-    install.packages("TDApplied")
+    install.packages("**TDApplied**")
 
 ## Citation
 
@@ -51,50 +51,29 @@ To cite this package in publication please use the BibTex entry:
 @Manual{TDApplied, title = {TDApplied: Machine Learning and Inference
 for Topological Data Analysis}, author = {Shael Brown and Dr. Reza
 Farivar}, note = {R package version 3.0.0}, url =
-{<https://github.com/shaelebrown/TDApplied>}, }
+{<https://github.com/shaelebrown/**TDApplied**>}, }
 
-If you wish to cite a particular method used in TDApplied see the
+If you wish to cite a particular method used in **TDApplied** see the
 REFERENCES.bib file in the vignette directory.
 
 ## Functionality
 
-TDApplied has five major goals:
+**TDApplied** has three major modules:
 
-1.  Deliver a fast engine for calculating persistence diagrams: the
-    `PyH` function connects with python creating a fast persistent
-    (co)homology engine compared to alternatives.
-2.  Convert persistence diagrams computed using the R packages TDA and
-    TDAstats into a commonly-used data type for data analyses (a data
-    frame): `diagram_to_df` performs this conversion.
-3.  Quantify differences and similarities between pairs of persistence
-    diagrams with high speed: the `diagram_distance` and
-    `diagram_kernel` functions allow for fast distance and kernel
-    calculations respectively.
-4.  Contribute tools for interpreting persistence diagrams: the
-    `plot_diagram` and `bootstrap_persistence_thresholds` functions can
-    be used to plot and threshold persistence diagrams (for
-    “significant” features).
-5.  Provide parallelized methods for machine learning and inference for
-    persistence diagrams: `diagram_mds`, `diagram_kpca`,
-    `diagram_kkmeans` and `diagram_ksvm` perform machine learning with
-    persistence diagrams (multidimensional scaling, kernel principal
-    components analysis, kernel k-means clustering and support vector
-    machines respectively) and `permutation_test` and
-    `independence_test` perform inference on groups of diagrams (a
-    permutation test for group differences and a two-sample independence
-    test respectively).
+1. Computing and interpreting persistence diagrams. The `PyH` function connects with python creating a fast persistent (co)homology engine compared to alternatives. The `plot_diagram` function can be used to plot diagrams computed from `PyH` or the **TDA** and **TDAstats** packages. The `rips_graphs` and `plot_rips_graphs` functions can be used to visualize dataset structure at the scale of particular topological features. The `bootstrap_persistence_thresholds` function can be used to identify statistically significant topological features in a dataset.
+2. Machine learning. The functions `diagram_mds`, `diagram_kpca` and `predict_diagram_kpca` can be used to project a group of diagrams into a low dimensional space (i.e. dimension reduction). The functions `diagram_kkmeans` and `predict_diagram_kkmeans` can be used to cluster a group of diagrams. The functions `diagram_ksvm` and `predict_diagram_ksvm` can be used to link, through a prediction function, persistence diagrams and an outcome (i.e. dependent) variable.
+3. Statistics. The `permutation_test` function acts like an ANOVA test for identifying group differences of persistence diagrams. The `independence_test` function can determine if two groups of paired persistence diagrams are likely independent or not.
 
-Through accomplishing these goals TDApplied is a fast and scalable
-one-stop-shop for all things persistent homology.
+Not only does **TDApplied** provide methods for the applied analysis of persistence diagrams which were previously unavailable, but an emphasis on speed and scalability through parallelization, C code, avoiding redundant slow computations, etc., makes **TDApplied** a powerful tool for carrying out applied analyses of persistence diagrams.
 
 ## Example Code
 
 This example creates nine persistence diagrams, plots one and projects
-all nine into 2D space using MDS to demonstrate TDApplied
+all nine into 2D space using MDS to demonstrate **TDApplied**
 functionalities.
 
 ``` r
-library(TDApplied)
+library(**TDApplied**)
 
 # create 9 persistence diagrams
 # 3 from circles, 3 from tori and 3 from spheres
@@ -118,13 +97,10 @@ plot(x = proj_2D[,1],y = proj_2D[,2])
 
 ## Documentation
 
-TDApplied has three major vignettes:
+**TDApplied** has five major vignettes:
 
-1.  “Introduction to TDApplied”, which documents the background theory
-    and practical usage of all functions (on simple simulated data),
-2.  “Benchmarking and Speedups”, which describes all implemented
-    optimizations of TDApplied functions and compares the runtime of
-    TDApplied functions with functions from other packages, and
-3.  “Practical Example - Human Connectome Project Analysis”, which
-    provides a sample analysis of real neurological data using
-    TDApplied.
+1. "TDApplied Theory and Practice", which documents the background theory and practical usage of all functions (on simple simulated data).
+2. "Human Connectome Project Analysis", which provides a sample analysis of real neurological data using **TDApplied**.
+3. "Benchmarking and Speedups", which describes all implemented optimizations of **TDApplied** functions and compares the runtime of **TDApplied** functions with functions from other packages.
+4. "Personalized Analyses with TDApplied", which demonstrates how machine learning (or statistical) models and pipelines, other than those implemented in **TDApplied**, can be fit to persistence diagrams.
+5. "Comparing Distance Calculations", which accounts for differences in distance functions of persistence diagrams across R packages.
