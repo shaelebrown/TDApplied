@@ -34,7 +34,7 @@ To install the latest version of this R package directly from github:
 
     install.packages("devtools")
     library(devtools)
-    devtools::install_github("shaelebrown/**TDApplied**")
+    devtools::install_github("shaelebrown/TDApplied")
     library(**TDApplied**)
 
 To install from Github you might need: 
