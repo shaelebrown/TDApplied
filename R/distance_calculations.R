@@ -29,6 +29,7 @@
 #' @return the numeric value of the distance calculation.
 #' @importFrom rdist cdist
 #' @importFrom clue solve_LSAP
+#' @import Rcpp
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @references

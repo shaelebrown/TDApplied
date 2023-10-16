@@ -41,7 +41,7 @@
 #'   c(0.5*min_death_H0,(loop_birth + loop_death)/2))
 #'
 #'   # verify that there are 25 clusters for the smaller radius
-#'   length(graphs$graphs[[0.5*min_death_H0]]$clusters)
+#'   length(graphs$graphs[[1]]$clusters)
 #'   
 #' }
 
