@@ -31,7 +31,7 @@ To install the latest version of this R package directly from github:
     install.packages("devtools")
     library(devtools)
     devtools::install_github("shaelebrown/TDApplied")
-    library(**TDApplied**)
+    library(TDApplied)
 
 To install from Github you might need:
 
@@ -42,16 +42,16 @@ To install from Github you might need:
 
 To install the stable version of this R package from CRAN:
 
-    install.packages("**TDApplied**")
+    install.packages("TDApplied")
 
 ## Citation
 
 To cite this package in publication please use the BibTex entry:
 
 @Manual{TDApplied, title = {TDApplied: Machine Learning and Inference
-for Topological Data Analysis}, author = {Shael Brown and Dr. Reza
+for Topological Data Analysis}, author = {Shael Brown and Dr. Reza
 Farivar}, note = {R package version 3.0.0}, url =
-{<https://github.com/shaelebrown/**TDApplied**>}, }
+{<https://github.com/shaelebrown/TDApplied>}, }
 
 If you wish to cite a particular method used in **TDApplied** see the
 REFERENCES.bib file in the vignette directory.
