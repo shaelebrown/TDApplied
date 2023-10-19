@@ -25,7 +25,7 @@ diagram_mds(
 
 \item{D}{an optional precomputed distance matrix of persistence diagrams, default NULL. If not NULL then `diagrams` parameter does not need to be supplied.}
 
-\item{k}{the dimension of the space which the data are to be represented in; must be in {1,2,...,n-1}.}
+\item{k}{the dimension of the space which the data are to be represented in; must be in \{1,2,...,n-1\}.}
 
 \item{distance}{a string representing the desired distance metric to be used, either 'wasserstein' (default) or 'fisher'.}
 

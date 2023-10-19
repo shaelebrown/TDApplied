@@ -11,7 +11,7 @@
 #'
 #' @param diagrams a list of n>=2 persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `diagrams` and `D` need to be supplied.
 #' @param D an optional precomputed distance matrix of persistence diagrams, default NULL. If not NULL then `diagrams` parameter does not need to be supplied.
-#' @param k the dimension of the space which the data are to be represented in; must be in {1,2,...,n-1}.
+#' @param k the dimension of the space which the data are to be represented in; must be in \{1,2,...,n-1\}.
 #' @param distance a string representing the desired distance metric to be used, either 'wasserstein' (default) or 'fisher'.
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param p a positive number representing the wasserstein power, a number at least 1 (infinity for the bottleneck distance), default 2.
