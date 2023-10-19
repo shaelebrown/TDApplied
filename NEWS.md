@@ -14,7 +14,7 @@ Please see those for more details.
 - added checks for 0 variance distance matrices in diagram_ksvm
 - added comparisons against package rgudhi
 - updated DESCRIPTION
-- added interpretations tools for rips graphs and multiple representative (co) cycles
+- added interpretations tools for vr graphs and multiple representative (co) cycles
 - improved HCP analysis
 - resolved some distance 0 cases in diagram_distance
 

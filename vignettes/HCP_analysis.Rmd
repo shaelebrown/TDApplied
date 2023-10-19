@@ -41,7 +41,7 @@ In this exploratory analysis, using **TDApplied**, we used persistent homology t
 
 # A task-related spatial loop
 
-For HCP subject 103111 we calculated a persistence diagram by analyzing the time-point by time-point correlation matrix $[\rho_{i,j}]$ of spatial patterns. A distance matrix was computed by the transformation $\rho_{i,j} \rightarrow \sqrt{2*(1 - \rho_{i,j})}$ (see the appendix for details), and the bootstrap procedure found a single significant loop. We plotted the rips graph of the loop representative at its birth scale (with nodes labelled by their time points), and the rips graph of the whole dataset at the scale of the loop birth (with nodes in the representative cycle colored red):
+For HCP subject 103111 we calculated a persistence diagram by analyzing the time-point by time-point correlation matrix $[\rho_{i,j}]$ of spatial patterns. A distance matrix was computed by the transformation $\rho_{i,j} \rightarrow \sqrt{2*(1 - \rho_{i,j})}$ (see the appendix for details), and the bootstrap procedure found a single significant loop. We plotted the VR graph of the loop representative at its birth scale (with nodes labelled by their time points), and the VR graph of the whole dataset at the scale of the loop birth (with nodes in the representative cycle colored red):
 
 ```{r,echo = F,out.width="60%", out.height="60%",fig.show="hold",fig.align = 'center'}
 knitr::include_graphics(c("rips_cycle.png","rips_all.png"))
@@ -53,7 +53,7 @@ Two things are apparent from these plots - the first is that the most persistent
 knitr::include_graphics(c("rips_respiratory.png","rips_task.png"))
 ```
 
-The secondary loop seemed task related when we colored its rips graph by time-since-last-block (i.e. the length of time since the most recent task block started), with clusters of similarly-colored time points (i.e. nodes) and smooth gradients at various points around the loop:
+The secondary loop seemed task related when we colored its VR graph by time-since-last-block (i.e. the length of time since the most recent task block started), with clusters of similarly-colored time points (i.e. nodes) and smooth gradients at various points around the loop:
 
 ```{r,echo = F,out.width="60%", out.height="60%",fig.show="hold",fig.align = 'center'}
 knitr::include_graphics(c("rips_secondary.png"))
@@ -61,7 +61,7 @@ knitr::include_graphics(c("rips_secondary.png"))
 
 # Linking the secondary loop to raw data
 
-We next linked the secondary loop back to the fMRI data from which it came. From the 2D layout of its rips graph we computed a $\theta$ variable (angle around the loop, between $-\pi$ and $\pi$) and an $r$ variable (distance to the origin). Using linear models of the form $A_i = \beta_{1}\cos(\theta) + \beta_{2}\sin(\theta) + \beta_3$ and $A_i = \beta_{4}r + \beta_5$ for the activity $A$ of surface node $i$, we found that out of the total 91282 surface nodes, the activity of 1475 had a significant relationship with either $\cos(\theta)$ or $\sin(\theta)$, and the activity of 53 had a significant relationship with $r$ (significance thresholding was done at the Bonferroni level of approximately $2.74*10^{-7}$). These two sets of nodes only shared one common node. 
+We next linked the secondary loop back to the fMRI data from which it came. From the 2D layout of its VR graph we computed a $\theta$ variable (angle around the loop, between $-\pi$ and $\pi$) and an $r$ variable (distance to the origin). Using linear models of the form $A_i = \beta_{1}\cos(\theta) + \beta_{2}\sin(\theta) + \beta_3$ and $A_i = \beta_{4}r + \beta_5$ for the activity $A$ of surface node $i$, we found that out of the total 91282 surface nodes, the activity of 1475 had a significant relationship with either $\cos(\theta)$ or $\sin(\theta)$, and the activity of 53 had a significant relationship with $r$ (significance thresholding was done at the Bonferroni level of approximately $2.74*10^{-7}$). These two sets of nodes only shared one common node. 
 
 Here are surface plots of the nodes for the left hemisphere, generated using python, responding to $\theta$ (top) and $r$ (bottom):
 

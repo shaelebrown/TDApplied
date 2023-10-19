@@ -1,12 +1,12 @@
 #### COMPUTE STATIC SIMPLICIAL COMPLEXES WITHIN RIPS FILTRATION ####
-#' Compute Rips graphs of a dataset at particular epsilon radius values.
+#' Compute Vietoris-Rips graphs of a dataset at particular epsilon radius values.
 #'
 #' Persistence diagrams computed from Rips-Vietoris filtrations contain information about 
 #' distance radius scales at which topological features of a dataset exist, but the features
-#' can be challenging to visualize, analyze and interpret. In order to help solve this problem the `rips_graphs`
-#' function computes the 1-skeleton (i.e. graph) of Rips complexes at particular radii.
+#' can be challenging to visualize, analyze and interpret. In order to help solve this problem the `vr_graphs`
+#' function computes the 1-skeleton (i.e. graph) of Rips complexes at particular radii, called "Vietoris-Rips graphs" (VR graphs) in the literature.
 #' 
-#' This function may be used in conjunction with the igraph package to visualize the graphs (see \code{\link{plot_rips_graph}}).
+#' This function may be used in conjunction with the igraph package to visualize the graphs (see \code{\link{plot_vr_graph}}).
 #'
 #' @param X either a point cloud data frame/matrix, or a distance matrix.
 #' @param distance_mat a boolean representing if the input `X` is a distance matrix, default value is `FALSE`.
@@ -17,6 +17,10 @@
 #' @importFrom stats dist
 #' @importFrom foreach foreach %do%
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @references 
+#' 
+#' A Zomorodian, The tidy set: A minimal simplicial set for computing homology of clique complexes in Proceedings of the Twenty-Sixth Annual Symposium on Computational Geometry, SoCG ’10. (Association for Computing Machinery, New York, NY, USA), p. 257–266 (2010).
+#' 
 #' @examples
 #'
 #' if(require("TDA") & require("igraph"))
@@ -34,10 +38,10 @@
 #'   loop_birth <- as.numeric(diag$diagram[nrow(diag$diagram),2L])
 #'   loop_death <- as.numeric(diag$diagram[nrow(diag$diagram),3L])
 #'
-#'   # compute Rips-Vietoris graphs at radii half of 
+#'   # compute VR graphs at radii half of 
 #'   # min_death_H0 and the mean of loop_birth and 
 #'   # loop_death, returning clusters
-#'   graphs <- rips_graphs(X = df,eps = 
+#'   graphs <- vr_graphs(X = df,eps = 
 #'   c(0.5*min_death_H0,(loop_birth + loop_death)/2))
 #'
 #'   # verify that there are 25 clusters for the smaller radius
@@ -45,7 +49,7 @@
 #'   
 #' }
 
-rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
+vr_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
   
   # function to compute static Rips complexes from a filtration at
   # specific epsilon radius values
@@ -200,11 +204,11 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
 }
 
 #### PLOT RIPS GRAPHS ####
-#' Plot a Rips graph using the igraph package.
+#' Plot a VR graph using the igraph package.
 #' 
 #' This function will throw an error if the igraph package is not installed.
 #'
-#' @param graphs the output of a `rips_graphs` function call.
+#' @param graphs the output of a `vr_graphs` function call.
 #' @param eps the numeric radius of the graph in `graphs` to plot.
 #' @param cols an optional character vector of vertex colors, default `NULL`.
 #' @param layout an optional 2D matrix of vertex coordinates, default `NULL`. If row names are supplied they can be used to subset a graph by those vertex names.
@@ -233,47 +237,47 @@ rips_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
 #'   loop_birth <- as.numeric(diag$diagram[nrow(diag$diagram),2L])
 #'   loop_death <- as.numeric(diag$diagram[nrow(diag$diagram),3L])
 #'
-#'   # compute Rips-Vietoris graphs at radii half of 
+#'   # compute VR graphs at radii half of 
 #'   # min_death_H0 and the mean of loop_birth and 
 #'   # loop_death, returning clusters
-#'   graphs <- rips_graphs(X = df,eps = 
+#'   graphs <- vr_graphs(X = df,eps = 
 #'   c(0.5*min_death_H0,(loop_birth + loop_death)/2))
 #'   
 #'   # plot graph of smaller (first) radius
-#'   plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0,
+#'   plot_vr_graph(graphs = graphs,eps = 0.5*min_death_H0,
 #'                   plot_isolated_vertices = TRUE)
 #'   
 #'   # plot graph of larger (second) radius
-#'   plot_rips_graph(graphs = graphs,eps = (loop_birth + loop_death)/2)
+#'   plot_vr_graph(graphs = graphs,eps = (loop_birth + loop_death)/2)
 #'   
 #'   # repeat but with rownames for df, each vertex
 #'   # will be plotted with its rownames
 #'   rownames(df) <- paste0("V",1:25)
-#'   graphs <- rips_graphs(X = df,eps = 
+#'   graphs <- vr_graphs(X = df,eps = 
 #'   c(0.5*min_death_H0,(loop_birth + loop_death)/2))
-#'   plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0,
+#'   plot_vr_graph(graphs = graphs,eps = 0.5*min_death_H0,
 #'                   plot_isolated_vertices = TRUE)
 #'   
 #'   # plot without vertex labels
-#'   plot_rips_graph(graphs = graphs,eps = (loop_birth + loop_death)/2,
+#'   plot_vr_graph(graphs = graphs,eps = (loop_birth + loop_death)/2,
 #'                   vertex_labels = FALSE)
 #'                  
 #'   # plot only the graph component containing vertex "1"
-#'   plot_rips_graph(graphs = graphs,eps = 0.5*min_death_H0,
+#'   plot_vr_graph(graphs = graphs,eps = 0.5*min_death_H0,
 #'                   component_of = "V1",plot_isolated_vertices = TRUE)
 #'  
 #'   # save the layout of the graph for adding features to 
 #'   # the same graph layout, like color
-#'   layout <- plot_rips_graph(graphs = graphs,eps = (loop_birth + loop_death)/2,
+#'   layout <- plot_vr_graph(graphs = graphs,eps = (loop_birth + loop_death)/2,
 #'                             return_layout = TRUE,vertex_labels = TRUE)
 #'   cols <- rep("blue",25)
 #'   cols[1:5] <- "red"
-#'   plot_rips_graph(graphs = graphs,eps = (loop_birth + loop_death)/2,cols = cols,
+#'   plot_vr_graph(graphs = graphs,eps = (loop_birth + loop_death)/2,cols = cols,
 #'                   layout = layout)
 #'   
 #' }
 
-plot_rips_graph <- function(graphs,eps,cols = NULL,layout = NULL,title = NULL,component_of = NULL,plot_isolated_vertices = FALSE,return_layout = FALSE,vertex_labels = TRUE){
+plot_vr_graph <- function(graphs,eps,cols = NULL,layout = NULL,title = NULL,component_of = NULL,plot_isolated_vertices = FALSE,return_layout = FALSE,vertex_labels = TRUE){
   
   # check for igraph
   if (!requireNamespace("igraph", quietly = TRUE)) {
@@ -286,7 +290,7 @@ plot_rips_graph <- function(graphs,eps,cols = NULL,layout = NULL,title = NULL,co
   # error check parameters
   if(!is.list(graphs) | length(graphs) != 2 | length(which(names(graphs) == c("vertices","graphs"))) != 2 | !inherits(graphs$graphs,"list"))
   {
-    stop("graphs must be the output of a rips_graphs function call.")
+    stop("graphs must be the output of a vr_graphs function call.")
   }
   check_param(param_name = "eps",param = eps,numeric = T,multiple = F,finite = T,positive = T)
   if(eps %in% names(graphs$graphs) == F)

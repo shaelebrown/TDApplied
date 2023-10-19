@@ -332,7 +332,7 @@ Persistence diagrams can contain any number of points representing different typ
 plot_diagram(diag,title = "Circle diagram")
 ```
 
-Now that we can visualize persistence diagrams we will describe three tools which can be used for their interpretation -- filtering out noisy topological features with bootstrapping, representative (co)cycles and *Rips graphs*.
+Now that we can visualize persistence diagrams we will describe three tools which can be used for their interpretation -- filtering out noisy topological features with bootstrapping, representative (co)cycles and *Vietoris-VR graphs* (called VR graphs for short).
 
 ## Bootstrapping Topological Features and **TDApplied**'s `bootstrap_persistence_thresholds` Function
 
@@ -526,11 +526,11 @@ for(i in 1:nrow(representative))
 
 Since we know that the data points in the representatives help form a loop in the original data set, we could perform a further exploratory analysis in circ to explore the periodic nature of the feature. While in this example we know that a loop will be present, this type of analysis could help find hidden latent structure in data sets.
 
-## Rips Graphs and **TDApplied**'s `rips_graphs` and `plot_rips_graph` Functions
+## VR Graphs and **TDApplied**'s `vr_graphs` and `plot_vr_graph` Functions
 
-Integral to the plots in the previous section were that the circ dataset is 2D, but most datasets are not 2D. In order to investigate topological features of high-dimensional datasets we can use the Rips complexes which are calculated as an intermediate step in persistent homology (as described earlier). Recall that the Rips complex of a dataset is a skeletal representations of the dataset's structure at a particular scale $\epsilon$ formed by connecting data points of distance at most $\epsilon$ and adding higher-dimensional structures (like triangles between triples of connected points). The connections between data points in a Rips complex form a "Rips graph", and this graph can be visualized regardless of the dimension of the underlying dataset.
+Integral to the plots in the previous section were that the circ dataset is 2D, but most datasets are not 2D. In order to investigate topological features of high-dimensional datasets we can use the Rips complexes which are calculated as an intermediate step in persistent homology (as described earlier). Recall that the Rips complex of a dataset is a skeletal representations of the dataset's structure at a particular scale $\epsilon$ formed by connecting data points of distance at most $\epsilon$ and adding higher-dimensional structures (like triangles between triples of connected points). The connections between data points in a Rips complex form a "VR graph" [@VR_graph], and this graph can be visualized regardless of the dimension of the underlying dataset.
 
-We can use the function `rips_graphs` to compute Rips graphs at a variety of scales, and can visualize the resulting graphs with the **igraph** package [@R-igraph] and the `plot_rips_graph` function. To demonstrate this functionality, we will pick two $\epsilon$ scales to study the dataset structure of circ, only based on its persistence diagram - the first scale will be half the birth radius of the loop and the second scale will be the average of the loop's birth and death radius:
+We can use the function `vr_graphs` to compute VR graphs at a variety of scales, and can visualize the resulting graphs with the **igraph** package [@R-igraph] and the `plot_vr_graph` function. To demonstrate this functionality, we will pick two $\epsilon$ scales to study the dataset structure of circ, only based on its persistence diagram - the first scale will be half the birth radius of the loop and the second scale will be the average of the loop's birth and death radius:
 
 ```{r,echo = T,eval = T}
 # get half of loop's birth radius
@@ -539,23 +539,23 @@ eps_1 <- diag[nrow(diag),2L]/2
 # get mean of loop's birth and death radii
 eps_2 <- (diag[nrow(diag),3L] + diag[nrow(diag),2L])/2
 
-# compute two Rips graphs
-gs <- rips_graphs(X = circ,eps = c(eps_1,eps_2))
+# compute two VR graphs
+gs <- vr_graphs(X = circ,eps = c(eps_1,eps_2))
 ```
 
-Next we can plot both Rips graphs:
+Next we can plot both VR graphs:
 
 ```{r,eval = requireNamespace("igraph"),fig.height = 5,fig.width = 5,fig.align = 'center'}
 # plot first graph
-plot_rips_graph(gs,eps_1)
+plot_vr_graph(gs,eps_1)
 
 # plot second graph
-plot_rips_graph(gs,eps_2)
+plot_vr_graph(gs,eps_2)
 ```
 
-The first graph shows that at a scale before the loop is born, the dominant loop does not exist in the data (and that the space is more fragmented), while the second graph was able to retrieve the dominant loop. Visualizing multiple Rips graphs of a dataset, choosing particular scales of interest from the persistence diagram of the dataset, can be an effective tool for interpreting topological features.
+The first graph shows that at a scale before the loop is born, the dominant loop does not exist in the data (and that the space is more fragmented), while the second graph was able to retrieve the dominant loop. Visualizing multiple VR graphs of a dataset, choosing particular scales of interest from the persistence diagram of the dataset, can be an effective tool for interpreting topological features.
 
-The input parameters of `plot_rips_graph` can help customize the graph visualizations. For example, if we want to investigate the loop we can also customize the plot to highlight the loop representative, and to only plot the component of the graph which contains the loop vertices:
+The input parameters of `plot_vr_graph` can help customize the graph visualizations. For example, if we want to investigate the loop we can also customize the plot to highlight the loop representative, and to only plot the component of the graph which contains the loop vertices:
 
 ```{r,eval = requireNamespace('igraph'),echo = F,fig.width = 5,fig.align = 'center'}
 # get the stimuli in the loop
@@ -567,14 +567,14 @@ colors <- rep("lightblue",50)
 colors[stimuli_in_loop] <- "red"
 
 # plot only component containing the loop stimuli with vertex colors
-plot_rips_graph(gs,eps_2,cols = colors,component_of = stimuli_in_loop[[1]])
+plot_vr_graph(gs,eps_2,cols = colors,component_of = stimuli_in_loop[[1]])
 ```
 
 We can customize one level further by removing the vertex labels and using the graph layout (i.e. x-y coordinates of all vertices) to plot other things on the graph:
 
 ```{r,eval = requireNamespace('igraph'),fig.width = 5,fig.align = 'center'}
 # plot only component containing the loop stimuli with vertex colors
-layout <- plot_rips_graph(gs,eps_2,cols = colors,
+layout <- plot_vr_graph(gs,eps_2,cols = colors,
                 component_of = stimuli_in_loop[[1]],
                 vertex_labels = F,return_layout = T)
 layout <- apply(layout,MARGIN = 2,FUN = function(X){
