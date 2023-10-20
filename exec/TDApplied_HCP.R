@@ -144,10 +144,10 @@ analyze_HCP <- function(directory_for_subjects){
   rownames(RDM_cycle) <- cycle
   cols <- rep("lightblue",ncol(RDM))
   cols[cycle] <- "red"
-  g <- rips_graphs(X = RDM_cycle,distance_mat = T,eps = loop[[1]],return_clusters = F)
-  plot_rips_graph(g,eps = loop[[1]],vertex_labels = T,title = "Rips graph of representative cycle") # clear loop
-  g <- rips_graphs(X = RDM,distance_mat = T,eps = loop[[1]],return_clusters = F)
-  l <- plot_rips_graph(g,eps = loop[[1]],component_of = cycle[[1]],vertex_labels = F,cols = cols,return_layout = T,title = "Rips graph of all data") # two clear loops! One big, one dense
+  g <- vr_graphs(X = RDM_cycle,distance_mat = T,eps = loop[[1]],return_clusters = F)
+  plot_vr_graph(g,eps = loop[[1]],vertex_labels = T,title = "Rips graph of representative cycle") # clear loop
+  g <- vr_graphs(X = RDM,distance_mat = T,eps = loop[[1]],return_clusters = F)
+  l <- plot_vr_graph(g,eps = loop[[1]],component_of = cycle[[1]],vertex_labels = F,cols = cols,return_layout = T,title = "Rips graph of all data") # two clear loops! One big, one dense
   
   # gather stimulus onset and physiological data
   # and summarize by TR
@@ -185,19 +185,19 @@ analyze_HCP <- function(directory_for_subjects){
   cols_time_since_last_shape_block <- scale_between_r_w_and_b(tr_data$time_since_last_shape_block)
   
   # plot rips graphs with each color scheme
-  plot_rips_graph(g,eps = loop[[1]],cols = cols_trigger_pulse,component_of = cycle[[1]],vertex_labels = F,layout = l,title = "Trigger pulse") # not super interesting
-  plot_rips_graph(g,eps = loop[[1]],cols = cols_respiratory,component_of = cycle[[1]],vertex_labels = F,layout = l,title = "Respiratory") # not super interesting
-  plot_rips_graph(g,eps = loop[[1]],cols = cols_pulse_oximeter,component_of = cycle[[1]],vertex_labels = F,layout = l,title = "Pulse Oximeter") # not super interesting
-  plot_rips_graph(g,eps = loop[[1]],cols = cols_time_since_last_block,component_of = cycle[[1]],vertex_labels = F,layout = l,title = "Time since last block") # interesting!!! same as time since last shape block
-  plot_rips_graph(g,eps = loop[[1]],cols = cols_time_since_last_fear_block,component_of = cycle[[1]],vertex_labels = F,layout = l,title = "Time since last fear block") # not interesting
-  plot_rips_graph(g,eps = loop[[1]],cols = cols_time_since_last_shape_block,component_of = cycle[[1]],vertex_labels = F,layout = l,title = "Time since last shape black") # interesting!! same as time since last block
+  plot_vr_graph(g,eps = loop[[1]],cols = cols_trigger_pulse,component_of = cycle[[1]],vertex_labels = F,layout = l,title = "Trigger pulse") # not super interesting
+  plot_vr_graph(g,eps = loop[[1]],cols = cols_respiratory,component_of = cycle[[1]],vertex_labels = F,layout = l,title = "Respiratory") # not super interesting
+  plot_vr_graph(g,eps = loop[[1]],cols = cols_pulse_oximeter,component_of = cycle[[1]],vertex_labels = F,layout = l,title = "Pulse Oximeter") # not super interesting
+  plot_vr_graph(g,eps = loop[[1]],cols = cols_time_since_last_block,component_of = cycle[[1]],vertex_labels = F,layout = l,title = "Time since last block") # interesting!!! same as time since last shape block
+  plot_vr_graph(g,eps = loop[[1]],cols = cols_time_since_last_fear_block,component_of = cycle[[1]],vertex_labels = F,layout = l,title = "Time since last fear block") # not interesting
+  plot_vr_graph(g,eps = loop[[1]],cols = cols_time_since_last_shape_block,component_of = cycle[[1]],vertex_labels = F,layout = l,title = "Time since last shape black") # interesting!! same as time since last block
   
   # main loop is the first stimulus block (shape)
   # is the secondary loop also time since shape block?
   secondary_loop <- g
   secondary_loop$vertices <- setdiff(g$vertices,as.character(cycle))
   secondary_loop$graphs[[1]][[1]] <- secondary_loop$graphs[[1]][[1]][which(secondary_loop$graphs[[1]][[1]][,1L] %in% cycle == F & secondary_loop$graphs[[1]][[1]][,2L] %in% cycle == F),]
-  info <- plot_rips_graph(secondary_loop,eps = loop[[1]],component_of = 99,vertex_labels = F,cols = cols_time_since_last_block[as.numeric(secondary_loop$vertices)],return_layout = T,title = "Rips graph of secondary loop")
+  info <- plot_vr_graph(secondary_loop,eps = loop[[1]],component_of = 99,vertex_labels = F,cols = cols_time_since_last_block[as.numeric(secondary_loop$vertices)],return_layout = T,title = "Rips graph of secondary loop")
   
   # compute position around loop, theta, and
   # distance to loop center, r
@@ -290,7 +290,7 @@ analyze_HCP <- function(directory_for_subjects){
   plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(theta_nodes*scaled_emotion[sampled_theta_inds[[4]],1:64984]),bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(directory_for_subjects,"/loop_3_pi_over_4.png"),threshold = 0.000002)
   plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(theta_nodes*scaled_emotion[sampled_theta_inds[[5]],1:64984]),bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(directory_for_subjects,"/loop_pi.png"),threshold = 0.000002)
   plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(theta_nodes*scaled_emotion[sampled_theta_inds[[6]],1:64984]),bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(directory_for_subjects,"/loop_5_pi_over_4.png"),threshold = 0.000002)
-  plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(theta_nodes*scaled_emotion[sampled_theta_inds[[7]],1:64984]),bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(directory_for_subjects,"/loop_3_pi_over_2"),threshold = 0.000002)
+  plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(theta_nodes*scaled_emotion[sampled_theta_inds[[7]],1:64984]),bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(directory_for_subjects,"/loop_3_pi_over_2.png"),threshold = 0.000002)
   plotting$plot_surf(hcp$mesh$inflated,reticulate::np_array(theta_nodes*scaled_emotion[sampled_theta_inds[[8]],1:64984]),bg_map = hcp$mesh$sulc,hemi = "left",output_file = paste0(directory_for_subjects,"/loop_7_pi_over_4.png"),threshold = 0.000002)
 
   plot(c(-1, 1), c(-1, 1), type = "n",xlab = "",ylab = "",xaxt = "n",yaxt = "n",bty = "n",xlim = c(-2.6,2.6),ylim = c(-2.6,2.6),main = "Activity with respect to theta")
