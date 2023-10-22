@@ -136,14 +136,12 @@ test_that("analyze_representatives is computing properly",{
     TDA::ripsDiag(X = as.matrix(dist(X)),maxdimension = 1,maxscale = 2,library = "dionysus",location = T,dist = "arbitrary")
     
   })
-  d_func <- function(d1,i,d2,j){
-    
-    p1 <- as.numeric(get("circs",envir = parent.env(environment()))[[d1]][i,])
-    p2 <- as.numeric(get("circs",envir = parent.env(environment()))[[d2]][j,])
-    return(sqrt((p1[[1]] - p2[[1]])^2 + (p1[[2]] - p2[[2]])^2))
-    
-  }
-  check6 <- analyze_representatives(circs_PH,dim = 1,num_points = 25,plot_heatmap = T,dist_func = d_func)
+  d <- matrix(data = 0,nrow = length(circs),ncol = length(circs))
+  r <- abs(stats::rnorm(45))
+  d[which(upper.tri(d),arr.ind = T)] <- r
+  d[which(upper.tri(d),arr.ind = T)[,c("col","row")]] <- r
+  d <- stats::as.dist(d)
+  check6 <- analyze_representatives(circs_PH,dim = 1,num_points = 25,plot_heatmap = T,d = d)
   expect_identical(ncol(check6),25L)
 
 })
