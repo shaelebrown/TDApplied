@@ -185,7 +185,7 @@ plot_diagram <- function(D,title = NULL,max_radius = NULL,legend = TRUE,threshol
     {
       C <- unlist(lapply(X = 1:nrow(D),FUN = function(X){
         
-        return(ifelse(D[X,3L] - D[X,2L] >= thresholds[[D[X,1L] + 1]],yes = cols[D[X,1L] + 1],no = "gray"))
+        return(ifelse(D[X,3L] - D[X,2L] > thresholds[[D[X,1L] + 1]],yes = cols[D[X,1L] + 1],no = "gray"))
         
       }))
     }
