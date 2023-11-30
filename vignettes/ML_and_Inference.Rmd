@@ -130,9 +130,9 @@ There are three prerequisites that must be satisfied in order to use the `PyH` f
 
 1. The reticulate package must be installed.
 2. Python must be installed and configured to work with reticulate.
-3. The **ripser** Python module must be installed, via `reticulate::py_install("ripser")`.
+3. The **ripser** Python module must be installed, via `reticulate::py_install("ripser")`. Some windows machines have had issues with recent versions of the **ripser** module, but version 0.6.1 has been tested and does work on Windows. So, Windows users may try `reticulate::py_install("ripser==0.6.1")`.
 
-For a sample use of `PyH` we will use the following pre-loaded dataset called "circ" (which is stored as a data frame in this vignette):
+For a sample use of `PyH` we will use the following pre-loaded dataset called "circ" (which is stored as a data frame in this vignette): 
 
 ```{r,echo = F,eval = T}
 # create the data

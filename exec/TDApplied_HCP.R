@@ -370,7 +370,7 @@ analyze_HCP <- function(directory_for_subjects){
     
   })
   K <- parallel_approx_gram_matrix(diagrams = diags,dim = 1,sigma = 0.05,rho = 1e-4) # occasionally needs to be rerun
-  emb <- diagram_kpca(diagrams = diags,K = K,dim = 1,t = 1,sigma = 0.05,rho = 1e-4,features = 2,th = 1e-6)
+  emb <- diagram_kpca(diagrams = diags,K = K,dim = 1,t = 1,sigma = 0.05,rho = 1e-4,features = 2,th = 1e-6) # only the first dimension was used and plotted in the HCP analysis vignette
   
   # download subject emotion stats for plotting
   for(s in subjects)

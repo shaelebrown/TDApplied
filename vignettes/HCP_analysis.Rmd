@@ -33,6 +33,10 @@ set.seed(123)
 par(mfrow = c(1,1))
 ```
 
+# Abstract
+
+In the **TDApplied** package vignette "TDApplied Theory and Practice" simulated data is used to provide examples of package function. In this vignette we will demonstrate that **TDApplied** can carry out meaningful analyses of real (i.e. non-simulated) data which other software packages cannot. We analyzed data from a very well-known neurological dataset, and identified topological features of neurological computation in single and multiple subjects which were correlated with (i) the task the subjects were performing while the data was collected, and (ii) the behavior (i.e. reaction time) of the subjects during the task -- these correlations suggest that the features are meaningful in the context of an neuroimaging analysis. Moreover, these features were identified, interpreted and analyzed with the `bootstrap_persistence_diagram`, `vr_graphs` and `diagram_kpca` functions, only the first of which has any implementation in another R package (**TDA**). **TDApplied** is therefore a powerful tool for applied topological analyses of data.
+
 # Introduction
 
 A popular technology for studying neural function is called *functional magnetic resonance imaging* (fMRI), in which oxygenated blood-flow across the brain is detected via magnetic resonance over multiple time points; fMRI is a proxy measurement of neural activity. Spatial activity patterns, i.e. vectors of measured values across space in a single time point, are modulated by performing tasks. The *study design* is the sequence of temporal *blocks* of performing these tasks and each task type is called a *condition*, and a study design can evoke meaningful information about neural processing related to tasks. Collections of spatial activity patterns (for example the spatial patterns evoked by a particular task over multiple time points) have previously been analyzed with topological and geometric techniques which capture their global structural features [@brain_manifold;@BrainOrganizationMapper;@fMRI_clustering_2;@resting_state_mapper]. However, these analyses are not designed to capture the spatially periodic features of fMRI data which we would expect to exist in abundance [@fMRI_noise1;@fMRI_noise2;@Denoising]. One persistent homology analysis of fMRI spatial pattern data found robust 0-dimensional topological features (i.e. clusters of time points with similar spatial patterns) whose persistence values negatively correlated with fluid intelligence [@topological_time_and_space]. Larger differences between spatial patterns at different time points generally corresponded to lower values of fluid intelligence, but higher-dimensional topological features such as loops were not considered in that analysis.
@@ -76,13 +80,7 @@ knitr::include_graphics(c("r_nodes.png"))
 
 A large cluster of surface nodes responding to $\theta$ was found in the left hemisphere (and not in the right hemisphere), which appeared to belong to the brain region Pol1 in the insular cortex. Interestingly, Pol1 was not found to show significant differences in activity between the faces and shapes conditions [@HCP_multimodal_parcellation], despite the implication of the insular cortex in emotional processing [@insula]. This finding suggests that spatial loops of fMRI data may contain complementary information to typical task-based analyses of fMRI data. 
 
-In order to make the variable $\theta$ more interpretable, we plotted the (normalized) activity of nodes responding to $\theta$ around the loop (which we represented as an idealized unit circle, although the loop does not form a perfect unit circle in the data): 
-
-```{r,echo = F,fig.align = 'center',out.width="100%",out.height="100%",fig.cap="Activity of theta-responding nodes at various loop angles."}
-knitr::include_graphics("loop.png")
-```
-
-The activity of the large cluster seemed to be low from the bottom of the loop through the top right, and high from the top of the left through the bottom left. A similar plot would have been possible for different values of $r$, along a single straight-line axis. However, with so few nodes, we found that the plot was unclear. A t-test then found a significant difference in mean $r$ values between shape and face blocks:
+A t-test then found a significant difference in mean $r$ values between shape and face blocks:
 
 ```{r,echo = F,out.width="45%", out.height="45%",fig.show="hold",fig.align = 'center',fig.cap="Boxplot of r values in shape and face blocks."}
 knitr::include_graphics(c("r_boxplot.png"))
@@ -90,10 +88,9 @@ knitr::include_graphics(c("r_boxplot.png"))
 
 # Linking topology to behavior
 
-The main goal of using a summary statistic of neurological data, such as persistence diagrams of spatial activity patterns, is to correlate it with behavior. In the HCP dataset, mean reaction time (in milliseconds) was recorded for all subjects and all tasks, so we checked whether topology was predictive of reaction time for the emotion task. We selected 100 subjects at random, computed their emotion right-to-left phase encoding data persistence diagrams, and computed a two dimensional kernel PCA embedding. We plotted the embedding scatterplot (top), colored by mean reaction time to shape condition blocks (more intense red means longer response time), and the relationship between the first embedding dimension and reaction time (bottom):
+The main goal of using a summary statistic of neurological data, such as persistence diagrams of spatial activity patterns, is to correlate the statistic with behavior. In the HCP dataset, mean reaction time (in milliseconds) was recorded for all subjects and all tasks, so we checked whether topology was predictive of reaction time for the emotion task. We selected 100 subjects at random, computed their emotion right-to-left phase encoding data persistence diagrams, and computed a one dimensional kernel PCA embedding. We then plotted the relationship between the first embedding dimension and reaction time to shape blocks:
 
-```{r,echo = F,out.width="45%", out.height="45%",fig.show="hold",fig.align = 'center',fig.cap="Plotting (left) the 2D PCA embedding of the 100 subject's emotion persistence diagrams, colored by mean response time in shape blocks, and (right) the correlation of the first embedding dimension with the mean response time."}
-knitr::include_graphics(c("pca_2_dims.png"))
+```{r,echo = F,out.width="45%", out.height="45%",fig.show="hold",fig.align = 'center',fig.cap="A 2D scatterplot, whose x-axis is the 1D PCA embedding coordinates of the 100 subject's emotion persistence diagrams and whose y-axis is the 100 subject's mean response times in the shape blocks trials."}
 knitr::include_graphics(c("topology_behavior.png"))
 ```
 
@@ -101,7 +98,7 @@ We found that there was a strong positive correlation between topological simila
 
 # Conclusion
 
-We analyzed spatial loops in HCP emotion fMRI data using **TDApplied**, and were able to visualize and interpret the large-scale spatial loops of an individual subject, relating them to the study design. Moreover, we were able to find a topology-behavior relationship in which topological similarities between subjects were informative of reaction time to shape condition blocks. These results point towards the potential usage of 1-dimensional topology in finding task-related and behavior-related summaries of fMRI spatial patterns.
+We analyzed spatial loops in HCP emotion fMRI data using **TDApplied**, and were able to visualize and interpret the large-scale spatial loops of an individual subject, relating them to the study design. Moreover, we were able to find a topology-behavior relationship in which topological similarities between subjects were informative of reaction time to shape condition blocks. These results point towards the potential usage of 1-dimensional topology in finding task-related and behavior-related summaries of fMRI spatial patterns. Moreover, our analysis hinged on the usage of several functions which are (largely) unique to **TDApplied**. These results show that **TDApplied** is the most flexible and useful tool for carrying out meaningful analyses of data.
 
 # Appendix: Converting Correlations to Distances
 
