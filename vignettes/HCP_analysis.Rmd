@@ -2,7 +2,7 @@
 title: "Human Connectome Project Analysis"
 author: "Shael Brown and Dr. Reza Farivar"
 output: 
-  rmarkdown::word_document:
+  rmarkdown::html_document:
     fig_caption: yes
 vignette: >
   %\VignetteIndexEntry{Human Connectome Project Analysis}
