@@ -2,7 +2,7 @@
 title: "Human Connectome Project Analysis"
 author: "Shael Brown and Dr. Reza Farivar"
 output: 
-  rmarkdown::html_document:
+  rmarkdown::word_document:
     fig_caption: yes
 vignette: >
   %\VignetteIndexEntry{Human Connectome Project Analysis}
@@ -88,13 +88,13 @@ knitr::include_graphics(c("r_boxplot.png"))
 
 # Linking topology to behavior
 
-The main goal of using a summary statistic of neurological data, such as persistence diagrams of spatial activity patterns, is to correlate the statistic with behavior. In the HCP dataset, mean reaction time (in milliseconds) was recorded for all subjects and all tasks, so we checked whether topology was predictive of reaction time for the emotion task. We selected 100 subjects at random, computed their emotion right-to-left phase encoding data persistence diagrams, and computed a one dimensional kernel PCA embedding. We then plotted the relationship between the first embedding dimension and reaction time to shape blocks:
+The main goal of using a summary statistic of neurological data, such as persistence diagrams of spatial activity patterns, is to correlate the statistic with behavior. In the HCP dataset, mean reaction time (in milliseconds) was recorded for all subjects and all tasks, so we checked whether topology was predictive of reaction time for the emotion task. We selected 100 subjects at random, computed their emotion right-to-left phase encoding data persistence diagrams, and computed a one dimensional kernel PCA embedding. We then plotted the relationship between the first embedding dimension and reaction time to shape blocks, which had a correlation of about 0.31:
 
 ```{r,echo = F,out.width="45%", out.height="45%",fig.show="hold",fig.align = 'center',fig.cap="A 2D scatterplot, whose x-axis is the 1D PCA embedding coordinates of the 100 subject's emotion persistence diagrams and whose y-axis is the 100 subject's mean response times in the shape blocks trials."}
 knitr::include_graphics(c("topology_behavior.png"))
 ```
 
-We found that there was a strong positive correlation between topological similarities and response time similarities, thereby relating the persistence diagrams to human behavior.
+We then computed statistical significance by Fisher-transforming the sample correlation of 0.31 to obtain a test-statistic of about 0.32, and compared this statistic to a normal null distribution with mean 0 and standard error $1/\sqrt{100-3} \approx 0.1$ [@fisher]. The resulting p-value, for a two-sided null hypothesis, would have been less than 0.002, suggesting a significant positive correlation between the topology of neural activity spatial patterns and subject behavior.
 
 # Conclusion
 
