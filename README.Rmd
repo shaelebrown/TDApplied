@@ -75,7 +75,7 @@ Not only does **TDApplied** provide methods for the applied analysis of persiste
 This example creates nine persistence diagrams, plots one and projects all nine into 2D space using multidimensional scaling (MDS) to demonstrate **TDApplied** functionalities.
 
 ```{r example,eval = F}
-library(**TDApplied**)
+library(TDApplied)
 
 # create 9 persistence diagrams
 # 3 from circles, 3 from tori and 3 from spheres
