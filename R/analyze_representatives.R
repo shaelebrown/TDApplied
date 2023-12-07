@@ -37,21 +37,20 @@
 #'
 #' if(require("TDA"))
 #' {
-#'   # sample the unit circle
+#'   # sample 50 points from a unit circle
 #'   circ <- TDA::circleUnif(n = 50)
-#'                         
-#'   # create 10 copies with added Gaussian noise and
+#'   # create 3 copies with added Gaussian noise and
 #'   # calculate their diagrams from distance matrices
-#'   circs <- lapply(X = 1:10,FUN = function(X){
+#'   circs <- lapply(X = 1:3,FUN = function(X){
 #'      df <- circ
 #'      df[,1] <- df[,1] + rnorm(n = 50,sd = 0.05)
 #'      df[,2] <- df[,2] + rnorm(n = 50,sd = 0.05)
-#'      diag <- bootstrap_persistence_thresholds(X = as.matrix(dist(df)),
-#'                                               FUN_diag = "ripsDiag",
-#'                                               maxdim = 1,
-#'                                               thresh = 2,distance_mat = TRUE,
-#'                                               calculate_representatives = TRUE,
-#'                                               return_subsetted = TRUE)
+#'      diag <- TDA::ripsDiag(X = as.matrix(dist(df)),
+#'                            maxdimension = 1,
+#'                            maxscale = 2,
+#'                            dist = "arbitrary",
+#'                            location = TRUE,
+#'                            library = "dionysus")
 #'      return(diag)
 #'   
 #'    })
@@ -62,17 +61,9 @@
 #'    analyze_representatives(diagrams = circs,dim = 1,
 #'                            num_points = 50)
 #'                            
-#'    # now highlight the first non-trivial cycle
-#'    first_loop_diag <- 0
-#'    for(i in 1:10)
-#'    {
-#'       if(nrow(circs[[i]]$subsetted_diag) > 0)
-#'       {
-#'          first_loop_diag <- i
-#'          break
-#'       }
-#'    }
-#'    br <- data.frame(diagram = first_loop_diag,rep = 1)
+#'    # now highlight the first diagram's first loop, which is
+#'    # its 51st representative
+#'    br <- data.frame(diagram = 1,rep = 51)
 #'    analyze_representatives(diagrams = circs,dim = 1,
 #'                            num_points = 50,boxed_reps = br)
 #'   
@@ -303,9 +294,9 @@ analyze_representatives <- function(diagrams,dim,num_points,plot_heatmap = TRUE,
   {
     error_check <- lapply(X = 1:nrow(boxed_reps),FUN = function(X){
       
-      if(boxed_reps[X,2L] %in% 1:length(cycles[[boxed_reps[X,1L]]]) == F)
+      if(boxed_reps[X,2L] %in% cycle_inds[[boxed_reps[X,1L]]] == F)
       {
-        stop("Some row of boxed_reps contained a rep value either less than 1 or greater than the number of cycles in that diagram (in the desired dimension).")
+        stop("For some row [i,j] of boxed_reps, the jth representative of diagram i did not have the input dimension 'dim'.")
       }
         
     }) 

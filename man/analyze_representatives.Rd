@@ -63,21 +63,20 @@ add the row (diagram = X,rep = Y) to `boxed_reps`. If `d` is supplied then it wi
 
 if(require("TDA"))
 {
-  # sample the unit circle
+  # sample 50 points from a unit circle
   circ <- TDA::circleUnif(n = 50)
-                        
-  # create 10 copies with added Gaussian noise and
+  # create 3 copies with added Gaussian noise and
   # calculate their diagrams from distance matrices
-  circs <- lapply(X = 1:10,FUN = function(X){
+  circs <- lapply(X = 1:3,FUN = function(X){
      df <- circ
      df[,1] <- df[,1] + rnorm(n = 50,sd = 0.05)
      df[,2] <- df[,2] + rnorm(n = 50,sd = 0.05)
-     diag <- bootstrap_persistence_thresholds(X = as.matrix(dist(df)),
-                                              FUN_diag = "ripsDiag",
-                                              maxdim = 1,
-                                              thresh = 2,distance_mat = TRUE,
-                                              calculate_representatives = TRUE,
-                                              return_subsetted = TRUE)
+     diag <- TDA::ripsDiag(X = as.matrix(dist(df)),
+                           maxdimension = 1,
+                           maxscale = 2,
+                           dist = "arbitrary",
+                           location = TRUE,
+                           library = "dionysus")
      return(diag)
   
    })
@@ -88,17 +87,9 @@ if(require("TDA"))
    analyze_representatives(diagrams = circs,dim = 1,
                            num_points = 50)
                            
-   # now highlight the first non-trivial cycle
-   first_loop_diag <- 0
-   for(i in 1:10)
-   {
-      if(nrow(circs[[i]]$subsetted_diag) > 0)
-      {
-         first_loop_diag <- i
-         break
-      }
-   }
-   br <- data.frame(diagram = first_loop_diag,rep = 1)
+   # now highlight the first diagram's first loop, which is
+   # its 51st representative
+   br <- data.frame(diagram = 1,rep = 51)
    analyze_representatives(diagrams = circs,dim = 1,
                            num_points = 50,boxed_reps = br)
   
