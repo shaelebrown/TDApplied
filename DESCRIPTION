@@ -13,7 +13,7 @@ Description: Topological data analysis is a powerful tool for finding non-linear
     useful and efficient methods for analyzing groups of persistence diagrams with machine learning and statistical inference,
     and these functions can also interface with other data science packages to form flexible and integrated
     topological data analysis pipelines.
-Depends: R (>= 3.2.2)
+Depends: R (>= 3.5.0)
 Imports: parallel, doParallel, foreach, clue, rdist, parallelly, kernlab, iterators, methods, stats, utils, Rcpp (>= 0.11.0)
 License: GPL-3
 URL: https://github.com/shaelebrown/TDApplied

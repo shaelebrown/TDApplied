@@ -47,24 +47,32 @@ In this exploratory analysis, using the R package **TDApplied**, we utilized per
 
 For HCP subject 103111 we calculated a persistence diagram by analyzing the time-point by time-point correlation matrix $[\rho_{i,j}]$ of spatial patterns. A distance matrix was computed by the transformation $\rho_{i,j} \rightarrow \sqrt{2(1 - \rho_{i,j})}$ (see the appendix for details), and the bootstrap procedure [@bootstrap] found a single significant loop. We plotted the VR graph [@VR_graph] of the loop representative with $\epsilon$ being the birth value (with nodes labelled by their time points), and the VR graph of the whole dataset at this $\epsilon$ (with nodes in the representative cycle colored red):
 
-```{r,echo = F,out.width="45%", out.height="45%",fig.show="hold",fig.align = 'center',fig.cap="The VR graphs of (left) just the representative cycle time points, and (right) all time points, with both epsilon scales at the loop birth value."}
-knitr::include_graphics(c("rips_cycle.png","rips_all.png"))
+```{r,echo=FALSE,message=FALSE}
+library("TDApplied")
 ```
 
-Two things are apparent from these plots -- the first is that the most persistent loop is the first task block (based on the time points in that block), and the second is that the dataset mainly forms two major loops in a figure eight. The secondary loop was the second most persistent loop in the diagram, and was comprised of (almost) all other time points. We found that physiology (i.e. breathing, measured in the HCP dataset as the pressure exerted by the subject's abdomen on the sensor belt, and averaged for each graph node) did not account for the two-loop structure, whereas task structure (measured by time-since-last-block -- i.e. the length of time since the most recent task block started) did. For formatting reasons we plotted the colorbar under the two graphs.
+```{r,echo = F,out.width="45%", out.height="45%",fig.show="hold",fig.align = 'center',fig.cap="The VR graphs of (left) just the representative cycle time points, and (right) all time points, with both epsilon scales at the loop birth value."}
+g <- readRDS("rips_cycle.rds")
+plot_vr_graph(g,eps = as.numeric(names(g$graphs)),vertex_labels = T,title = "Rips graph of representative cycle") # clear loop
+g <- readRDS("rips_all.rds")
+cols <- readRDS("cols.rds")
+l <- plot_vr_graph(g,eps = as.numeric(names(g$graphs)),component_of = 20,vertex_labels = F,cols = cols,return_layout = T,title = "Rips graph of all data") # two clear loops! One big, one dense
+```
+
+Two things are apparent from these plots -- the first is that the most persistent loop is the first task block (based on the time points in that block), and the second is that the dataset mainly forms two major loops in a figure eight. The secondary loop was the second most persistent loop in the diagram, and was comprised of (almost) all other time points. We found that physiology (i.e. breathing, measured in the HCP dataset as the pressure exerted by the subject's abdomen on the sensor belt, and averaged for each graph node) did not account for the two-loop structure, whereas task structure (measured by time-since-last-block -- i.e. the length of time since the most recent task block started) did. In these graphs, red represents high values, pink middle-high, white middle, light blue middle-low, blue low and black missing.
 
 ```{r,echo = F,out.width="45%", out.height="45%",fig.show="hold",fig.align = 'center',fig.cap="VR graph of all time points, colored by (left) mean respiration and (right) time-since-last-block."}
-knitr::include_graphics(c("rips_respiratory.png","rips_task.png"))
-```
-
-```{r,echo = F,out.width="10%", out.height="10%",fig.show="hold",fig.align = 'center'}
-knitr::include_graphics(c("color_bar.png"))
+cols_respiratory <- readRDS("cols_respiratory.rds")
+cols_time_since_last_block <- readRDS("cols_time_since_last_block.rds")
+plot_vr_graph(g,eps = as.numeric(names(g$graphs)),cols = cols_respiratory,component_of = 20,vertex_labels = F,layout = l,title = "Respiratory")
+plot_vr_graph(g,eps = as.numeric(names(g$graphs)),cols = cols_time_since_last_block,component_of = 20,vertex_labels = F,layout = l,title = "Time since last block")
 ```
 
 The secondary loop seemed task-related when we colored its VR graph by time-since-last-block (i.e. the length of time since the most recent task block started), with clusters of similarly-colored time points (i.e. nodes) and smooth gradients at various points around the loop:
 
 ```{r,echo = F,out.width="45%", out.height="45%",fig.show="hold",fig.align = 'center',fig.cap = "VR graph of the secondary loop, colored by time-since-last-block."}
-knitr::include_graphics(c("rips_secondary.png"))
+secondary_loop <- readRDS("rips_secondary.rds")
+plot_vr_graph(secondary_loop,eps = as.numeric(names(secondary_loop$graphs)),component_of = 99,vertex_labels = F,cols = cols_time_since_last_block[as.numeric(secondary_loop$vertices)],title = "Rips graph of secondary loop")
 ```
 
 # Linking the secondary loop to raw data
@@ -83,7 +91,9 @@ A large cluster of surface nodes responding to $\theta$ was found in the left he
 A t-test then found a significant difference in mean $r$ values between shape and face blocks:
 
 ```{r,echo = F,out.width="45%", out.height="45%",fig.show="hold",fig.align = 'center',fig.cap="Boxplot of r values in shape and face blocks."}
-knitr::include_graphics(c("r_boxplot.png"))
+r_shape <- readRDS("r_shape.rds")
+r_face <- readRDS("r_face.rds")
+graphics::boxplot(r_shape,r_face,main = "r across conditions, p < 0.01",xlab = "Condition",ylab = "r",names = c("Shape","Face"))
 ```
 
 # Linking topology to behavior
@@ -91,7 +101,14 @@ knitr::include_graphics(c("r_boxplot.png"))
 The main goal of using a summary statistic of neurological data, such as persistence diagrams of spatial activity patterns, is to correlate the statistic with behavior. In the HCP dataset, mean reaction time (in milliseconds) was recorded for all subjects and all tasks, so we checked whether topology was predictive of reaction time for the emotion task. We selected 100 subjects at random, computed their emotion right-to-left phase encoding data persistence diagrams, and computed a one dimensional kernel PCA embedding. We then plotted the relationship between the first embedding dimension and reaction time to shape blocks, which had a correlation of about 0.31:
 
 ```{r,echo = F,out.width="45%", out.height="45%",fig.show="hold",fig.align = 'center',fig.cap="A 2D scatterplot, whose x-axis is the 1D PCA embedding coordinates of the 100 subject's emotion persistence diagrams and whose y-axis is the 100 subject's mean response times in the shape blocks trials."}
-knitr::include_graphics(c("topology_behavior.png"))
+emb <- readRDS("emb.rds")
+shape_rt <- readRDS("shape_rt.rds")
+plot(emb,shape_rt,xlab = "Embedding dim 1",ylab = "Mean Shape Block Reaction Time (ms)",main = "Topology-Behavior Relationship")
+l <- lm(formula = shape_rt ~ emb)
+coefficients <- as.numeric(coef(l))
+graphics::lines(x = c(min(emb),max(emb)),y = coefficients[[1]] + coefficients[[2]]*c(min(emb),max(emb)))
+cor_val <- round(cor(emb,shape_rt),digits = 2)
+graphics::text(x = 0,y = 1400,paste0("Correlation = ",cor_val))
 ```
 
 We then computed statistical significance by Fisher-transforming the sample correlation of 0.31 to obtain a test-statistic of about 0.32, and compared this statistic to a normal null distribution with mean 0 and standard error $1/\sqrt{100-3} \approx 0.1$ [@fisher]. The resulting p-value, for a two-sided null hypothesis, would have been less than 0.002, suggesting a significant positive correlation between the topology of neural activity spatial patterns and subject behavior.

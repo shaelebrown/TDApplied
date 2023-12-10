@@ -104,10 +104,6 @@ normalize <- function(v){
   
 }
 
-# temporary
-directory_for_subjects = "/Users/jibaccount/Downloads/HCP_test"
-devtools::load_all()
-
 # carry out analysis
 analyze_HCP <- function(directory_for_subjects){
   
@@ -384,7 +380,6 @@ analyze_HCP <- function(directory_for_subjects){
     return(data.frame(subject = X,face_acc = df[1,1L],face_rt = df[2,1L],shape_acc = df[3,1L],shape_rt = df[4,1L]))
     
   }))
-  plot(emb$pca@rotated[,1],emb$pca@rotated[,2],xlab = "Embedding dim 1",ylab = "Embedding dim 2",main = "100 fMRI Persistence Diagrams",col = rgb(red = 1,green = 0,blue = 0,alpha = normalize(stats$shape_rt)))
   plot(emb$pca@rotated[,1],stats$shape_rt,xlab = "Embedding dim 1",ylab = "Mean Shape Block Reaction Time (ms)",main = "Topology-Behavior Relationship")
   l <- lm(formula = stats$shape_rt ~ emb$pca@rotated[,1])
   coefficients <- as.numeric(coef(l))
