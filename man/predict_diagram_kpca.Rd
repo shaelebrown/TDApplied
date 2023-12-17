@@ -47,10 +47,8 @@ if(require("TDA") & require("TDAstats"))
   g <- list(D1,D2,D3,D4,D5,D6)
 
   # calculate their 2D PCA embedding with sigma = t = 2 in dimension 0
-  # using the approximate persistence Fisher metric
   pca <- diagram_kpca(diagrams = g,dim = 1,t = 2,sigma = 2,
-                      rho = 0.001,features = 2,num_workers = 2,
-                      th = 1e-6)
+                      features = 2,num_workers = 2,th = 1e-6)
 
   # project two new diagrams onto old model
   D7 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
@@ -64,7 +62,7 @@ if(require("TDA") & require("TDAstats"))
   
   # repeat with precomputed Gram matrix, gives same result but much faster
   K <- gram_matrix(diagrams = g_new,other_diagrams = pca$diagrams,dim = pca$dim,
-                   t = pca$t,sigma = pca$sigma,rho = pca$rho,num_workers = 2)
+                   t = pca$t,sigma = pca$sigma,num_workers = 2)
   new_pca <- predict_diagram_kpca(K = K,embedding = pca,num_workers = 2)
 }
 }

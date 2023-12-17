@@ -61,11 +61,6 @@ if(require("TDA") & require("TDAstats"))
   # calculate their distance matrix in dimension 0 with the persistence Fisher metric
   # using 2 cores
   D <- distance_matrix(diagrams = g,dim = 0,distance = "fisher",sigma = 1,num_workers = 2)
-  
-  # calculate their distance matrix in dimension 0 with the approximate persistence Fisher metric
-  # using 2 cores
-  D <- distance_matrix(diagrams = g,dim = 0,distance = "fisher",sigma = 1,rho = 0.001,
-                       num_workers = 2)
 
   # calculate their distance matrix in dimension 0 with the 2-wasserstein metric 
   # using 2 cores
