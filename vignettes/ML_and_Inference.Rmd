@@ -297,12 +297,20 @@ Again, D1 and D2 are less different than D1 and D3 using the Fisher information 
 
 A fast approximation to the Fisher information metric was described in [@persistence_fisher], and C++ code in the GitHub repository (https://github.com/vmorariu/figtree) was used to calculate this approximation in Matlab. Using the Rcpp package [@Rcpp] this code is included in **TDApplied** and the approximation can be calculated by providing the positive `rho` parameter:
 
-```{r,echo = T}
+```{r,echo = T,eval = F}
 # Fisher information metric calculation between D1 and D2 for sigma = 1
 diagram_distance(D1,D2,dim = 0,distance = "fisher",sigma = 1)
+```
+```{r,echo = F}
+0.02354779
+```
 
+```{r,echo = T,eval = F}
 # fast approximate Fisher information metric calculation between D1 and D3 for sigma = 1
 diagram_distance(D1,D2,dim = 0,distance = "fisher",sigma = 1,rho = 0.001)
+```
+```{r,echo = F}
+0.02354779
 ```
 
 Now we will explore calculating similarity of persistence diagrams using kernel functions. A kernel function is a special (positive semi-definite) symmetric similarity measure between objects in some complicated space which can be used to project data into a space suitable for machine learning [@murphyML]. Some examples of machine learning techniques which can be "kernelized" when dealing with complicated data are *k-means* (kernel k-means), *principal components analysis* (kernel PCA), and *support vector machines* (SVM) which are inherently based on kernel calculations.
