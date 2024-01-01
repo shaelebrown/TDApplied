@@ -667,12 +667,6 @@ predict_diagram_kpca <- function(new_diagrams,K = NULL,embedding,num_workers = p
 #'   model_svm <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0),
 #'                             y = y,sigma = c(1),t = c(1),
 #'                             num_workers = 2)
-#'                             
-#'   # repeat with precomputed distance matrix, gives same result but much faster
-#'   D <- distance_matrix(diagrams = g,sigma = 1,distance = "fisher",num_workers = 2)
-#'   model_svm <- diagram_ksvm(diagrams = g,distance_matrices = list(D),cv = 1,dim = c(0),
-#'                             y = y,sigma = c(1),t = c(1),
-#'                             num_workers = 2)
 #' }
                           
 diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type = NULL,distance_matrices = NULL,C = 1,nu = 0.2,epsilon = 0.1,prob.model = FALSE,class.weights = NULL,fit = TRUE,cache = 40,tol = 0.001,shrinking = TRUE,num_workers = parallelly::availableCores(omit = 1)){
@@ -1146,10 +1140,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
 #'                                      dim = 0,threshold = 2)
 #'   g_new <- list(D5,D6)
 #' 
-#'   # predict
-#'   predict_diagram_ksvm(new_diagrams = g_new,model = model_svm,num_workers = 2)
-#'   
-#'   # repeat with precomputed Gram matrix, gives same result just much faster
+#'   # predict with precomputed Gram matrix
 #'   K <- gram_matrix(diagrams = g_new,other_diagrams = model_svm$diagrams,
 #'                    dim = model_svm$best_model$dim,sigma = model_svm$best_model$sigma,
 #'                    t = model_svm$best_model$t,num_workers = 2)

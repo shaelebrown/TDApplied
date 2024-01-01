@@ -59,10 +59,7 @@ if(require("TDA") & require("TDAstats"))
                                      dim = 0,threshold = 2)
   g_new <- list(D5,D6)
 
-  # predict
-  predict_diagram_ksvm(new_diagrams = g_new,model = model_svm,num_workers = 2)
-  
-  # repeat with precomputed Gram matrix, gives same result just much faster
+  # predict with precomputed Gram matrix
   K <- gram_matrix(diagrams = g_new,other_diagrams = model_svm$diagrams,
                    dim = model_svm$best_model$dim,sigma = model_svm$best_model$sigma,
                    t = model_svm$best_model$t,num_workers = 2)

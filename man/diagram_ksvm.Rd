@@ -119,12 +119,6 @@ if(require("TDA") & require("TDAstats"))
   model_svm <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0),
                             y = y,sigma = c(1),t = c(1),
                             num_workers = 2)
-                            
-  # repeat with precomputed distance matrix, gives same result but much faster
-  D <- distance_matrix(diagrams = g,sigma = 1,distance = "fisher",num_workers = 2)
-  model_svm <- diagram_ksvm(diagrams = g,distance_matrices = list(D),cv = 1,dim = c(0),
-                            y = y,sigma = c(1),t = c(1),
-                            num_workers = 2)
 }
 }
 \references{
