@@ -1,7 +1,7 @@
 Package: TDApplied
 Type: Package
 Title: Machine Learning and Inference for Topological Data Analysis
-Version: 3.0.1
+Version: 3.0.2
 Authors@R: c(person("Shael", "Brown", email = "shaelebrown@gmail.com", role = c("aut","cre")),
              person("Dr. Reza", "Farivar", email = "reza.farivar@mcgill.ca", role = c("aut","fnd")))
 Author: Shael Brown [aut, cre],
