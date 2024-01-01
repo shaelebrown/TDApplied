@@ -59,7 +59,9 @@
 #'   diagram_distance(D1,D2,dim = 1,distance = "fisher",sigma = 1)
 #'   
 #'   # repeat but with fast approximation
-#'   # diagram_distance(D1,D2,dim = 1,distance = "fisher",sigma = 1,rho = 0.001)
+#'   \dontrun{
+#'   diagram_distance(D1,D2,dim = 1,distance = "fisher",sigma = 1,rho = 0.001)
+#'   }
 #' }
 
 diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma = NULL,rho = NULL){

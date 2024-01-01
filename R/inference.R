@@ -379,10 +379,8 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_
 #'   g1 <- list(D1,D2,D2,D2,D2,D2)
 #'   g2 <- list(D2,D1,D1,D1,D1,D1)
 #' 
-#'   # do independence test with sigma = t = 1 in dimension 0
-#'   indep_test <- independence_test(g1,g2,dims = c(0),num_workers = 2)
-#'   
-#'   # repeat with precomputed Gram matrices, gives same result just much faster
+#'   # do independence test with sigma = t = 1 in dimension 0, using
+#'   # precomputed Gram matrices
 #'   K = gram_matrix(diagrams = g1,dim = 0,t = 1,sigma = 1,num_workers = 2)
 #'   L = gram_matrix(diagrams = g2,dim = 0,t = 1,sigma = 1,num_workers = 2)
 #'   indep_test <- independence_test(Ks = list(K),Ls = list(L),dims = c(0))
