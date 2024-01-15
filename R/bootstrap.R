@@ -54,10 +54,10 @@
 #' Chazal F et al (2017). "Robust Topological Inference: Distance to a Measure and Kernel Distance." \url{https://www.jmlr.org/papers/volume18/15-484/15-484.pdf}.
 #' @examples
 #'
-#' if(require("TDA"))
+#' if(require("TDAstats"))
 #' {
 #'   # create a persistence diagram from a sample of the unit circle
-#'   df = TDA::circleUnif(n = 50)
+#'   df <- TDAstats::circle2d[sample(1:100,size = 50),]
 #'
 #'   # calculate persistence thresholds for alpha = 0.05 
 #'   # and return the calculated diagram as well as the subsetted diagram

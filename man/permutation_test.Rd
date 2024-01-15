@@ -83,12 +83,12 @@ then the sum of the elements of `group_sizes` must equal the number of rows and 
 }
 \examples{
 
-if(require("TDA") & require("TDAstats"))
+if(require("TDAstats"))
 {
   # create two groups of diagrams
-  D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+  D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,10),],
                                      dim = 0,threshold = 2)
-  D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+  D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,10),],
                                      dim = 0,threshold = 2)
   g1 <- list(D1,D2)
   g2 <- list(D1,D2)

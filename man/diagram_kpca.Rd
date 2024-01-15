@@ -65,21 +65,21 @@ be used for further analysis, or simply as a data visualization tool for persist
 }
 \examples{
 
-if(require("TDA") & require("TDAstats"))
+if(require("TDAstats"))
 {
   # create six diagrams
-  D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
-                                     dim = 1,threshold = 2)
-  D2 <- TDAstats::calculate_homology(TDA::sphereUnif(n = 50,d = 2,r = 1),
-                                     dim = 1,threshold = 2)
-  D3 <- TDAstats::calculate_homology(TDA::torusUnif(n = 50,a = 0.25,c = 0.75),
-                                     dim = 1,threshold = 2)
-  D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
-                                     dim = 1,threshold = 2)
-  D5 <- TDAstats::calculate_homology(TDA::sphereUnif(n = 50,d = 2,r = 1),
-                                     dim = 1,threshold = 2)
-  D6 <- TDAstats::calculate_homology(TDA::torusUnif(n = 50,a = 0.25,c = 0.75),
-                                     dim = 1,threshold = 2)
+  D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
+  D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
+  D3 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
+  D4 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
+  D5 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
+  D6 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
   g <- list(D1,D2,D3,D4,D5,D6)
 
   # calculate their 2D PCA embedding with sigma = t = 2 in dimension 1

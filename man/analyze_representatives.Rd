@@ -59,42 +59,6 @@ plotted heatmap would mean the Yth representative of diagram X. If certain repre
 in the heatmap, a dataframe `boxed_reps` can be supplied with two integer columns - 'diagram' and 'rep'. For example, if we wish to draw a box for DX[Y] then we
 add the row (diagram = X,rep = Y) to `boxed_reps`. If `d` is supplied then it will be used to cluster the representatives, based on the distances in `d`.
 }
-\examples{
-
-if(require("TDA"))
-{
-  # sample 50 points from a unit circle
-  circ <- TDA::circleUnif(n = 50)
-  # create 3 copies with added Gaussian noise and
-  # calculate their diagrams from distance matrices
-  circs <- lapply(X = 1:3,FUN = function(X){
-     df <- circ
-     df[,1] <- df[,1] + rnorm(n = 50,sd = 0.05)
-     df[,2] <- df[,2] + rnorm(n = 50,sd = 0.05)
-     diag <- TDA::ripsDiag(X = as.matrix(dist(df)),
-                           maxdimension = 1,
-                           maxscale = 2,
-                           dist = "arbitrary",
-                           location = TRUE,
-                           library = "dionysus")
-     return(diag)
-  
-   })
-   
-   # analyze loop representatives across the diagrams
-   # num_points is 50 because each underlying dataset had
-   # 50 (corresponding) points
-   analyze_representatives(diagrams = circs,dim = 1,
-                           num_points = 50)
-                           
-   # now highlight the first diagram's first loop, which is
-   # its 51st representative
-   br <- data.frame(diagram = 1,rep = 51)
-   analyze_representatives(diagrams = circs,dim = 1,
-                           num_points = 50,boxed_reps = br)
-  
-}
-}
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}
 }

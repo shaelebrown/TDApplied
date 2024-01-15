@@ -43,13 +43,13 @@ Gram matrices are used in downstream analyses, like in the `diagram_kkmeans`, `d
 }
 \examples{
 
-if(require("TDA") & require("TDAstats"))
+if(require("TDAstats"))
 {
   # create two diagrams
-  D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                     dim = 0,threshold = 2)
-  D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                     dim = 0,threshold = 2)
+  D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
+  D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
   g <- list(D1,D2)
 
   # calculate the Gram matrix in dimension 0 with sigma = 2, t = 2

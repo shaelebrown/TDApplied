@@ -99,21 +99,21 @@ across all folds is recorded in the cv results table.
 }
 \examples{
 
-if(require("TDA") & require("TDAstats"))
+if(require("TDAstats"))
 {
   # create four diagrams
-  D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                     dim = 0,threshold = 2)
-  D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                     dim = 0,threshold = 2)
-  D3 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                     dim = 0,threshold = 2)
-  D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                     dim = 0,threshold = 2)
+  D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
+  D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
+  D3 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
+  D4 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
   g <- list(D1,D2,D3,D4)
 
   # create response vector
-  y <- as.factor(c("circle","sphere","circle","sphere"))
+  y <- as.factor(c("circle","circle","sphere","sphere"))
 
   # fit model without cross validation
   model_svm <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0),

@@ -55,12 +55,12 @@
 #' Abdallah H et al. (2021). "Statistical Inference for Persistent Homology applied to fMRI." \url{https://github.com/hassan-abdallah/Statistical_Inference_PH_fMRI/blob/main/Abdallah_et_al_Statistical_Inference_PH_fMRI.pdf}.
 #' @examples
 #'
-#' if(require("TDA") & require("TDAstats"))
+#' if(require("TDAstats"))
 #' {
 #'   # create two groups of diagrams
-#'   D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+#'   D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,10),],
 #'                                      dim = 0,threshold = 2)
-#'   D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+#'   D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,10),],
 #'                                      dim = 0,threshold = 2)
 #'   g1 <- list(D1,D2)
 #'   g2 <- list(D1,D2)
@@ -368,13 +368,13 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_
 #' Gretton A et al. (2007). "A Kernel Statistical Test of Independence." \url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf}.
 #' @examples
 #'
-#' if(require("TDA") & require("TDAstats"))
+#' if(require("TDAstats"))
 #' {
 #'   # create two independent groups of diagrams of length 6, which
 #'   # is the minimum length
-#'   D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+#'   D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,10),],
 #'                                      dim = 0,threshold = 2)
-#'   D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+#'   D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,10),],
 #'                                      dim = 0,threshold = 2)
 #'   g1 <- list(D1,D2,D2,D2,D2,D2)
 #'   g2 <- list(D2,D1,D1,D1,D1,D1)

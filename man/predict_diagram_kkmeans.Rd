@@ -29,24 +29,24 @@ This allows for reusing old cluster models for new tasks, or to perform cross va
 }
 \examples{
 
-if(require("TDA") & require("TDAstats"))
+if(require("TDAstats"))
 {
   # create two diagrams
-  D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                     dim = 0,threshold = 2)
-  D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                     dim = 0,threshold = 2)
+  D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
+  D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
   g <- list(D1,D1,D2,D2)
 
   # calculate kmeans clusters with centers = 2, and sigma = t = 2 in dimension 0
   clust <- diagram_kkmeans(diagrams = g,centers = 2,dim = 0,t = 2,sigma = 2,num_workers = 2)
 
   # create two new diagrams
-  D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                     dim = 0,threshold = 2)
-  D5 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-                                     dim = 0,threshold = 2)
-  g_new <- list(D4,D5)
+  D3 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
+  D4 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
+  g_new <- list(D3,D4)
 
   # predict cluster labels
   predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)

@@ -24,10 +24,10 @@
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @examples
 #'
-#' if(require("TDA") & require("TDAstats"))
+#' if(require("TDAstats"))
 #' {
 #'   # create a sample diagram from the unit circle
-#'   df <- TDA::circleUnif(n = 50)
+#'   df <- TDAstats::circle2d[sample(1:100,50),]
 #'   diag <- TDAstats::calculate_homology(df,threshold = 2)
 #' 
 #'   # plot without title

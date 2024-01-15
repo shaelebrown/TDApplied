@@ -25,13 +25,13 @@
 #' Murphy, K. "Machine learning: a probabilistic perspective", MIT press (2012).
 #' @examples
 #'
-#' if(require("TDA"))
+#' if(require("TDAstats"))
 #' {
 #'   # create two diagrams
-#'   D1 <- TDA::ripsDiag(TDA::circleUnif(n = 20,r = 1),
-#'                       maxdimension = 1,maxscale = 2)
-#'   D2 <- TDA::ripsDiag(TDA::sphereUnif(n = 20,d = 2,r = 1),
-#'                       maxdimension = 1,maxscale = 2)
+#'   D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
 #' 
 #'   # calculate the kernel value between D1 and D2 with sigma = 2, t = 2 in dimension 1
 #'   diagram_kernel(D1,D2,dim = 1,sigma = 2,t = 2)
@@ -74,13 +74,13 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1,rho = NULL){
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @examples
 #'
-#' if(require("TDA") & require("TDAstats"))
+#' if(require("TDAstats"))
 #' {
 #'   # create two diagrams
-#'   D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                      dim = 0,threshold = 2)
-#'   D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                      dim = 0,threshold = 2)
+#'   D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
 #'   g <- list(D1,D2)
 #'
 #'   # calculate the Gram matrix in dimension 0 with sigma = 2, t = 2

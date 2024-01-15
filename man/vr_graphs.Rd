@@ -29,20 +29,22 @@ This function may be used in conjunction with the igraph package to visualize th
 }
 \examples{
 
-if(require("TDA") & require("igraph"))
+if(require("TDAstats") & require("igraph"))
 {
   # simulate data from the unit circle and calculate 
   # its diagram
-  df <- TDA::circleUnif(n = 25)
-  diag <- TDA::ripsDiag(df,maxdimension = 1,maxscale = 2)
+  df <- TDAstats::circle2d[sample(1:100,25),]
+  diag <- TDAstats::calculate_homology(df,
+                                       dim = 1,
+                                       threshold = 2)
   
   # get minimum death radius of any data cluster
   min_death_H0 <- 
-  min(diag$diagram[which(diag$diagram[,1] == 0),3L])
+  min(diag[which(diag[,1] == 0),3L])
   
   # get birth and death radius of the loop
-  loop_birth <- as.numeric(diag$diagram[nrow(diag$diagram),2L])
-  loop_death <- as.numeric(diag$diagram[nrow(diag$diagram),3L])
+  loop_birth <- as.numeric(diag[nrow(diag),2L])
+  loop_death <- as.numeric(diag[nrow(diag),3L])
 
   # compute VR graphs at radii half of 
   # min_death_H0 and the mean of loop_birth and 

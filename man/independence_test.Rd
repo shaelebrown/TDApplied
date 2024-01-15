@@ -64,13 +64,13 @@ approaches. If all of the diagrams in either g1 or g2 are the same in some dimen
 }
 \examples{
 
-if(require("TDA") & require("TDAstats"))
+if(require("TDAstats"))
 {
   # create two independent groups of diagrams of length 6, which
   # is the minimum length
-  D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+  D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,10),],
                                      dim = 0,threshold = 2)
-  D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+  D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,10),],
                                      dim = 0,threshold = 2)
   g1 <- list(D1,D2,D2,D2,D2,D2)
   g2 <- list(D2,D1,D1,D1,D1,D1)

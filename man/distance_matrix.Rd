@@ -49,12 +49,12 @@ contain many points and when the number of available cores is small.
 }
 \examples{
 
-if(require("TDA") & require("TDAstats"))
+if(require("TDAstats"))
 {
   # create two diagrams
-  D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+  D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,10),],
                                      dim = 0,threshold = 2)
-  D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
+  D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,10),],
                                      dim = 0,threshold = 2)
   g <- list(D1,D2)
 

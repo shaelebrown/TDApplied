@@ -15,16 +15,10 @@
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
 #' @examples
 #'
-#' if(require("TDA") & require("TDAstats"))
+#' if(require("TDAstats"))
 #' {
 #'   # create a persistence diagram from a 2D Gaussian
 #'   df = data.frame(x = rnorm(n = 20,mean = 0,sd = 1),y = rnorm(n = 20,mean = 0,sd = 1))
-#'
-#'   # compute persistence diagram with ripsDiag from package TDA
-#'   phom_TDA = TDA::ripsDiag(X = df,maxdimension = 0,maxscale = 1)
-#'
-#'   # convert to data frame
-#'   phom_TDA_df = diagram_to_df(d = phom_TDA)
 #' 
 #'   # compute persistence diagram with calculate_homology from package TDAstats
 #'   phom_TDAstats = TDAstats::calculate_homology(mat = df,dim = 0,threshold = 1)

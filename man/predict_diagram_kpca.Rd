@@ -32,18 +32,18 @@ previously-computed kernel PCA embedding (from the \code{\link{diagram_kpca}} fu
 if(require("TDA") & require("TDAstats"))
 {
   # create six diagrams
-  D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
-                                     dim = 1,threshold = 2)
-  D2 <- TDAstats::calculate_homology(TDA::sphereUnif(n = 50,d = 2,r = 1),
-                                     dim = 1,threshold = 2)
-  D3 <- TDAstats::calculate_homology(TDA::torusUnif(n = 50,a = 0.25,c = 0.75),
-                                     dim = 1,threshold = 2)
-  D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
-                                     dim = 1,threshold = 2)
-  D5 <- TDAstats::calculate_homology(TDA::sphereUnif(n = 50,d = 2,r = 1),
-                                     dim = 1,threshold = 2)
-  D6 <- TDAstats::calculate_homology(TDA::torusUnif(n = 50,a = 0.25,c = 0.75),
-                                     dim = 1,threshold = 2)
+  D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
+  D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
+  D3 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
+  D4 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
+  D5 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
+  D6 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+                      dim = 1,threshold = 2)
   g <- list(D1,D2,D3,D4,D5,D6)
 
   # calculate their 2D PCA embedding with sigma = t = 2 in dimension 0
@@ -51,11 +51,11 @@ if(require("TDA") & require("TDAstats"))
                       features = 2,num_workers = 2,th = 1e-6)
 
   # project two new diagrams onto old model
-  D7 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
+  D7 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,50),],
                                      dim = 0,threshold = 2)
-  D8 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
+  D8 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,50),],
                                      dim = 0,threshold = 2)
-  g_new <- list(D4,D5)
+  g_new <- list(D7,D8)
 
   # calculate new embedding coordinates
   new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers = 2)

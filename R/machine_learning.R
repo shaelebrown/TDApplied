@@ -50,13 +50,13 @@
 #' 
 #' @examples
 #'
-#' if(require("TDA") & require("TDAstats"))
+#' if(require("TDAstats"))
 #' {
 #'   # create two diagrams
-#'   D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                      dim = 0,threshold = 2)
-#'   D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                      dim = 0,threshold = 2)
+#'   D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,10),],
+#'                       dim = 1,threshold = 2)
+#'   D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,10),],
+#'                       dim = 1,threshold = 2)
 #'   g <- list(D1,D2)
 #' 
 #'   # calculate their 1D MDS embedding in dimension 0 with the bottleneck distance
@@ -143,13 +143,13 @@ diagram_mds <- function(diagrams,D = NULL,k = 2,distance = "wasserstein",dim = 0
 #' Dhillon, I and Guan, Y and Kulis, B (2004). "A Unified View of Kernel k-means , Spectral Clustering and Graph Cuts." \url{https://people.bu.edu/bkulis/pubs/spectral_techreport.pdf}.
 #' @examples
 #'
-#' if(require("TDA") & require("TDAstats"))
+#' if(require("TDAstats"))
 #' {
 #'   # create two diagrams
-#'   D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                      dim = 0,threshold = 2)
-#'   D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                      dim = 0,threshold = 2)
+#'   D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
 #'   g <- list(D1,D1,D2,D2)
 #' 
 #'   # calculate kmeans clusters with centers = 2, and sigma = t = 2 in dimension 0
@@ -267,24 +267,24 @@ diagram_kkmeans <- function(diagrams,K = NULL,centers,dim = 0,t = 1,sigma = 1,rh
 #' @seealso \code{\link{diagram_kkmeans}} for clustering persistence diagrams.
 #' @examples
 #'
-#' if(require("TDA") & require("TDAstats"))
+#' if(require("TDAstats"))
 #' {
 #'   # create two diagrams
-#'   D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                      dim = 0,threshold = 2)
-#'   D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                      dim = 0,threshold = 2)
+#'   D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
 #'   g <- list(D1,D1,D2,D2)
 #' 
 #'   # calculate kmeans clusters with centers = 2, and sigma = t = 2 in dimension 0
 #'   clust <- diagram_kkmeans(diagrams = g,centers = 2,dim = 0,t = 2,sigma = 2,num_workers = 2)
 #' 
 #'   # create two new diagrams
-#'   D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                      dim = 0,threshold = 2)
-#'   D5 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                      dim = 0,threshold = 2)
-#'   g_new <- list(D4,D5)
+#'   D3 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D4 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   g_new <- list(D3,D4)
 #' 
 #'   # predict cluster labels
 #'   predict_diagram_kkmeans(new_diagrams = g_new,clustering = clust,num_workers = 2)
@@ -399,21 +399,21 @@ predict_diagram_kkmeans <- function(new_diagrams,K = NULL,clustering,num_workers
 #' Scholkopf, B and Smola, A and Muller, K (1998). "Nonlinear Component Analysis as a Kernel Eigenvalue Problem." \url{https://www.mlpack.org/papers/kpca.pdf}.
 #' @examples
 #'
-#' if(require("TDA") & require("TDAstats"))
+#' if(require("TDAstats"))
 #' {
 #'   # create six diagrams
-#'   D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
-#'                                      dim = 1,threshold = 2)
-#'   D2 <- TDAstats::calculate_homology(TDA::sphereUnif(n = 50,d = 2,r = 1),
-#'                                      dim = 1,threshold = 2)
-#'   D3 <- TDAstats::calculate_homology(TDA::torusUnif(n = 50,a = 0.25,c = 0.75),
-#'                                      dim = 1,threshold = 2)
-#'   D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
-#'                                      dim = 1,threshold = 2)
-#'   D5 <- TDAstats::calculate_homology(TDA::sphereUnif(n = 50,d = 2,r = 1),
-#'                                      dim = 1,threshold = 2)
-#'   D6 <- TDAstats::calculate_homology(TDA::torusUnif(n = 50,a = 0.25,c = 0.75),
-#'                                      dim = 1,threshold = 2)
+#'   D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D3 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D4 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D5 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D6 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
 #'   g <- list(D1,D2,D3,D4,D5,D6)
 #' 
 #'   # calculate their 2D PCA embedding with sigma = t = 2 in dimension 1
@@ -494,18 +494,18 @@ diagram_kpca <- function(diagrams,K = NULL,dim = 0,t = 1,sigma = 1,rho = NULL,fe
 #' if(require("TDA") & require("TDAstats"))
 #' {
 #'   # create six diagrams
-#'   D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
-#'                                      dim = 1,threshold = 2)
-#'   D2 <- TDAstats::calculate_homology(TDA::sphereUnif(n = 50,d = 2,r = 1),
-#'                                      dim = 1,threshold = 2)
-#'   D3 <- TDAstats::calculate_homology(TDA::torusUnif(n = 50,a = 0.25,c = 0.75),
-#'                                      dim = 1,threshold = 2)
-#'   D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
-#'                                      dim = 1,threshold = 2)
-#'   D5 <- TDAstats::calculate_homology(TDA::sphereUnif(n = 50,d = 2,r = 1),
-#'                                      dim = 1,threshold = 2)
-#'   D6 <- TDAstats::calculate_homology(TDA::torusUnif(n = 50,a = 0.25,c = 0.75),
-#'                                      dim = 1,threshold = 2)
+#'   D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D3 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D4 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D5 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D6 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
 #'   g <- list(D1,D2,D3,D4,D5,D6)
 #' 
 #'   # calculate their 2D PCA embedding with sigma = t = 2 in dimension 0
@@ -513,11 +513,11 @@ diagram_kpca <- function(diagrams,K = NULL,dim = 0,t = 1,sigma = 1,rho = NULL,fe
 #'                       features = 2,num_workers = 2,th = 1e-6)
 #' 
 #'   # project two new diagrams onto old model
-#'   D7 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
+#'   D7 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,50),],
 #'                                      dim = 0,threshold = 2)
-#'   D8 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50,r = 1),
+#'   D8 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,50),],
 #'                                      dim = 0,threshold = 2)
-#'   g_new <- list(D4,D5)
+#'   g_new <- list(D7,D8)
 #' 
 #'   # calculate new embedding coordinates
 #'   new_pca <- predict_diagram_kpca(new_diagrams = g_new,embedding = pca,num_workers = 2)
@@ -647,21 +647,21 @@ predict_diagram_kpca <- function(new_diagrams,K = NULL,embedding,num_workers = p
 #' Murphy, K. "Machine learning: a probabilistic perspective." MIT press (2012).
 #' @examples
 #'
-#' if(require("TDA") & require("TDAstats"))
+#' if(require("TDAstats"))
 #' {
 #'   # create four diagrams
-#'   D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                      dim = 0,threshold = 2)
-#'   D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                      dim = 0,threshold = 2)
-#'   D3 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                      dim = 0,threshold = 2)
-#'   D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                      dim = 0,threshold = 2)
+#'   D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D3 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D4 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
 #'   g <- list(D1,D2,D3,D4)
 #' 
 #'   # create response vector
-#'   y <- as.factor(c("circle","sphere","circle","sphere"))
+#'   y <- as.factor(c("circle","circle","sphere","sphere"))
 #' 
 #'   # fit model without cross validation
 #'   model_svm <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0),
@@ -1115,18 +1115,18 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
 #' if(require("TDA") & require("TDAstats"))
 #' {
 #'   # create four diagrams
-#'   D1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                      dim = 0,threshold = 2)
-#'   D2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                      dim = 0,threshold = 2)
-#'   D3 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                      dim = 0,threshold = 2)
-#'   D4 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                      dim = 0,threshold = 2)
+#'   D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D3 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D4 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
 #'   g <- list(D1,D2,D3,D4)
 #' 
 #'   # create response vector
-#'   y <- as.factor(c("circle","sphere","circle","sphere"))
+#'   y <- as.factor(c("circle","circle","sphere","sphere"))
 #' 
 #'   # fit model without cross validation
 #'   model_svm <- diagram_ksvm(diagrams = g,cv = 1,dim = c(0),
@@ -1134,10 +1134,10 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
 #'                             num_workers = 2)
 #'
 #'   # create two new diagrams
-#'   D5 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                      dim = 0,threshold = 2)
-#'   D6 <- TDAstats::calculate_homology(TDA::circleUnif(n = 10,r = 1),
-#'                                      dim = 0,threshold = 2)
+#'   D5 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
+#'   D6 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,20),],
+#'                       dim = 1,threshold = 2)
 #'   g_new <- list(D5,D6)
 #' 
 #'   # predict with precomputed Gram matrix
