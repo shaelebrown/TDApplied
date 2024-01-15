@@ -14,7 +14,7 @@ test_that("diagram_distance detects incorrect parameters correctly",{
 })
 
 test_that("diagram_distance can accept inputs from either TDA/TDAstats homology output or diagram_to_df function, with or without cycle location",{
-  
+
   skip_if_not_installed("TDA")
   skip_if_not_installed("TDAstats")
   D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
@@ -29,7 +29,7 @@ test_that("diagram_distance can accept inputs from either TDA/TDAstats homology 
   expect_gte(diagram_distance(D1 = D1,D2 = diagram_to_df(D3),dim = 1),0)
   expect_gte(diagram_distance(D1 = D1,D2 = D4,dim = 1),0)
   expect_error(diagram_distance(D1 = D1,D2 = D2,dim = 0),"Inf")
-  
+
 })
 
 test_that("diagram_distance is computing correctly",{
@@ -52,7 +52,7 @@ test_that("diagram_distance is computing correctly",{
   expect_identical(diagram_distance(D1 = D1,D2 = D2,dim = 1,p = Inf,distance = "wasserstein"),0.5)
   expect_identical(diagram_distance(D1 = D2,D2 = D1,dim = 1,p = 2,distance = "wasserstein"),sqrt(0.5^2))
   expect_identical(diagram_distance(D1 = D2,D2 = D1,dim = 1,p = Inf,distance = "wasserstein"),0.5)
-
+  
   # this example was picked the TDA function wasserstein disagrees with the actual minimum values
   # for p = 2,3, but diagram_distance gets the correct answer
   D1 = data.frame(dimension = c(0,0),birth = c(0,0),death = c(0.9640122,1.3467424))
@@ -84,7 +84,7 @@ test_that("diagram_distance is computing correctly",{
   }
   D1_subset <- rbind(D1_subset,diag2)
   D2_subset <- rbind(D2_subset,diag1)
-
+  
   dist_mat_bottleneck <- as.matrix(rdist::cdist(D1_subset,D2_subset,metric = "maximum"))
   dist_mat_2 <- dist_mat_bottleneck^2
   dist_mat_3 <- dist_mat_bottleneck^3

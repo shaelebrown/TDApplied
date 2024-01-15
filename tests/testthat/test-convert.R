@@ -1,6 +1,6 @@
 
 test_that("diagram_to_df can accept the right kinds of input",{
-  
+
   skip_if_not_installed("TDA")
   skip_if_not_installed("TDAstats")
   D <- TDA::circleUnif(n = 20,r = 1)

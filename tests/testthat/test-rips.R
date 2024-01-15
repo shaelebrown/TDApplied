@@ -22,6 +22,7 @@ test_that("vr_graphs is working properly",{
   
   # simulate data from the unit circle and calculate
   # its diagram
+  skip_if_not_installed("TDA")
   df <- TDA::circleUnif(n = 25)
   diag <- TDA::ripsDiag(df,maxdimension = 1,maxscale = 2)
 
@@ -63,6 +64,7 @@ test_that("vr_graphs is working properly",{
 
 test_that("plot_vr_graph can detect incorrect parameters properly",{
   
+  skip_if_not_installed("TDA")
   skip_if_not_installed("igraph")
   
   expect_error(plot_vr_graph(graphs = c()),"vr_graphs")
@@ -123,6 +125,9 @@ test_that("plot_vr_graph can detect incorrect parameters properly",{
 })
 
 test_that("plot_vr_graph is working properly",{
+  
+  skip_if_not_installed("TDA")
+  skip_if_not_installed("igraph")
   
   # simulate data from the unit circle and calculate
   # its diagram
