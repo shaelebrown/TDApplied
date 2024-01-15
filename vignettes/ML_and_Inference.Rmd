@@ -78,9 +78,9 @@ Let's get started!
 
 The main tool of topological data analysis is called *persistent homology* [@PHoriginal;@ComputingPH]. Persistent homology starts with either data points and a distance function, or a distance matrix storing distance values between data points. It assumes that these points arise from a dataset with some kind of "shape". This "shape" has certain features that exist at various scales, but sampling induces noise in these features. Persistent homology aims to describe certain mathematical features of this underlying shape, by forming approximations to the shape at various distance scales. The mathematical features which are tracked include clusters (connected components), loops (ellipses) and voids (spheres), which are examples of *cycles* (i.e. different types of holes). The *homological dimension* of these features are 0, 1 and 2, respectively. What is interesting about these particular mathematical features is that they can tell us where our data is not, which is extremely important information which other data analysis methods cannot provide.
 
-```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center',eval = requireNamespace("TDA")}
+```{r,echo = F,fig.height = 3,fig.width = 7,fig.align = 'center',eval = requireNamespace("TDAstats")}
 par(mfrow = c(1,4))
-circ <- TDA::circleUnif(n = 50,r = 1)
+circ <- TDAstats::circle2d[sample(1:100,50),]
 plot(x = circ[,1],y = circ[,2],main = "Approximation 1:\nindividual data points",xlab = "",ylab = "",las = 1)
 plot(x = circ[,1],y = circ[,2],main = "Approximation 2:\nnot a loop",xlab = "",ylab = "",las = 1)
 for(i in 1:(nrow(circ)-1))
@@ -169,16 +169,23 @@ Note that the installation status of Python for `PyH` is checked using the funct
 
 The most typical data structure used in R for data science is a data frame. The output of the `PyH` function is a data frame (unless representatives are calculated, in which case the output is a list containing a data frame and other information), but the persistence diagrams calculated from the popular R packages **TDA** [@R-TDA] and **TDAstats** [@R-TDAstats] are not stored in data frames, making subsequent machine learning and inference analyses of these diagrams challenging. In order to solve this problem the **TDApplied** function `diagram_to_df` can convert **TDA**/**TDAstats** persistence diagrams into data frames:
 
-```{r,echo = T,eval = requireNamespace("TDAstats") & requireNamespace("TDA")}
+```{r,echo = T,eval = F}
 # convert TDA diagram into data frame
 diag1 <- TDA::ripsDiag(circ,maxdimension = 1,maxscale = 2,library = "dionysus")
 diag1_df <- diagram_to_df(diag1)
 class(diag1_df)
-
+```
+```{r,echo = F}
+c("data.frame")
+```
+```{r,echo = T,eval = F}
 # convert TDAstats diagram into data frame
 diag2 <- TDAstats::calculate_homology(circ,dim = 1,threshold = 2)
 diag2_df <- diagram_to_df(diag1)
 class(diag2_df)
+```
+```{r,echo = F}
+c("data.frame")
 ```
 
 When a persistence diagram is calculated with either `PyH`, `ripsDiag` or `alphaComplexDiag` and contains representatives, `diagram_to_df` only returns the persistence diagram data frame (i.e. the representatives are ignored).
@@ -612,34 +619,34 @@ for(i in vertex_inds)
 
 These visualizations can help determine which points are part of a representative and what the dataset structure is at various scales.
 
-## Analyzing Multiple Representatives with **TDApplied**'s `analyze_representatives` Function
+<!-- ## Analyzing Multiple Representatives with **TDApplied**'s `analyze_representatives` Function -->
 
-Now that we have tools for visualizing and interpreting individual representative (co)cycles, we will introduce a tool for interpreting multiple representatives. Consider a scenario when we have multiple datasets tracking the same data points - for example, 100 datasets representing  correlations of the same 50 stock's values across 100 distinct temporal windows. Representative cycles of each individual dataset can reveal periodic covariance of the stock values, but are the cycles representing the same feature across datasets? One way we can approach this problem is to determine if roughly the same data points (in our example, stocks) contribute (i.e. are members of) all the representative cycles across the datasets. Intuitively, if all representatives involved roughly the same points, then they represent the same feature. On the other hand, there could be multiple signatures of representatives (based on their members) or the representatives may be completely disjoint (or even not significant).
+<!-- Now that we have tools for visualizing and interpreting individual representative (co)cycles, we will introduce a tool for interpreting multiple representatives. Consider a scenario when we have multiple datasets tracking the same data points - for example, 100 datasets representing  correlations of the same 50 stock's values across 100 distinct temporal windows. Representative cycles of each individual dataset can reveal periodic covariance of the stock values, but are the cycles representing the same feature across datasets? One way we can approach this problem is to determine if roughly the same data points (in our example, stocks) contribute (i.e. are members of) all the representative cycles across the datasets. Intuitively, if all representatives involved roughly the same points, then they represent the same feature. On the other hand, there could be multiple signatures of representatives (based on their members) or the representatives may be completely disjoint (or even not significant). -->
 
-We can use the function `analyze_representatives` to plot and analyze the memberships of representatives computed from distance matrices (this ensures that data point i is considered the same across all datasets). For example, we can create 10 copies of the circ dataset with small amounts of Gaussian noise to its points, and should be able to analyze the resulting 10 loop representatives to see that they are basically the same:
+<!-- We can use the function `analyze_representatives` to plot and analyze the memberships of representatives computed from distance matrices (this ensures that data point i is considered the same across all datasets). For example, we can create 10 copies of the circ dataset with small amounts of Gaussian noise to its points, and should be able to analyze the resulting 10 loop representatives to see that they are basically the same: -->
 
-```{r,eval = requireNamespace("TDA"),fig.height = 5,fig.width = 5,fig.align = 'center'}
-# create 10 copies with added Gaussian noise and
-# calculate their diagrams from distance matrices
-circs <- lapply(X = 1:10,FUN = function(X){
-   df <- circ
-   df$x <- df$x + rnorm(n = 50,sd = 0.05)
-   df$y <- df$y + rnorm(n = 50,sd = 0.05)
-   diag <- bootstrap_persistence_thresholds(X = as.matrix(dist(df)),
-                                            FUN_diag = "ripsDiag",
-                                            FUN_boot = "ripsDiag",maxdim = 1,
-                                            thresh = 2,distance_mat = T,
-                                            calculate_representatives = T,
-                                            return_subsetted = T)
-   return(diag)
-})
+<!-- ```{r,eval = requireNamespace("TDA"),fig.height = 5,fig.width = 5,fig.align = 'center'} -->
+<!-- # create 10 copies with added Gaussian noise and -->
+<!-- # calculate their diagrams from distance matrices -->
+<!-- circs <- lapply(X = 1:10,FUN = function(X){ -->
+<!--    df <- circ -->
+<!--    df$x <- df$x + rnorm(n = 50,sd = 0.05) -->
+<!--    df$y <- df$y + rnorm(n = 50,sd = 0.05) -->
+<!--    diag <- bootstrap_persistence_thresholds(X = as.matrix(dist(df)), -->
+<!--                                             FUN_diag = "ripsDiag", -->
+<!--                                             FUN_boot = "ripsDiag",maxdim = 1, -->
+<!--                                             thresh = 2,distance_mat = T, -->
+<!--                                             calculate_representatives = T, -->
+<!--                                             return_subsetted = T) -->
+<!--    return(diag) -->
+<!-- }) -->
 
-# plot the membership matrix of loop representatives
-membership_mat <- analyze_representatives(diagrams = circs,
-                                          dim = 1,num_points = 50)
-```
+<!-- # plot the membership matrix of loop representatives -->
+<!-- membership_mat <- analyze_representatives(diagrams = circs, -->
+<!--                                           dim = 1,num_points = 50) -->
+<!-- ``` -->
 
-The rows of this heatmap are the representatives calculated from the input diagrams, and the columns are the (shared across dataset) data points. The matrix values are membership - is this point in this representative. A dendrogram can help us interpret how many types of representatives exist in our datasets, but visually we can also see that there is a strong common signature across all the loop representatives including roughly the first 13 data points. This significant overlap suggests that the loop representatives are all representing the same topological feature across datasets.
+<!-- The rows of this heatmap are the representatives calculated from the input diagrams, and the columns are the (shared across dataset) data points. The matrix values are membership - is this point in this representative. A dendrogram can help us interpret how many types of representatives exist in our datasets, but visually we can also see that there is a strong common signature across all the loop representatives including roughly the first 13 data points. This significant overlap suggests that the loop representatives are all representing the same topological feature across datasets. -->
 
 # Hypothesis Testing
 

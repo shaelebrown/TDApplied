@@ -26,6 +26,7 @@ Suggests:
     knitr,
     testthat (>= 3.0.0),
     TDAstats,
+    TDA,
     reticulate,
     igraph
 LinkingTo: Rcpp
