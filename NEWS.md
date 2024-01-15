@@ -8,6 +8,7 @@ Please see those for more details.
 - all CRAN issues for this update were caused by the rho parameter, which invokes external C++ code. We therefore fixed these issues by removing the rho parameter from the predict_diagram_kpca and diagram_distance examples, from all tests and in the ML_and_inference.Rmd file. This parameter has been kept and is still tested, just not tested on CRAN
 - sped up the independence_test example by only showing the Gram-matrix approach
 - removed warnings from benchmarking plots in Speed.Rmd
+- removed dependency on package TDA which is currently unavailable on CRAN
 
 # 3.0.1
 - same updates as 3.0.0 but with more efficient vignette building

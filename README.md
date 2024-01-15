@@ -49,7 +49,7 @@ To install the stable version of this R package from CRAN:
 To cite this package in publication please use the BibTex entry:
 
 @Manual{TDApplied, title = {TDApplied: Machine Learning and Inference
-for Topological Data Analysis}, author = {Shael Brown and Dr. Reza
+for Topological Data Analysis}, author = {Shael Brown and Dr. Reza
 Farivar}, note = {R package version 3.0.0}, url =
 {<https://github.com/shaelebrown/TDApplied>}, }
 
@@ -71,11 +71,11 @@ REFERENCES.bib file in the vignette directory.
     topological features in a dataset.
 2.  Machine learning. The functions `diagram_mds`, `diagram_kpca` and
     `predict_diagram_kpca` can be used to project a group of diagrams
-    into a low dimensional space (i.e. dimension reduction). The
+    into a low dimensional space (i.e. dimension reduction). The
     functions `diagram_kkmeans` and `predict_diagram_kkmeans` can be
     used to cluster a group of diagrams. The functions `diagram_ksvm`
     and `predict_diagram_ksvm` can be used to link, through a prediction
-    function, persistence diagrams and an outcome (i.e. dependent)
+    function, persistence diagrams and an outcome (i.e. dependent)
     variable.
 3.  Statistics. The `permutation_test` function acts like an ANOVA test
     for identifying group differences of persistence diagrams. The
@@ -90,30 +90,27 @@ for carrying out applied analyses of persistence diagrams.
 
 ## Example Code
 
-This example creates nine persistence diagrams, plots one and projects
-all nine into 2D space using multidimensional scaling (MDS) to
+This example creates six persistence diagrams, plots one and projects
+all six into 2D space using multidimensional scaling (MDS) to
 demonstrate **TDApplied** functionalities.
 
 ``` r
 library(TDApplied)
 
-# create 9 persistence diagrams
-# 3 from circles, 3 from tori and 3 from spheres
-circ1 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50),dim = 1,threshold = 1)
-circ2 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50),dim = 1,threshold = 1)
-circ3 <- TDAstats::calculate_homology(TDA::circleUnif(n = 50),dim = 1,threshold = 1)
-torus1 <- TDAstats::calculate_homology(TDA::torusUnif(n = 50,a = 0.25,c = 1),dim = 1,threshold = 1)
-torus2 <- TDAstats::calculate_homology(TDA::torusUnif(n = 50,a = 0.25,c = 1),dim = 1,threshold = 1)
-torus3 <- TDAstats::calculate_homology(TDA::torusUnif(n = 50,a = 0.25,c = 1),dim = 1,threshold = 1)
-sphere1 <- TDAstats::calculate_homology(TDA::sphereUnif(n = 50,d = 2),dim = 1,threshold = 1)
-sphere2 <- TDAstats::calculate_homology(TDA::sphereUnif(n = 50,d = 2),dim = 1,threshold = 1)
-sphere3 <- TDAstats::calculate_homology(TDA::sphereUnif(n = 50,d = 2),dim = 1,threshold = 1)
+# create 6 persistence diagrams
+# 3 from circles and 3 from spheres
+circ1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,size = 50),],dim = 1,threshold = 2)
+circ2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,size = 50),],dim = 1,threshold = 2)
+circ3 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,size = 50),],dim = 1,threshold = 2)
+sphere1 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,size = 50),],dim = 1,threshold = 2)
+sphere2 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,size = 50),],dim = 1,threshold = 2)
+sphere3 <- TDAstats::calculate_homology(TDAstats::sphere3d[sample(1:100,size = 50),],dim = 1,threshold = 2)
 
 # plot a diagram
 plot_diagram(circ1,title = "Circle 1")
 
 # project into 2D and plot
-proj_2D <- diagram_mds(list(circ1,circ2,circ3,torus1,torus2,torus3,sphere1,sphere2,sphere3),dim = 1,k = 2)
+proj_2D <- diagram_mds(list(circ1,circ2,circ3,sphere1,sphere2,sphere3),dim = 1,k = 2)
 plot(x = proj_2D[,1],y = proj_2D[,2])
 ```
 
