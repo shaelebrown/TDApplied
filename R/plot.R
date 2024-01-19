@@ -13,7 +13,7 @@
 #' \code{\link{bootstrap_persistence_thresholds}}. Points whose persistence are greater than or equal to their dimension's
 #' threshold will be plotted in their dimension's color, and in gray otherwise.
 #' 
-#' @param D a persistence diagram, either outputted from either a persistent homology homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}} or from \code{\link{diagram_to_df}}, with
+#' @param D a persistence diagram, either outputted from either a persistent homology homology calculation like ripsDiag/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}} or from \code{\link{diagram_to_df}}, with
 #' maximum dimension at most 12.
 #' @param title the character string plot title, default NULL.
 #' @param max_radius the x and y limits of the plot are defined as `c(0,max_radius)`, and the default value of `max_radius` is the maximum death value in `D`.

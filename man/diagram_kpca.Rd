@@ -17,7 +17,7 @@ diagram_kpca(
 )
 }
 \arguments{
-\item{diagrams}{a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.}
+\item{diagrams}{a list of persistence diagrams which are either the output of a persistent homology calculation like ripsDiag/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.}
 
 \item{K}{an optional precomputed Gram matrix of the persistence diagrams in `diagrams`, default NULL.}
 

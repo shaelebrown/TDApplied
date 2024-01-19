@@ -18,7 +18,7 @@ analyze_representatives(
 )
 }
 \arguments{
-\item{diagrams}{a list of persistence diagrams, either the output of persistent homology calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, \code{\link{diagram_to_df}} or \code{\link{bootstrap_persistence_thresholds}}.}
+\item{diagrams}{a list of persistence diagrams, either the output of persistent homology calculations like ripsDiag/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, \code{\link{diagram_to_df}} or \code{\link{bootstrap_persistence_thresholds}}.}
 
 \item{dim}{the integer homological dimension of representatives to consider.}
 

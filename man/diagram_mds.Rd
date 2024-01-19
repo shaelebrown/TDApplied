@@ -21,7 +21,7 @@ diagram_mds(
 )
 }
 \arguments{
-\item{diagrams}{a list of n>=2 persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `diagrams` and `D` need to be supplied.}
+\item{diagrams}{a list of n>=2 persistence diagrams which are either the output of a persistent homology calculation like ripsDiag/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `diagrams` and `D` need to be supplied.}
 
 \item{D}{an optional precomputed distance matrix of persistence diagrams, default NULL. If not NULL then `diagrams` parameter does not need to be supplied.}
 

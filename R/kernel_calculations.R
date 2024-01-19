@@ -3,7 +3,7 @@
 #'
 #' Returns the persistence Fisher kernel value between a pair of persistence diagrams
 #' in a particular homological dimension, each of which is either the output from a \code{\link{diagram_to_df}} 
-#' function call or from a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}.
+#' function call or from a persistent homology calculation like ripsDiag/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}.
 #'
 #' The persistence Fisher kernel is calculated from the Fisher information metric according to the formula
 #' \eqn{k_{PF}(D_1,D_2) = exp(-t*d_{FIM}(D_1,D_2))}, resembling a radial basis kernel for standard
@@ -60,7 +60,7 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1,rho = NULL){
 #' Gram matrices are used in downstream analyses, like in the `diagram_kkmeans`, `diagram_nearest_cluster`,`diagram_kpca`, 
 #' `predict_diagram_kpca`, `predict_diagram_ksvm` and `independence_test` functions.
 #'
-#' @param diagrams a list of persistence diagrams, where each diagram is either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
+#' @param diagrams a list of persistence diagrams, where each diagram is either the output of a persistent homology calculation like ripsDiag/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
 #' @param other_diagrams either NULL (default) or another list of persistence diagrams to compute a cross-Gram matrix.
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param sigma a positive number representing the bandwidth for the Fisher information metric, default 1.

@@ -405,8 +405,8 @@ PyH <- function(X,maxdim = 1,thresh,distance_mat = FALSE,ripser,ignore_infinite_
 #' The persim bottleneck function behaves the same as the diagram_distance bottleneck function, but the wasserstein
 #' functions are slightly different. The formulas being used are different.
 #' 
-#' @param D1 the first persistence diagram, either computed from a TDA/TDAstats function like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or such an object converted to a data frame with \code{\link{diagram_to_df}}.
-#' @param D2 the second persistence diagram, either computed from TDA/TDAstats function like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}, or such an object converted to a data frame with \code{\link{diagram_to_df}}.
+#' @param D1 the first persistence diagram, either computed from a TDA/TDAstats function like ripsDiag/\code{\link[TDAstats]{calculate_homology}}, or such an object converted to a data frame with \code{\link{diagram_to_df}}.
+#' @param D2 the second persistence diagram, either computed from TDA/TDAstats function like ripsDiag/\code{\link[TDAstats]{calculate_homology}}, or such an object converted to a data frame with \code{\link{diagram_to_df}}.
 #' @param dim the non-negative integer homological dimension in which to calculate distances, default 0.
 #' @param p a number representing the wasserstein power parameter, at least 1 and default 2.
 #' @param ripser the ripser python module.

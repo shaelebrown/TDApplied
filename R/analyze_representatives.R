@@ -18,7 +18,7 @@
 #' in the heatmap, a dataframe `boxed_reps` can be supplied with two integer columns - 'diagram' and 'rep'. For example, if we wish to draw a box for DX[Y] then we
 #' add the row (diagram = X,rep = Y) to `boxed_reps`. If `d` is supplied then it will be used to cluster the representatives, based on the distances in `d`.
 #'
-#' @param diagrams a list of persistence diagrams, either the output of persistent homology calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, \code{\link{diagram_to_df}} or \code{\link{bootstrap_persistence_thresholds}}.
+#' @param diagrams a list of persistence diagrams, either the output of persistent homology calculations like ripsDiag/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, \code{\link{diagram_to_df}} or \code{\link{bootstrap_persistence_thresholds}}.
 #' @param dim the integer homological dimension of representatives to consider.
 #' @param num_points the integer number of data points in all the original datasets (from which the diagrams were calculated).
 #' @param plot_heatmap a boolean representing if a heatmap of data point membership similarity of the representatives should be plotted, default `TRUE`. A dendrogram of hierarchical clustering is plotted, and rows (representatives) are sorted according to this clustering.

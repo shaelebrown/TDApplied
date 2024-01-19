@@ -25,7 +25,7 @@ the numeric kernel value.
 \description{
 Returns the persistence Fisher kernel value between a pair of persistence diagrams
 in a particular homological dimension, each of which is either the output from a \code{\link{diagram_to_df}} 
-function call or from a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}.
+function call or from a persistent homology calculation like ripsDiag/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}.
 }
 \details{
 The persistence Fisher kernel is calculated from the Fisher information metric according to the formula

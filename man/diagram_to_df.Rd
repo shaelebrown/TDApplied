@@ -7,7 +7,7 @@
 diagram_to_df(d)
 }
 \arguments{
-\item{d}{the output of a TDA/TDAstats homology calculation, like \code{\link[TDA]{ripsDiag}} or \code{\link[TDAstats]{calculate_homology}}.}
+\item{d}{the output of a TDA/TDAstats homology calculation, like ripsDiag or \code{\link[TDAstats]{calculate_homology}}.}
 }
 \value{
 a 3-column data frame, with each row representing a topological feature. The first column is the feature dimension (a non-negative integer), the second column is the birth radius of the feature and the third column is the death radius.
@@ -19,7 +19,7 @@ outputs into a data frame either for further usage in this package or
 for personalized analyses.
 }
 \details{
-If a diagram is constructed using a TDA function like \code{\link[TDA]{ripsDiag}}
+If a diagram is constructed using a TDA function like ripsDiag
 with the `location` parameter set to true then the return value will ignore the location information.
 }
 \examples{

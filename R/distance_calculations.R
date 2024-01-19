@@ -2,7 +2,7 @@
 #' Calculate distance between a pair of persistence diagrams.
 #'
 #' Calculates the distance between a pair of persistence diagrams, either the output from a \code{\link{diagram_to_df}} function call
-#' or from a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}},
+#' or from a persistent homology calculation like ripsDiag/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}},
 #' in a particular homological dimension.
 #'
 #' The most common distance calculations between persistence diagrams
@@ -312,7 +312,7 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
 #' approximating the Fisher information metric this is only recommended when the persistence diagrams
 #' contain many points and when the number of available cores is small.
 #'
-#' @param diagrams a list of persistence diagrams, either the output of persistent homology calculations like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
+#' @param diagrams a list of persistence diagrams, either the output of persistent homology calculations like ripsDiag/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
 #' @param other_diagrams either NULL (default) or another list of persistence diagrams to compute a cross-distance matrix.
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param distance a character determining which metric to use, either "wasserstein" (default) or "fisher".

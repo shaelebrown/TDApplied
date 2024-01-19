@@ -9,7 +9,7 @@
 #' Returns the output of \code{\link[stats]{cmdscale}} on the desired distance matrix of a group of persistence diagrams
 #' in a particular dimension. If `distance` is "fisher" then `sigma` must not be NULL.
 #'
-#' @param diagrams a list of n>=2 persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `diagrams` and `D` need to be supplied.
+#' @param diagrams a list of n>=2 persistence diagrams which are either the output of a persistent homology calculation like ripsDiag/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `diagrams` and `D` need to be supplied.
 #' @param D an optional precomputed distance matrix of persistence diagrams, default NULL. If not NULL then `diagrams` parameter does not need to be supplied.
 #' @param k the dimension of the space which the data are to be represented in; must be in \{1,2,...,n-1\}.
 #' @param distance a string representing the desired distance metric to be used, either 'wasserstein' (default) or 'fisher'.
@@ -109,7 +109,7 @@ diagram_mds <- function(diagrams,D = NULL,k = 2,distance = "wasserstein",dim = 0
 #' to estimate cluster labels for new persistence diagrams in the `predict_diagram_kkmeans`
 #' function.
 #'
-#' @param diagrams a list of n>=2 persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or the \code{\link{diagram_to_df}} function.
+#' @param diagrams a list of n>=2 persistence diagrams which are either the output of a persistent homology calculation like ripsDiag/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or the \code{\link{diagram_to_df}} function.
 #' @param K an optional precomputed Gram matrix of persistence diagrams, default NULL.
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
@@ -256,7 +256,7 @@ diagram_kkmeans <- function(diagrams,K = NULL,centers,dim = 0,t = 1,sigma = 1,rh
 #' Returns the nearest (highest kernel value) \code{\link[kernlab]{kkmeans}} cluster center label for new persistence diagrams.
 #' This allows for reusing old cluster models for new tasks, or to perform cross validation.
 #'
-#' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `new_diagrams` and `K` need to be supplied.
+#' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like ripsDiag/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `new_diagrams` and `K` need to be supplied.
 #' @param K an optional precomputed cross Gram matrix of the new diagrams and the diagrams used in `clustering`, default NULL. If not NULL then `new_diagrams` does not need to be supplied.
 #' @param clustering the output of a \code{\link{diagram_kkmeans}} function call, of class 'diagram_kkmeans'.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
@@ -365,7 +365,7 @@ predict_diagram_kkmeans <- function(new_diagrams,K = NULL,clustering,num_workers
 #' advantage of using \code{\link{diagram_kpca}} over \code{\link{diagram_mds}}. The embedding coordinates can also
 #' be used for further analysis, or simply as a data visualization tool for persistence diagrams.
 #'
-#' @param diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
+#' @param diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like ripsDiag/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
 #' @param K an optional precomputed Gram matrix of the persistence diagrams in `diagrams`, default NULL.
 #' @param dim the non-negative integer homological dimension in which the distance is to be computed, default 0.
 #' @param t a positive number representing the scale for the persistence Fisher kernel, default 1.
@@ -480,7 +480,7 @@ diagram_kpca <- function(diagrams,K = NULL,dim = 0,t = 1,sigma = 1,rho = NULL,fe
 #' Compute the location in low-dimensional space of each element of a list of new persistence diagrams using a
 #' previously-computed kernel PCA embedding (from the \code{\link{diagram_kpca}} function).
 #'
-#' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `new_diagrams` and `K` need to be supplied.
+#' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like ripsDiag/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `new_diagrams` and `K` need to be supplied.
 #' @param K an optional precomputed cross-Gram matrix of the new diagrams and the ones used in `embedding`, default NULL. If not NULL then `new_diagrams` does not need to be supplied.
 #' @param embedding the output of a \code{\link{diagram_kpca}} function call, of class 'diagram_kpca'.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
@@ -603,7 +603,7 @@ predict_diagram_kpca <- function(new_diagrams,K = NULL,embedding,num_workers = p
 #' cross-validation is performed then the mean error across folds is still recorded, but the best `t` parameter
 #' across all folds is recorded in the cv results table.
 #'
-#' @param diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
+#' @param diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like ripsDiag/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}.
 #' @param cv a positive number at most the length of `diagrams` which determines the number of cross validation splits to be performed (default 1, aka no cross-validation). If `prob.model` is TRUE then cv is set to 1 since kernlab performs 3-fold CV internally in this case. When performing classification, classes are balanced within each cv fold.
 #' @param dim a non-negative integer vector of homological dimensions in which the model is to be fit.
 #' @param t either a vector of positive numbers representing the grid of values for the scale of the persistence Fisher kernel or NULL, default 1. If NULL then t is selected automatically, see details.
@@ -1100,7 +1100,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
 #' This function is a wrapper of the kernlab \code{\link{predict}} function.
 #'
 #'
-#' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `new_diagrams` and `K` need to be supplied.
+#' @param new_diagrams a list of persistence diagrams which are either the output of a persistent homology calculation like ripsDiag/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}}, or \code{\link{diagram_to_df}}. Only one of `new_diagrams` and `K` need to be supplied.
 #' @param model the output of a \code{\link{diagram_ksvm}} function call, of class 'diagram_ksvm'.
 #' @param K an optional cross-Gram matrix of the new diagrams and the diagrams in `model`, default NULL. If not NULL then `new_diagrams` does not need to be supplied.
 #' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.

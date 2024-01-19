@@ -34,7 +34,7 @@ the numeric value of the distance calculation.
 }
 \description{
 Calculates the distance between a pair of persistence diagrams, either the output from a \code{\link{diagram_to_df}} function call
-or from a persistent homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}},
+or from a persistent homology calculation like ripsDiag/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}},
 in a particular homological dimension.
 }
 \details{

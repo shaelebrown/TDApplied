@@ -13,7 +13,7 @@ plot_diagram(
 )
 }
 \arguments{
-\item{D}{a persistence diagram, either outputted from either a persistent homology homology calculation like \code{\link[TDA]{ripsDiag}}/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}} or from \code{\link{diagram_to_df}}, with
+\item{D}{a persistence diagram, either outputted from either a persistent homology homology calculation like ripsDiag/\code{\link[TDAstats]{calculate_homology}}/\code{\link{PyH}} or from \code{\link{diagram_to_df}}, with
 maximum dimension at most 12.}
 
 \item{title}{the character string plot title, default NULL.}

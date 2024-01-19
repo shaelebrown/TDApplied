@@ -2,12 +2,12 @@
 title: "TDApplied Theory and Practice"
 author: "Shael Brown and Dr. Reza Farivar"
 output: 
-  rmarkdown::html_document:
+  rmarkdown::html_document: 
     fig_caption: yes
 vignette: >
   %\VignetteIndexEntry{TDApplied Theory and Practice}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
 bibliography: REFERENCES.bib
 ---
 
