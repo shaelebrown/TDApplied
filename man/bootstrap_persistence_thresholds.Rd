@@ -84,7 +84,9 @@ or the p-values must be less than `alpha`, set `p_less_than_alpha` to `TRUE`. Th
 possible p-value is always 1/(`num_samples` + 1).
 Note that since \code{\link[TDAstats]{calculate_homology}} 
 can ignore the longest-lived cluster, fewer "real" clusters may be found. To avoid this possibility
-try setting `FUN_diag` equal to 'ripsDiag'.
+try setting `FUN_diag` equal to 'ripsDiag'. Please note that due to the TDA package no longer being available on CRAN,
+if `FUN_diag` or `FUN_boot` are 'ripsDiag' then `bootstrap_persistence_thresholds` will look for the ripsDiag function in the global environment, 
+so the TDA package should be attached with `library("TDA")` prior to use.
 }
 \examples{
 

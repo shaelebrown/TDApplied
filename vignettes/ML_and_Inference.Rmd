@@ -167,7 +167,7 @@ Note that the installation status of Python for `PyH` is checked using the funct
 
 ## Converting Diagrams to DataFrames with **TDApplied**'s `diagram_to_df` Function
 
-The most typical data structure used in R for data science is a data frame. The output of the `PyH` function is a data frame (unless representatives are calculated, in which case the output is a list containing a data frame and other information), but the persistence diagrams calculated from the popular R packages **TDA** [@R-TDA] and **TDAstats** [@R-TDAstats] are not stored in data frames, making subsequent machine learning and inference analyses of these diagrams challenging. In order to solve this problem the **TDApplied** function `diagram_to_df` can convert **TDA**/**TDAstats** persistence diagrams into data frames:
+The most typical data structure used in R for data science is a data frame. The output of the `PyH` function is a data frame (unless representatives are calculated, in which case the output is a list containing a data frame and other information), but the persistence diagrams calculated from the popular R packages **TDA** [@R-TDA] and **TDAstats** [@R-TDAstats] are not stored in data frames, making subsequent machine learning and inference analyses of these diagrams challenging. Since In order to solve this problem the **TDApplied** function `diagram_to_df` can convert **TDA**/**TDAstats** persistence diagrams into data frames:
 
 ```{r,echo = T,eval = F}
 # convert TDA diagram into data frame
@@ -378,13 +378,14 @@ Like in [@Robinson_Turner] we can calculate the p-value for a feature as $p = \f
 
 The function `bootstrap_persistence_thresholds` can be used to determine these persistence thresholds. Here is an example for the circ dataset, and the results can be plotted with the `plot_diagram` function (with overlaid p-values using the graphics `text` function):
 
-```{r,fig.height = 4,fig.width = 8,fig.align = 'center'}
+```{r,fig.height = 4,fig.width = 8,fig.align = 'center',eval = F}
 # calculate the bootstrapped persistence thresholds using 2 cores
 # and 30 iterations. We'll use the distance matrix of circ to
 # make representative cycles more comprehensible
+library("TDA")
 thresh <- bootstrap_persistence_thresholds(X = as.matrix(dist(circ)),
-                                           FUN_diag = "ripsDiag",
-                                           FUN_boot = "ripsDiag",
+                                           FUN_diag = 'ripsDiag',
+                                           FUN_boot = 'ripsDiag',
                                            distance_mat = T,
                                            maxdim = 1,thresh = 2,num_workers = 2,
                                            alpha = 0.05,num_samples = 30,
@@ -392,12 +393,23 @@ thresh <- bootstrap_persistence_thresholds(X = as.matrix(dist(circ)),
                                            calculate_representatives = T)
 diag <- thresh$diag
 
-# the p-value are 1/31 (about 0.032) and 2/31 (about 0.065) respectively 
-# which are the two smallest possible values when num_samples = 30 
-thresh$pvals
-
 # plot original diagram and thresholded diagram side-by-side, including
-# p-values
+# p-values. These p-values are the smallest possible (1/31) when there
+# are 30 bootstrap iterations
+par(mfrow = c(1,2))
+
+plot_diagram(diag,title = "Circ diagram")
+
+plot_diagram(diag,title = "Circ diagram with thresholds",
+             thresholds = thresh$thresholds)
+text(x = c(0.2,0.5),y = c(2,1.8),
+     paste("p = ",round(thresh$pvals,digits = 3)),
+     cex = 0.5)
+```
+
+```{r,fig.height = 4,fig.width = 8,fig.align = 'center',eval = T,echo = F}
+thresh <- readRDS("thresh.rds")
+diag <- thresh$diag
 par(mfrow = c(1,2))
 
 plot_diagram(diag,title = "Circ diagram")
@@ -413,7 +425,7 @@ text(x = c(0.2,0.5),y = c(2,1.8),
 par(mfrow = c(1,1))
 ```
 
-The bootstrap procedure can be done in parallel or sequentially, depending on which function is specified to calculate the persistence diagrams. There are three possible such functions -- **TDAstats**' `calculate_homology`, **TDA**'s `ripsDiag` and **TDApplied**'s `PyH`. The functions `calculate_homology` and `ripsDiag` can be run in parallel. However, `PyH` is the fastest function followed by `calculate_homology` based on our simulations. Both `ripsDiag` and `PyH` allow for the calculation of representative (co)cycles (i.e. the approximate location in the data of each topological feature), whereas `calculate_homology` does not. Therefore, our recommendation is to pick the function according to the following criteria: if a user can use the `PyH` function, then it should be used in all cases except for when the input data set is small, the machine has many available cores and the number of desired bootstrap iterations is large. Otherwise, use `calculate_homology` for speed or `ripsDiag` for calculating representatives. 
+To see why we needed to load the **TDA** package prior to the function call please see the `bootstrap_persistence_thresholds` function documentation. The bootstrap procedure can be done in parallel or sequentially, depending on which function is specified to calculate the persistence diagrams. There are three possible such functions -- **TDAstats**' `calculate_homology`, **TDA**'s `ripsDiag` and **TDApplied**'s `PyH`. The functions `calculate_homology` and `ripsDiag` can be run in parallel. However, `PyH` is the fastest function followed by `calculate_homology` based on our simulations. Both `ripsDiag` and `PyH` allow for the calculation of representative (co)cycles (i.e. the approximate location in the data of each topological feature), whereas `calculate_homology` does not. Therefore, our recommendation is to pick the function according to the following criteria: if a user can use the `PyH` function, then it should be used in all cases except for when the input data set is small, the machine has many available cores and the number of desired bootstrap iterations is large. Otherwise, use `calculate_homology` for speed or `ripsDiag` for calculating representatives. 
 
 ## Representative (Co)Cycles
 

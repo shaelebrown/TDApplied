@@ -31,7 +31,7 @@ This function is a wrapper of the kernlab \code{\link{predict}} function.
 }
 \examples{
 
-if(require("TDA") & require("TDAstats"))
+if(require("TDAstats"))
 {
   # create four diagrams
   D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],

@@ -9,7 +9,7 @@
 **TDApplied** is an R package for analyzing persistence diagrams using
 machine learning and statistical inference, and is designed to interface
 with persistent (co)homology calculations from the R packages **TDA**
-and **TDAstats**.
+and **TDAstats**. Please note that during the development of **TDApplied**, **TDA** was available on CRAN and therefore included in package examples and tests, however since that is presently not the case the dependency on **TDA** has been removed (and therefore some examples and tests have been modified) but **TDApplied** will still work with **TDA** computed persistence diagrams and **TDA** functions if a user already has a working version installed.
 
 R package **TDA**:
 

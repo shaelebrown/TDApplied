@@ -16,5 +16,6 @@
 * when checking on Mac release using devtools the build failed, with one failed test and one error in an example, but I was not able to reproduce these errors on my local Mac machine or in any other build.
 * some of the examples run for over 5s, however these examples have been made as small and fast as possible without throwing errors.
 * there are domain-specific words and author names in ML_and_Inference.Rmd which were flagged by devtools::check_spelling() but to the author's knowledge they are all spelled correctly.
+* the (suggests) dependency on TDA has been removed because TDA was removed from CRAN recently. As such many tests have been commented out (unchanged).
 
 

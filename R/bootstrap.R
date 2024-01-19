@@ -20,7 +20,9 @@
 #' possible p-value is always 1/(`num_samples` + 1).
 #' Note that since \code{\link[TDAstats]{calculate_homology}} 
 #' can ignore the longest-lived cluster, fewer "real" clusters may be found. To avoid this possibility
-#' try setting `FUN_diag` equal to 'ripsDiag'.
+#' try setting `FUN_diag` equal to 'ripsDiag'. Please note that due to the TDA package no longer being available on CRAN,
+#' if `FUN_diag` or `FUN_boot` are 'ripsDiag' then `bootstrap_persistence_thresholds` will look for the ripsDiag function in the global environment, 
+#' so the TDA package should be attached with `library("TDA")` prior to use.
 #'
 #' @param X the input dataset, must either be a matrix or data frame.
 #' @param FUN_diag a string representing the persistent homology function to use for calculating the full persistence diagram, either
@@ -185,10 +187,12 @@ bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",F
   }
   if(FUN_diag == 'ripsDiag')
   {
-    if(requireNamespace("TDA",quietly = T) == F)
-    {
-      stop("To use the \'ripsDiag\' function the package TDA must be installed.")
-    }
+    tryCatch(expr = {ripsDiag <- get("ripsDiag",envir = globalenv())},
+             error = function(e){
+               
+               stop("To use the \'ripsDiag\' function the package TDA must be attached in the global environment.")
+               
+             })
   }
   
   if(FUN_diag == "PyH")
@@ -236,10 +240,12 @@ bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",F
   }
   if(FUN_boot == 'ripsDiag')
   {
-    if(requireNamespace("TDA",quietly = T) == F)
-    {
-      stop("To use the \'ripsDiag\' function the package TDA must be installed.")
-    }
+    tryCatch(expr = {ripsDiag <- get("ripsDiag",envir = globalenv())},
+             error = function(e){
+               
+               stop("To use the \'ripsDiag\' function the package TDA must be attached in the global environment.")
+               
+             })
   }
   
   if(FUN_boot == "PyH")
@@ -313,7 +319,7 @@ bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",F
   }
   if(FUN_diag == "ripsDiag")
   {
-    diag <- TDA::ripsDiag(X = X,maxdimension = maxdim,maxscale = thresh,dist = ifelse(test = distance_mat == F,yes = "euclidean",no = "arbitrary"),library = "dionysus",location = calculate_representatives,printProgress = F)
+    diag <- ripsDiag(X = X,maxdimension = maxdim,maxscale = thresh,dist = ifelse(test = distance_mat == F,yes = "euclidean",no = "arbitrary"),library = "dionysus",location = calculate_representatives,printProgress = F)
     if(calculate_representatives == T)
     {
       representatives <- diag$cycleLocation
@@ -361,7 +367,7 @@ bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",F
       }
       if(FUN_boot == "ripsDiag")
       {
-        bootstrap_diag <- diagram_to_df(TDA::ripsDiag(X = X_sample,maxdimension = maxdim,maxscale = thresh,dist = ifelse(test = distance_mat == F,yes = "euclidean",no = "arbitrary"),library = "dionysus",location = F,printProgress = F))
+        bootstrap_diag <- diagram_to_df(ripsDiag(X = X_sample,maxdimension = maxdim,maxscale = thresh,dist = ifelse(test = distance_mat == F,yes = "euclidean",no = "arbitrary"),library = "dionysus",location = F,printProgress = F))
       }
       
       # return bottleneck distance with original diagram in each dimension

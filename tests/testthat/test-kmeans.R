@@ -98,19 +98,19 @@ test_that("diagram_kkmeans is computing correctly",{
   
 })
 
-test_that("diagram_kkmeans can accept inputs from TDA, TDAstats and diagram_to_df",{
-
-  skip_if_not_installed("TDA")
-  skip_if_not_installed("TDAstats")
-
-  D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
-  D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)
-  D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
-  D4 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
-  expect_length(diagram_kkmeans(diagrams = list(D1,D2,D3,D4,D1,D1,D1,D2,D2,D2),centers = 2,dim = 1,num_workers = 2)$clustering@.Data,10)
-  expect_error(diagram_kkmeans(diagrams = list(D1,D2,D3,D4,D1,D1,D1,D2,D2,D2),centers = 2,dim = 0,num_workers = 2),"Inf")
-
-})
+# test_that("diagram_kkmeans can accept inputs from TDA, TDAstats and diagram_to_df",{
+# 
+#   skip_if_not_installed("TDA")
+#   skip_if_not_installed("TDAstats")
+# 
+#   D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
+#   D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)
+#   D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
+#   D4 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
+#   expect_length(diagram_kkmeans(diagrams = list(D1,D2,D3,D4,D1,D1,D1,D2,D2,D2),centers = 2,dim = 1,num_workers = 2)$clustering@.Data,10)
+#   expect_error(diagram_kkmeans(diagrams = list(D1,D2,D3,D4,D1,D1,D1,D2,D2,D2),centers = 2,dim = 0,num_workers = 2),"Inf")
+# 
+# })
 
 test_that("diagram_kkmeans can accept a precomputed Gram matrix",{
   
@@ -210,37 +210,37 @@ test_that("predict_diagram_kkmeans is computing correctly",{
   
 })
 
-test_that("predict_diagram_kkmeans can accept inputs from TDA, TDAstats and diagram_to_df",{
+# test_that("predict_diagram_kkmeans can accept inputs from TDA, TDAstats and diagram_to_df",{
+# 
+#   skip_if_not_installed("TDA")
+#   skip_if_not_installed("TDAstats")
+# 
+#   D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
+#   D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)
+#   D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
+#   D4 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
+#   dkk <- diagram_kkmeans(diagrams = list(D1,D1,D1,D2,D2,D2,D3,D3,D3,D4,D4,D4),centers = 2,dim = 1,num_workers = 2)
+#   expect_length(predict_diagram_kkmeans(new_diagrams = list(D1,D2,D3,D4),clustering = dkk,num_workers = 2),4)
+# 
+# })
 
-  skip_if_not_installed("TDA")
-  skip_if_not_installed("TDAstats")
-
-  D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
-  D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)
-  D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
-  D4 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
-  dkk <- diagram_kkmeans(diagrams = list(D1,D1,D1,D2,D2,D2,D3,D3,D3,D4,D4,D4),centers = 2,dim = 1,num_workers = 2)
-  expect_length(predict_diagram_kkmeans(new_diagrams = list(D1,D2,D3,D4),clustering = dkk,num_workers = 2),4)
-
-})
-
-test_that("predict_diagram_kkmeans can accept a precomputed Gram matrix",{
-
-  skip_if_not_installed("TDA")
-  skip_if_not_installed("TDAstats")
-
-  D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
-  D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)
-  D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
-  D4 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
-  K = gram_matrix(diagrams = list(D1,D2,D3,D4),other_diagrams = list(D1,D1,D1,D2,D2,D2,D3,D3,D3,D4,D4,D4),dim = 1,num_workers = 2)
-  dkk <- diagram_kkmeans(diagrams = list(D1,D1,D1,D2,D2,D2,D3,D3,D3,D4,D4,D4),centers = 2,dim = 1,num_workers = 2)
-  expect_length(predict_diagram_kkmeans(K = K,clustering = dkk,num_workers = 2),4)
-  expect_length(predict_diagram_kkmeans(new_diagrams = list(D1),clustering = dkk,num_workers = 2),1)
-  expect_identical(predict_diagram_kkmeans(K = K,clustering = dkk,num_workers = 2),predict_diagram_kkmeans(new_diagrams = list(D1,D2,D3,D4),clustering = dkk,num_workers = 2))
-
-  K = matrix(data = c(1,2,3),nrow = 3)
-  class(K) = "kernelMatrix"
-  expect_error(predict_diagram_kkmeans(K = K,clustering = dkk,num_workers = 2),"rows")
-
-})
+# test_that("predict_diagram_kkmeans can accept a precomputed Gram matrix",{
+# 
+#   skip_if_not_installed("TDA")
+#   skip_if_not_installed("TDAstats")
+# 
+#   D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
+#   D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)
+#   D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
+#   D4 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
+#   K = gram_matrix(diagrams = list(D1,D2,D3,D4),other_diagrams = list(D1,D1,D1,D2,D2,D2,D3,D3,D3,D4,D4,D4),dim = 1,num_workers = 2)
+#   dkk <- diagram_kkmeans(diagrams = list(D1,D1,D1,D2,D2,D2,D3,D3,D3,D4,D4,D4),centers = 2,dim = 1,num_workers = 2)
+#   expect_length(predict_diagram_kkmeans(K = K,clustering = dkk,num_workers = 2),4)
+#   expect_length(predict_diagram_kkmeans(new_diagrams = list(D1),clustering = dkk,num_workers = 2),1)
+#   expect_identical(predict_diagram_kkmeans(K = K,clustering = dkk,num_workers = 2),predict_diagram_kkmeans(new_diagrams = list(D1,D2,D3,D4),clustering = dkk,num_workers = 2))
+# 
+#   K = matrix(data = c(1,2,3),nrow = 3)
+#   class(K) = "kernelMatrix"
+#   expect_error(predict_diagram_kkmeans(K = K,clustering = dkk,num_workers = 2),"rows")
+# 
+# })

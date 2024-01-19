@@ -11,23 +11,23 @@ test_that("diagram_kernel detects incorrect parameters correctly",{
 
 })
 
-test_that("diagram_kernel can accept inputs from either TDA/TDAstats homology output or diagram_to_df function, with or without cycle location",{
-
-  skip_if_not_installed("TDA")
-  skip_if_not_installed("TDAstats")
-  D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
-  D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)
-  D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
-  D4 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
-  expect_gte(diagram_kernel(D1 = D1,D2 = D2,dim = 1),0)
-  expect_gte(diagram_kernel(D1 = diagram_to_df(D1),D2 = D2,dim = 1),0)
-  expect_gte(diagram_kernel(D1 = D1,D2 = diagram_to_df(D2),dim = 1),0)
-  expect_gte(diagram_kernel(D1 = D3,D2 = diagram_to_df(D2),dim = 1),0)
-  expect_gte(diagram_kernel(D1 = D1,D2 = diagram_to_df(D3),dim = 1),0)
-  expect_gte(diagram_kernel(D1 = D1,D2 = D4,dim = 1),0)
-  expect_error(diagram_kernel(D1 = D1,D2 = D2,dim = 0),"Inf")
-
-})
+# test_that("diagram_kernel can accept inputs from either TDA/TDAstats homology output or diagram_to_df function, with or without cycle location",{
+# 
+#   skip_if_not_installed("TDA")
+#   skip_if_not_installed("TDAstats")
+#   D1 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1)
+#   D2 = TDA::alphaComplexDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxdimension = 1)
+#   D3 = TDA::ripsDiag(data.frame(x = runif(50,0,1),y = runif(50,0,1)),maxscale = 1,maxdimension = 1,library = "dionysus",location = T)
+#   D4 = TDAstats::calculate_homology(data.frame(x = runif(50,0,1),y = runif(50,0,1)),threshold = 1)
+#   expect_gte(diagram_kernel(D1 = D1,D2 = D2,dim = 1),0)
+#   expect_gte(diagram_kernel(D1 = diagram_to_df(D1),D2 = D2,dim = 1),0)
+#   expect_gte(diagram_kernel(D1 = D1,D2 = diagram_to_df(D2),dim = 1),0)
+#   expect_gte(diagram_kernel(D1 = D3,D2 = diagram_to_df(D2),dim = 1),0)
+#   expect_gte(diagram_kernel(D1 = D1,D2 = diagram_to_df(D3),dim = 1),0)
+#   expect_gte(diagram_kernel(D1 = D1,D2 = D4,dim = 1),0)
+#   expect_error(diagram_kernel(D1 = D1,D2 = D2,dim = 0),"Inf")
+# 
+# })
 
 test_that("diagram_kernel is computing correctly",{
   

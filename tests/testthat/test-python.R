@@ -41,6 +41,7 @@ test_that("PyH can detect bad input parameters.",{
 test_that("PyH is computing correctly.",{
   
   skip_if(T)
+  skip_if_not_installed("TDAstats")
   D1 <- data.frame(x = stats::rnorm(20),y = stats::rnorm(20))
   D2 <- data.frame(x = stats::rnorm(20),y = stats::rnorm(20))
   D3 <- data.frame(x = stats::rnorm(20),y = stats::rnorm(20))
@@ -66,7 +67,7 @@ test_that("PyH is computing correctly.",{
   phom_with_reps <- PyH(D1,thresh = 5,ripser = ripser,calculate_representatives = T)
   expect_type(phom_with_reps,"list")
   
-  circ <- TDA::circleUnif(n = 10,r = 1)
+  circ <- TDAstats::circle2d[sample(1:100,10),]
   phom_with_empty_dim <- PyH(circ,thresh = 2,ripser = ripser,maxdim = 2)
   expect_s3_class(phom_with_empty_dim,"data.frame")
   
@@ -75,8 +76,9 @@ test_that("PyH is computing correctly.",{
 test_that("bootstrap function can detect PyH errors correctly.",{
   
   skip_if(T)
+  skip_if_not_installed("TDAstats")
   ripser = import_ripser()
-  D <- TDA::circleUnif(n = 50,r = 1)
+  D <- TDAstats::circle2d[sample(1:100,10),]
   expect_error(bootstrap_persistence_thresholds(X = D,FUN_diag = "PyH",maxdim = 1,thresh = 2,calculate_representatives = T,return_diag = T,ripser = ripser,num_workers = 2,num_samples = 3,return_subsetted = T,ignore_infinite_cluster = NULL),"NULL")
   expect_error(bootstrap_persistence_thresholds(X = D,FUN_diag = "PyH",maxdim = 1,thresh = 2,calculate_representatives = T,return_diag = T,ripser = ripser,num_workers = 2,num_samples = 3,return_subsetted = T,ignore_infinite_cluster = 2),"logical")
   expect_error(bootstrap_persistence_thresholds(X = D,FUN_boot = "PyH",maxdim = 1,thresh = 2,calculate_representatives = T,return_diag = T,ripser = ripser,num_workers = 2,num_samples = 3,return_subsetted = T,ignore_infinite_cluster = NA),"NA")
@@ -86,8 +88,9 @@ test_that("bootstrap function can detect PyH errors correctly.",{
 test_that("PyH functionality works in bootstrap function.",{
   
   skip_if(T)
+  skip_if_not_installed("TDAstats")
   ripser = import_ripser()
-  D <- TDA::circleUnif(n = 50,r = 1)
+  D <- TDAstats::circle2d[sample(1:100,10),]
   
   # PyH with multiple thresholds
   bs <- bootstrap_persistence_thresholds(X = D,FUN_diag = "PyH",FUN_boot = "PyH",maxdim = 1,thresh = 2,calculate_representatives = T,return_diag = T,ripser = ripser,num_workers = 2,num_samples = 3,return_subsetted = T,ignore_infinite_cluster = F)

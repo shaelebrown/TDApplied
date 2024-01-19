@@ -491,7 +491,7 @@ diagram_kpca <- function(diagrams,K = NULL,dim = 0,t = 1,sigma = 1,rho = NULL,fe
 #' @seealso \code{\link{diagram_kpca}} for embedding persistence diagrams into a low-dimensional space.
 #' @examples
 #'
-#' if(require("TDA") & require("TDAstats"))
+#' if(require("TDAstats"))
 #' {
 #'   # create six diagrams
 #'   D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
@@ -1112,7 +1112,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
 #' @importFrom methods is
 #' @examples
 #'
-#' if(require("TDA") & require("TDAstats"))
+#' if(require("TDAstats"))
 #' {
 #'   # create four diagrams
 #'   D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],

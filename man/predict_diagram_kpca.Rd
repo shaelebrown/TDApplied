@@ -29,7 +29,7 @@ previously-computed kernel PCA embedding (from the \code{\link{diagram_kpca}} fu
 }
 \examples{
 
-if(require("TDA") & require("TDAstats"))
+if(require("TDAstats"))
 {
   # create six diagrams
   D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,20),],
