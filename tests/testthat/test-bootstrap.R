@@ -3,6 +3,8 @@
 # 
 #   skip_if_not_installed("TDA")
 #   skip_if_not_installed("TDAstats")
+#   
+#   library(TDA)
 # 
 #   D <- TDA::circleUnif(n = 50,r = 1)
 #   # ripser = import_ripser()
@@ -26,6 +28,8 @@
 # 
 #   skip_if_not_installed("TDA")
 #   skip_if_not_installed("TDAstats")
+#   
+#   library(TDA)
 # 
 #   # X, FUN, maxdim, thresh, distance_mat, ripser, ignore_infinite_cluster, calculate_representatives, num_samples, alpha, return_subsetted, return_diag
 #   expect_error(bootstrap_persistence_thresholds(data.frame(),maxdim = 1,thresh = 2),"X")
@@ -87,11 +91,13 @@
 #   expect_error(bootstrap_persistence_thresholds(data.frame(x = 1:10,y = 1:10),FUN_diag = "ripsDiag",maxdim = 1,thresh = 2,return_diag = NA),"NA")
 # 
 # })
-
+ 
 # test_that("bootstrap_persistence_thresholds is computing properly",{
 # 
 #   skip_if_not_installed("TDA")
 #   skip_if_not_installed("TDAstats")
+#   
+#   library(TDA)
 # 
 #   D <- TDA::circleUnif(n = 50,r = 1)
 # 
