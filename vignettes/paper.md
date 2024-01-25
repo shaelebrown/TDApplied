@@ -20,6 +20,8 @@ affiliations:
 date: 24 January 2024
 bibliography: vignettes/REFERENCES.bib
 
+---
+
 # Summary
 
 Topological data analysis is a collection of tools, based on the mathematical fields of topology and geometry, for finding structure in whole datasets. Its main tool, persistent homology [@PHOriginal;@ComputingPH], computes a shape descriptor of a dataset called a persistence diagram which encodes information about holes that exist in the dataset (example applications span a variety of areas, see for example [@TDA_ADHD;@word_embeddings;@TDA_chemistry]). These types of features cannot be identified by other methods, making persistence diagrams a unique and valuable data science object for studying and comparing datasets. The two most popular data science tools for analyzing multiple objects are machine learning and inference, but to date there has been no open source implementation of published methods for machine learning and inference of persistence diagrams.
