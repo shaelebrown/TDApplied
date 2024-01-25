@@ -18,7 +18,7 @@ affiliations:
  - name: McGill Vision Research, Department of Opthamology, McGill University, Montreal Canada.
    index: 2
 date: 24 January 2024
-bibliography: REFERENCES.bib
+bibliography: vignettes/REFERENCES.bib
 
 # Summary
 
