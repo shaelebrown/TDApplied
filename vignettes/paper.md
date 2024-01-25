@@ -46,7 +46,7 @@ Topological data analysis is a collection of tools, based on the mathematical fi
 2. "Human Connectome Project Analysis" demonstrates an applied example analysis of neurological data, 
 3. "Benchmarking and Speedups" outlines the package's optimization strategies and highlights performance gains compared to other packages, 
 4. "Personalized Analyses with TDApplied" demonstrates how to interface `TDApplied` with other data science packages, and 
-5. "Comparing Distance Calculations" accounts for differences in computed distance values between persistence diagrams.
+5. "Comparing Distance Calculations" accounts for differences in computed distance values between persistence diagrams across comparable packages.
 
 # Acknowledgements
 
