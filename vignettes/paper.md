@@ -18,7 +18,7 @@ affiliations:
  - name: McGill Vision Research, Department of Opthamology, McGill University, Montreal Canada.
    index: 2
 date: 24 January 2024
-bibliography: REFERENCES.bib
+bibliography: paper.bib
 
 ---
 
@@ -28,7 +28,11 @@ Topological data analysis is a collection of tools, based on the mathematical fi
 
 # Statement of need
 
-`TDApplied` is the first R package for machine learning and inference of persistence diagrams, building on the main R packages for the calculation of persistence diagrams `TDA` [@R-TDA] and `TDAstats` [@R-TDAstats] and publications of applied analysis methods for persistence diagrams [@Robinson_Turner;@persistence_fisher]. `TDApplied` is intended to be used by academic researchers and industry professionals wanting to integrate persistence diagrams into their analysis workflows. The package is built on three main pillars:
+`TDApplied` is the first R package for machine learning and inference of persistence diagrams, building on the main R packages for the calculation of persistence diagrams `TDA` [@R-TDA] and `TDAstats` [@R-TDAstats;@TDAstats2018] and publications of applied analysis methods for persistence diagrams [@Robinson_Turner;@persistence_fisher]. `TDApplied` is intended to be used by academic researchers and industry professionals wanting to integrate persistence diagrams into their analysis workflows. An example `TDApplied` workflow, in which the topological differences between three datasets are visualized in 2D using multidimensional scaling (MDS) [@Cox2008], is visualized in figure \autoref{fig:software}: 
+
+![An example `TDApplied` workflow. A dataset, left, contains one loop, yellow, and two clusters (components), red. These topological features are captured with persistent homology in a persistence diagram (middle top), and two other data sets (not shown) have their persistence diagrams computed (middle center and middle bottom). PD1 and PD2 are not very topologically different in terms of their loops, with both containing a loop with similar birth and death values, and this is represented by a dashed-line relationship. On the other hand, PD2 and PD3 are topologically different in terms of their loops because PD3 does not contain a loop, and this is represented by a dotted-line relationship. `TDApplied` can quantify these topological differences and use MDS to project the persistence diagrams into three points in a 2D embedding space (right) where interpoint distances reflect the topological differences between the persistence diagrams. \label{fig:software}](software.pdf){width=100%}
+
+The `TDApplied` package is built on three main pillars:
 
 1. User-friendly -- internal preprocessing of persistence diagrams that would normally be left to R users to figure out ad hoc, and functions designed to easily flow from input diagrams to output metrics.
 2. Efficient -- parallelization, C code, computational tricks and storage of reusable and cumbersome calculations significantly increases the feasibility of topological analyses (compared to existing R packages).
