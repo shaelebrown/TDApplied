@@ -44,7 +44,7 @@ Topological data analysis is a relatively new area of data science which can com
 - improving model predictions of various chemical properties of molecules by including topological features [@TDA_chemistry],
 - distinguishing between the topology of human brain function of healthy control subjects vs. subjects with a neurological disorder [@TDA_ADHD;@TDA_Alzheimers;@persistent_hom_brain_networks], etc. 
 
-For a broad introduction to the mathematical background and main tools of topological data analysis, see [@TDA_intro].
+For a broad introduction to the mathematical background and main tools of topological data analysis with applications, see [@TDA_intro;@TDA].
 
 Traditional data science pipelines in academia and industry are focused on machine learning and statistical inference of structured (tabular) data, being able to answer questions like:
 
