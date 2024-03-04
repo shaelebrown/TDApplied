@@ -142,6 +142,6 @@ plot(x = proj_2D[,1],y = proj_2D[,2])
 ## Contribute
 
 To contribute to **TDApplied** you can create issues for any
-bugs/suggestions on the issues page. You can also fork the **TDApplied**
+bugs/suggestions on the [issues page](https://github.com/shaelebrown/TDApplied/issues). You can also fork the **TDApplied**
 repository and create pull requests to add features you think will be
 useful for users.
