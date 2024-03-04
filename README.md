@@ -9,7 +9,13 @@
 **TDApplied** is an R package for analyzing persistence diagrams using
 machine learning and statistical inference, and is designed to interface
 with persistent (co)homology calculations from the R packages **TDA**
-and **TDAstats**. Please note that during the development of **TDApplied**, **TDA** was available on CRAN and therefore included in package examples and tests, however since that is presently not the case the dependency on **TDA** has been removed (and therefore some examples and tests have been modified) but **TDApplied** will still work with **TDA** computed persistence diagrams and **TDA** functions if a user already has a working version installed.
+and **TDAstats**. Please note that during the development of
+**TDApplied**, **TDA** was available on CRAN and therefore included in
+package examples and tests, however since that is presently not the case
+the dependency on **TDA** has been removed (and therefore some examples
+and tests have been modified) but **TDApplied** will still work with
+**TDA** computed persistence diagrams and **TDA** functions if a user
+already has a working version installed.
 
 R package **TDA**:
 
@@ -49,7 +55,7 @@ To install the stable version of this R package from CRAN:
 To cite this package in publication please use the BibTex entry:
 
 @Manual{TDApplied, title = {TDApplied: Machine Learning and Inference
-for Topological Data Analysis}, author = {Shael Brown and Dr. Reza
+for Topological Data Analysis}, author = {Shael Brown and Dr. Reza
 Farivar}, note = {R package version 3.0.0}, url =
 {<https://github.com/shaelebrown/TDApplied>}, }
 
@@ -71,11 +77,11 @@ REFERENCES.bib file in the vignette directory.
     topological features in a dataset.
 2.  Machine learning. The functions `diagram_mds`, `diagram_kpca` and
     `predict_diagram_kpca` can be used to project a group of diagrams
-    into a low dimensional space (i.e. dimension reduction). The
+    into a low dimensional space (i.e. dimension reduction). The
     functions `diagram_kkmeans` and `predict_diagram_kkmeans` can be
     used to cluster a group of diagrams. The functions `diagram_ksvm`
     and `predict_diagram_ksvm` can be used to link, through a prediction
-    function, persistence diagrams and an outcome (i.e. dependent)
+    function, persistence diagrams and an outcome (i.e. dependent)
     variable.
 3.  Statistics. The `permutation_test` function acts like an ANOVA test
     for identifying group differences of persistence diagrams. The
@@ -132,3 +138,10 @@ plot(x = proj_2D[,1],y = proj_2D[,2])
     diagrams.
 5.  “Comparing Distance Calculations”, which accounts for differences in
     distance functions of persistence diagrams across R packages.
+
+## Contribute
+
+To contribute to **TDApplied** you can create issues for any
+bugs/suggestions on the issues page. You can also fork the **TDApplied**
+repository and create pull requests to add features you think will be
+useful for users.

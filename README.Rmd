@@ -103,3 +103,7 @@ plot(x = proj_2D[,1],y = proj_2D[,2])
 3. "Benchmarking and Speedups", which describes all implemented optimizations of **TDApplied** functions and compares the runtime of **TDApplied** functions with functions from other packages.
 4. "Personalized Analyses with TDApplied", which demonstrates how machine learning (or statistical) models and pipelines, other than those implemented in **TDApplied**, can be fit to persistence diagrams.
 5. "Comparing Distance Calculations", which accounts for differences in distance functions of persistence diagrams across R packages.
+
+## Contribute
+
+To contribute to **TDApplied** you can create issues for any bugs/suggestions on the issues page. You can also fork the **TDApplied** repository and create pull requests to add features you think will be useful for users.
