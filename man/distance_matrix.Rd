@@ -72,6 +72,9 @@ if(require("TDAstats"))
                              p = 2,num_workers = 2)
 }
 }
+\seealso{
+\code{\link{diagram_distance}} for individual distance calculations.
+}
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}
 }

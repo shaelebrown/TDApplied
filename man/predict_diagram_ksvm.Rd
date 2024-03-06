@@ -67,7 +67,7 @@ if(require("TDAstats"))
 }
 }
 \seealso{
-\code{\link{diagram_ksvm}} for training a SVM model on a training set of persistence diagrams.
+\code{\link{diagram_ksvm}} for training a SVM model on a training set of persistence diagrams and labels.
 }
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}

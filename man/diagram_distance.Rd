@@ -83,6 +83,9 @@ Le T, Yamada M (2018). "Persistence fisher kernel: a riemannian manifold kernel 
 
 Vlad I. Morariu, Balaji Vasan Srinivasan, Vikas C. Raykar, Ramani Duraiswami, and Larry S. Davis. Automatic online tuning for fast Gaussian summation. Advances in Neural Information Processing Systems (NIPS), 2008.
 }
+\seealso{
+\code{\link{distance_matrix}} for distance matrix calculations.
+}
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}
 }

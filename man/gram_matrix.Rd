@@ -60,6 +60,9 @@ if(require("TDAstats"))
                          t = 2,num_workers = 2)
 }
 }
+\seealso{
+\code{\link{diagram_kernel}} for individual persistence Fisher kernel calculations.
+}
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}
 }

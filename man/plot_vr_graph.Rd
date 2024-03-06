@@ -100,6 +100,9 @@ if(require("TDAstats") & require("igraph"))
   
 }
 }
+\seealso{
+\code{\link{vr_graphs}} for computing VR graphs.
+}
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}
 }

@@ -17,6 +17,7 @@
 #' @importFrom stats dist
 #' @importFrom foreach foreach %do%
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @seealso \code{\link{plot_vr_graph}} for plotting VR graphs.
 #' @references 
 #' 
 #' A Zomorodian, The tidy set: A minimal simplicial set for computing homology of clique complexes in Proceedings of the Twenty-Sixth Annual Symposium on Computational Geometry, SoCG ’10. (Association for Computing Machinery, New York, NY, USA), p. 257–266 (2010).
@@ -222,6 +223,7 @@ vr_graphs <- function(X,distance_mat = FALSE,eps,return_clusters = TRUE){
 #' @return if `return_layout` is `TRUE` then a list with elements "layout" (the numeric matrix of vertex x-y coordinates) and "vertices" (character vertex labels), otherwise the function does not return anything.
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @seealso \code{\link{vr_graphs}} for computing VR graphs.
 #' @examples
 #'
 #' if(require("TDAstats") & require("igraph"))

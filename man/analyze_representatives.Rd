@@ -36,10 +36,10 @@ analyze_representatives(
 
 \item{title}{a character string title for the plotted heatmap, default NULL.}
 
-\item{return_clust}{a boolean determining whether or not to return the result of the `stats::hclust` call when a heatmap is plotted, default `FALSE`.}
+\item{return_clust}{a boolean determining whether or not to return the result of the `stats::hclust()` call when a heatmap is plotted, default `FALSE`.}
 }
 \value{
-either a matrix of data point contributions to the representatives, or a list with elements "memberships" (the matrix) and some combination of elements "contributions" (a vector of membership percentages for each data point across representatives) and "clust" (the results of `stats::hclust` on the membership matrix).
+either a matrix of data point contributions to the representatives, or a list with elements "memberships" (the matrix) and some combination of elements "contributions" (a vector of membership percentages for each data point across representatives) and "clust" (the results of `stats::hclust()` on the membership matrix).
 }
 \description{
 Multiple distance matrices with corresponding data points can contain the same topological features. 

@@ -1107,7 +1107,7 @@ diagram_ksvm <- function(diagrams,cv = 1,dim,t = 1,sigma = 1,rho = NULL,y,type =
 #' @return a vector containing the output of \code{\link[kernlab]{predict.ksvm}} on the cross Gram matrix of the new diagrams and the support vector diagrams stored in the model.
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
-#' @seealso \code{\link{diagram_ksvm}} for training a SVM model on a training set of persistence diagrams.
+#' @seealso \code{\link{diagram_ksvm}} for training a SVM model on a training set of persistence diagrams and labels.
 #' @importFrom kernlab predict as.kernelMatrix
 #' @importFrom methods is
 #' @examples

@@ -60,6 +60,9 @@ if(require("TDAstats") & require("igraph"))
 \references{
 A Zomorodian, The tidy set: A minimal simplicial set for computing homology of clique complexes in Proceedings of the Twenty-Sixth Annual Symposium on Computational Geometry, SoCG ’10. (Association for Computing Machinery, New York, NY, USA), p. 257–266 (2010).
 }
+\seealso{
+\code{\link{plot_vr_graph}} for plotting VR graphs.
+}
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}
 }

@@ -19,6 +19,7 @@
 #' @return the numeric kernel value.
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @seealso \code{\link{gram_matrix}} for Gram (i.e. kernel) matrix calculations.
 #' @references
 #' Le T, Yamada M (2018). "Persistence fisher kernel: a riemannian manifold kernel for persistence diagrams." \url{https://proceedings.neurips.cc/paper/2018/file/959ab9a0695c467e7caf75431a872e5c-Paper.pdf}.
 #' 
@@ -72,6 +73,7 @@ diagram_kernel <- function(D1,D2,dim = 0,sigma = 1,t = 1,rho = NULL){
 #' @return the numeric (cross) Gram matrix of class 'kernelMatrix'.
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @seealso \code{\link{diagram_kernel}} for individual persistence Fisher kernel calculations.
 #' @examples
 #'
 #' if(require("TDAstats"))

@@ -49,6 +49,7 @@
 #' @importFrom parallelly availableCores
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @seealso \code{\link{independence_test}} for an inferential test of independence for two groups of persistence diagrams.
 #' @references
 #' Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis." \url{https://link.springer.com/article/10.1007/s41468-017-0008-7}.
 #' 
@@ -364,6 +365,7 @@ permutation_test <- function(...,iterations = 20,p = 2,q = 2,dims = c(0,1),dist_
 #' @importFrom parallelly availableCores
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @seealso \code{\link{permutation_test}} for an inferential group difference test for groups of persistence diagrams.
 #' @references
 #' Gretton A et al. (2007). "A Kernel Statistical Test of Independence." \url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf}.
 #' @examples

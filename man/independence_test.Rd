@@ -86,6 +86,9 @@ if(require("TDAstats"))
 \references{
 Gretton A et al. (2007). "A Kernel Statistical Test of Independence." \url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf}.
 }
+\seealso{
+\code{\link{permutation_test}} for an inferential group difference test for groups of persistence diagrams.
+}
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}
 }

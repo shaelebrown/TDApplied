@@ -27,8 +27,8 @@
 #' @param lwd a positive number width for the lines of drawn boxes, if boxed_reps is not null.
 #' @param d either NULL (default) or a "dist" object representing a distance matrix for the representatives, which must have the same number of rows and columns as cycles in the dimension `dim`.
 #' @param title a character string title for the plotted heatmap, default NULL.
-#' @param return_clust a boolean determining whether or not to return the result of the `stats::hclust` call when a heatmap is plotted, default `FALSE`.
-#' @return either a matrix of data point contributions to the representatives, or a list with elements "memberships" (the matrix) and some combination of elements "contributions" (a vector of membership percentages for each data point across representatives) and "clust" (the results of `stats::hclust` on the membership matrix).
+#' @param return_clust a boolean determining whether or not to return the result of the `stats::hclust()` call when a heatmap is plotted, default `FALSE`.
+#' @return either a matrix of data point contributions to the representatives, or a list with elements "memberships" (the matrix) and some combination of elements "contributions" (a vector of membership percentages for each data point across representatives) and "clust" (the results of `stats::hclust()` on the membership matrix).
 #' @importFrom stats heatmap order.dendrogram as.dendrogram hclust as.dist
 #' @importFrom graphics rect
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}

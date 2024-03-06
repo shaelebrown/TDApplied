@@ -53,6 +53,9 @@ Le T, Yamada M (2018). "Persistence fisher kernel: a riemannian manifold kernel 
 
 Murphy, K. "Machine learning: a probabilistic perspective", MIT press (2012).
 }
+\seealso{
+\code{\link{gram_matrix}} for Gram (i.e. kernel) matrix calculations.
+}
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}
 }

@@ -114,6 +114,9 @@ Robinson T, Turner K (2017). "Hypothesis testing for topological data analysis."
 
 Abdallah H et al. (2021). "Statistical Inference for Persistent Homology applied to fMRI." \url{https://github.com/hassan-abdallah/Statistical_Inference_PH_fMRI/blob/main/Abdallah_et_al_Statistical_Inference_PH_fMRI.pdf}.
 }
+\seealso{
+\code{\link{independence_test}} for an inferential test of independence for two groups of persistence diagrams.
+}
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}
 }

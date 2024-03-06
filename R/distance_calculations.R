@@ -32,6 +32,7 @@
 #' @import Rcpp
 #' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
+#' @seealso \code{\link{distance_matrix}} for distance matrix calculations.
 #' @references
 #' Kerber M, Morozov D and Nigmetov A (2017). "Geometry Helps to Compare Persistence Diagrams." \url{http://www.geometrie.tugraz.at/kerber/kerber_papers/kmn-ghtcpd_journal.pdf}.
 #' 
@@ -330,6 +331,7 @@ diagram_distance <- function(D1,D2,dim = 0,p = 2,distance = "wasserstein",sigma 
 #' @importFrom parallelly availableCores
 #' @importFrom doParallel registerDoParallel stopImplicitCluster
 #' @importFrom iterators iter
+#' @seealso \code{\link{diagram_distance}} for individual distance calculations.
 #' @examples
 #'
 #' if(require("TDAstats"))
