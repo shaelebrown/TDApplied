@@ -8,7 +8,7 @@
 #' The most common distance calculations between persistence diagrams
 #' are the wasserstein and bottleneck distances, both of which "match" points between
 #' their two input diagrams and compute the "loss" of the optimal matching 
-#' (see \url{http://www.geometrie.tugraz.at/kerber/kerber_papers/kmn-ghtcpd_journal.pdf} for details). Another 
+#' (see \url{https://dl.acm.org/doi/10.1145/3064175} for details). Another 
 #' method for computing distances, the Fisher information metric, 
 #' converts the two diagrams into distributions
 #' defined on the plane, and calculates a distance between the resulting two distributions
