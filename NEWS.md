@@ -4,6 +4,9 @@
 [Pull Request](https://github.com/shaelebrown/TDApplied/pulls) number.
 Please see those for more details.
 
+# 3.0.3
+- Updated documentation for JOSS paper release
+
 # 3.0.2
 - all CRAN issues for this update were caused by the rho parameter, which invokes external C++ code. We therefore fixed these issues by removing the rho parameter from the predict_diagram_kpca and diagram_distance examples, from all tests and in the ML_and_inference.Rmd file. This parameter has been kept and is still tested, just not tested on CRAN
 - sped up the independence_test example by only showing the Gram-matrix approach
