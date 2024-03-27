@@ -13,9 +13,9 @@ authors:
     orcid: 0000-0002-3123-2627
     affiliation: 2
 affiliations:
- - name: Department of Quantitative Life Sciences, McGill University, Montreal Canada.
+ - name: Department of Quantitative Life Sciences, McGill University, Montreal, Canada
    index: 1
- - name: McGill Vision Research, Department of Opthamology, McGill University, Montreal Canada.
+ - name: McGill Vision Research, Department of Opthamology, McGill University, Montreal, Canada
    index: 2
 date: 24 January 2024
 bibliography: paper.bib
@@ -24,11 +24,11 @@ bibliography: paper.bib
 
 # Summary
 
-Topological data analysis is a collection of tools, based on the mathematical fields of topology and geometry, for finding structure in whole datasets. Its main tool, persistent homology [@PHoriginal;@ComputingPH], computes a shape descriptor of a dataset called a persistence diagram which encodes information about holes that exist in the dataset (example applications span a variety of areas, see for example [@TDA_ADHD;@word_embeddings;@TDA_chemistry]). These types of features cannot be identified by other methods, making persistence diagrams a unique and valuable data science object for studying and comparing datasets. The two most popular data science tools for analyzing multiple objects are machine learning and inference, but to date there has been no open source implementation of published methods for machine learning and inference of persistence diagrams.
+Topological data analysis is a collection of tools, based on the mathematical fields of topology and geometry, for finding structure in whole datasets. Its main tool, persistent homology [@PHoriginal;@ComputingPH], computes a shape descriptor of a dataset called a persistence diagram which encodes information about holes that exist in the dataset (example applications span a variety of areas, see for example @TDA_ADHD, @word_embeddings, and @TDA_chemistry). These types of features cannot be identified by other methods, making persistence diagrams a unique and valuable data science object for studying and comparing datasets. The two most popular data science tools for analyzing multiple objects are machine learning and inference, but to date there has been no open source implementation of published methods for machine learning and inference of persistence diagrams.
 
 # Statement of need
 
-`TDApplied` is the first R package for machine learning and inference of persistence diagrams, building on the main R packages for the calculation of persistence diagrams `TDA` [@R-TDA] and `TDAstats` [@R-TDAstats;@TDAstats2018] and publications of applied analysis methods for persistence diagrams [@Robinson_Turner;@persistence_fisher]. `TDApplied` is intended to be used by academic researchers and industry professionals wanting to integrate persistence diagrams into their analysis workflows. An example `TDApplied` workflow, in which the topological differences between three datasets are visualized in 2D using multidimensional scaling (MDS) [@Cox2008], is visualized in figure \autoref{fig:software}: 
+`TDApplied` is the first R package for machine learning and inference of persistence diagrams, building on the main R packages for the calculation of persistence diagrams `TDA` [@R-TDA] and `TDAstats` [@R-TDAstats;@TDAstats2018] and publications of applied analysis methods for persistence diagrams [@Robinson_Turner;@persistence_fisher]. `TDApplied` is intended to be used by academic researchers and industry professionals wanting to integrate persistence diagrams into their analysis workflows. An example `TDApplied` workflow, in which the topological differences between three datasets are visualized in 2D using multidimensional scaling (MDS) [@Cox2008], is visualized in \autoref{fig:software}: 
 
 ![An example `TDApplied` workflow. A dataset (D1, left) contains one loop (yellow) and two clusters (the loop forms one cluster and the three points on the bottom are another cluster, and clusters are denoted by the color red). These topological features are captured with persistent homology in a persistence diagram PD1 (middle top), and two other data sets, D2 and D3 (not shown), have their persistence diagrams, PD2 and PD3, computed (middle center and middle bottom). PD1 and PD2 are not very topologically different in terms of their loops, with both containing a loop with similar birth and death values, and this is represented by a dashed-line relationship. On the other hand, PD2 and PD3 are topologically different in terms of their loops because PD3 does not contain a loop, and this is represented by a dotted-line relationship. `TDApplied` can quantify these topological differences and use MDS to project the persistence diagrams into three points in a 2D embedding space (right) where interpoint distances reflect the topological differences between the persistence diagrams. \label{fig:software}](software.pdf){width=100%}
 
