@@ -39,14 +39,14 @@ R package **TDAstats**:
 
 ## Installation
 
-To install the latest version of this R package directly from github:
+To install the latest version of this R package directly from GitHub:
 
     install.packages("devtools")
     library(devtools)
     devtools::install_github("shaelebrown/TDApplied")
     library(TDApplied)
 
-To install from Github you might need: 
+To install from GitHub you might need: 
 
 - **Windows:** Rtools (https://cran.r-project.org/bin/windows/Rtools/)
 - **OS X:** xcode (from the app store)
