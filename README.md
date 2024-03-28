@@ -6,6 +6,15 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![CRAN version](http://www.r-pkg.org/badges/version/TDApplied)](https://CRAN.R-project.org/package=TDApplied)
+[![CRAN Downloads](http://cranlogs.r-pkg.org/badges/grand-total/TDApplied)](https://CRAN.R-project.org/package=TDApplied)
+
+[![JOSS DOI](https://joss.theoj.org/papers/10.21105/joss.06321/status.svg)](https://doi.org/10.21105/joss.06321)
+[![Zenodo DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10814141.svg)](https://doi.org/10.5281/zenodo.10814141)
+
+## Overview
+
 **TDApplied** is an R package for analyzing persistence diagrams using
 machine learning and statistical inference, and is designed to interface
 with persistent (co)homology calculations from the R packages **TDA**
@@ -52,12 +61,9 @@ To install the stable version of this R package from CRAN:
 
 ## Citation
 
-To cite this package in publication please use the BibTex entry:
+If you use TDApplied, please consider citing as:
 
-@Manual{TDApplied, title = {TDApplied: Machine Learning and Inference
-for Topological Data Analysis}, author = {Shael Brown and Dr. Reza
-Farivar}, note = {R package version 3.0.0}, url =
-{<https://github.com/shaelebrown/TDApplied>}, }
+- Brown et al., (2024). TDApplied: An R package for machine learning and inference with persistence diagrams. Journal of Open Source Software, 9(95), 6321, https://doi.org/10.21105/joss.06321
 
 If you wish to cite a particular method used in **TDApplied** see the
 REFERENCES.bib file in the vignette directory.
@@ -145,3 +151,10 @@ To contribute to **TDApplied** you can create issues for any
 bugs/suggestions on the [issues page](https://github.com/shaelebrown/TDApplied/issues). You can also fork the **TDApplied**
 repository and create pull requests to add features you think will be
 useful for users.
+
+## Published applications
+
+- Shael Brown and Reza Farivar. The topology of representational geometry. bioRxiv, 2024.
+- Yashbir Singh, Colleen M. Farrelly, Quincy A. Hathaway, Tim Leiner, Jaidip Jagtap, Gunnar E. Carlsson, and Bradley J. Erickson. Topological data analysis in medical imaging:
+current state of the art. Insights into Imaging, 14(1):58, 2023.
+- Rui Dong. Linguistics from a topological viewpoint. arXiv, 2024.
