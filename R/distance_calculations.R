@@ -598,7 +598,7 @@ loss <- function(diagram_groups,dist_mats,dims,p,q,distance,sigma,rho,num_worker
           
           # loss statistic is the sum of all within group distances of unique diagram pairs, normalized
           # by the number of those pairs in the group
-          return(sum(d_tots[which(combinations$group == X)])/(length(diagram_groups[[X]])*(length(diagram_groups[[X]]) - 1)))
+          return(sum(d_tots[which(combinations$group == X)]^q)/(length(diagram_groups[[X]])*(length(diagram_groups[[X]]) - 1)))
           
         }))))
         
