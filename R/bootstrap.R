@@ -44,6 +44,7 @@
 #' @param return_pvals a boolean representing whether or not to return p-values for features in the subsetted diagram, default FALSE.
 #' @param p_less_than_alpha a boolean representing whether or not subset further and return only feature whose p-values are strictly less than `alpha`, default `FALSE`. Note that this is not part of the original bootstrap procedure.
 #' @param num_workers the integer number of cores used for parallelizing (over bootstrap samples), default one less the maximum amount of cores on the machine.
+#' @param ... additional parameters for internal methods.
 #' @return either a numeric vector of threshold values, with one for each dimension 0..`maxdim` (in that order), or a list containing those thresholds and elements (if desired) 
 #' @export
 #' @importFrom stats quantile
@@ -67,10 +68,30 @@
 #'   maxdim = 1,thresh = 2,num_workers = 2)
 #' }
 
-bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",FUN_boot = "calculate_homology",maxdim = 0,thresh,distance_mat = FALSE,ripser = NULL,ignore_infinite_cluster = TRUE,calculate_representatives = FALSE,num_samples = 30,alpha = 0.05,return_subsetted = FALSE,return_pvals = FALSE,return_diag = TRUE,num_workers = parallelly::availableCores(omit = 1),p_less_than_alpha = FALSE){
+bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",FUN_boot = "calculate_homology",maxdim = 0,thresh,distance_mat = FALSE,ripser = NULL,ignore_infinite_cluster = TRUE,calculate_representatives = FALSE,num_samples = 30,alpha = 0.05,return_subsetted = FALSE,return_pvals = FALSE,return_diag = TRUE,num_workers = parallelly::availableCores(omit = 1),p_less_than_alpha = FALSE,...){
   
   # function for thresholding the points computed in a diagram
   # based on persistence
+  
+  # to avoid check issues
+  N <- NULL
+  
+  # get additional parameters for internal methods
+  additional_params <- list(...)
+  if("bootstrap_samples" %in% names(additional_params))
+  {
+    bootstrap_samples <- additional_params$bootstrap_samples
+  }else
+  {
+    bootstrap_samples <- NULL
+  }
+  if("return_distances" %in% names(additional_params))
+  {
+    return_distances <- additional_params$return_distances
+  }else
+  {
+    return_distances <- FALSE
+  }
   
   # error check parameters
   if(is.null(distance_mat))
@@ -302,29 +323,33 @@ bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",F
     num_workers <- parallelly::availableCores(omit = 1)
   }
   
+  # if not returning just subsetted diagrams
   # first calculate the "real" persistence diagram, storing representative cycles if need be
-  if(FUN_diag == "PyH")
+  if(return_diag | (is.null(bootstrap_samples) & !return_distances))
   {
-    diag <- PyH(X = X,maxdim = maxdim,thresh = thresh,distance_mat = distance_mat,ripser = ripser,ignore_infinite_cluster = ignore_infinite_cluster,calculate_representatives = calculate_representatives)
-    if(calculate_representatives == T)
+    if(FUN_diag == "PyH")
     {
-      representatives = diag$representatives
-      diag <- diag$diagram
+      diag <- PyH(X = X,maxdim = maxdim,thresh = thresh,distance_mat = distance_mat,ripser = ripser,ignore_infinite_cluster = ignore_infinite_cluster,calculate_representatives = calculate_representatives)
+      if(calculate_representatives == T)
+      {
+        representatives = diag$representatives
+        diag <- diag$diagram
+      }
     }
-  }
-  if(FUN_diag == "calculate_homology")
-  {
-    diag <- diagram_to_df(TDAstats::calculate_homology(mat = X,dim = maxdim,threshold = thresh,format = ifelse(test = distance_mat == T,yes = "distmat",no = "cloud")))
-    representatives <- NULL
-  }
-  if(FUN_diag == "ripsDiag")
-  {
-    diag <- ripsDiag(X = X,maxdimension = maxdim,maxscale = thresh,dist = ifelse(test = distance_mat == F,yes = "euclidean",no = "arbitrary"),library = "dionysus",location = calculate_representatives,printProgress = F)
-    if(calculate_representatives == T)
+    if(FUN_diag == "calculate_homology")
     {
-      representatives <- diag$cycleLocation
+      diag <- diagram_to_df(TDAstats::calculate_homology(mat = X,dim = maxdim,threshold = thresh,format = ifelse(test = distance_mat == T,yes = "distmat",no = "cloud")))
+      representatives <- NULL
     }
-    diag <- diagram_to_df(diag)
+    if(FUN_diag == "ripsDiag")
+    {
+      diag <- ripsDiag(X = X,maxdimension = maxdim,maxscale = thresh,dist = ifelse(test = distance_mat == F,yes = "euclidean",no = "arbitrary"),library = "dionysus",location = calculate_representatives,printProgress = F)
+      if(calculate_representatives == T)
+      {
+        representatives <- diag$cycleLocation
+      }
+      diag <- diagram_to_df(diag)
+    } 
   }
   
   # compute in parallel if FUN != "PyH"
@@ -345,8 +370,15 @@ bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",F
     
     bootstrap_values <- foreach_func(foreach::foreach(N = 1:num_samples,.combine = c),ex = {
       
-      # sample data points with replacement
-      s <- unique(sample(1:nrow(X),size = nrow(X),replace = T))
+      if(is.null(bootstrap_samples))
+      {
+        # sample data points with replacement
+        s <- unique(sample(1:nrow(X),size = nrow(X),replace = T))
+      }else
+      {
+        s <- bootstrap_samples[[N]]
+      }
+      
       if(distance_mat == F)
       {
         X_sample <- X[s,]
@@ -369,6 +401,12 @@ bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",F
       {
         bootstrap_diag <- diagram_to_df(ripsDiag(X = X_sample,maxdimension = maxdim,maxscale = thresh,dist = ifelse(test = distance_mat == F,yes = "euclidean",no = "arbitrary"),library = "dionysus",location = F,printProgress = F))
       }
+      
+      # if desired return subsetted diagram
+      if(!is.null(bootstrap_samples) & !return_distances)
+      {
+        return(bootstrap_diag)
+      } # else...
       
       # return bottleneck distance with original diagram in each dimension
       ret_vec <- list()
@@ -399,6 +437,22 @@ bootstrap_persistence_thresholds <- function(X,FUN_diag = "calculate_homology",F
     }
              
   })
+  
+  # if desired return list of diagrams or distances
+  if(!is.null(bootstrap_samples))
+  {
+    if(return_diag)
+    {
+      return(list(diag = diag,diagrams = as.list(bootstrap_values)))
+    }else
+    {
+      return(as.list(bootstrap_values))
+    }
+  }
+  if(return_distances)
+  {
+    return(bootstrap_values)
+  }
   
   # convert distance threshold(s) into persistence threshold(s)
   thresholds <- unlist(lapply(X = 0:maxdim,FUN = function(X){
