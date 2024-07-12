@@ -4,6 +4,10 @@
 [Pull Request](https://github.com/shaelebrown/TDApplied/pulls) number.
 Please see those for more details.
 
+# 3.0.4
+- fixed distance exponentiation and group permuting in permutation test
+- added permutation model inference procedure
+
 # 3.0.3
 - Updated documentation for JOSS paper release
 
