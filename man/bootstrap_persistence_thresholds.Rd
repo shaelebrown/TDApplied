@@ -20,7 +20,8 @@ bootstrap_persistence_thresholds(
   return_pvals = FALSE,
   return_diag = TRUE,
   num_workers = parallelly::availableCores(omit = 1),
-  p_less_than_alpha = FALSE
+  p_less_than_alpha = FALSE,
+  ...
 )
 }
 \arguments{
@@ -59,6 +60,8 @@ calculated when using the 'calculate_homology' function.}
 \item{num_workers}{the integer number of cores used for parallelizing (over bootstrap samples), default one less the maximum amount of cores on the machine.}
 
 \item{p_less_than_alpha}{a boolean representing whether or not subset further and return only feature whose p-values are strictly less than `alpha`, default `FALSE`. Note that this is not part of the original bootstrap procedure.}
+
+\item{...}{additional parameters for internal methods.}
 }
 \value{
 either a numeric vector of threshold values, with one for each dimension 0..`maxdim` (in that order), or a list containing those thresholds and elements (if desired)
