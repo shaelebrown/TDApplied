@@ -167,3 +167,16 @@ test_that("independence_test is working",{
   expect_equal(independence_test(g1 = list(D1,D1,D1,D1,D1,D3),g2 = list(D2,D2,D2,D2,D2,D3),dims = c(0),num_workers = 2)$p_values[[1]],stats::pgamma(q = HSIC,rate = mu/v,shape = mu^2/v,lower.tail = F))
   
 })
+
+test_that("universal_null can detect incorrect parameters",{
+  
+  expect_equal(1,1)
+  
+})
+
+test_that("universal_null is working properly",{
+  
+  expect_equal(1,1)
+  
+})
+

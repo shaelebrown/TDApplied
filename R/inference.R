@@ -797,27 +797,6 @@ permutation_model_inference <- function(D1, D2, iterations, num_samples, dims = 
   }
   res <- permutation_test(bootstrapped_diagrams1,bootstrapped_diagrams2,iterations = iterations,dims = dims,paired = FALSE,num_workers = num_workers,p = Inf,q = 2)
   
-  # # now calculate distance metrics and confidence intervals if desired
-  # if(paired & return_dist_CI)
-  # {
-  #   CI_data <- list(estimates = unlist(lapply(X = dims,FUN = function(X){
-  #     
-  #     return(diagram_distance(diag1, diag2, dim = X, p = Inf))
-  #     
-  #   })))
-  #   sampling_distrs <- list()
-  #   for(d in dims)
-  #   {
-  #     sampling_distrs[[length(sampling_distrs) + 1]] <- lapply(X = 1:num_samples,FUN = function(X){
-  #       
-  #       return(diagram_distance(bootstrapped_diagrams1[[X]],bootstrapped_diagrams2[[X]], dim = d, p = Inf))
-  #       
-  #     })
-  #   }
-  #   CI_data$sampling_distrs <- sampling_distrs
-  #   res$CI_data <- CI_data
-  # }
-  
   if(verbose)
   {
     message(paste0("Finished permutation test at ",Sys.time()))
@@ -831,279 +810,374 @@ permutation_model_inference <- function(D1, D2, iterations, num_samples, dims = 
   
 }
 
-#### NEW STUFF ####
-#' Model inference with bootstrap.
+#### UNIVERSAL NULL ####
+#' Filtering topological features with the universal null distribution.
 #'
-#' Carries out inference to determine if two datasets were likely generated from the same process or not (i.e. if
-#' the persistence diagram of one dataset is a good model for the persistence diagram of the other dataset). Inference is
-#' carried out by generating bootstrap resampled persistence diagrams from the two datasets and carrying out a permutation test
-#' on the resulting two groups.
-#' A small p-value in a certain dimension suggests that the datasets are not good models of each other.
+#' An inference procedure to determine which topological features (if any) of a datasets are likely signal (i.e. significant)
+#' vs noise (not). 
+#' 
+#' For each feature in a diagram we compute its persistence ratio $\pi = \frac{death radius}{birth radius}$, and a
+#' test statistic $A \log \log \pi + B$ (where $A$ and $B$ are constants). This statistic is compared to a left-skewed Gumbel distribution
+#' to get a p-value. A Bonferroni correction is applied to all the p-values across all features, so when `return_pvals` is TRUE a list of 
+#' p-value thresholds is also returned, one for each dimension, which is `alpha` divided by the number of features in that dimension. 
+#' This function is significantly faster than the \code{\link{bootstrap_persistence_thresholds}} function. Note that the `calculate_homology`
+#' function does not seem to store infinite cycles (i.e. cycles that have death value equal to `thresh`).
 #'
-#' @param D1 the first dataset (a data frame).
-#' @param D2 the second dataset (a data frame).
-#' @param num_samples the number of bootstrap iterations, default 30.
-#' @param dims a non-negative integer vector of the homological dimensions in which the test is to be carried out, default c(0,1).
-#' @param paired a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups, default FALSE
-#' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
-#' @param verbose a boolean flag for if the time duration of the function call should be printed, default FALSE
-#'
-#' @return a list with the following elements:
-#' \describe{
-#' 
-#'  \item{dimensions}{the input `dims` argument.}
-#' 
-#'  \item{permvals}{a numeric vector of length `iterations` with the permuted loss value for each iteration (permutation)}
-#'  
-#'  \item{test_statisics}{a numeric vector of the test statistic value in each dimension.}
-#'  
-#'  \item{p_values}{a numeric vector of the p-values in each dimension.}
-#'  
-#'  \item{run_time}{the run time of the function call, containing time units.}
-#' 
-#' }
-#' 
-#' @importFrom parallelly availableCores
+#' @param X the input dataset, must either be a matrix or data frame.
+#' @param FUN_diag a string representing the persistent homology function to use for calculating the full persistence diagram, either
+#' 'calculate_homology' (the default), 'PyH' or 'ripsDiag'.
+#' @param maxdim the integer maximum homological dimension for persistent homology, default 0.
+#' @param thresh the positive numeric maximum radius of the Vietoris-Rips filtration.
+#' @param distance_mat a boolean representing if `X` is a distance matrix (TRUE) or not (FALSE, default).
+#' dimensions together (TRUE, the default) or if one threshold should be calculated for each dimension separately (FALSE).
+#' @param ripser the imported ripser module when `FUN_diag` is `PyH`.
+#' @param ignore_infinite_cluster a boolean indicating whether or not to ignore the infinitely lived cluster when `FUN_diag` is `PyH`.
+#' @param calculate_representatives a boolean representing whether to calculate representative (co)cycles, default FALSE. Note that representatives cant be
+#' calculated when using the 'calculate_homology' function.
+#' @param alpha the type-1 error threshold, default 0.05.
+#' @param return_pvals a boolean representing whether or not to return p-values for features in the subsetted diagram as well as a list of p-value thresholds, default FALSE.
+#' @param infinite_cycles a boolean representing whether or not to perform inference for features with infinite (i.e. `thresh`) death values, default FALSE.
+#' @return a list containing the full persistence diagram, the subsetted diagram, representatives and/or subsetted representatives if desired, the p-values of subsetted features and the Bonferroni p-value thresholds in each dimension if desired. 
+#' @export
 #' @author Shael Brown - \email{shaelebrown@@gmail.com}
-#' @seealso \code{\link{permutation_test}} for an inferential group difference test for groups of persistence diagrams.
 #' @references
-#' Gretton A et al. (2007). "A Kernel Statistical Test of Independence." \url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf}.
+#' Bobrowski O, Skraba P (2023). "A universal null-distribution for topological data analysis." \url{https://www.nature.com/articles/s41598-023-37842-2}.
 #' @examples
 #'
 #' if(require("TDAstats"))
 #' {
-#'   # create two independent groups of diagrams of length 6, which
-#'   # is the minimum length
+#'   # create two datasets
 #'   D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,10),],
 #'                                      dim = 0,threshold = 2)
 #'   D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,10),],
 #'                                      dim = 0,threshold = 2)
 #' 
-#'   # do model inference test
-#'   model_test <- bootstrap_model_inference(D1, D2, num_samples = 20,thresh = 1.75,num_samples = 20)
+#'   # do model inference test with 1 iteration (for speed, more
+#'   # iterations should be used in practice)
+#'   model_test <- permutation_model_inference(D1, D2, iterations = 1,
+#'                                             thresh = 1.75,num_samples = 3,
+#'                                             num_workers = 2L)
 #'   
-#'   # p-values show difference in the clustering of points but not in the
-#'   # arrangement of loops:
+#'   # with more iterations, p-values show a difference in the 
+#'   # clustering of points but not in the arrangement of loops
 #'   model_test$p_values
 #'   
-#' }
-
-# bootstrap_model_inference <- function(D1, D2, num_samples, dims = c(0,1), paired = F, num_workers = parallelly::availableCores(omit = 1), verbose = F,FUN_diag = "calculate_homology",FUN_boot = "calculate_homology",thresh,distance_mat = FALSE,ripser = NULL,return_diagrams = FALSE){
-#   
-#   # do error checks for D1, D2 and paired
-#   
-#   # generate bootstrap samples
-#   # if paired then generate shared samples, otherwise different samples
-#   s1 <- lapply(X = 1:num_samples,FUN = function(X){
-#     
-#     return(unique(sample(1:nrow(D1),size = nrow(D1),replace = T)))
-#     
-#   })
-#   if(paired)
-#   {
-#     s2 <- s1
-#   }else
-#   {
-#     s2 <- lapply(X = 1:num_samples,FUN = function(X){
-#       
-#       return(unique(sample(1:nrow(D2),size = nrow(D2),replace = T)))
-#       
-#     })
-#   }
-#   
-#   # store maximum dimension
-#   m <- max(dims)
-#   
-#   # compute actual distance between the two full persistence diagrams
-#   if(verbose)
-#   {
-#     message(paste0("Starting to calculate full persistence diagrams at ",Sys.time()))
-#   }
-#   if(FUN_diag == "PyH")
-#   {
-#     diag1 <- PyH(X = D1,maxdim = m,thresh = thresh,distance_mat = distance_mat,ripser = ripser,ignore_infinite_cluster = F)
-#     diag2 <- PyH(X = D2,maxdim = m,thresh = thresh,distance_mat = distance_mat,ripser = ripser,ignore_infinite_cluster = F)
-#   }
-#   if(FUN_diag == "calculate_homology")
-#   {
-#     diag1 <- diagram_to_df(TDAstats::calculate_homology(mat = D1,dim = m,threshold = thresh,format = ifelse(test = distance_mat == T,yes = "distmat",no = "cloud")))
-#     diag2 <- diagram_to_df(TDAstats::calculate_homology(mat = D2,dim = m,threshold = thresh,format = ifelse(test = distance_mat == T,yes = "distmat",no = "cloud")))
-#   }
-#   if(FUN_diag == "ripsDiag")
-#   {
-#     diag1 <- ripsDiag(X = D1,maxdimension = m,maxscale = thresh,dist = ifelse(test = distance_mat == F,yes = "euclidean",no = "arbitrary"),library = "dionysus",printProgress = F)
-#     diag1 <- diagram_to_df(diag1)
-#     diag2 <- ripsDiag(X = D2,maxdimension = m,maxscale = thresh,dist = ifelse(test = distance_mat == F,yes = "euclidean",no = "arbitrary"),library = "dionysus",printProgress = F)
-#     diag2 <- diagram_to_df(diag2)
-#   }
-#   
-#   # use bootstrap samples to get distances and perform inference
-#   if(verbose)
-#   {
-#     message(paste0("Starting to calculate bootstrap distances at ",Sys.time()))
-#   }
-#   distances1 <- bootstrap_persistence_thresholds(X = D1,maxdim = m,distance_mat = distance_mat,thresh = thresh,num_workers = num_workers,ripser = ripser,FUN_boot = FUN_boot,bootstrap_samples = s1,return_distances = TRUE,num_samples = num_samples,FUN_diag = FUN_diag)
-#   distances2 <- bootstrap_persistence_thresholds(X = D2,maxdim = m,distance_mat = distance_mat,thresh = thresh,num_workers = num_workers,ripser = ripser,FUN_boot = FUN_boot,bootstrap_samples = s2,return_distances = TRUE,num_samples = num_samples,FUN_diag = FUN_diag)
-#   res <- lapply(X = 0:m,FUN = function(X){
-#     
-#     bottleneck_dist <- diagram_distance(D1 = diag1,D2 = diag2,dim = X,p = Inf)
-#     boot_vals <- c(as.numeric(distances1[seq(X + 1,length(distances1),m + 1)]),as.numeric(distances2[seq(X + 1,length(distances2),m + 1)]))
-#     Z <- length(which(boot_vals >= bottleneck_dist))
-#     p <- (Z + 1)/(length(boot_vals) + 1)
-#     return(list(boot_vals,bottleneck_dist,p))
-#     
-#   })
-#   res <- list(dimensions = dims,permvals = lapply(res,"[[",1),test_statistics = lapply(res,"[[",2),p_values = lapply(res,"[[",3))
-#   names(res$permvals) <- as.character(0:m)
-#   res$test_statistics <- as.numeric(res$test_statistics)
-#   names(res$test_statistics) <- as.character(0:m)
-#   res$p_values <- as.numeric(res$p_values)
-#   names(res$p_values) <- as.character(0:m)
-#   
-#   if(return_diagrams)
-#   {
-#     res$diag1 <- diag1
-#     res$diag2 <- diag2
-#   }
-#   
-#   if(verbose)
-#   {
-#     message(paste0("Finished inference test at ",Sys.time()))
-#   }
-#   
-#   return(res)
-#   
-# }
-
-#### NEW STUFF ####
-#' Model inference with independence test.
-#'
-#' Carries out inference to determine if two datasets were likely generated from the same process or not (i.e. if
-#' the persistence diagram of one dataset is a good model for the persistence diagram of the other dataset). Inference is
-#' carried out by generating bootstrap resampled persistence diagrams from the two datasets and carrying out a permutation test
-#' on the resulting two groups.
-#' A small p-value in a certain dimension suggests that the datasets are not good models of each other.
-#'
-#' @param D1 the first dataset (a data frame).
-#' @param D2 the second dataset (a data frame).
-#' @param iterations the number of iterations for permuting group labels, default 20.
-#' @param num_samples the number of bootstrap iterations, default 30.
-#' @param dims a non-negative integer vector of the homological dimensions in which the test is to be carried out, default c(0,1).
-#' @param paired a boolean flag for if there is a second-order pairing between diagrams at the same index in different groups, default FALSE
-#' @param num_workers the number of cores used for parallel computation, default is one less than the number of cores on the machine.
-#' @param verbose a boolean flag for if the time duration of the function call should be printed, default FALSE
-#'
-#' @return a list with the following elements:
-#' \describe{
+#'   # to supply samp, when we believe there is a correspondence between
+#'   # the rows in D1 and the rows in D2
+#'   # note that the number of entries of samp (3 in this case) must
+#'   # match the num_samples parameter to the function call
+#'   samp <- lapply(X = 1:3,FUN = function(X){
 #' 
-#'  \item{dimensions}{the input `dims` argument.}
+#'            return(unique(sample(1:nrow(D1),size = nrow(D1),replace = TRUE)))
 #' 
-#'  \item{permvals}{a numeric vector of length `iterations` with the permuted loss value for each iteration (permutation)}
-#'  
-#'  \item{test_statisics}{a numeric vector of the test statistic value in each dimension.}
-#'  
-#'  \item{p_values}{a numeric vector of the p-values in each dimension.}
-#'  
-#'  \item{run_time}{the run time of the function call, containing time units.}
-#' 
-#' }
-#' 
-#' @importFrom parallelly availableCores
-#' @author Shael Brown - \email{shaelebrown@@gmail.com}
-#' @seealso \code{\link{permutation_test}} for an inferential group difference test for groups of persistence diagrams.
-#' @references
-#' Gretton A et al. (2007). "A Kernel Statistical Test of Independence." \url{https://proceedings.neurips.cc/paper/2007/file/d5cfead94f5350c12c322b5b664544c1-Paper.pdf}.
-#' @examples
-#'
-#' if(require("TDAstats"))
-#' {
-#'   # create two independent groups of diagrams of length 6, which
-#'   # is the minimum length
-#'   D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,10),],
-#'                                      dim = 0,threshold = 2)
-#'   D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,10),],
-#'                                      dim = 0,threshold = 2)
-#' 
-#'   # do model inference test
-#'   model_test <- permutation_model_inference(D1, D2, iterations = 20,thresh = 1.75,num_samples = 20)
+#'           })
 #'   
-#'   # p-values show difference in the clustering of points but not in the
-#'   # arrangement of loops:
-#'   model_test$p_values
-#'   
+#'   # model inference will theoretically have higher power now for a
+#'   # paired test 
+#'   model_test2 <- permutation_model_inference(D1, D2, iterations = 1,
+#'                                              thresh = 1.75,num_samples = 3,
+#'                                              paired = TRUE,samp = samp,
+#'                                              num_workers = 2L)
+#'   model_test2$p_values
 #' }
-# 
-# independence_model_inference <- function(D1, D2, num_samples, dims = c(0,1), sigma = 1, t = 1, rho = NULL, paired = F, num_workers = parallelly::availableCores(omit = 1), verbose = F,FUN_boot = "calculate_homology",thresh,distance_mat = FALSE,ripser = NULL,return_diagrams = FALSE){
-#   
-#   # do error checks for D1, D2 and paired
-#   
-#   # generate bootstrap samples
-#   # if paired then generate shared samples, otherwise different samples
-#   s1 <- lapply(X = 1:num_samples,FUN = function(X){
-#     
-#     return(unique(sample(1:nrow(D1),size = nrow(D1),replace = T)))
-#     
-#   })
-#   if(paired)
-#   {
-#     s2 <- s1
-#   }else
-#   {
-#     s2 <- lapply(X = 1:num_samples,FUN = function(X){
-#       
-#       return(unique(sample(1:nrow(D2),size = nrow(D2),replace = T)))
-#       
-#     })
-#   }
-#   
-#   # use bootstrap samples to get bootstrapped diagrams
-#   if(verbose)
-#   {
-#     message(paste0("Starting to calculate bootstrapped diagrams at ",Sys.time()))
-#   }
-#   bootstrapped_diagrams1 <- bootstrap_persistence_thresholds(X = D1,maxdim = max(dims),distance_mat = distance_mat,thresh = thresh,num_workers = num_workers,ripser = ripser,FUN_boot = FUN_boot,bootstrap_samples = s1,num_samples = num_samples)
-#   bootstrapped_diagrams1 <- lapply(X = 1:num_samples,FUN = function(X){
-#     
-#     return(data.frame(dimension = bootstrapped_diagrams1[[(X-1)*3 + 1]],birth = bootstrapped_diagrams1[[(X-1)*3 + 2]],death = bootstrapped_diagrams1[[X*3]]))
-#     
-#   })
-#   bootstrapped_diagrams2 <- bootstrap_persistence_thresholds(X = D2,maxdim = max(dims),distance_mat = distance_mat,thresh = thresh,num_workers = num_workers,ripser = ripser,FUN_boot = FUN_boot,bootstrap_samples = s2,num_samples = num_samples)
-#   bootstrapped_diagrams2 <- lapply(X = 1:num_samples,FUN = function(X){
-#     
-#     return(data.frame(dimension = bootstrapped_diagrams2[[(X-1)*3 + 1]],birth = bootstrapped_diagrams2[[(X-1)*3 + 2]],death = bootstrapped_diagrams2[[X*3]]))
-#     
-#   })
-#   
-#   # carry out independence test
-#   if(verbose)
-#   {
-#     message(paste0("Starting independence test at ",Sys.time()))
-#   }
-#   p_values <- c()
-#   for(d in dims)
-#   {
-#     vals <- unlist(lapply(1:num_samples,FUN = function(X){
-#       
-#       return(cos(diagram_distance(bootstrapped_diagrams1[[X]],bootstrapped_diagrams2[[X]],dim = 0,distance = "fisher",sigma = sigma)))
-#       
-#     }))
-#     test <- wilcox.test(vals,mu = 1,alternative = "less",conf.int = T)
-#     p_values <- c(p_values,test$p.value)
-#   }
-#   res <- list(p_values = p_values)
-#   
-#   # res <- independence_test(bootstrapped_diagrams1,bootstrapped_diagrams2,dims = dims,sigma = sigma,t = t,rho = rho,num_workers = num_workers)
-#   if(verbose)
-#   {
-#     message(paste0("Finished independence test at ",Sys.time()))
-#   }
-#   if(return_diagrams)
-#   {
-#     res$diagrams1 <- bootstrapped_diagrams1
-#     res$diagrams2 <- bootstrapped_diagrams2
-#   }
-#   return(res)
-#   
-# }
+universal_null <- function(X,FUN_diag = "calculate_homology",maxdim = 0,thresh,distance_mat = FALSE,ripser = NULL,ignore_infinite_cluster = TRUE,calculate_representatives = FALSE,alpha = 0.05,return_pvals = FALSE,infinite_cycles = FALSE){
+  
+  # function for thresholding the points computed in a diagram
+  # based on the universal null distribution
+  
+  # to avoid check issues
+  N <- NULL
+  
+  # error check parameters
+  if(is.null(distance_mat))
+  {
+    stop("distance_mat must not be NULL.")
+  }
+  if(length(distance_mat) > 1 | !inherits(distance_mat,"logical"))
+  {
+    stop("distance_mat must be a single logical (i.e. T or F).")
+  }
+  if(is.na(distance_mat) | is.nan(distance_mat) )
+  {
+    stop("distance_mat must not be NA/NAN.")
+  }
+  
+  if(is.null(return_pvals))
+  {
+    stop("return_pvals must not be NULL.")
+  }
+  if(length(return_pvals) > 1 | !inherits(return_pvals,"logical"))
+  {
+    stop("return_pvals must be a single logical (i.e. T or F).")
+  }
+  if(is.na(return_pvals) | is.nan(return_pvals) )
+  {
+    stop("return_pvals must not be NA/NAN.")
+  }
+  
+  check_param(param = maxdim,param_name = "maxdim",numeric = T,whole_numbers = T,multiple = F,finite = T,non_negative = T)
+  check_param(param = thresh,param_name = "thresh",numeric = T,whole_numbers = F,multiple = F,finite = T,non_negative = T,positive = T)
+  
+  if(!inherits(X,"data.frame") & !inherits(X,"matrix"))
+  {
+    stop("X must either be a dataframe or a matrix.")
+  }
+  if(nrow(X) < 2 | ncol(X) < 1)
+  {
+    stop("X must have at least two rows and one column.")
+  }
+  if(length(which(stats::complete.cases(X) == F)) > 0)
+  {
+    stop("X must not contain any missing values.")
+  }
+  if(distance_mat == T & (ncol(X) != nrow(X) | !inherits(X,"matrix")))
+  {
+    stop("if distance_mat is TRUE then X must be a square matrix.")
+  }
+  if((inherits(X,"matrix") & !inherits(X[1,1],"numeric")) | (inherits(X,"data.frame") & length(which(unlist(lapply(X,is.numeric)))) < ncol(X)))
+  {
+    stop("X must have only numeric entries.")
+  }
+  
+  if(is.null(FUN_diag))
+  {
+    stop("FUN_diag must not be NULL.")
+  }
+  if(length(FUN_diag) > 1 | !inherits(FUN_diag,"character"))
+  {
+    stop("FUN_diag must be a single string.")
+  }
+  if(is.na(FUN_diag) | is.nan(FUN_diag) )
+  {
+    stop("FUN_diag must not be NA/NAN.")
+  }
+  if(FUN_diag %in% c("calculate_homology","ripsDiag","PyH") == F)
+  {
+    stop("FUN_diag must be either \'calculate_homology\', \'PyH\' or \'ripsDiag\'.")
+  }
+  if(FUN_diag == 'calculate_homology')
+  {
+    if(requireNamespace("TDAstats",quietly = T) == F)
+    {
+      stop("To use the \'calculate_homology\' function the package TDAstats must be installed.")
+    }
+  }
+  if(FUN_diag == 'ripsDiag')
+  {
+    tryCatch(expr = {ripsDiag <- get("ripsDiag",envir = globalenv())},
+             error = function(e){
+               
+               stop("To use the \'ripsDiag\' function the package TDA must be attached in the global environment.")
+               
+             })
+  }
+  
+  if(FUN_diag == "PyH")
+  {
+    
+    if(is.null(ignore_infinite_cluster))
+    {
+      stop("ignore_infinite_cluster must not be NULL.")
+    }
+    if(length(ignore_infinite_cluster) > 1 | !inherits(ignore_infinite_cluster,"logical"))
+    {
+      stop("ignore_infinite_cluster must be a single logical (i.e. T or F).")
+    }
+    if(is.na(ignore_infinite_cluster) | is.nan(ignore_infinite_cluster) )
+    {
+      stop("ignore_infinite_cluster must not be NA/NAN.")
+    }
+    
+    check_ripser(ripser)
+    
+  }
+  
+  if(is.null(calculate_representatives))
+  {
+    stop("calculate_representatives must not be NULL.")
+  }
+  if(length(calculate_representatives) > 1 | !inherits(calculate_representatives,"logical"))
+  {
+    stop("calculate_representatives must be a single boolean value.")
+  }
+  if(is.na(calculate_representatives) | is.nan(calculate_representatives) )
+  {
+    stop("calculate_representatives must not be NA/NAN.")
+  }
+  check_param(param_name = "alpha",param = alpha,numeric = T,whole_numbers = F,multiple = F,finite = T,non_negative = T)
+  if(alpha <= 0 | alpha >= 1)
+  {
+    stop("alpha must be between 0 and 1 (non-inclusive).")
+  }
+  if(is.null(infinite_cycles))
+  {
+    stop("infinite_cycles must not be NULL.")
+  }
+  if(length(infinite_cycles) > 1 | !inherits(infinite_cycles,"logical"))
+  {
+    stop("infinite_cycles must be a single boolean value.")
+  }
+  if(is.na(infinite_cycles) | is.nan(infinite_cycles) )
+  {
+    stop("infinite_cycles must not be NA/NAN.")
+  }
+  
+  # first calculate the "real" persistence diagram, storing representative cycles if need be
+  if(FUN_diag == "PyH")
+  {
+    diag <- PyH(X = X,maxdim = maxdim,thresh = thresh,distance_mat = distance_mat,ripser = ripser,ignore_infinite_cluster = ignore_infinite_cluster,calculate_representatives = calculate_representatives)
+    if(calculate_representatives == T)
+    {
+      representatives = diag$representatives
+      diag <- diag$diagram
+    }
+  }
+  if(FUN_diag == "calculate_homology")
+  {
+    diag <- diagram_to_df(TDAstats::calculate_homology(mat = X,dim = maxdim,threshold = thresh,format = ifelse(test = distance_mat == T,yes = "distmat",no = "cloud")))
+    representatives <- NULL
+  }
+  if(FUN_diag == "ripsDiag")
+  {
+    diag <- ripsDiag(X = X,maxdimension = maxdim,maxscale = thresh,dist = ifelse(test = distance_mat == F,yes = "euclidean",no = "arbitrary"),library = "dionysus",location = calculate_representatives,printProgress = F)
+    if(calculate_representatives == T)
+    {
+      representatives <- diag$cycleLocation
+    }
+    diag <- diagram_to_df(diag)
+  }
+  
+  # make return list
+  ret_list <- list(diag = diag, subsetted_diag = subsetted_diag)
+  if(calculate_representatives)
+  {
+    ret_list$representatives <- representatives
+  }
+  
+  # make sure there is work to be done
+  if(max(diag$dimension) > 0)
+  {
+    # compute test statistics
+    diag_highdim <- diag[which(diag$dimension > 0),]
+    dims <- c(1:maxdim)
+    A <- 0.5
+    lambda <- -digamma(1)
+    pi <- unlist(lapply(X = 1:nrow(diag_highdim),FUN = function(X){
+      
+      return(return(X[[3]]/X[[2]]))
+      
+    }))
+    loglog_pi <- log(log(pi))
+    L_bar <- unlist(lapply(X = dims, FUN = function(X){
+      
+      dim_inds <- which(diag_highdim == X)
+      return(mean(loglog_pi[dim_inds]))
+      
+    }))
+    B <- -1*lambda - A*L_bar
+    test_stats <- unlist(lapply(X = 1:length(loglog_pi),FUN = function(X){
+      
+      return(A*loglog_pi[[X]] + B[[diag_highdim[X, 1L]]])
+    
+    }))
+    
+    # compute p-values
+    pvals <- exp(-1*exp(test_stats))
+    
+    # get Bonferroni thresholds in each dimension
+    alpha_thresh <- unlist(lapply(dims,FUN = function(X){
+      
+      L <- length(which(diag_highdim$dimension == X))
+      if(L == 0)
+      {
+        return(Inf)
+      }
+      return(alpha/L)
+      
+    }))
+    
+    # subset in each dimension
+    inds <- c()
+    for(d in 1:maxdim)
+    {
+      inds <- c(inds,which(diag_highdim$dimension == d & p_vals < alpha_thresh[[d]])) 
+    }
+    ret_list$subsetted_diag <- diag[inds,]
+    
+    # subset representatives if desired
+    # deal with representatives
+    if(calculate_representatives == T & FUN_diag == "ripsDiag")
+    {
+      ret_list$subsetted_representatives = representatives[inds]
+    }
+    if(calculate_representatives == T & FUN_diag == "PyH")
+    {
+      ret_list$subsetted_representatives = representatives
+      if(maxdim > 0)
+      {
+        for(d in 1:maxdim)
+        {
+          if(length(which(diag$dimension == d)) > 0)
+          {
+            min_ind <- min(which(diag$dimension == d))
+            max_ind <- max(which(diag$dimension == d))
+            ret_list$subsetted_representatives[[d + 1]] <- ret_list$subsetted_representatives[[d + 1]][inds[which(inds %in% c(min_ind:max_ind))] - min_ind + 1]
+          }else
+          {
+            ret_list$subsetted_representatives[[d + 1]] <- list()
+          }
+        }
+      }
+    }
+    if(return_pvals)
+    {
+      ret_list$pvals <- pvals[inds]
+      ret_list$alpha_thresh <- alpha_thresh
+    }
+    if(infinite_cycles)
+    {
+      # perform inference for infinite cycles
+      infinite_inds <- which(diag_highdim$death == thresh)
+      diag_infinite <- diag_highdim[infinite_inds,]
+      pvals_infinite <- pvals[infinite_inds]
+      infinite_cycle_inference <- data.frame(dimension = integer(), birth = numeric(), death = numeric(), min_significant_threshold = numeric())
+      unknown_death_cycles <- data.frame(dimension = integer(), birth = numeric(), death = numeric())
+      for(i in 1:nrow(diag_infinite))
+      {
+        if(pvals_infinite[[i]] < alpha_thresh[[diag_infinite[i,1L]]])
+        {
+          infinite_cycle_inference <- rbind(infinite_cycle_inference, data.frame(dimension = diag_infinite[i,1L], birth = diag_infinite[i,2L], death = diag_infinite[i,3L], min_significant_threshold = thresh))
+        }else
+        {
+          unknown_death_cycles <- rbind(unknown_death_cycles, data.frame(dimension = diag_infinite[i,1L], birth = diag_infinite[i,2L], death = diag_infinite[i,3L]))
+        }
+      }
+      alpha_cutoffs <- unlist(lapply(1:length(alpha_thresh), FUN = function(X){
+        
+        quant <- log(log(1/alpha_thresh[[X]]))
+        pi_min <- exp(exp((quant - B[[X]])/A))
+        return(pi_min)
+        
+      }))
+      
+    }
+  }
+  else
+  {
+    ret_list$subsetted_diag <- diagram_to_df(data.frame(dimension = integer(),birth = numeric(),death = numeric()))
+    if(calculate_representatives)
+    {
+      ret_list$subsetted_representatives <- list()
+    }
+    if(return_pvals)
+    {
+      ret_list$pvals <- list()
+      ret_list$alpha_thresh <- list()
+    }
+  }
+  
+  return(ret_list)
+  
+}
 
 
