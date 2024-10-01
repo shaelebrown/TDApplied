@@ -880,13 +880,10 @@ permutation_model_inference <- function(D1, D2, iterations, num_samples, dims = 
 #'                                              num_workers = 2L)
 #'   model_test2$p_values
 #' }
-universal_null <- function(X,FUN_diag = "calculate_homology",maxdim = 0,thresh,distance_mat = FALSE,ripser = NULL,ignore_infinite_cluster = TRUE,calculate_representatives = FALSE,alpha = 0.05,return_pvals = FALSE,infinite_cycles = FALSE){
+universal_null <- function(X,FUN_diag = "calculate_homology",maxdim = 1,thresh,distance_mat = FALSE,ripser = NULL,ignore_infinite_cluster = TRUE,calculate_representatives = FALSE,alpha = 0.05,return_pvals = FALSE,infinite_cycle_inference = FALSE){
   
   # function for thresholding the points computed in a diagram
   # based on the universal null distribution
-  
-  # to avoid check issues
-  N <- NULL
   
   # error check parameters
   if(is.null(distance_mat))
@@ -1009,17 +1006,17 @@ universal_null <- function(X,FUN_diag = "calculate_homology",maxdim = 0,thresh,d
   {
     stop("alpha must be between 0 and 1 (non-inclusive).")
   }
-  if(is.null(infinite_cycles))
+  if(is.null(infinite_cycle_inference))
   {
-    stop("infinite_cycles must not be NULL.")
+    stop("infinite_cycle_inference must not be NULL.")
   }
-  if(length(infinite_cycles) > 1 | !inherits(infinite_cycles,"logical"))
+  if(length(infinite_cycle_inference) > 1 | !inherits(infinite_cycle_inference,"logical"))
   {
-    stop("infinite_cycles must be a single boolean value.")
+    stop("infinite_cycle_inference must be a single boolean value.")
   }
-  if(is.na(infinite_cycles) | is.nan(infinite_cycles) )
+  if(is.na(infinite_cycle_inference) | is.nan(infinite_cycle_inference) )
   {
-    stop("infinite_cycles must not be NA/NAN.")
+    stop("infinite_cycle_inference must not be NA/NAN.")
   }
   
   # first calculate the "real" persistence diagram, storing representative cycles if need be
@@ -1048,7 +1045,7 @@ universal_null <- function(X,FUN_diag = "calculate_homology",maxdim = 0,thresh,d
   }
   
   # make return list
-  ret_list <- list(diag = diag, subsetted_diag = subsetted_diag)
+  ret_list <- list(diag = diag)
   if(calculate_representatives)
   {
     ret_list$representatives <- representatives
@@ -1060,17 +1057,17 @@ universal_null <- function(X,FUN_diag = "calculate_homology",maxdim = 0,thresh,d
     # compute test statistics
     diag_highdim <- diag[which(diag$dimension > 0),]
     dims <- c(1:maxdim)
-    A <- 0.5
+    A <- 1 # for VR filtrations
     lambda <- -digamma(1)
     pi <- unlist(lapply(X = 1:nrow(diag_highdim),FUN = function(X){
       
-      return(return(X[[3]]/X[[2]]))
+      return(return(diag_highdim[X,3L]/diag_highdim[X,2L]))
       
     }))
     loglog_pi <- log(log(pi))
     L_bar <- unlist(lapply(X = dims, FUN = function(X){
       
-      dim_inds <- which(diag_highdim == X)
+      dim_inds <- which(diag_highdim$dimension == X)
       return(mean(loglog_pi[dim_inds]))
       
     }))
@@ -1100,9 +1097,9 @@ universal_null <- function(X,FUN_diag = "calculate_homology",maxdim = 0,thresh,d
     inds <- c()
     for(d in 1:maxdim)
     {
-      inds <- c(inds,which(diag_highdim$dimension == d & p_vals < alpha_thresh[[d]])) 
+      inds <- c(inds,which(diag_highdim$dimension == d & pvals < alpha_thresh[[d]])) 
     }
-    ret_list$subsetted_diag <- diag[inds,]
+    ret_list$subsetted_diag <- diag_highdim[inds,]
     
     # subset representatives if desired
     # deal with representatives
@@ -1134,31 +1131,50 @@ universal_null <- function(X,FUN_diag = "calculate_homology",maxdim = 0,thresh,d
       ret_list$pvals <- pvals[inds]
       ret_list$alpha_thresh <- alpha_thresh
     }
-    if(infinite_cycles)
+    if(infinite_cycle_inference)
     {
       # perform inference for infinite cycles
       infinite_inds <- which(diag_highdim$death == thresh)
-      diag_infinite <- diag_highdim[infinite_inds,]
-      pvals_infinite <- pvals[infinite_inds]
-      infinite_cycle_inference <- data.frame(dimension = integer(), birth = numeric(), death = numeric(), min_significant_threshold = numeric())
-      unknown_death_cycles <- data.frame(dimension = integer(), birth = numeric(), death = numeric())
-      for(i in 1:nrow(diag_infinite))
+      if(length(infinite_inds) > 0)
       {
-        if(pvals_infinite[[i]] < alpha_thresh[[diag_infinite[i,1L]]])
+        diag_infinite <- diag_highdim[infinite_inds,]
+        pvals_infinite <- pvals[infinite_inds]
+        infinite_cycle_inference <- data.frame(dimension = integer(), birth = numeric(), death = numeric(), min_radius_for_signif = numeric())
+        unknown_death_cycles <- data.frame(dimension = integer(), birth = numeric(), death = numeric())
+        for(i in 1:nrow(diag_infinite))
         {
-          infinite_cycle_inference <- rbind(infinite_cycle_inference, data.frame(dimension = diag_infinite[i,1L], birth = diag_infinite[i,2L], death = diag_infinite[i,3L], min_significant_threshold = thresh))
-        }else
-        {
-          unknown_death_cycles <- rbind(unknown_death_cycles, data.frame(dimension = diag_infinite[i,1L], birth = diag_infinite[i,2L], death = diag_infinite[i,3L]))
+          if(pvals_infinite[[i]] < alpha_thresh[[diag_infinite[i,1L]]])
+          {
+            infinite_cycle_inference <- rbind(infinite_cycle_inference, data.frame(dimension = diag_infinite[i,1L], birth = diag_infinite[i,2L], death = diag_infinite[i,3L], min_radius_for_signif = thresh))
+          }else
+          {
+            unknown_death_cycles <- rbind(unknown_death_cycles, data.frame(dimension = diag_infinite[i,1L], birth = diag_infinite[i,2L], death = diag_infinite[i,3L]))
+          }
         }
+        alpha_cutoffs <- unlist(lapply(1:length(alpha_thresh), FUN = function(X){
+          
+          quant <- log(log(1/alpha_thresh[[X]]))
+          pi_min <- exp(exp((quant - B[[X]])/A))
+          return(pi_min)
+          
+        }))
+        # take lowest birth value point, determine its candidate death radius and test
+        while(nrow(unknown_death_cycles) > 0)
+        {
+          min_birth_ind <- which(unknown_death_cycles$birth == min(unknown_death_cycles$birth))[[1]]
+          min_birth_pt <- unknown_death_cycles[min_birth_ind,]
+          unknown_death_cycles <- unknown_death_cycles[setdiff(1:nrow(unknown_death_cycles), min_birth_ind),]
+          new_death <- alpha_cutoffs[[min_birth_pt[[1]]]]*min_birth_pt[[2]]
+          new_res <- universal_null(X = X,FUN_diag = FUN_diag,maxdim = maxdim, thresh = new_death,distance_mat = distance_mat,ripser = ripser, ignore_infinite_cluster = ignore_infinite_cluster,calculate_representatives = FALSE,alpha = alpha,return_pvals = FALSE,infinite_cycle_inference = FALSE)
+          # check if feature with same birth value is still infinite or not
+          # if so then add to infinite_cycle_inference
+          if(length(which(new_res$subsetted_diag$dimension == min_birth_pt[[1]] & new_res$subsetted_diag$birth == min_birth_pt[[2]] & new_res$subsetted_diag$death == min_birth_pt[[3]])) > 0)
+          {
+            infinite_cycle_inference <- rbind(infinite_cycle_inference, data.frame(dimension = min_birth_pt[[1]],birth = min_birth_pt[[2]],death = min_birth_pt[[3]],min_radius_for_signif = new_death))
+          }
+        }
+        ret_list$signif_inf_cycles <- infinite_cycle_inference
       }
-      alpha_cutoffs <- unlist(lapply(1:length(alpha_thresh), FUN = function(X){
-        
-        quant <- log(log(1/alpha_thresh[[X]]))
-        pi_min <- exp(exp((quant - B[[X]])/A))
-        return(pi_min)
-        
-      }))
       
     }
   }
@@ -1173,6 +1189,10 @@ universal_null <- function(X,FUN_diag = "calculate_homology",maxdim = 0,thresh,d
     {
       ret_list$pvals <- list()
       ret_list$alpha_thresh <- list()
+    }
+    if(infinite_cycle_inference)
+    {
+      ret_list$signif_inf_cycles <- data.frame(dimension = integer(), birth = numeric(), death = numeric(), min_radius_for_signif = numeric())
     }
   }
   

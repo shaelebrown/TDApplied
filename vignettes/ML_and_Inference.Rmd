@@ -347,11 +347,19 @@ Persistence diagrams can contain any number of points representing different typ
 plot_diagram(diag,title = "Circle diagram")
 ```
 
-Now that we can visualize persistence diagrams we will describe three tools which can be used for their interpretation -- filtering out noisy topological features with bootstrapping, representative (co)cycles and *Vietoris-VR graphs* (called VR graphs for short).
+Now that we can visualize persistence diagrams we will describe four tools which can be used for their interpretation -- filtering out noisy topological features with the universal null distribution, bootstrapping, representative (co)cycles and *Vietoris-VR graphs* (called VR graphs for short).
+
+## Filtering Topological Features and **TDApplied**'s `univeral_null` Function
+
+Noise in datasets can drastically affect the results of inference and machine learning procedures. Therefore it is desirable to clean data before applying such procedures. Noise in persistence diagrams are features whose birth and death values are very similar. The question of determining which points in a persistence diagrams are "significant" and which are "noise" has been recently addressed via a parametric approach in [@universal_null].
+
+The idea is to compute a test statistic for each feature based on the ratio of death divided by birth and to compare these statistics against the left-skewed Gumbel distribution to compute p-values, and use a Bonferroni correction to ensure that the probability of getting a false positive significant feature is at most $\alpha$. This is a very strict thresholding procedure, testing each p-value $p$ for a topological feature in dimension $i$ against $\alpha/n_i$ where $n_i$ is the number of topological features of that dimension.
+
+
 
 ## Bootstrapping Topological Features and **TDApplied**'s `bootstrap_persistence_thresholds` Function
 
-Noise in datasets can drastically affect the results of inference and machine learning procedures. Therefore it is desirable to clean data before applying such procedures. Noise in persistence diagrams are low persistence topological features, i.e. features whose birth and death values are very similar (such points would be near the diagonal line when plotted). The question of determining which points in a persistence diagrams are "significant" and which are "noise" has been addressed via a bootstrapping approach in [@bootstrap].
+Another approach in the literature for filtering significant topological features of datasets was based on bootstrapping ([@bootstrap]), although this method is far slower than the aforementioned universal null distribution approach (a direct comparison is made in the "Comparing Topological Filtering Methods" vignette).
 
 The idea of the procedure is as follows, where $X$ is the input data set and $\alpha$ is the desired threshold for type 1 error:
 
