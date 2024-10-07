@@ -14,12 +14,15 @@
 #' {
 #'   # create a persistence diagram from a 2D Gaussian
 #'   df = data.frame(x = rnorm(n = 20,mean = 0,sd = 1),y = rnorm(n = 20,mean = 0,sd = 1))
-#' 
-#'   # compute persistence diagram with calculate_homology from package TDAstats
-#'   phom_TDAstats = TDAstats::calculate_homology(mat = df,dim = 0,threshold = 1)
-#' 
-#'   # convert to data frame
-#'   phom_TDAstats_df = diagram_to_df(d = phom_TDAstats)
+#'   
+#'   # compute the enclosing radius from the point cloud
+#'   enc_rad <- enclosing_radius(df, distance_mat = FALSE)
+#'   
+#'   # compute the distance matrix manually, stored as a matrix
+#'   dist_df <- as.matrix(dist(df))
+#'   
+#'   # compute the enclosing radius from the distance matrix
+#'   enc_rad <- enclosing_radius(dist_df, distance_mat = TRUE)
 #' }
 enclosing_radius <- function(X, distance_mat){
   
@@ -63,15 +66,36 @@ enclosing_radius <- function(X, distance_mat){
   {
     dist_X <- dist(X)
     n <- nrow(X)
-    return(min(sapply(1:(n - 1),FUN = function(X){
+    return(min(sapply(1:n,FUN = function(X){
       
-      lower_bound <- n*(X - 1) - X*(X - 1)/2 + 1
-      upper_bound <- lower_bound + n - X
-      if(X == n - 1)
+      col_inds <- c()
+      if(X > 1)
       {
-        upper_bound <- upper_bound - 1
+        num_cols <- X - 1
+        col <- 1
+        pos <- X - 1
+        while(col < num_cols)
+        {
+          col_inds <- c(col_inds, pos)
+          col <- col + 1
+          pos <- pos + n - col
+        }
       }
-      return(max(dist_X[lower_bound:upper_bound]))
+      
+      row_inds <- c()
+      if(X < n)
+      {
+        lower_bound <- n*(X - 1) - X*(X - 1)/2 + 1
+        upper_bound <- lower_bound + n - X
+        if(X == n - 1)
+        {
+          upper_bound <- upper_bound - 1
+        }
+        row_inds <- c(lower_bound:upper_bound)
+      }
+      inds <- c(row_inds, col_inds)
+      
+      return(max(dist_X[inds]))
       
     })))
   }
