@@ -169,7 +169,7 @@ Note that the installation status of Python for `PyH` is checked using the funct
 
 ## Determining the Radius Threshold with **TDApplied**'s `enclosing_radius` Function
 
-One of the most important parameters in a persistent (co)homology calculation is the maximum connectivity radius of the filtration (which is the `maxdim` parameter in the `PyH` function). A small radius threshold may prematurely stop the filtration before we can identify real large-scale features of our data, while an overly large threshold could quickly cause the calculations to become intractable. While there is no method that can determine an optimal balance between these two extremes, a radius threshold exists, called the "enclosing radius", beyond which the topology of the dataset is trivial (i.e. there are no topological features except for one connected component). 
+One of the most important parameters in a persistent (co)homology calculation is the maximum connectivity radius of the filtration (which is the `maxdim` parameter in the `PyH` function). A small radius threshold may prematurely stop the filtration before we can identify real large-scale features of our data, while an overly large threshold could quickly cause the calculations to become intractable. While there is no method that can determine an optimal balance between these two extremes, a radius threshold exists, called the "enclosing radius", beyond which the topology of the dataset is trivial (i.e. there are no topological features except for one connected component). This radius is obtained by calculating, for each data point, the maximum distance from that point to all other points, and taking the minimum of these values.
 
 The enclosing radius of a dataset can be computed using **TDApplied**'s `enclosing_radius` function. Consider the topology of a dataset sampled from a circle and its origin:
 
@@ -393,9 +393,9 @@ The idea is to compute a test statistic for each feature based on the ratio of d
 
 ## Bootstrapping Topological Features and **TDApplied**'s `bootstrap_persistence_thresholds` Function
 
-Another approach in the literature for filtering significant topological features of datasets was based on bootstrapping ([@bootstrap]), although this method is far slower than the aforementioned universal null distribution approach (a direct comparison is made in the "Comparing Topological Filtering Methods" vignette).
+Another approach in the literature for filtering significant topological features of datasets was based on bootstrapping ([@bootstrap]), although this method is far slower than the aforementioned universal null distribution approach. On the other hand, for topologically simple datasets without noise (like a sampled unit circle) the universal null distribution will often fail to retrieve the real topological features.
 
-The idea of the procedure is as follows, where $X$ is the input data set and $\alpha$ is the desired threshold for type 1 error:
+The idea of the bootstrap procedure is as follows, where $X$ is the input data set and $\alpha$ is the desired threshold for type 1 error:
 
 1. We first compute $D$, the diagram of $X$.
 2. Then we repeatedly sample, with replacement, the original data to obtain $\{X_1,\dots,X_n\}$ and compute new persistence diagrams $\{D_1,\dots,D_n\}$.

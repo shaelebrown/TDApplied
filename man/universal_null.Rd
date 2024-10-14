@@ -33,7 +33,8 @@ dimensions together (TRUE, the default) or if one threshold should be calculated
 
 \item{ripser}{the imported ripser module when `FUN_diag` is `PyH`.}
 
-\item{ignore_infinite_cluster}{a boolean indicating whether or not to ignore the infinitely lived cluster when `FUN_diag` is `PyH`.}
+\item{ignore_infinite_cluster}{a boolean indicating whether or not to ignore the infinitely lived cluster when `FUN_diag` is `PyH`. If infinite cycle inference is to be performed,
+this parameter should be set to FALSE.}
 
 \item{calculate_representatives}{a boolean representing whether to calculate representative (co)cycles, default FALSE. Note that representatives cant be
 calculated when using the 'calculate_homology' function.}
@@ -42,7 +43,8 @@ calculated when using the 'calculate_homology' function.}
 
 \item{return_pvals}{a boolean representing whether or not to return p-values for features in the subsetted diagram as well as a list of p-value thresholds, default FALSE.}
 
-\item{infinite_cycles}{a boolean representing whether or not to perform inference for features with infinite (i.e. `thresh`) death values, default FALSE.}
+\item{infinite_cycles}{a boolean representing whether or not to perform inference for features with infinite (i.e. `thresh`) death values, default FALSE. If `FUN_diag` is `calculate_homology` (the
+default) then no infinite cycles will be returned by the persistent homology calculation at all.}
 }
 \value{
 a list containing the full persistence diagram, the subsetted diagram, representatives and/or subsetted representatives if desired, the p-values of subsetted features and the Bonferroni p-value thresholds in each dimension if desired.
@@ -61,41 +63,31 @@ function does not seem to store infinite cycles (i.e. cycles that have death val
 }
 \examples{
 
-if(require("TDAstats"))
+if(require("TDA"))
 {
-  # create two datasets
-  D1 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,10),],
-                                     dim = 0,threshold = 2)
-  D2 <- TDAstats::calculate_homology(TDAstats::circle2d[sample(1:100,10),],
-                                     dim = 0,threshold = 2)
+  # create dataset
+  theta <- runif(n = 100,min = 0,max = 2*pi)
+  x <- cos(theta)
+  y <- sin(theta)
+  circ <- data.frame(x = x,y = y)
 
-  # do model inference test with 1 iteration (for speed, more
-  # iterations should be used in practice)
-  model_test <- permutation_model_inference(D1, D2, iterations = 1,
-                                            thresh = 1.75,num_samples = 3,
-                                            num_workers = 2L)
-  
-  # with more iterations, p-values show a difference in the 
-  # clustering of points but not in the arrangement of loops
-  model_test$p_values
-  
-  # to supply samp, when we believe there is a correspondence between
-  # the rows in D1 and the rows in D2
-  # note that the number of entries of samp (3 in this case) must
-  # match the num_samples parameter to the function call
-  samp <- lapply(X = 1:3,FUN = function(X){
+  # add noise
+  circ$x <- circ$x + stats::rnorm(n = 100,sd = 0.1)
+  circ$y <- circ$y + stats::rnorm(n = 100,sd = 0.1)
 
-           return(unique(sample(1:nrow(D1),size = nrow(D1),replace = TRUE)))
+  # determine significant topological features
+  library(TDA)
+  res <- universal_null(circ, thresh = 2,alpha = 0.1,return_pvals = TRUE,FUN_diag = "ripsDiag")
+  res$subsetted_diag
+  res$pvals
+  res$alpha_thresh
 
-          })
-  
-  # model inference will theoretically have higher power now for a
-  # paired test 
-  model_test2 <- permutation_model_inference(D1, D2, iterations = 1,
-                                             thresh = 1.75,num_samples = 3,
-                                             paired = TRUE,samp = samp,
-                                             num_workers = 2L)
-  model_test2$p_values
+  # at a lower threshold we can check for 
+  # infinite cycles
+  res2 <- universal_null(circ, thresh = 0.5, 
+                         infinite_cycle_inference = TRUE,
+                         FUN_diag = "ripsDiag")
+  res2$subsetted_diag
 }
 }
 \references{

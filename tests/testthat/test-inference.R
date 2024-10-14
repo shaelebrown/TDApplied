@@ -221,27 +221,32 @@ test_that("independence_test is working",{
 # })
 
 # test_that("universal_null is working properly",{
-#   
+# 
 #   theta <- runif(n = 100, min = 0,max = 2*3.14)
 #   x <- cos(theta)
 #   y <- sin(theta)
 #   circ <- data.frame(x = x,y = y)
 #   res <- universal_null(circ, maxdim = 1, thresh = 2)
 #   expect_equal(nrow(res$subsetted_diag), 0) # when there is only one feature, same for TDA::sphereUnif
-#   
+# 
 #   circ$x <- circ$x + rnorm(n = 100,sd = 0.1)
 #   circ$y <- circ$y + rnorm(n = 100,sd = 0.1)
 #   res <- universal_null(circ, maxdim = 1, thresh = 2,alpha = 0.1) # with enough leeway
 #   expect_equal(nrow(res$subsetted_diag), 1L)
 #   expect_equal(res$subsetted_diag[1,1L], 1) # dim 1
-#   
+# 
 #   # now trying with and without infinite cycle inference at a smaller radius
-#   res <- universal_null(circ, maxdim = 1, thresh = 1,alpha = 0.05)
+#   res <- universal_null(circ, maxdim = 1, thresh = 1.1,alpha = 0.05)
 #   expect_equal(nrow(res$subsetted_diag), 0L)
 #   library(TDA)
-#   res <- universal_null(circ, FUN_diag = 'ripsDiag', maxdim = 1, thresh = 1.0,alpha = 0.05,infinite_cycle_inference = T)
+#   res <- universal_null(circ, FUN_diag = 'ripsDiag', maxdim = 1, thresh = 1.1,alpha = 0.05,infinite_cycle_inference = T)
 #   expect_equal(nrow(res$subsetted_diag), 1L)
-#   expect_equal(nrow(res$signif_inf_cycles), 1L)
-#   
+# 
 # })
+
+test_that("universal_null subsets representatives properly",{
+  
+  # DO THIS!!!
+  
+})
 
