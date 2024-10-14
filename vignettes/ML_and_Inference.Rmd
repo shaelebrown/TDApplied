@@ -67,7 +67,8 @@ This vignette documents the background of **TDApplied** functions and the usage 
 To start we must load the **TDApplied** package:
 
 ```{r setup}
-library("TDApplied")
+# library("TDApplied")
+devtools::load_all()
 ``` 
 
 Let's get started!
@@ -164,6 +165,39 @@ diag[47:51,]
 In the package vignette "Benchmarking and Speedups", simulations are used to demonstrate the practical advantages of using `PyH` to calculate persistence diagrams compared to other alternatives.
 
 Note that the installation status of Python for `PyH` is checked using the function `reticulate::py_available()`, which according to several online forums does not always behave as expected. If error messages occur using **TDApplied** functions regarding Python not being installed then we recommend consulting online resources to ensure that the `py_available` function returns `TRUE` on your system. Due to the complicated dependencies required to use the `PyH` function, it is only an optional function in the **TDApplied** package and therefore the reticulate package is only suggested in the **TDApplied** namespace.
+
+
+## Determining the Radius Threshold with **TDApplied**'s `enclosing_radius` Function
+
+One of the most important parameters in a persistent (co)homology calculation is the maximum connectivity radius of the filtration (which is the `maxdim` parameter in the `PyH` function). A small radius threshold may prematurely stop the filtration before we can identify real large-scale features of our data, while an overly large threshold could quickly cause the calculations to become intractable. While there is no method that can determine an optimal balance between these two extremes, a radius threshold exists, called the "enclosing radius", beyond which the topology of the dataset is trivial (i.e. there are no topological features except for one connected component). 
+
+The enclosing radius of a dataset can be computed using **TDApplied**'s `enclosing_radius` function. Consider the topology of a dataset sampled from a circle and its origin:
+
+```{r, echo=FALSE,fig.height = 5,fig.width = 5,fig.align = 'center'}
+theta <- stats::runif(n = 100,min = 0,max = 2*pi)
+x <- cos(theta)
+y <- sin(theta)
+origin <- data.frame(x = 0,y = 0)
+new_data <- rbind(data.frame(x = x,y = y), origin)
+layout <- as.matrix(new_data)
+rownames(layout) <- 1:nrow(new_data)
+vrs <- vr_graphs(new_data, eps = c(0.0001,1))
+plot_vr_graph(vrs, eps = (0.0001), layout = layout, plot_isolated_vertices = TRUE,vertex_labels = FALSE)
+```
+Without knowing anything about the structure of our new dataset we would not know which distance threshold to use for persistent homology calculations. We would compute the enclosing radius as follows:
+
+```{r}
+enc_rad <- enclosing_radius(new_data, distance_mat = FALSE)
+print(enc_rad)
+```
+
+This radius is the distance from the origin point to all the points on the circumference - at which point the whole graph is connected and the loop is gone:
+
+```{r,echo = FALSE,fig.height = 5,fig.width = 5,fig.align = 'center'}
+plot_vr_graph(vrs, eps = enc_rad, layout = layout,vertex_labels = F)
+```
+
+We will see in a later section how to construct these types of graphs using the `vr_graphs` and `plot_vr_graph` functions.
 
 ## Converting Diagrams to DataFrames with **TDApplied**'s `diagram_to_df` Function
 
@@ -585,7 +619,12 @@ Next we can plot both VR graphs:
 plot_vr_graph(gs,eps_1)
 
 # plot second graph
-plot_vr_graph(gs,eps_2)
+layout <- plot_vr_graph(gs,eps_2,return_layout = TRUE)
+layout <- apply(layout,MARGIN = 2,FUN = function(X){
+  
+  return(-1 + 2*(X - min(X))/(max(X) - min(X)))
+  
+})
 ```
 
 The first graph shows that at a scale before the loop is born, the dominant loop does not exist in the data (and that the space is more fragmented), while the second graph was able to retrieve the dominant loop. Visualizing multiple VR graphs of a dataset, choosing particular scales of interest from the persistence diagram of the dataset, can be an effective tool for interpreting topological features.
@@ -602,21 +641,17 @@ colors <- rep("lightblue",50)
 colors[stimuli_in_loop] <- "red"
 
 # plot only component containing the loop stimuli with vertex colors
-plot_vr_graph(gs,eps_2,cols = colors,component_of = stimuli_in_loop[[1]])
+plot_vr_graph(gs,eps_2,cols = colors,component_of = stimuli_in_loop[[1]],layout = layout)
 ```
 
 We can customize one level further by removing the vertex labels and using the graph layout (i.e. x-y coordinates of all vertices) to plot other things on the graph:
 
 ```{r,eval = requireNamespace('igraph'),fig.width = 5,fig.align = 'center'}
 # plot only component containing the loop stimuli with vertex colors
-layout <- plot_vr_graph(gs,eps_2,cols = colors,
-                component_of = stimuli_in_loop[[1]],
-                vertex_labels = F,return_layout = T)
-layout <- apply(layout,MARGIN = 2,FUN = function(X){
-  
-  return(-1 + 2*(X - min(X))/(max(X) - min(X)))
-  
-})
+plot_vr_graph(gs,eps_2,cols = colors,
+              component_of = stimuli_in_loop[[1]],
+              vertex_labels = FALSE,
+              layout = layout)
 
 # get indices of vertices in loop
 # not necessary in this case but necessary when we have

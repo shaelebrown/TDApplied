@@ -22,4 +22,11 @@ test_that("enclosing_radius is computing properly",{
   expect_equal(enclosing_radius(X, F), dist_X[1,6])
   expect_equal(enclosing_radius(dist_X, T), dist_X[1,6])
   
+  theta <- runif(n = 100,min = 0,max = 2*pi)
+  x <- cos(theta)
+  y <- sin(theta)
+  df <- data.frame(x = x,y = y)
+  dist_df <- as.matrix(dist(df))
+  expect_equal(enclosing_radius(df, F),enclosing_radius(dist_df, T))
+    
 })
