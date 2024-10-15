@@ -57,7 +57,10 @@ vs noise (not).
 For each feature in a diagram we compute its persistence ratio $\pi = \frac{death radius}{birth radius}$, and a
 test statistic $A \log \log \pi + B$ (where $A$ and $B$ are constants). This statistic is compared to a left-skewed Gumbel distribution
 to get a p-value. A Bonferroni correction is applied to all the p-values across all features, so when `return_pvals` is TRUE a list of 
-p-value thresholds is also returned, one for each dimension, which is `alpha` divided by the number of features in that dimension. 
+p-value thresholds is also returned, one for each dimension, which is `alpha` divided by the number of features in that dimension.
+If desired, infinite cycles (i.e. cycles whose death value is equal to the maximum distance threshold parameter for the persistent homology calculation) 
+can be anaylzed for significance by determining their minimum distance thresholds where they might be significant (using the Gumbel distribution again),
+calculating the persistence diagram up to those thresholds and seeing if they are still infinite (i.e. significant) or not.
 This function is significantly faster than the \code{\link{bootstrap_persistence_thresholds}} function. Note that the `calculate_homology`
 function does not seem to store infinite cycles (i.e. cycles that have death value equal to `thresh`).
 }
