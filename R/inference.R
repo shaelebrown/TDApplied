@@ -837,9 +837,10 @@ permutation_model_inference <- function(D1, D2, iterations, num_samples, dims = 
 #' @param ignore_infinite_cluster a boolean indicating whether or not to ignore the infinitely lived cluster when `FUN_diag` is `PyH`. If infinite cycle inference is to be performed,
 #' this parameter should be set to FALSE.
 #' @param calculate_representatives a boolean representing whether to calculate representative (co)cycles, default FALSE. Note that representatives cant be
-#' calculated when using the 'calculate_homology' function.
+#' calculated when using the 'calculate_homology' function. Note that representatives cannot be computed for (significant) infinite cycles.
 #' @param alpha the type-1 error threshold, default 0.05.
 #' @param return_pvals a boolean representing whether or not to return p-values for features in the subsetted diagram as well as a list of p-value thresholds, default FALSE.
+#' Infinite cycles that are significant (see below) will have p-value NA in this list, as the true value is unknown but less than its dimension's p-value threshold.
 #' @param infinite_cycles a boolean representing whether or not to perform inference for features with infinite (i.e. `thresh`) death values, default FALSE. If `FUN_diag` is `calculate_homology` (the
 #' default) then no infinite cycles will be returned by the persistent homology calculation at all.
 #' @return a list containing the full persistence diagram, the subsetted diagram, representatives and/or subsetted representatives if desired, the p-values of subsetted features and the Bonferroni p-value thresholds in each dimension if desired. 
@@ -870,7 +871,7 @@ permutation_model_inference <- function(D1, D2, iterations, num_samples, dims = 
 #'
 #'   # at a lower threshold we can check for 
 #'   # infinite cycles
-#'   res2 <- universal_null(circ, thresh = 0.5, 
+#'   res2 <- universal_null(circ, thresh = 1.1, 
 #'                          infinite_cycle_inference = TRUE,
 #'                          FUN_diag = "ripsDiag")
 #'   res2$subsetted_diag
@@ -1049,8 +1050,24 @@ universal_null <- function(X,FUN_diag = "calculate_homology",maxdim = 1,thresh,d
   # make sure there is work to be done
   if(max(diag$dimension) > 0)
   {
-    # compute test statistics
+    # subset diagram and representatives
     diag_highdim <- diag[which(diag$dimension > 0),]
+    if(calculate_representatives)
+    {
+      if(FUN_diag == "calculate_homology")
+      {
+        representatives_highdim <- NULL
+      }
+      if(FUN_diag == "ripsDiag")
+      {
+        representatives_highdim <- representatives[which(diag$dimension > 0)]
+      }
+      if(FUN_diag == "PyH")
+      {
+        representatives_highdim <- representatives[2:(max(diag$dimension) + 1)]
+      }
+    }
+    # compute test statistics
     dims <- c(1:maxdim)
     A <- 1 # for VR filtrations
     lambda <- -digamma(1)
@@ -1090,42 +1107,56 @@ universal_null <- function(X,FUN_diag = "calculate_homology",maxdim = 1,thresh,d
     
     # subset in each dimension
     inds <- c()
+    non_inf_inds <- c()
     for(d in 1:maxdim)
     {
       inds <- c(inds,which(diag_highdim$dimension == d & pvals < alpha_thresh[[d]])) 
+      non_inf_inds <- c(non_inf_inds,which(diag_highdim$dimension == d & pvals < alpha_thresh[[d]] & diag_highdim$death < thresh))
     }
     ret_list$subsetted_diag <- diag_highdim[inds,]
     
-    # subset representatives if desired
-    # deal with representatives
-    if(calculate_representatives == T & FUN_diag == "ripsDiag")
+    if(return_pvals)
     {
-      ret_list$subsetted_representatives = representatives[inds]
-    }
-    if(calculate_representatives == T & FUN_diag == "PyH")
-    {
-      ret_list$subsetted_representatives = representatives
-      if(maxdim > 0)
+      if(length(non_inf_inds) > 0)
       {
-        for(d in 1:maxdim)
+        ret_list$pvals <- pvals[inds]
+      }else
+      {
+        ret_list$pvals <- numeric()
+      }
+      ret_list$alpha_thresh <- alpha_thresh
+    }
+    
+    # subset representatives if desired
+    # offset inds
+    if(length(non_inf_inds) > 0)
+    {
+      non_inf_inds <- non_inf_inds + length(which(diag$dimension == 0))
+      if(calculate_representatives == T & FUN_diag == "ripsDiag")
+      {
+        ret_list$subsetted_representatives = representatives[non_inf_inds]
+      }
+      if(calculate_representatives == T & FUN_diag == "PyH")
+      {
+        ret_list$subsetted_representatives = representatives
+        if(maxdim > 0)
         {
-          if(length(which(diag$dimension == d)) > 0)
+          for(d in 1:maxdim)
           {
-            min_ind <- min(which(diag$dimension == d))
-            max_ind <- max(which(diag$dimension == d))
-            ret_list$subsetted_representatives[[d + 1]] <- ret_list$subsetted_representatives[[d + 1]][inds[which(inds %in% c(min_ind:max_ind))] - min_ind + 1]
-          }else
-          {
-            ret_list$subsetted_representatives[[d + 1]] <- list()
+            if(length(which(diag$dimension == d)) > 0)
+            {
+              min_ind <- min(which(diag$dimension == d))
+              max_ind <- max(which(diag$dimension == d))
+              ret_list$subsetted_representatives[[d + 1]] <- ret_list$subsetted_representatives[[d + 1]][non_inf_inds[which(non_inf_inds %in% c(min_ind:max_ind))] - min_ind + 1]
+            }else
+            {
+              ret_list$subsetted_representatives[[d + 1]] <- list()
+            }
           }
         }
       }
     }
-    if(return_pvals)
-    {
-      ret_list$pvals <- pvals[inds]
-      ret_list$alpha_thresh <- alpha_thresh
-    }
+    
     if(infinite_cycle_inference)
     {
       # perform inference for infinite cycles
@@ -1176,7 +1207,9 @@ universal_null <- function(X,FUN_diag = "calculate_homology",maxdim = 1,thresh,d
             infinite_cycle_inference <- rbind(infinite_cycle_inference, data.frame(dimension = min_birth_pt[[1]],birth = min_birth_pt[[2]],death = min_birth_pt[[3]]))
           }
         }
+        # update subsetted diagram and pvalues
         ret_list$subsetted_diag <- rbind(ret_list$subsetted_diag,infinite_cycle_inference)
+        ret_list$pvals <- c(ret_list$pvals,NA)
       }
       
     }
@@ -1190,12 +1223,8 @@ universal_null <- function(X,FUN_diag = "calculate_homology",maxdim = 1,thresh,d
     }
     if(return_pvals)
     {
-      ret_list$pvals <- list()
-      ret_list$alpha_thresh <- list()
-    }
-    if(infinite_cycle_inference)
-    {
-      ret_list$signif_inf_cycles <- data.frame(dimension = integer(), birth = numeric(), death = numeric(), min_radius_for_signif = numeric())
+      ret_list$pvals <- numeric()
+      ret_list$alpha_thresh <- numeric()
     }
   }
   

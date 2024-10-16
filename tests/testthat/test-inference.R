@@ -217,7 +217,7 @@ test_that("independence_test is working",{
 #     expect_error(universal_null(data.frame(x = 1:10,y = 1:10),FUN_diag = "ripsDiag",maxdim = 1,thresh = 2,infinite_cycle_inference = c(T,F)),"boolean")
 #     expect_error(universal_null(data.frame(x = 1:10,y = 1:10),FUN_diag = "calculate_homology",maxdim = 1,thresh = 2,infinite_cycle_inference = NULL),"NULL")
 #     expect_error(universal_null(data.frame(x = 1:10,y = 1:10),FUN_diag = "calculate_homology",maxdim = 1,thresh = 2,infinite_cycle_inference = NA),"NA")
-#   
+# 
 # })
 
 # test_that("universal_null is working properly",{
@@ -244,9 +244,24 @@ test_that("independence_test is working",{
 # 
 # })
 
-test_that("universal_null subsets representatives properly",{
-  
-  # DO THIS!!!
-  
-})
+# test_that("universal_null subsets representatives properly",{
+#   
+#     # circle has only representative
+#     theta <- runif(n = 100, min = 0,max = 2*3.14)
+#     x <- cos(theta)
+#     y <- sin(theta)
+#     circ <- data.frame(x = x,y = y)
+#     circ$x <- circ$x + rnorm(n = 100,sd = 0.1)
+#     circ$y <- circ$y + rnorm(n = 100,sd = 0.1)
+#     library(TDA)
+#     res <- universal_null(circ, FUN_diag = "ripsDiag",maxdim = 1, thresh = 2,alpha = 0.1,calculate_representatives = TRUE,return_pvals = TRUE) # with enough leeway
+#     expect_equal(length(res$subsetted_representatives),1L)
+#     expect_equal(length(res$pvals),1L)
+#     
+#     # circle with infinite cycle still has one representative
+#     res2 <- universal_null(circ, FUN_diag = "ripsDiag",maxdim = 1, thresh = 1.1,alpha = 0.1,calculate_representatives = TRUE,infinite_cycle_inference = TRUE,return_pvals = TRUE) # with enough leeway
+#     expect_equal(length(res2$subsetted_representatives),0L)
+#     expect_equal(length(res2$pvals),1L)
+#     
+# })
 

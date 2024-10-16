@@ -37,11 +37,12 @@ dimensions together (TRUE, the default) or if one threshold should be calculated
 this parameter should be set to FALSE.}
 
 \item{calculate_representatives}{a boolean representing whether to calculate representative (co)cycles, default FALSE. Note that representatives cant be
-calculated when using the 'calculate_homology' function.}
+calculated when using the 'calculate_homology' function. Note that representatives cannot be computed for (significant) infinite cycles.}
 
 \item{alpha}{the type-1 error threshold, default 0.05.}
 
-\item{return_pvals}{a boolean representing whether or not to return p-values for features in the subsetted diagram as well as a list of p-value thresholds, default FALSE.}
+\item{return_pvals}{a boolean representing whether or not to return p-values for features in the subsetted diagram as well as a list of p-value thresholds, default FALSE.
+Infinite cycles that are significant (see below) will have p-value NA in this list, as the true value is unknown but less than its dimension's p-value threshold.}
 
 \item{infinite_cycles}{a boolean representing whether or not to perform inference for features with infinite (i.e. `thresh`) death values, default FALSE. If `FUN_diag` is `calculate_homology` (the
 default) then no infinite cycles will be returned by the persistent homology calculation at all.}
@@ -87,7 +88,7 @@ if(require("TDA"))
 
   # at a lower threshold we can check for 
   # infinite cycles
-  res2 <- universal_null(circ, thresh = 0.5, 
+  res2 <- universal_null(circ, thresh = 1.1, 
                          infinite_cycle_inference = TRUE,
                          FUN_diag = "ripsDiag")
   res2$subsetted_diag
