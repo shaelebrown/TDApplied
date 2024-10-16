@@ -24,7 +24,7 @@
 #'   # compute the enclosing radius from the distance matrix
 #'   enc_rad <- enclosing_radius(dist_df, distance_mat = TRUE)
 #' }
-enclosing_radius <- function(X, distance_mat){
+enclosing_radius <- function(X, distance_mat = FALSE){
   
   # error check parameters
   if(is.null(distance_mat))
