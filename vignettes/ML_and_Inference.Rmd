@@ -381,19 +381,74 @@ Persistence diagrams can contain any number of points representing different typ
 plot_diagram(diag,title = "Circle diagram")
 ```
 
-Now that we can visualize persistence diagrams we will describe four tools which can be used for their interpretation -- filtering out noisy topological features with the universal null distribution, bootstrapping, representative (co)cycles and *Vietoris-VR graphs* (called VR graphs for short).
+Now that we can visualize persistence diagrams we will describe four tools which can be used for their interpretation -- filtering out noisy topological features with the universal null distribution and bootstrapping methods, representative (co)cycles and *Vietoris-VR graphs* (called VR graphs for short).
 
-## Filtering Topological Features and **TDApplied**'s `univeral_null` Function
+## Filtering Topological Features and **TDApplied**'s `universal_null` Function
 
 Noise in datasets can drastically affect the results of inference and machine learning procedures. Therefore it is desirable to clean data before applying such procedures. Noise in persistence diagrams are features whose birth and death values are very similar. The question of determining which points in a persistence diagrams are "significant" and which are "noise" has been recently addressed via a parametric approach in [@universal_null].
 
-The idea is to compute a test statistic for each feature based on the ratio of death divided by birth and to compare these statistics against the left-skewed Gumbel distribution to compute p-values, and use a Bonferroni correction to ensure that the probability of getting a false positive significant feature is at most $\alpha$. This is a very strict thresholding procedure, testing each p-value $p$ for a topological feature in dimension $i$ against $\alpha/n_i$ where $n_i$ is the number of topological features of that dimension.
+The idea is to compute a test statistic for each feature based on the ratio of death divided by birth and to compare these statistics against the left-skewed Gumbel distribution to compute p-values, and use a Bonferroni correction to ensure that the probability of getting a false positive significant feature is at most $\alpha$. This is a very strict thresholding procedure, testing each p-value $p$ for a topological feature in dimension $i$ against $\alpha/n_i$ where $n_i$ is the number of topological features of that dimension (so typical choices for $\alpha$, like 0.05 or 0.01 etc., may be too strict for some analyses).
 
+We would be tempted to use this procedure to locate the main loop in our circ dataset, but the results are surprising:
 
+```{r}
+circ_result <- universal_null(circ,thresh = enclosing_radius(circ))
+circ_result$subsetted_diag
+```
+
+No loop was found! The reason for this is because since circ is a "topologically perfect" dataset, with no noise and therefore only one loop, the singular loop can never be significant without smaller loops to compare it to. The same phenomenon will occur in other datasets like a sampled unit sphere, etc., but does this mean that the procedure does not work?
+
+Certainly not! All real world datasets will contain some measure of noise and therefore will likely have more than one feature in a given homological dimension. Let's add some noise to our circ dataset and rerun the procedure:
+
+```{r}
+# create circle with noise dataset and plot
+circ_with_noise <- circ
+circ_with_noise$x <- circ_with_noise$x + stats::rnorm(n = 50,sd = 0.1)
+circ_with_noise$y <- circ_with_noise$y + stats::rnorm(n = 50,sd = 0.1)
+plot(circ_with_noise)
+
+# rerun the inference procedure
+noisy_circ_result <- universal_null(circ_with_noise, 
+                                    thresh = enclosing_radius(circ_with_noise),
+                                    return_pvals = TRUE)
+noisy_circ_result$subsetted_diag
+noisy_circ_result$pvals
+```
+
+We have successfully found the significant loop in the noisy dataset (with p-value less than `alpha`). Remember though that this procedure is very strict - it is much more likely to disregard real topological features than to retain noise features, so if the `universal_null` function says that your dataset has no significant features when you are confident there are some you can try increasing the `alpha` parameter to carry out a more relaxed thresholding.
+
+While the `enclosing_radius` function, used in our examples, may be an appropriate connectivity threshold for most applications, it may be too computationally intensive for others. When lower thresholds are used, real topological features may be obscured because the threshold is much smaller than its (unobserved) death radius. Thankfully though, the `universal_null` procedure can handle these "infinite cycles", by:
+
+1. Using the left-skewed Gumbel distribution and `alpha` parameter to determine the minimum connectivity threshold for persistent homology where a given infinite cycle feature *might* be significant,
+2. Computing the persistence diagram at that threshold, and
+3. Checking if the feature is still infinite (i.e. if its death value is the new larger threshold). If yes then the feature is reported as being significant, otherwise it is filtered out.
+
+Picking a very small threshold, resulting in many infinite cycles, will be very computationally demanding requiring the computation of many persistence diagrams, so care should be taken when picking the threshold when performing this infinite cycle inference.
+
+Here's an example of performing inference on the noisy circ dataset, with and without infinite cycle inference at a lower threshold value (and a slightly higher `alpha`):
+
+```{r}
+# inference without infinite cycle inference
+res_non_inf_small_thresh <- universal_null(circ_with_noise,
+                                           thresh = 1.1,
+                                           alpha = 0.1)
+res_non_inf_small_thresh$subsetted_diag
+
+# inference with infinite cycle inference
+res_inf_small_thresh <- universal_null(circ_with_noise,
+                                       thresh = 1.1,
+                                       alpha = 0.1,
+                                       infinite_cycle_inference = TRUE)
+res_inf_small_thresh$subsetted_diag
+```
+
+At this smaller threshold the procedure with infinite cycle inference was able to locate the main loop.
+
+In a later section you will read about "representative (co)cycles", which are subsets of the datapoints on a topological feature that can be used to help locate the feature in our dataset, but for now just know that if desired this procedure will subset the representatives for only the significant topological features, but infinite cycles will not have representatives.
 
 ## Bootstrapping Topological Features and **TDApplied**'s `bootstrap_persistence_thresholds` Function
 
-Another approach in the literature for filtering significant topological features of datasets was based on bootstrapping ([@bootstrap]), although this method is far slower than the aforementioned universal null distribution approach. On the other hand, for topologically simple datasets without noise (like a sampled unit circle) the universal null distribution will often fail to retrieve the real topological features.
+Another approach in the literature for filtering significant topological features of datasets was based on bootstrapping ([@bootstrap]), although this method is far slower than the aforementioned universal null distribution approach because it requires the computation of many persistence diagrams and distances. On the other hand, for topologically simple datasets without noise (like a sampled unit circle) the universal null distribution will often fail to retrieve the real topological features.
 
 The idea of the bootstrap procedure is as follows, where $X$ is the input data set and $\alpha$ is the desired threshold for type 1 error:
 
@@ -881,7 +936,7 @@ mod_comp_paired <- permutation_model_inference(circ, circ_noise, iterations = 20
 mod_comp_paired$p_values
 ```
 
-In this case we see that the p-values increased, capturing the tighter model fit. In general a high p-value only "suggests" a better model fit, but in this case we know that the two datasets are highly related.
+Once again the p-values are not significant. In general a high p-value only "suggests" a better model fit, but in this case we know that the two datasets are highly related.
 
 If we wanted to carry out multiple paired tests between datasets (for instance data from the same subjects across multiple studies) we can ensure that the same bootstrap samples are used in all comparisons by explicitly defining those samples and supplying them to the procedure. If we had defined another dataset, `circ3`, we could carry out the paired tests as follows:
 
