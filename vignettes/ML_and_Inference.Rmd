@@ -392,25 +392,31 @@ The idea is to compute a test statistic for each feature based on the ratio of d
 We would be tempted to use this procedure to locate the main loop in our circ dataset, but the results are surprising:
 
 ```{r}
-circ_result <- universal_null(circ,thresh = enclosing_radius(circ))
+# determine significant features
+circ_result <- universal_null(circ,
+                                   thresh = enclosing_radius(circ))
 circ_result$subsetted_diag
 ```
 
 No loop was found! The reason for this is because since circ is a "topologically perfect" dataset, with no noise and therefore only one loop, the singular loop can never be significant without smaller loops to compare it to. The same phenomenon will occur in other datasets like a sampled unit sphere, etc., but does this mean that the procedure does not work?
 
-Certainly not! All real world datasets will contain some measure of noise and therefore will likely have more than one feature in a given homological dimension. Let's add some noise to our circ dataset and rerun the procedure:
+Certainly not! All real world datasets will contain some measure of noise and therefore will likely have more than one feature in a given homological dimension. Let's add some noise to our unit_circ dataset and rerun the procedure:
 
-```{r}
+```{r,echo = T,fig.height = 5,fig.width = 5,fig.align = 'center',eval = requireNamespace("TDA")}
 # create circle with noise dataset and plot
 circ_with_noise <- circ
-circ_with_noise$x <- circ_with_noise$x + stats::rnorm(n = 50,sd = 0.1)
-circ_with_noise$y <- circ_with_noise$y + stats::rnorm(n = 50,sd = 0.1)
+x_noise <- stats::rnorm(n = 50,sd = 0.1)
+y_noise <- stats::rnorm(n = 50,sd = 0.1)
+circ_with_noise$x <- circ_with_noise$x + x_noise
+circ_with_noise$y <- circ_with_noise$y + y_noise
 plot(circ_with_noise)
 
 # rerun the inference procedure
+library(TDA)
 noisy_circ_result <- universal_null(circ_with_noise, 
-                                    thresh = enclosing_radius(circ_with_noise),
-                                    return_pvals = TRUE)
+                                         FUN_diag = "ripsDiag",
+                                         thresh = enclosing_radius(circ_with_noise),
+                                         return_pvals = TRUE)
 noisy_circ_result$subsetted_diag
 noisy_circ_result$pvals
 ```
@@ -425,19 +431,19 @@ While the `enclosing_radius` function, used in our examples, may be an appropria
 
 Picking a very small threshold, resulting in many infinite cycles, will be very computationally demanding requiring the computation of many persistence diagrams, so care should be taken when picking the threshold when performing this infinite cycle inference.
 
-Here's an example of performing inference on the noisy circ dataset, with and without infinite cycle inference at a lower threshold value (and a slightly higher `alpha`):
+Here's an example of performing inference on the noisy circ dataset, with and without infinite cycle inference at a lower threshold value:
 
-```{r}
+```{r,eval = requireNamespace("TDA")}
 # inference without infinite cycle inference
 res_non_inf_small_thresh <- universal_null(circ_with_noise,
-                                           thresh = 1.1,
-                                           alpha = 0.1)
+                                           FUN_diag = "ripsDiag",
+                                           thresh = 0.9)
 res_non_inf_small_thresh$subsetted_diag
 
 # inference with infinite cycle inference
 res_inf_small_thresh <- universal_null(circ_with_noise,
-                                       thresh = 1.1,
-                                       alpha = 0.1,
+                                       FUN_diag = "ripsDiag",
+                                       thresh = 0.9,
                                        infinite_cycle_inference = TRUE)
 res_inf_small_thresh$subsetted_diag
 ```

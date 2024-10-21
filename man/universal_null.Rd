@@ -76,8 +76,10 @@ if(require("TDA"))
   circ <- data.frame(x = x,y = y)
 
   # add noise
-  circ$x <- circ$x + stats::rnorm(n = 100,sd = 0.1)
-  circ$y <- circ$y + stats::rnorm(n = 100,sd = 0.1)
+  x_noise <- -0.1 + 0.2*stats::runif(n = 100)
+  y_noise <- -0.1 + 0.2*stats::runif(n = 100)
+  circ$x <- circ$x + x_noise
+  circ$y <- circ$y + y_noise
 
   # determine significant topological features
   library(TDA)
@@ -90,6 +92,7 @@ if(require("TDA"))
   # infinite cycles
   res2 <- universal_null(circ, thresh = 1.1, 
                          infinite_cycle_inference = TRUE,
+                         alpha = 0.1,
                          FUN_diag = "ripsDiag")
   res2$subsetted_diag
 }

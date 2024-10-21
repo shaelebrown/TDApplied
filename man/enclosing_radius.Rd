@@ -4,7 +4,7 @@
 \alias{enclosing_radius}
 \title{Compute the enclosing radius for a dataset.}
 \usage{
-enclosing_radius(X, distance_mat)
+enclosing_radius(X, distance_mat = FALSE)
 }
 \arguments{
 \item{X}{the input dataset, must either be a matrix or data frame.}
