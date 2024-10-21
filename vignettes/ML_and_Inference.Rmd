@@ -979,8 +979,8 @@ Kernel k-means [@kkmeans] is a method which can find hidden groups in complex da
 # create noisy copies of D1, D2 and D3
 g <- generate_TDApplied_vignette_data(3,3,3)
                               
-# calculate kmeans clusters with centers = 3, and sigma = t = 2
-clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 2,sigma = 2,num_workers = 2)
+# calculate kmeans clusters with centers = 3, and sigma = t = 0.1
+clust <- diagram_kkmeans(diagrams = g,centers = 3,dim = 0,t = 0.1,sigma = 0.1,num_workers = 2)
 
 # display cluster labels
 clust$clustering@.Data
