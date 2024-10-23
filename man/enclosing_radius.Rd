@@ -15,24 +15,21 @@ enclosing_radius(X, distance_mat = FALSE)
 the numeric enclosing radius.
 }
 \description{
-The enclosing radius is the minimum radius beyond which no topological changes will occur.
+The enclosing radius is the minimum (Euclidean distance) radius beyond which no topological changes will occur.
 }
 \examples{
 
-if(require("TDAstats"))
-{
-  # create a persistence diagram from a 2D Gaussian
-  df = data.frame(x = rnorm(n = 20,mean = 0,sd = 1),y = rnorm(n = 20,mean = 0,sd = 1))
+# create a persistence diagram from a 2D Gaussian
+df = data.frame(x = rnorm(n = 20,mean = 0,sd = 1),y = rnorm(n = 20,mean = 0,sd = 1))
   
-  # compute the enclosing radius from the point cloud
-  enc_rad <- enclosing_radius(df, distance_mat = FALSE)
+# compute the enclosing radius from the point cloud
+enc_rad <- enclosing_radius(df, distance_mat = FALSE)
   
-  # compute the distance matrix manually, stored as a matrix
-  dist_df <- as.matrix(dist(df))
+# compute the distance matrix manually, stored as a matrix
+dist_df <- as.matrix(dist(df))
   
-  # compute the enclosing radius from the distance matrix
-  enc_rad <- enclosing_radius(dist_df, distance_mat = TRUE)
-}
+# compute the enclosing radius from the distance matrix
+enc_rad <- enclosing_radius(dist_df, distance_mat = TRUE)
 }
 \author{
 Shael Brown - \email{shaelebrown@gmail.com}
