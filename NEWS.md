@@ -7,6 +7,7 @@ Please see those for more details.
 # 3.0.4
 - fixed distance exponentiation and group permuting in permutation test
 - added permutation model inference procedure
+- added universal null and enclosing radius functions
 
 # 3.0.3
 - Updated documentation for JOSS paper release

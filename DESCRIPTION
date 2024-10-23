@@ -27,6 +27,7 @@ Suggests:
     testthat (>= 3.0.0),
     TDAstats,
     reticulate,
+    TDA,
     igraph
 LinkingTo: Rcpp
 VignetteBuilder: knitr, rmarkdown
