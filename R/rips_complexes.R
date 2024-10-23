@@ -429,7 +429,21 @@ plot_vr_graph <- function(graphs,eps,cols = NULL,layout = NULL,title = NULL,comp
   }
   
   # create graph
-  g <- igraph::graph_from_data_frame(graphs$graphs[[which(names(graphs$graphs) == eps)]]$graph,directed = FALSE,vertices = graphs$vertices)
+  edge_table <- graphs$graphs[[which(names(graphs$graphs) == as.character(eps))]]$graph
+  if(length(edge_table) == 2)
+  {
+    edge_table <- data.frame(t(edge_table))
+  }
+  if(length(edge_table) == 0){
+    if(inherits(graphs$vertices,"character"))
+    {
+      edge_table <- data.frame(row = character(),col = character())
+    }else
+    {
+      edge_table <- data.frame(row = numeric(),col = numeric())
+    }
+  }
+  g <- igraph::graph_from_data_frame(edge_table,directed = FALSE,vertices = graphs$vertices)
   if(!is.null(cols))
   {
     igraph::V(g)$color <- cols
