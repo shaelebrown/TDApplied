@@ -44,7 +44,7 @@ calculated when using the 'calculate_homology' function. Note that representativ
 \item{return_pvals}{a boolean representing whether or not to return p-values for features in the subsetted diagram as well as a list of p-value thresholds, default FALSE.
 Infinite cycles that are significant (see below) will have p-value NA in this list, as the true value is unknown but less than its dimension's p-value threshold.}
 
-\item{infinite_cycles}{a boolean representing whether or not to perform inference for features with infinite (i.e. `thresh`) death values, default FALSE. If `FUN_diag` is `calculate_homology` (the
+\item{infinite_cycle_inference}{a boolean representing whether or not to perform inference for features with infinite (i.e. `thresh`) death values, default FALSE. If `FUN_diag` is `calculate_homology` (the
 default) then no infinite cycles will be returned by the persistent homology calculation at all.}
 }
 \value{
@@ -55,8 +55,8 @@ An inference procedure to determine which topological features (if any) of a dat
 vs noise (not).
 }
 \details{
-For each feature in a diagram we compute its persistence ratio $\pi = \frac{death radius}{birth radius}$, and a
-test statistic $A \log \log \pi + B$ (where $A$ and $B$ are constants). This statistic is compared to a left-skewed Gumbel distribution
+For each feature in a diagram we compute its persistence ratio \eqn{\pi = death/birth}, and a
+test statistic \eqn{A log log \pi + B} (where \eqn{A} and \eqn{B} are constants). This statistic is compared to a left-skewed Gumbel distribution
 to get a p-value. A Bonferroni correction is applied to all the p-values across all features, so when `return_pvals` is TRUE a list of 
 p-value thresholds is also returned, one for each dimension, which is `alpha` divided by the number of features in that dimension.
 If desired, infinite cycles (i.e. cycles whose death value is equal to the maximum distance threshold parameter for the persistent homology calculation) 
