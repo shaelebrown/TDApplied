@@ -586,7 +586,7 @@ predict_diagram_kpca <- function(new_diagrams,K = NULL,embedding,num_workers = p
 #### KERNEL SVM ####
 #' Fit a support vector machine model where each training set instance is a persistence diagram.
 #'
-#' Returns the output of kernlab's \code{\link{ksvm}} function on the Gram matrix of the list of persistence diagrams
+#' Returns the output of kernlab's \code{\link[kernlab]{ksvm}} function on the Gram matrix of the list of persistence diagrams
 #' in a particular dimension.
 #' 
 #' Cross validation is carried out in parallel, using a trick

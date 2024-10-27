@@ -79,7 +79,7 @@ a list of class 'diagram_ksvm' containing the elements
 }
 }
 \description{
-Returns the output of kernlab's \code{\link{ksvm}} function on the Gram matrix of the list of persistence diagrams
+Returns the output of kernlab's \code{\link[kernlab]{ksvm}} function on the Gram matrix of the list of persistence diagrams
 in a particular dimension.
 }
 \details{
